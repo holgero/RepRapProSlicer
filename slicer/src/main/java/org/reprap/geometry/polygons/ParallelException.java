@@ -57,7 +57,7 @@ package org.reprap.geometry.polygons;
 /**
  * Exception for when trying to intersect parallel lines
  */
-class ParallelException extends Exception {
+public class ParallelException extends Exception {
     private static final long serialVersionUID = 1L;
 
     ParallelException(final String s) {

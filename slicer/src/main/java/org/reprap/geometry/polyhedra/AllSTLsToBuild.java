@@ -25,8 +25,12 @@ import org.reprap.geometry.LayerRules;
 import org.reprap.geometry.polygons.BooleanGrid;
 import org.reprap.geometry.polygons.BooleanGridList;
 import org.reprap.geometry.polygons.CSG2D;
+import org.reprap.geometry.polygons.Circle;
+import org.reprap.geometry.polygons.HalfPlane;
+import org.reprap.geometry.polygons.Line;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
+import org.reprap.geometry.polygons.PolygonIndexedPoint;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.graphicio.RFO;
@@ -661,7 +665,7 @@ public class AllSTLsToBuild {
 
         BooleanGridList allThis = new BooleanGridList();
         allThis.add(unionOfThisLayer);
-        allThis = allThis.offset(layerRules, true, 2); // 2mm gap is a bit of a hack...
+        allThis = offset(allThis, layerRules, true, 2); // 2mm gap is a bit of a hack...
         if (allThis.size() > 0) {
             unionOfThisLayer = allThis.get(0);
         } else {
@@ -697,15 +701,16 @@ public class AllSTLsToBuild {
         // for all the materials in it.  If the material isn't active in this layer, remove it from the list
 
         for (int i = 0; i < support.size(); i++) {
-            final GCodeExtruder e = support.attribute(i).getExtruder().getSupportExtruder();
+            final BooleanGrid grid = support.get(i);
+            final GCodeExtruder e = grid.attribute().getExtruder().getSupportExtruder();
             if (e == null) {
                 Debug.getInstance().errorMessage("AllSTLsToBuild.computeSupport(): null support extruder specified!");
                 continue;
             }
-            support.get(i).forceAttribute(new Attributes(e.getMaterial(), null, null, e.getAppearance()));
+            grid.forceAttribute(new Attributes(e.getMaterial(), null, null, e.getAppearance()));
         }
 
-        return support.hatch(layerRules, false, null, true);
+        return AllSTLsToBuild.hatch(support, layerRules, false, null, true);
     }
 
     /**
@@ -824,14 +829,14 @@ public class AllSTLsToBuild {
         if (layerRules.getLayingSupport()) {
             borderPolygons = null;
         } else {
-            final BooleanGridList offBorder = slice.offset(layerRules, true, -1);
+            final BooleanGridList offBorder = offset(slice, layerRules, true, -1);
             borderPolygons = offBorder.borders();
         }
 
         // If we've got polygons to plot, maybe amend them so they start in the middle 
         // of a hatch (this gives cleaner boundaries).  
         if (borderPolygons != null && borderPolygons.size() > 0) {
-            borderPolygons.middleStarts(hatchedPolygons, layerRules, slice);
+            AllSTLsToBuild.middleStarts(borderPolygons, hatchedPolygons, layerRules, slice);
         }
 
         return borderPolygons;
@@ -911,7 +916,7 @@ public class AllSTLsToBuild {
         for (extruderID = 0; extruderID < edges.length; extruderID++) {
             // Deal with CSG shapes (much simpler and faster).
             for (int i = 0; i < csgs[extruderID].size(); i++) {
-                csgp = CSG2D.slice(csgs[extruderID].get(i), z);
+                csgp = CSG3D.slice(csgs[extruderID].get(i), z);
                 result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), atts[extruderID]));
             }
 
@@ -924,7 +929,7 @@ public class AllSTLsToBuild {
                     pgl = pgl.simplify(Preferences.gridRes() * 1.5);
 
                     // Fix small radii
-                    pgl = pgl.arcCompensate();
+                    pgl = AllSTLsToBuild.arcCompensate(pgl);
 
                     csgp = pgl.toCSG();
 
@@ -1057,6 +1062,278 @@ public class AllSTLsToBuild {
                 addAllEdges((Shape3D) sg, trans, z, att, edges);
             }
         }
+    }
+
+    /**
+     * This assumes that the RrPolygonList for which it is called is all the
+     * closed outline polygons, and that hatching is their infill hatch. It goes
+     * through the outlines and the hatch modifying both so that that outlines
+     * actually start and end half-way along a hatch line (that half of the
+     * hatch line being deleted). When the outlines are then printed, they start
+     * and end in the middle of a solid area, thus minimising dribble.
+     * 
+     * The outline polygons are re-ordered before the start so that their first
+     * point is the most extreme one in the current hatch direction.
+     * 
+     * Only hatches and outlines whose physical extruders match are altered.
+     */
+    public static void middleStarts(final PolygonList list, final PolygonList hatching, final LayerRules lc,
+            final BooleanGridList slice) {
+        for (int i = 0; i < list.size(); i++) {
+            Polygon outline = list.polygon(i);
+            final GCodeExtruder ex = outline.getAttributes().getExtruder();
+            if (ex.getMiddleStart()) {
+                Line l = lc.getHatchDirection(ex, false).pLine();
+                if (i % 2 != 0 ^ lc.getMachineLayer() % 4 > 1) {
+                    l = l.neg();
+                }
+                outline = outline.newStart(outline.maximalVertex(l));
+        
+                final Point2D start = outline.point(0);
+                final PolygonIndexedPoint pp = hatching.ppSearch(start, -1, outline.getAttributes().getExtruder()
+                        .getPhysicalExtruderNumber());
+                boolean failed = true;
+                if (pp != null) {
+                    pp.findLongEnough(10, 30);
+                    final int st = pp.near();
+                    final int en = pp.end();
+                    final Polygon pg = pp.polygon();
+        
+                    // Check that the line from the start of the outline polygon to the first point
+                    // of the tail-in is in solid.  If not, we have jumped between polygons and don't
+                    // want to use that as a lead in.
+                    final Point2D pDif = Point2D.sub(pg.point(st), start);
+                    final Point2D pq1 = Point2D.add(start, Point2D.mul(0.25, pDif));
+                    final Point2D pq2 = Point2D.add(start, Point2D.mul(0.5, pDif));
+                    final Point2D pq3 = Point2D.add(start, Point2D.mul(0.5, pDif));
+        
+                    if (slice.membership(pq1) & slice.membership(pq2) & slice.membership(pq3)) {
+                        outline.add(start);
+                        outline.setExtrudeEnd(-1, 0);
+        
+                        if (en >= st) {
+                            for (int j = st; j <= en; j++) {
+                                outline.add(0, pg.point(j)); // Put it on the beginning...
+                                if (j < en) {
+                                    outline.add(pg.point(j)); // ...and the end.
+                                }
+                            }
+                        } else {
+                            for (int j = st; j >= en; j--) {
+                                outline.add(0, pg.point(j));
+                                if (j > en) {
+                                    outline.add(pg.point(j));
+                                }
+                            }
+                        }
+                        list.set(i, outline);
+                        hatching.cutPolygon(pp.pIndex(), st, en);
+                        failed = false;
+                    }
+                }
+                if (failed) {
+                    list.set(i, outline.randomStart()); // Best we can do.
+                }
+            }
+        }
+    }
+
+    /**
+     * Offset (some of) the points in the polygons to allow for the fact that
+     * extruded circles otherwise don't come out right. See
+     * http://reprap.org/bin/view/Main/ArcCompensation.
+     */
+    public static PolygonList arcCompensate(final PolygonList list) {
+        final PolygonList result = new PolygonList();
+
+        for (int i = 0; i < list.size(); i++) {
+            final Polygon p = list.polygon(i);
+            result.add(AllSTLsToBuild.arcCompensate(p));
+        }
+
+        return result;
+    }
+
+    /**
+     * Offset (some of) the points in the polygon to allow for the fact that
+     * extruded circles otherwise don't come out right. See
+     * http://reprap.org/bin/view/Main/ArcCompensation. If the extruder for the
+     * polygon's arc compensation factor is 0, return the polygon unmodified.
+     * 
+     * This ignores speeds
+     * 
+     * @param es
+     */
+    static Polygon arcCompensate(final Polygon polygon) {
+        final Attributes attributes = polygon.getAttributes();
+        final GCodeExtruder e = attributes.getExtruder();
+
+        // Multiply the geometrically correct result by factor
+        final double factor = e.getArcCompensationFactor();
+        if (factor < Preferences.tiny()) {
+            return polygon;
+        }
+
+        // The points making the arc must be closer than this together
+        final double shortSides = e.getArcShortSides();
+        final double thickness = e.getExtrusionSize();
+        final Polygon result = new Polygon(attributes, polygon.isClosed());
+        Point2D previous = polygon.point(polygon.size() - 1);
+        Point2D current = polygon.point(0);
+        Point2D next;
+        Point2D offsetPoint;
+
+        double d1 = Point2D.dSquared(current, previous);
+        double d2;
+        final double short2 = shortSides * shortSides;
+        final double t2 = thickness * thickness;
+        double offset;
+
+        for (int i = 0; i < polygon.size(); i++) {
+            if (i == polygon.size() - 1) {
+                next = polygon.point(0);
+            } else {
+                next = polygon.point(i + 1);
+            }
+
+            d2 = Point2D.dSquared(next, current);
+            if (d1 < short2 && d2 < short2) {
+                try {
+                    final Circle c = new Circle(previous, current, next);
+                    offset = factor * (Math.sqrt(t2 + 4 * c.radiusSquared()) * 0.5 - Math.sqrt(c.radiusSquared()));
+                    //System.out.println("Circle r: " + Math.sqrt(c.radiusSquared()) + " offset: " + offset);
+                    offsetPoint = Point2D.sub(current, c.centre());
+                    offsetPoint = Point2D.add(current, Point2D.mul(offsetPoint.norm(), offset));
+                    result.add(offsetPoint);
+                } catch (final Exception ex) {
+                    result.add(current);
+                }
+            } else {
+                result.add(current);
+            }
+
+            d1 = d2;
+            previous = current;
+            current = next;
+        }
+
+        return result;
+    }
+
+    /**
+     * Work out all the open polygons forming a set of infill hatches. If
+     * surface is true, these polygons are on the outside (top or bottom). If
+     * it's false they are in the interior. If overrideDirection is not null,
+     * that is used as the hatch direction. Otherwise the hatch is provided by
+     * layerConditions.
+     */
+    public static PolygonList hatch(final BooleanGridList list, final LayerRules layerConditions, final boolean surface,
+            final HalfPlane overrideDirection, final boolean support) {
+        final PolygonList result = new PolygonList();
+        final boolean foundation = layerConditions.getLayingSupport();
+        final GCodeExtruder[] es = layerConditions.getPrinter().getExtruders();
+        for (int i = 0; i < list.size(); i++) {
+            GCodeExtruder e;
+            final BooleanGrid grid = list.get(i);
+            Attributes att = grid.attribute();
+            if (foundation) {
+                e = es[0]; // Extruder 0 is used for foundations
+            } else {
+                e = att.getExtruder();
+            }
+            GCodeExtruder ei;
+            if (!surface) {
+                ei = e.getInfillExtruder();
+                if (ei != null) {
+                    att = new Attributes(ei.getMaterial(), null, null, ei.getAppearance());
+                }
+            } else {
+                ei = e;
+            }
+            if (ei != null) {
+                HalfPlane hatchLine;
+                if (overrideDirection != null) {
+                    hatchLine = overrideDirection;
+                } else {
+                    hatchLine = layerConditions.getHatchDirection(ei, support);
+                }
+                result.add(grid.hatch(hatchLine, layerConditions.getHatchWidth(ei), att));
+
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Offset all the shapes in the list for this layer
+     */
+    public static BooleanGridList offset(final BooleanGridList gridList, final LayerRules lc, final boolean outline,
+            final double multiplier) {
+        final boolean foundation = lc.getLayingSupport();
+        if (outline && foundation) {
+            Debug.getInstance().errorMessage("Offsetting a foundation outline!");
+        }
+
+        BooleanGridList result = new BooleanGridList();
+        for (int i = 0; i < gridList.size(); i++) {
+            final BooleanGrid grid = gridList.get(i);
+            final Attributes att = grid.attribute();
+            if (att == null) {
+                Debug.getInstance().errorMessage("BooleanGridList.offset(): null attribute!");
+            } else {
+                final GCodeExtruder[] es = lc.getPrinter().getExtruders();
+                GCodeExtruder e;
+                int shells;
+                if (foundation) {
+                    e = es[0]; // By convention extruder 0 builds the foundation
+                    shells = 1;
+                } else {
+                    e = att.getExtruder();
+                    shells = e.getShells();
+                }
+                if (outline) {
+                    int shell = 0;
+                    boolean carryOn = true;
+                    while (carryOn && shell < shells) {
+                        final double d = multiplier * (shell + 0.5) * e.getExtrusionSize();
+                        final BooleanGrid thisOne = grid.offset(d);
+                        if (thisOne.isEmpty()) {
+                            carryOn = false;
+                        } else {
+                            if (shell == 0 && e.getSingleLine()) {
+                                final BooleanGrid lines = grid.lines(thisOne, d);
+                                lines.setThin(true);
+                                result.add(lines);
+                            }
+                            result.add(thisOne);
+                        }
+                        shell++;
+                    }
+                    if (e.getInsideOut()) {
+                        result = result.reverse(); // Plot from the inside out?
+                    }
+                } else {
+                    // Must be a hatch.  Only do it if the gap is +ve or we're building the foundation
+                    double offSize;
+                    final int ei = e.getInfillExtruderNumber();
+                    GCodeExtruder ife = e;
+                    if (ei >= 0) {
+                        ife = es[ei];
+                    }
+                    if (foundation) {
+                        offSize = 3;
+                    } else if (multiplier < 0) {
+                        offSize = multiplier * (shells + 0.5) * e.getExtrusionSize() + ife.getInfillOverlap();
+                    } else {
+                        offSize = multiplier * (shells + 0.5) * e.getExtrusionSize();
+                    }
+                    if (e.getExtrusionInfillWidth() > 0 || foundation) {
+                        result.add(grid.offset(offSize));
+                    }
+                }
+            }
+        }
+        return result;
     }
 
 }

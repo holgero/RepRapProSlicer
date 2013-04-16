@@ -50,9 +50,6 @@
 
 package org.reprap.geometry.polygons;
 
-import org.reprap.geometry.polyhedra.CSG3D;
-import org.reprap.geometry.polyhedra.CSGOp;
-import org.reprap.geometry.polyhedra.Point3D;
 import org.reprap.utilities.Debug;
 
 /**
@@ -96,21 +93,12 @@ public class CSG2D {
     /**
      * How much is in here (leaf count)?
      */
-    private int complexity;
-
-    private CSG2D() {
-        hp = null;
-        op = CSGOp.LEAF;
-        c1 = null;
-        c2 = null;
-        comp = null;
-        complexity = 1;
-    }
+    private final int complexity;
 
     /**
      * Make a leaf from a single half-plane
      */
-    CSG2D(final HalfPlane h) {
+    public CSG2D(final HalfPlane h) {
         hp = new HalfPlane(h);
         op = CSGOp.LEAF;
         c1 = null;
@@ -138,56 +126,15 @@ public class CSG2D {
     /**
      * Universal or null set
      */
-    static CSG2D universe() {
+    public static CSG2D universe() {
         return u;
     }
 
     /**
      * @return nothing/null set
      */
-    static CSG2D nothing() {
+    public static CSG2D nothing() {
         return n;
-    }
-
-    /**
-     * Compute a 2D slice of a 3D CSG at a given Z value
-     */
-    public static CSG2D slice(final CSG3D t, final double z) {
-        final CSG2D r = new CSG2D();
-
-        switch (t.operator()) {
-        case LEAF:
-            r.op = CSGOp.LEAF;
-            r.complexity = 1;
-            try {
-                r.hp = new HalfPlane(t.hSpace(), z);
-            } catch (final ParallelException e) {
-                if (t.hSpace().value(new Point3D(0, 0, z)) <= 0) {
-                    return universe();
-                } else {
-                    return nothing();
-                }
-            }
-            break;
-
-        case NULL:
-            Debug.getInstance().errorMessage("CSG2D constructor from CSG3D: null set in tree!");
-            break;
-
-        case UNIVERSE:
-            Debug.getInstance().errorMessage("CSG2D constructor from CSG3D: universal set in tree!");
-            break;
-
-        case UNION:
-            return CSG2D.union(slice(t.c_1(), z), slice(t.c_2(), z));
-
-        case INTERSECTION:
-            return CSG2D.intersection(slice(t.c_1(), z), slice(t.c_2(), z));
-
-        default:
-            Debug.getInstance().errorMessage("CSG2D constructor from CSG3D: invalid operator " + t.operator());
-        }
-        return r;
     }
 
     int complexity() {
@@ -260,7 +207,7 @@ public class CSG2D {
      * 
      * @return union of passed CSG objects a and b
      */
-    static CSG2D union(final CSG2D a, final CSG2D b) {
+    public static CSG2D union(final CSG2D a, final CSG2D b) {
         if (a == b) {
             return a;
         }
@@ -290,7 +237,7 @@ public class CSG2D {
      * 
      * @return intersection of passed CSG objects a and b
      */
-    static CSG2D intersection(final CSG2D a, final CSG2D b) {
+    public static CSG2D intersection(final CSG2D a, final CSG2D b) {
         if (a == b) {
             return a;
         }

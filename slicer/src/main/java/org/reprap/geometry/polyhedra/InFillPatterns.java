@@ -43,9 +43,9 @@ final class InFillPatterns {
 
         // Get the bottom out of the way - no fancy calculations needed.
         if (layer <= surfaceLayers) {
-            slice = slice.offset(layerRules, false, -1);
+            slice = AllSTLsToBuild.offset(slice, layerRules, false, -1);
             slice = slicer.neededThisLayer(slice, false, false);
-            return slice.hatch(layerRules, true, null, false);
+            return AllSTLsToBuild.hatch(slice, layerRules, true, null, false);
         }
 
         // If we are solid but the slices above or below us weren't, we need some fine infill as
@@ -86,7 +86,7 @@ final class InFillPatterns {
         // Make the bridges fatter, then crop them to the slice.
         // This will make them interpenetrate at their ends/sides to give
         // bridge landing areas.
-        bridges = bridges.offset(layerRules, false, 2);
+        bridges = AllSTLsToBuild.offset(bridges, layerRules, false, 2);
         bridges = BooleanGridList.intersections(bridges, slice);
 
         // Find the landing areas as a separate set of shapes that go with the bridges.
@@ -94,9 +94,9 @@ final class InFillPatterns {
 
         // Shapes will be outlined, and so need to be shrunk to allow for that.  But they
         // must not also shrink from each other internally.  So initially expand them so they overlap
-        bridges = bridges.offset(layerRules, false, 1);
-        insides = insides.offset(layerRules, false, 1);
-        surfaces = surfaces.offset(layerRules, false, 1);
+        bridges = AllSTLsToBuild.offset(bridges, layerRules, false, 1);
+        insides = AllSTLsToBuild.offset(insides, layerRules, false, 1);
+        surfaces = AllSTLsToBuild.offset(surfaces, layerRules, false, 1);
 
         // Now intersect them with the slice so the outer edges are back where they should be.
         bridges = BooleanGridList.intersections(bridges, slice);
@@ -106,17 +106,17 @@ final class InFillPatterns {
         // Now shrink them so the edges are in a bit to allow the outlines to
         // be put round the outside.  The inner joins should now shrink back to be
         // adjacent to each other as they should be.
-        bridges = bridges.offset(layerRules, false, -1);
-        insides = insides.offset(layerRules, false, -1);
-        surfaces = surfaces.offset(layerRules, false, -1);
+        bridges = AllSTLsToBuild.offset(bridges, layerRules, false, -1);
+        insides = AllSTLsToBuild.offset(insides, layerRules, false, -1);
+        surfaces = AllSTLsToBuild.offset(surfaces, layerRules, false, -1);
 
         // Generate the infill patterns.  We do the bridges first, as each bridge subtracts its
         // lands from the other two sets of shapes.  We want that, so they don't get infilled twice.
         bridgeHatch(lands, layerRules);
         insides = slicer.neededThisLayer(insides, true, false);
-        hatchedPolygons.add(insides.hatch(layerRules, false, null, false));
+        hatchedPolygons.add(AllSTLsToBuild.hatch(insides, layerRules, false, null, false));
         surfaces = slicer.neededThisLayer(surfaces, false, false);
-        hatchedPolygons.add(surfaces.hatch(layerRules, true, null, false));
+        hatchedPolygons.add(AllSTLsToBuild.hatch(surfaces, layerRules, true, null, false));
 
         return hatchedPolygons;
     }

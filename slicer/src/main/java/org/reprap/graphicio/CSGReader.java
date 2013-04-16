@@ -9,8 +9,8 @@ import java.util.ArrayList;
 
 import javax.vecmath.Matrix4d;
 
+import org.reprap.geometry.polygons.CSGOp;
 import org.reprap.geometry.polyhedra.CSG3D;
-import org.reprap.geometry.polyhedra.CSGOp;
 import org.reprap.utilities.Debug;
 
 /**

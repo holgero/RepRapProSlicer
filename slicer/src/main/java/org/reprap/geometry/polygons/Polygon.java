@@ -75,7 +75,6 @@ import java.util.Random;
 
 import org.reprap.Attributes;
 import org.reprap.Preferences;
-import org.reprap.gcode.GCodeExtruder;
 import org.reprap.utilities.Debug;
 
 /**
@@ -286,7 +285,7 @@ public class Polygon {
     /**
      * Insert a new point into the polygon
      */
-    void add(final int i, final Point2D p) {
+    public void add(final int i, final Point2D p) {
         if (speeds != null) {
             Debug.getInstance().errorMessage("Rr2Point.add(): adding a point to a polygon with its speeds set.");
         }
@@ -365,7 +364,7 @@ public class Polygon {
     /**
      * Set the last point to plot to
      */
-    void setExtrudeEnd(final int d, final double d2) {
+    public void setExtrudeEnd(final int d, final double d2) {
         extrudeEnd = d;
         extrudeEndDistance2 = d2;
     }
@@ -500,14 +499,14 @@ public class Polygon {
     /**
      * @return same polygon starting at a random vertex
      */
-    Polygon randomStart() {
+    public Polygon randomStart() {
         return newStart(rangen.nextInt(size()));
     }
 
     /**
      * @return same polygon, but starting at vertex i
      */
-    Polygon newStart(int i) {
+    public Polygon newStart(int i) {
         if (!isClosed()) {
             Debug.getInstance().errorMessage("RrPolygon.newStart(i): reordering an open polygon!");
         }
@@ -591,7 +590,7 @@ public class Polygon {
      * Find the index of the polygon point that has the maximal parametric
      * projection onto a line.
      */
-    int maximalVertex(final Line ln) {
+    public int maximalVertex(final Line ln) {
         double d = Double.NEGATIVE_INFINITY;
         int result = -1;
         for (int i = 0; i < size(); i++) {
@@ -827,71 +826,6 @@ public class Polygon {
             }
             r.add(point(v2 % leng));
         }
-    }
-
-    /**
-     * Offset (some of) the points in the polygon to allow for the fact that
-     * extruded circles otherwise don't come out right. See
-     * http://reprap.org/bin/view/Main/ArcCompensation. If the extruder for the
-     * polygon's arc compensation factor is 0, return the polygon unmodified.
-     * 
-     * This ignores speeds
-     * 
-     * @param es
-     */
-    Polygon arcCompensate() {
-        final GCodeExtruder e = att.getExtruder();
-
-        // Multiply the geometrically correct result by factor
-        final double factor = e.getArcCompensationFactor();
-        if (factor < Preferences.tiny()) {
-            return this;
-        }
-
-        // The points making the arc must be closer than this together
-        final double shortSides = e.getArcShortSides();
-        final double thickness = e.getExtrusionSize();
-        final Polygon result = new Polygon(att, closed);
-        Point2D previous = point(size() - 1);
-        Point2D current = point(0);
-        Point2D next;
-        Point2D offsetPoint;
-
-        double d1 = Point2D.dSquared(current, previous);
-        double d2;
-        final double short2 = shortSides * shortSides;
-        final double t2 = thickness * thickness;
-        double offset;
-
-        for (int i = 0; i < size(); i++) {
-            if (i == size() - 1) {
-                next = point(0);
-            } else {
-                next = point(i + 1);
-            }
-
-            d2 = Point2D.dSquared(next, current);
-            if (d1 < short2 && d2 < short2) {
-                try {
-                    final Circle c = new Circle(previous, current, next);
-                    offset = factor * (Math.sqrt(t2 + 4 * c.radiusSquared()) * 0.5 - Math.sqrt(c.radiusSquared()));
-                    //System.out.println("Circle r: " + Math.sqrt(c.radiusSquared()) + " offset: " + offset);
-                    offsetPoint = Point2D.sub(current, c.centre());
-                    offsetPoint = Point2D.add(current, Point2D.mul(offsetPoint.norm(), offset));
-                    result.add(offsetPoint);
-                } catch (final Exception ex) {
-                    result.add(current);
-                }
-            } else {
-                result.add(current);
-            }
-
-            d1 = d2;
-            previous = current;
-            current = next;
-        }
-
-        return result;
     }
 
     private Interval accRange(final double startV, final double s, final double acc) {

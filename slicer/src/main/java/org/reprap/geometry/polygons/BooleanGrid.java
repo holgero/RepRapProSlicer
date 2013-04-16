@@ -220,14 +220,14 @@ public class BooleanGrid {
         return att;
     }
 
-    void setThin(final Boolean t) {
+    public void setThin(final Boolean t) {
         isThin = t;
     }
 
     /**
      * Any pixels set?
      */
-    boolean isEmpty() {
+    public boolean isEmpty() {
         return bits.isEmpty();
     }
 
@@ -1509,7 +1509,7 @@ public class BooleanGrid {
      * discarded by the original offset (plus some noise at places square convex
      * corners that have grown back rounded).
      */
-    BooleanGrid lines(final BooleanGrid shrunk, final double dist) {
+    public BooleanGrid lines(final BooleanGrid shrunk, final double dist) {
         if (dist >= 0) {
             Debug.getInstance().errorMessage("BooleanGrid.lines() called with non-negative offset: " + dist);
             return new BooleanGrid();
@@ -1521,7 +1521,7 @@ public class BooleanGrid {
      * Offset the pattern by a given real-world distance. If the distance is
      * negative the pattern is shrunk; if it is positive it is grown;
      */
-    BooleanGrid offset(final double dist) {
+    public BooleanGrid offset(final double dist) {
         final int r = iScale(dist);
 
         final BooleanGrid result = new BooleanGrid(this, rec.offset(r));

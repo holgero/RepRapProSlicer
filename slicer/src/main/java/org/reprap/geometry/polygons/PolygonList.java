@@ -59,8 +59,6 @@ package org.reprap.geometry.polygons;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.reprap.gcode.GCodeExtruder;
-import org.reprap.geometry.LayerRules;
 import org.reprap.utilities.Debug;
 
 /**
@@ -113,7 +111,7 @@ public class PolygonList {
      * @param p
      *            polygon to set at index i
      */
-    private void set(final int i, final Polygon p) {
+    public void set(final int i, final Polygon p) {
         polygons.set(i, p);
     }
 
@@ -487,7 +485,7 @@ public class PolygonList {
      * 
      * The two new polygons are put on the end of the list.
      */
-    private void cutPolygon(final int pol, int st, int en) {
+    public void cutPolygon(final int pol, int st, int en) {
         final Polygon old = polygon(pol);
         final Polygon p1 = new Polygon(old.getAttributes(), old.isClosed());
         final Polygon p2 = new Polygon(old.getAttributes(), old.isClosed());
@@ -522,7 +520,7 @@ public class PolygonList {
      * 
      * Only polygons with the same physical extruder are compared.
      */
-    private PolygonIndexedPoint ppSearch(final Point2D p, final int omit, final int physicalExtruder) {
+    public PolygonIndexedPoint ppSearch(final Point2D p, final int omit, final int physicalExtruder) {
         double d = Double.POSITIVE_INFINITY;
         PolygonIndexedPoint result = null;
 
@@ -549,95 +547,6 @@ public class PolygonList {
         }
 
         return result;
-    }
-
-    /**
-     * This assumes that the RrPolygonList for which it is called is all the
-     * closed outline polygons, and that hatching is their infill hatch. It goes
-     * through the outlines and the hatch modifying both so that that outlines
-     * actually start and end half-way along a hatch line (that half of the
-     * hatch line being deleted). When the outlines are then printed, they start
-     * and end in the middle of a solid area, thus minimising dribble.
-     * 
-     * The outline polygons are re-ordered before the start so that their first
-     * point is the most extreme one in the current hatch direction.
-     * 
-     * Only hatches and outlines whose physical extruders match are altered.
-     */
-    public void middleStarts(final PolygonList hatching, final LayerRules lc, final BooleanGridList slice) {
-        for (int i = 0; i < size(); i++) {
-            Polygon outline = polygon(i);
-            final GCodeExtruder ex = outline.getAttributes().getExtruder();
-            if (ex.getMiddleStart()) {
-                Line l = lc.getHatchDirection(ex, false).pLine();
-                if (i % 2 != 0 ^ lc.getMachineLayer() % 4 > 1) {
-                    l = l.neg();
-                }
-                outline = outline.newStart(outline.maximalVertex(l));
-
-                final Point2D start = outline.point(0);
-                final PolygonIndexedPoint pp = hatching.ppSearch(start, -1, outline.getAttributes().getExtruder()
-                        .getPhysicalExtruderNumber());
-                boolean failed = true;
-                if (pp != null) {
-                    pp.findLongEnough(10, 30);
-                    final int st = pp.near();
-                    final int en = pp.end();
-                    final Polygon pg = pp.polygon();
-
-                    // Check that the line from the start of the outline polygon to the first point
-                    // of the tail-in is in solid.  If not, we have jumped between polygons and don't
-                    // want to use that as a lead in.
-                    final Point2D pDif = Point2D.sub(pg.point(st), start);
-                    final Point2D pq1 = Point2D.add(start, Point2D.mul(0.25, pDif));
-                    final Point2D pq2 = Point2D.add(start, Point2D.mul(0.5, pDif));
-                    final Point2D pq3 = Point2D.add(start, Point2D.mul(0.5, pDif));
-
-                    if (slice.membership(pq1) & slice.membership(pq2) & slice.membership(pq3)) {
-                        outline.add(start);
-                        outline.setExtrudeEnd(-1, 0);
-
-                        if (en >= st) {
-                            for (int j = st; j <= en; j++) {
-                                outline.add(0, pg.point(j)); // Put it on the beginning...
-                                if (j < en) {
-                                    outline.add(pg.point(j)); // ...and the end.
-                                }
-                            }
-                        } else {
-                            for (int j = st; j >= en; j--) {
-                                outline.add(0, pg.point(j));
-                                if (j > en) {
-                                    outline.add(pg.point(j));
-                                }
-                            }
-                        }
-                        set(i, outline);
-                        hatching.cutPolygon(pp.pIndex(), st, en);
-                        failed = false;
-                    }
-                }
-                if (failed) {
-                    set(i, outline.randomStart()); // Best we can do.
-                }
-            }
-        }
-    }
-
-    /**
-     * Offset (some of) the points in the polygons to allow for the fact that
-     * extruded circles otherwise don't come out right. See
-     * http://reprap.org/bin/view/Main/ArcCompensation.
-     */
-    public PolygonList arcCompensate() {
-        final PolygonList r = new PolygonList();
-
-        for (int i = 0; i < size(); i++) {
-            final Polygon p = polygon(i);
-            r.add(p.arcCompensate());
-        }
-
-        return r;
     }
 
     /**

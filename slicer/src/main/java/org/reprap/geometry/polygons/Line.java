@@ -58,7 +58,7 @@ package org.reprap.geometry.polygons;
 /**
  * Class to hold and manipulate parametric lines
  */
-class Line {
+public class Line {
     private Point2D direction = null;
     private Point2D origin = null;
 
@@ -108,7 +108,7 @@ class Line {
     /**
      * @return inverted direction of this line
      */
-    Line neg() {
+    public Line neg() {
         final Line a = new Line(this);
         a.direction = direction.neg();
         return a;

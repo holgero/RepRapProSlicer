@@ -7,7 +7,7 @@ import org.reprap.utilities.Debug;
  * 
  * @author ensab
  */
-class PolygonIndexedPoint {
+public class PolygonIndexedPoint {
     private final int pNear;
     private int pEnd;
     private final int pg;
@@ -19,19 +19,19 @@ class PolygonIndexedPoint {
         pol = poly;
     }
 
-    int near() {
+    public int near() {
         return pNear;
     }
 
-    int end() {
+    public int end() {
         return pEnd;
     }
 
-    int pIndex() {
+    public int pIndex() {
         return pg;
     }
 
-    Polygon polygon() {
+    public Polygon polygon() {
         return pol;
     }
 
@@ -56,7 +56,7 @@ class PolygonIndexedPoint {
      * Find the a long-enough polygon edge away from point pNear and put its
      * index in pNext.
      */
-    void findLongEnough(final double longEnough, final double searchFor) {
+    public void findLongEnough(final double longEnough, final double searchFor) {
         double d;
         double sum = 0;
         double longest = -1;

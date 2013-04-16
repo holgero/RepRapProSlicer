@@ -52,6 +52,10 @@ package org.reprap.geometry.polyhedra;
 
 import javax.vecmath.Matrix4d;
 
+import org.reprap.geometry.polygons.CSG2D;
+import org.reprap.geometry.polygons.CSGOp;
+import org.reprap.geometry.polygons.HalfPlane;
+import org.reprap.geometry.polygons.ParallelException;
 import org.reprap.utilities.Debug;
 
 /**
@@ -365,6 +369,38 @@ public class CSG3D {
         final Matrix4d iM = new Matrix4d(m);
         iM.invert();
         return xform(iM);
+    }
+
+    /**
+     * Compute a 2D slice of a 3D CSG at a given Z value
+     */
+    public static CSG2D slice(final CSG3D t, final double z) {
+        switch (t.operator()) {
+        case LEAF:
+            try {
+                final HalfPlane hp = new HalfPlane(t.hSpace(), z);
+                return new CSG2D(hp);
+            } catch (final ParallelException e) {
+                if (t.hSpace().value(new Point3D(0, 0, z)) <= 0) {
+                    return CSG2D.universe();
+                } else {
+                    return CSG2D.nothing();
+                }
+            }
+        case NULL:
+            Debug.getInstance().errorMessage("CSG2D constructor from CSG3D: null set in tree!");
+            break;
+        case UNIVERSE:
+            Debug.getInstance().errorMessage("CSG2D constructor from CSG3D: universal set in tree!");
+            break;
+        case UNION:
+            return CSG2D.union(slice(t.c_1(), z), slice(t.c_2(), z));
+        case INTERSECTION:
+            return CSG2D.intersection(slice(t.c_1(), z), slice(t.c_2(), z));
+        default:
+            Debug.getInstance().errorMessage("CSG2D constructor from CSG3D: invalid operator " + t.operator());
+        }
+        return null;
     }
 
     /**

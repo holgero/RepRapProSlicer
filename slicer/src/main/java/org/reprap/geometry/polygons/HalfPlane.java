@@ -104,7 +104,7 @@ public class HalfPlane {
      * @param hs
      * @param z
      */
-    HalfPlane(final HalfSpace hs, final double z) throws ParallelException {
+    public HalfPlane(final HalfSpace hs, final double z) throws ParallelException {
         normal = new Point2D(hs.normal().x(), hs.normal().y());
         final double m = normal.mod();
         if (m < 1.0e-10) {
@@ -128,7 +128,7 @@ public class HalfPlane {
      * 
      * @return parametric equivalent of a line
      */
-    Line pLine() {
+    public Line pLine() {
         return p;
     }
 

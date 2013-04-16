@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.reprap.Attributes;
-import org.reprap.gcode.GCodeExtruder;
-import org.reprap.geometry.LayerRules;
 import org.reprap.utilities.Debug;
 
 /**
@@ -31,20 +28,13 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
     /**
      * Is a point in any of the shapes?
      */
-    boolean membership(final Point2D p) {
+    public boolean membership(final Point2D p) {
         for (int i = 0; i < size(); i++) {
             if (get(i).get(p)) {
                 return true;
             }
         }
         return false;
-    }
-
-    /**
-     * Return the ith attribute
-     */
-    public Attributes attribute(final int i) {
-        return shapes.get(i).attribute();
     }
 
     /**
@@ -70,80 +60,10 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
     /**
      * Reverse the order of the list
      */
-    private BooleanGridList reverse() {
+    public BooleanGridList reverse() {
         final BooleanGridList result = new BooleanGridList();
         for (int i = size() - 1; i >= 0; i--) {
             result.add(get(i));
-        }
-        return result;
-    }
-
-    /**
-     * Offset all the shapes in the list for this layer
-     */
-    public BooleanGridList offset(final LayerRules lc, final boolean outline, final double multiplier) {
-        final boolean foundation = lc.getLayingSupport();
-        if (outline && foundation) {
-            Debug.getInstance().errorMessage("Offsetting a foundation outline!");
-        }
-
-        BooleanGridList result = new BooleanGridList();
-        for (int i = 0; i < size(); i++) {
-            final Attributes att = attribute(i);
-            if (att == null) {
-                Debug.getInstance().errorMessage("BooleanGridList.offset(): null attribute!");
-            } else {
-                final GCodeExtruder[] es = lc.getPrinter().getExtruders();
-                GCodeExtruder e;
-                int shells;
-                if (foundation) {
-                    e = es[0]; // By convention extruder 0 builds the foundation
-                    shells = 1;
-                } else {
-                    e = att.getExtruder();
-                    shells = e.getShells();
-                }
-                if (outline) {
-                    int shell = 0;
-                    boolean carryOn = true;
-                    while (carryOn && shell < shells) {
-                        final double d = multiplier * (shell + 0.5) * e.getExtrusionSize();
-                        final BooleanGrid thisOne = get(i).offset(d);
-                        if (thisOne.isEmpty()) {
-                            carryOn = false;
-                        } else {
-                            if (shell == 0 && e.getSingleLine()) {
-                                final BooleanGrid lines = get(i).lines(thisOne, d);
-                                lines.setThin(true);
-                                result.add(lines);
-                            }
-                            result.add(thisOne);
-                        }
-                        shell++;
-                    }
-                    if (e.getInsideOut()) {
-                        result = result.reverse(); // Plot from the inside out?
-                    }
-                } else {
-                    // Must be a hatch.  Only do it if the gap is +ve or we're building the foundation
-                    double offSize;
-                    final int ei = e.getInfillExtruderNumber();
-                    GCodeExtruder ife = e;
-                    if (ei >= 0) {
-                        ife = es[ei];
-                    }
-                    if (foundation) {
-                        offSize = 3;
-                    } else if (multiplier < 0) {
-                        offSize = multiplier * (shells + 0.5) * e.getExtrusionSize() + ife.getInfillOverlap();
-                    } else {
-                        offSize = multiplier * (shells + 0.5) * e.getExtrusionSize();
-                    }
-                    if (e.getExtrusionInfillWidth() > 0 || foundation) {
-                        result.add(get(i).offset(offSize));
-                    }
-                }
-            }
         }
         return result;
     }
@@ -154,50 +74,8 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
     public PolygonList borders() {
         final PolygonList result = new PolygonList();
         for (int i = 0; i < size(); i++) {
-            result.add(get(i).allPerimiters(attribute(i)));
-        }
-        return result;
-    }
-
-    /**
-     * Work out all the open polygons forming a set of infill hatches. If
-     * surface is true, these polygons are on the outside (top or bottom). If
-     * it's false they are in the interior. If overrideDirection is not null,
-     * that is used as the hatch direction. Otherwise the hatch is provided by
-     * layerConditions.
-     */
-    public PolygonList hatch(final LayerRules layerConditions, final boolean surface, final HalfPlane overrideDirection,
-            final boolean support) {
-        final PolygonList result = new PolygonList();
-        final boolean foundation = layerConditions.getLayingSupport();
-        final GCodeExtruder[] es = layerConditions.getPrinter().getExtruders();
-        for (int i = 0; i < size(); i++) {
-            GCodeExtruder e;
-            Attributes att = attribute(i);
-            if (foundation) {
-                e = es[0]; // Extruder 0 is used for foundations
-            } else {
-                e = att.getExtruder();
-            }
-            GCodeExtruder ei;
-            if (!surface) {
-                ei = e.getInfillExtruder();
-                if (ei != null) {
-                    att = new Attributes(ei.getMaterial(), null, null, ei.getAppearance());
-                }
-            } else {
-                ei = e;
-            }
-            if (ei != null) {
-                HalfPlane hatchLine;
-                if (overrideDirection != null) {
-                    hatchLine = overrideDirection;
-                } else {
-                    hatchLine = layerConditions.getHatchDirection(ei, support);
-                }
-                result.add(get(i).hatch(hatchLine, layerConditions.getHatchWidth(ei), att));
-
-            }
+            final BooleanGrid grid = get(i);
+            result.add(grid.allPerimiters(grid.attribute()));
         }
         return result;
     }
@@ -280,8 +158,9 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
             final BooleanGrid abg = a.get(i);
             boolean aMatched = false;
             for (int j = 0; j < b.size(); j++) {
-                if (abg.attribute().getExtruder().getID() == b.attribute(j).getExtruder().getID()) {
-                    result.add(BooleanGrid.union(abg, b.get(j)));
+                final BooleanGrid grid = b.get(j);
+                if (abg.attribute().getExtruder().getID() == grid.attribute().getExtruder().getID()) {
+                    result.add(BooleanGrid.union(abg, grid));
                     bMatched[j] = true;
                     aMatched = true;
                     break;
@@ -322,8 +201,9 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
         for (int i = 0; i < a.size(); i++) {
             final BooleanGrid abg = a.get(i);
             for (int j = 0; j < b.size(); j++) {
-                if (abg.attribute().getExtruder().getID() == b.attribute(j).getExtruder().getID()) {
-                    result.add(BooleanGrid.intersection(abg, b.get(j)));
+                final BooleanGrid grid = b.get(j);
+                if (abg.attribute().getExtruder().getID() == grid.attribute().getExtruder().getID()) {
+                    result.add(BooleanGrid.intersection(abg, grid));
                     break;
                 }
             }
@@ -380,8 +260,9 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
             final BooleanGrid abg = a.get(i);
             boolean aMatched = false;
             for (int j = 0; j < b.size(); j++) {
-                if (ignoreAttributes || (abg.attribute().getExtruder().getID() == b.attribute(j).getExtruder().getID())) {
-                    result.add(BooleanGrid.difference(abg, b.get(j), abg.attribute()));
+                final BooleanGrid grid = b.get(j);
+                if (ignoreAttributes || (abg.attribute().getExtruder().getID() == grid.attribute().getExtruder().getID())) {
+                    result.add(BooleanGrid.difference(abg, grid, abg.attribute()));
                     if (!ignoreAttributes) {
                         aMatched = true;
                         break;
