@@ -79,8 +79,8 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Tuple3d;
 import javax.vecmath.Vector3d;
 
-import org.reprap.Attributes;
-import org.reprap.Preferences;
+import org.reprap.attributes.Attributes;
+import org.reprap.attributes.Preferences;
 import org.reprap.graphicio.CSGReader;
 import org.reprap.graphicio.StlFile;
 import org.reprap.gui.MouseObject;

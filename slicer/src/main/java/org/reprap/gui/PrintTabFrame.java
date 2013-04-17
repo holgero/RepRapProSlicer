@@ -21,7 +21,7 @@ import javax.swing.JProgressBar;
 import javax.swing.SwingConstants;
 
 import org.reprap.Main;
-import org.reprap.Preferences;
+import org.reprap.attributes.Preferences;
 
 /**
  * @author ensab
@@ -685,7 +685,7 @@ public class PrintTabFrame extends JInternalFrame {
     }
 
     private void displayPaths(final boolean disp) {
-        org.reprap.Preferences.setSimulate(disp);
+        org.reprap.attributes.Preferences.setSimulate(disp);
     }
 
     private void displayPathsCheckMouseClicked() {

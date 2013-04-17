@@ -2,8 +2,8 @@ package org.reprap.geometry;
 
 import javax.swing.JCheckBoxMenuItem;
 
-import org.reprap.Attributes;
-import org.reprap.Preferences;
+import org.reprap.attributes.Attributes;
+import org.reprap.attributes.Preferences;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.BooleanGrid;
@@ -15,11 +15,10 @@ import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.gui.RepRapBuild;
 import org.reprap.utilities.Debug;
-import org.reprap.utilities.RrGraphics;
 
 public class Producer {
     private LayerRules layerRules = null;
-    private RrGraphics simulationPlot = null;
+    private SimulationPlotter simulationPlot = null;
 
     /**
      * The list of objects to be built
@@ -35,7 +34,7 @@ public class Producer {
         pr.setLayerRules(layerRules);
 
         if (Preferences.simulate()) {
-            simulationPlot = new RrGraphics("RepRap building simulation");
+            simulationPlot = new SimulationPlotter("RepRap building simulation");
         } else {
             simulationPlot = null;
         }

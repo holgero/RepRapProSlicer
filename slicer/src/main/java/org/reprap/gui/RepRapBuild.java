@@ -119,8 +119,8 @@ import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
-import org.reprap.Attributes;
-import org.reprap.Preferences;
+import org.reprap.attributes.Attributes;
+import org.reprap.attributes.Preferences;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.geometry.polyhedra.STLObject;
@@ -372,7 +372,12 @@ public class RepRapBuild extends JPanel implements MouseListener {
         if (s == null) {
             return;
         }
-        final AllSTLsToBuild newStls = RFO.load(s);
+        AllSTLsToBuild newStls;
+        try {
+            newStls = RFO.load(s);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
         for (int i = 0; i < newStls.size(); i++) {
             wv_and_stls.addChild(newStls.get(i).top());
         }
@@ -383,7 +388,7 @@ public class RepRapBuild extends JPanel implements MouseListener {
         RFO.save(s, stls);
     }
 
-    public void saveSCADFile(final String s) {
+    public void saveSCADFile(final String s) throws IOException {
         stls.saveSCAD(s);
     }
 

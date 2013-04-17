@@ -2,8 +2,8 @@ package org.reprap.geometry;
 
 import java.io.IOException;
 
-import org.reprap.Attributes;
-import org.reprap.Preferences;
+import org.reprap.attributes.Attributes;
+import org.reprap.attributes.Preferences;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.Interval;
@@ -13,10 +13,9 @@ import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polygons.VelocityProfile;
 import org.reprap.utilities.Debug;
-import org.reprap.utilities.RrGraphics;
 
 class LayerProducer {
-    private RrGraphics simulationPlot = null;
+    private SimulationPlotter simulationPlot = null;
     private LayerRules layerConditions = null;
     private final PolygonList allPolygons[];
     private double currentFeedrate;
@@ -24,7 +23,7 @@ class LayerProducer {
     /**
      * Set up a normal layer
      */
-    LayerProducer(final PolygonList ap[], final LayerRules lc, final RrGraphics simPlot) throws IOException {
+    LayerProducer(final PolygonList ap[], final LayerRules lc, final SimulationPlotter simPlot) throws IOException {
         layerConditions = lc;
         simulationPlot = simPlot;
 

@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-import org.reprap.Attributes;
-import org.reprap.Preferences;
+import org.reprap.attributes.Attributes;
+import org.reprap.attributes.Preferences;
 import org.reprap.utilities.Debug;
 
 /**

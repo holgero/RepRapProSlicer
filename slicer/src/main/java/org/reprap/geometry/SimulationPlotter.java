@@ -47,23 +47,23 @@
  =====================================================================
  
  
- RrGraphics: Simple 2D graphics
+ SimulationPlotter: Simple 2D graphics
  
  First version 20 May 2005
  This version: 1 May 2006 (Now in CVS - no more comments here)
  
  */
 
-package org.reprap.utilities;
+package org.reprap.geometry;
 
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 
 import javax.media.j3d.Appearance;
 import javax.media.j3d.Material;
@@ -71,19 +71,19 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.vecmath.Color3f;
 
-import org.reprap.Attributes;
-import org.reprap.geometry.polygons.BooleanGrid;
+import org.reprap.attributes.Attributes;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
+import org.reprap.utilities.Debug;
 
 /**
  * Class to plot images of geometrical structures for debugging.
  * 
  * @author ensab
  */
-public class RrGraphics extends JComponent {
+public class SimulationPlotter extends JComponent {
     private static final Color BOX_COLOR = Color.blue;
 
     /**
@@ -98,8 +98,6 @@ public class RrGraphics extends JComponent {
      * The layer being built
      */
     private String layerNumber;
-    private final BooleanGrid bg = null;
-    private boolean csgSolid = true;
     private double scale;
     private Point2D p_0;
     private Point2D pos;
@@ -114,7 +112,7 @@ public class RrGraphics extends JComponent {
     /**
      * Constructor for nothing - add stuff later
      */
-    public RrGraphics(final String t) {
+    public SimulationPlotter(final String t) {
         p_list = null;
         title = t;
         initialised = false;
@@ -171,8 +169,8 @@ public class RrGraphics extends JComponent {
         jframe.setTitle(title);
         jframe.setVisible(true);
         jframe.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
-        jframe.addMouseListener(new myMouse());
-        jframe.addKeyListener(new myKB());
+        jframe.addMouseListener(new MouseClickMagnifier());
+        jframe.addKeyListener(new TogglePlotBox());
         jframe.setIgnoreRepaint(false);
 
         initialised = true;
@@ -267,7 +265,7 @@ public class RrGraphics extends JComponent {
             return;
         }
         if (p.getAttributes().getAppearance() == null) {
-            Debug.getInstance().errorMessage("RrGraphics: polygon with size > 0 has null appearance.");
+            Debug.getInstance().errorMessage("SimulationPlotter: polygon with size > 0 has null appearance.");
             return;
         }
 
@@ -283,34 +281,10 @@ public class RrGraphics extends JComponent {
     }
 
     /**
-     * Fill a Boolean Grid where it's solid.
-     */
-    private void fillBG(final Graphics2D g2d, final BooleanGrid b) {
-        if (b.attribute().getAppearance() == null) {
-            Debug.getInstance().errorMessage("RrGraphics: booleanGrid has null appearance.");
-            return;
-        }
-
-        setColour(g2d, b.attribute());
-        for (int x = 0; x < frameWidth; x++) {
-            for (int y = 0; y < frameHeight; y++) {
-                final boolean v = b.get(iTransform(x, y));
-                if (v) {
-                    g2d.drawRect(x, y, 1, 1); // Is this really the most efficient way?
-                }
-            }
-        }
-    }
-
-    /**
      * Master plot function - draw everything
      */
     private void plot(final Graphics2D g2d) {
         plotBar(g2d);
-        if (bg != null) {
-            fillBG(g2d, bg);
-        }
-
         if (p_list != null) {
             final int leng = p_list.size();
             for (int i = 0; i < leng; i++) {
@@ -325,7 +299,7 @@ public class RrGraphics extends JComponent {
         jframe.setTitle(title + ", layer: " + layerNumber);
     }
 
-    class myKB implements KeyListener {
+    private final class TogglePlotBox extends KeyAdapter {
         @Override
         public void keyTyped(final KeyEvent k) {
             switch (k.getKeyChar()) {
@@ -333,50 +307,16 @@ public class RrGraphics extends JComponent {
             case 'B':
                 plot_box = !plot_box;
                 break;
-
-            case 's':
-            case 'S':
-                csgSolid = !csgSolid;
-
-            default:
             }
             jframe.repaint();
         }
-
-        @Override
-        public void keyPressed(final KeyEvent k) {
-        }
-
-        @Override
-        public void keyReleased(final KeyEvent k) {
-        }
     }
 
-    /**
-     * Clicking the mouse magnifies
-     */
-    class myMouse implements MouseListener {
+    private final class MouseClickMagnifier extends MouseAdapter {
         private Rectangle magBox(final Rectangle b, final int ix, final int iy) {
             final Point2D cen = iTransform(ix, iy);
-            //System.out.println("Mouse: " + cen.toString() + "; box: " +  scaledBox.toString());
             final Point2D off = new Point2D(b.x().length() * 0.05, b.y().length() * 0.05);
             return new Rectangle(Point2D.sub(cen, off), Point2D.add(cen, off));
-        }
-
-        @Override
-        public void mousePressed(final MouseEvent e) {
-        }
-
-        @Override
-        public void mouseReleased(final MouseEvent e) {
-        }
-
-        @Override
-        public void mouseEntered(final MouseEvent e) {
-        }
-
-        @Override
-        public void mouseExited(final MouseEvent e) {
         }
 
         @Override
@@ -388,13 +328,9 @@ public class RrGraphics extends JComponent {
             case MouseEvent.BUTTON1:
                 setScales(magBox(scaledBox, ix, iy));
                 break;
-
             case MouseEvent.BUTTON2:
-
                 break;
-
             case MouseEvent.BUTTON3:
-
             default:
                 setScales(originalBox);
             }

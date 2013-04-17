@@ -1,6 +1,6 @@
 package org.reprap.geometry.polyhedra;
 
-import org.reprap.Attributes;
+import org.reprap.attributes.Attributes;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.utilities.Debug;
 

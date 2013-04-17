@@ -1,4 +1,4 @@
-package org.reprap;
+package org.reprap.attributes;
 
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;

@@ -32,7 +32,6 @@ import org.reprap.gui.RepRapBuild;
 import org.reprap.gui.SlicerFrame;
 import org.reprap.utilities.Debug;
 import org.reprap.utilities.ExtensionFileFilter;
-import org.reprap.utilities.RrDeleteOnExit;
 
 /**
  * Main RepRapProSlicer software overview. Please see http://reprap.org/ for
@@ -40,7 +39,6 @@ import org.reprap.utilities.RrDeleteOnExit;
  */
 public class Main {
     public static Main gui;
-    public static RrDeleteOnExit cleanUpFiles = new RrDeleteOnExit();
 
     private Producer producer = null;
     private GCodePrinter printer = null;
@@ -341,7 +339,11 @@ public class Main {
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             f = scadChooser.getSelectedFile();
             result = "file:" + f.getAbsolutePath();
-            builder.saveSCADFile(result);
+            try {
+                builder.saveSCADFile(result);
+            } catch (final IOException e) {
+                Debug.getInstance().errorMessage("failed to save " + result);
+            }
             return f.getName();
         }
         return "";
@@ -393,12 +395,6 @@ public class Main {
     }
 
     public static void main(final String[] args) {
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                cleanUpFiles.killThem();
-            }
-        });
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {

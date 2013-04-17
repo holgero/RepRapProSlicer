@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import javax.swing.JOptionPane;
 
-import org.reprap.Preferences;
+import org.reprap.attributes.Preferences;
 import org.reprap.utilities.Debug;
 
 /**

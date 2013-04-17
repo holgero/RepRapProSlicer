@@ -6,7 +6,7 @@ import javax.media.j3d.Appearance;
 import javax.media.j3d.Material;
 import javax.vecmath.Color3f;
 
-import org.reprap.Preferences;
+import org.reprap.attributes.Preferences;
 import org.reprap.utilities.Debug;
 
 public class GCodeExtruder {

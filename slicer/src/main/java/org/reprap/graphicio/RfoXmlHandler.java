@@ -1,8 +1,10 @@
 package org.reprap.graphicio;
 
+import java.io.File;
+
 import javax.media.j3d.Transform3D;
 
-import org.reprap.Preferences;
+import org.reprap.attributes.Preferences;
 import org.reprap.geometry.polyhedra.STLObject;
 import org.reprap.utilities.Debug;
 import org.xml.sax.InputSource;
@@ -153,8 +155,8 @@ final class RfoXmlHandler extends DefaultHandler {
         } else if (element.equalsIgnoreCase("files")) {
 
         } else if (element.equalsIgnoreCase("file")) {
-            final org.reprap.Attributes att = stl.addSTL(rfo.getRfoDir() + location, null, Preferences.unselectedApp(),
-                    firstSTL);
+            final org.reprap.attributes.Attributes att = stl.addSTL(new File(rfo.getRfoDir(), location).getAbsolutePath(),
+                    null, Preferences.unselectedApp(), firstSTL);
             if (firstSTL == null) {
                 firstSTL = stl;
             }

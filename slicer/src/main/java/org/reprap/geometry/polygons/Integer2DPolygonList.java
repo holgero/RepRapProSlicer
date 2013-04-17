@@ -3,7 +3,7 @@ package org.reprap.geometry.polygons;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.reprap.Attributes;
+import org.reprap.attributes.Attributes;
 
 /**
  * A list of polygons

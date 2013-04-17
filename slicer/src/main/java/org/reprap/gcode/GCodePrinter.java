@@ -16,8 +16,8 @@ import java.util.Date;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JOptionPane;
 
-import org.reprap.Attributes;
-import org.reprap.Preferences;
+import org.reprap.attributes.Attributes;
+import org.reprap.attributes.Preferences;
 import org.reprap.geometry.LayerRules;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Rectangle;

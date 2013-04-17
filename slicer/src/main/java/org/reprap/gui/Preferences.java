@@ -59,14 +59,14 @@ public class Preferences extends JFrame {
      * Get the value corresponding to name from the preferences file
      */
     private String loadString(final String name) throws IOException {
-        return org.reprap.Preferences.loadGlobalString(name);
+        return org.reprap.attributes.Preferences.loadGlobalString(name);
     }
 
     /**
      * Save the value corresponding to name to the preferences file
      */
     private void saveString(final String name, final String value) throws IOException {
-        org.reprap.Preferences.setGlobalString(name, value);
+        org.reprap.attributes.Preferences.setGlobalString(name, value);
     }
 
     private void updatePreferencesValues() {
@@ -119,7 +119,7 @@ public class Preferences extends JFrame {
                 }
             }
 
-            org.reprap.Preferences.saveGlobal();
+            org.reprap.attributes.Preferences.saveGlobal();
         } catch (final Exception ex) {
             JOptionPane.showMessageDialog(null, "Saving preferences: " + ex);
             ex.printStackTrace();
@@ -134,7 +134,7 @@ public class Preferences extends JFrame {
     public Preferences() {
         // Start with everything that isn't an extruder value.
         try {
-            final String[] g = org.reprap.Preferences.notStartsWith("Extruder");
+            final String[] g = org.reprap.attributes.Preferences.notStartsWith("Extruder");
             Arrays.sort(g);
             globals = makeLabels(g);
             globalValues = makeValues(globals);
@@ -158,7 +158,7 @@ public class Preferences extends JFrame {
         extruderCats = new PreferenceCategory[extruderCount][];
         try {
             for (int i = 0; i < extruderCount; i++) {
-                final String[] a = org.reprap.Preferences.startsWith("Extruder" + i);
+                final String[] a = org.reprap.attributes.Preferences.startsWith("Extruder" + i);
                 Arrays.sort(a);
                 extruders[i] = makeLabels(a);
                 extruderValues[i] = makeValues(extruders[i]);
@@ -217,7 +217,7 @@ public class Preferences extends JFrame {
         try {
             final JPanel panel = new JPanel();
             String[] configfiles = { "reprap.properties" };
-            final File dir = new File(org.reprap.Preferences.getMachineFilePath());
+            final File dir = new File(org.reprap.attributes.Preferences.getMachineFilePath());
             if (dir.list() != null) {
                 configfiles = dir.list();
                 for (int i = 0; i < configfiles.length; i++) {
@@ -230,7 +230,7 @@ public class Preferences extends JFrame {
             final JComboBox<String> configfileList = new JComboBox<String>(configfiles);
             configfileList.setEditable(true);
 
-            String configName = org.reprap.Preferences.getDefaultPropsFile();
+            String configName = org.reprap.attributes.Preferences.getDefaultPropsFile();
             configName = configName.substring(0, configName.indexOf(".properties"));
             configfileList.setSelectedItem(configName);
             configfileList.addActionListener(new ActionListener() {
@@ -238,10 +238,10 @@ public class Preferences extends JFrame {
                 public void actionPerformed(final ActionEvent e) {
                     if ("comboBoxChanged".equals(e.getActionCommand())) {
                         final String configToLoad = (String) configfileList.getSelectedItem() + ".properties";
-                        final String configPath = org.reprap.Preferences.getUsersRootDir() + configToLoad;
+                        final String configPath = org.reprap.attributes.Preferences.getUsersRootDir() + configToLoad;
                         if ((new File(configPath)).exists()) {
                             Debug.getInstance().debugMessage("loading config " + configToLoad);
-                            org.reprap.Preferences.loadConfig(configToLoad);
+                            org.reprap.attributes.Preferences.loadConfig(configToLoad);
                             updatePreferencesValues();
                         }
                     }
@@ -254,12 +254,12 @@ public class Preferences extends JFrame {
                 @Override
                 public void actionPerformed(final ActionEvent e) {
                     final String configToLoad = (String) configfileList.getSelectedItem() + ".properties";
-                    final String configPath = org.reprap.Preferences.getUsersRootDir() + configToLoad;
+                    final String configPath = org.reprap.attributes.Preferences.getUsersRootDir() + configToLoad;
                     final File configFileObj = new File(configPath);
                     if (!configFileObj.exists()) {
                         configfileList.addItem((String) configfileList.getSelectedItem());
                         Debug.getInstance().printMessage("loading config " + configToLoad);
-                        org.reprap.Preferences.loadConfig(configToLoad);
+                        org.reprap.attributes.Preferences.loadConfig(configToLoad);
                         updatePreferencesValues();
                     }
                 }
@@ -271,14 +271,14 @@ public class Preferences extends JFrame {
                 public void actionPerformed(final ActionEvent e) {
                     String configToDelete = (String) configfileList.getSelectedItem() + ".properties";
                     if (!configToDelete.equals("reprap.properties")) {
-                        final String configPath = org.reprap.Preferences.getUsersRootDir() + configToDelete;
+                        final String configPath = org.reprap.attributes.Preferences.getUsersRootDir() + configToDelete;
                         final File configFileObj = new File(configPath);
                         if (configFileObj.exists()) {
                             configFileObj.delete();
                             configfileList.removeItem(configfileList.getSelectedItem());
                             updatePreferencesValues();
                         } else {
-                            configToDelete = org.reprap.Preferences.getDefaultPropsFile();
+                            configToDelete = org.reprap.attributes.Preferences.getDefaultPropsFile();
                             configToDelete = configToDelete.substring(0, configToDelete.indexOf(".properties"));
                             configfileList.setSelectedItem(configToDelete);
                         }

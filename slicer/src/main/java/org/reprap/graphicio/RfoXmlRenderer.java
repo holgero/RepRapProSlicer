@@ -1,5 +1,6 @@
 package org.reprap.graphicio;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 
@@ -17,14 +18,11 @@ final class RfoXmlRenderer {
 
     /**
      * Create an XML file called LegendFile starting with XML entry start.
-     * 
-     * @param LegendFile
-     * @param start
      */
-    RfoXmlRenderer(final String LegendFile, final String start) {
+    RfoXmlRenderer(final File legendFile, final String start) {
         FileOutputStream fileStream = null;
         try {
-            fileStream = new FileOutputStream(LegendFile);
+            fileStream = new FileOutputStream(legendFile);
         } catch (final Exception e) {
             Debug.getInstance().errorMessage("XMLOut(): " + e);
         }

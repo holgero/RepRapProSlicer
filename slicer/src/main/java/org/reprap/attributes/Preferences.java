@@ -1,4 +1,4 @@
-package org.reprap;
+package org.reprap.attributes;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -20,6 +20,7 @@ import javax.media.j3d.Appearance;
 import javax.media.j3d.Material;
 import javax.vecmath.Color3f;
 
+import org.reprap.Main;
 import org.reprap.utilities.Debug;
 import org.reprap.utilities.RepRapUtils;
 

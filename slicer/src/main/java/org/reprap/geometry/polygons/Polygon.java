@@ -72,8 +72,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import org.reprap.Attributes;
-import org.reprap.Preferences;
+import org.reprap.attributes.Attributes;
+import org.reprap.attributes.Preferences;
 import org.reprap.utilities.Debug;
 
 /**

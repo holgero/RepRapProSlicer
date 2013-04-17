@@ -1,6 +1,6 @@
 package org.reprap.geometry.polygons;
 
-import org.reprap.Preferences;
+import org.reprap.attributes.Preferences;
 
 /**
  * A circle (centre and squared radius)

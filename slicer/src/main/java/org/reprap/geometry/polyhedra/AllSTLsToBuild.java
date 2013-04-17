@@ -17,9 +17,9 @@ import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
-import org.reprap.Attributes;
 import org.reprap.Main;
-import org.reprap.Preferences;
+import org.reprap.attributes.Attributes;
+import org.reprap.attributes.Preferences;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.geometry.LayerRules;
 import org.reprap.geometry.polygons.BooleanGrid;
@@ -294,8 +294,9 @@ public class AllSTLsToBuild {
      * 
      * @param fn
      *            the directory to write into
+     * @throws IOException
      */
-    public void saveSCAD(String fn) {
+    public void saveSCAD(String fn) throws IOException {
         if (fn.charAt(fn.length() - 1) == File.separator.charAt(0)) {
             fn = fn.substring(0, fn.length() - 1);
         }
@@ -321,7 +322,7 @@ public class AllSTLsToBuild {
         if (!file.exists()) {
             file.mkdir();
         }
-        RFO.copySTLs(this, path);
+        RFO.copySTLs(this, file);
         try {
             final PrintWriter out = new PrintWriter(new FileWriter(path + name));
             out.println(toSCAD());
