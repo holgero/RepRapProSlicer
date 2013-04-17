@@ -1088,7 +1088,7 @@ public class AllSTLsToBuild {
                     l = l.neg();
                 }
                 outline = outline.newStart(outline.maximalVertex(l));
-        
+
                 final Point2D start = outline.point(0);
                 final PolygonIndexedPoint pp = hatching.ppSearch(start, -1, outline.getAttributes().getExtruder()
                         .getPhysicalExtruderNumber());
@@ -1098,7 +1098,7 @@ public class AllSTLsToBuild {
                     final int st = pp.near();
                     final int en = pp.end();
                     final Polygon pg = pp.polygon();
-        
+
                     // Check that the line from the start of the outline polygon to the first point
                     // of the tail-in is in solid.  If not, we have jumped between polygons and don't
                     // want to use that as a lead in.
@@ -1106,11 +1106,10 @@ public class AllSTLsToBuild {
                     final Point2D pq1 = Point2D.add(start, Point2D.mul(0.25, pDif));
                     final Point2D pq2 = Point2D.add(start, Point2D.mul(0.5, pDif));
                     final Point2D pq3 = Point2D.add(start, Point2D.mul(0.5, pDif));
-        
+
                     if (slice.membership(pq1) & slice.membership(pq2) & slice.membership(pq3)) {
                         outline.add(start);
-                        outline.setExtrudeEnd(-1, 0);
-        
+
                         if (en >= st) {
                             for (int j = st; j <= en; j++) {
                                 outline.add(0, pg.point(j)); // Put it on the beginning...

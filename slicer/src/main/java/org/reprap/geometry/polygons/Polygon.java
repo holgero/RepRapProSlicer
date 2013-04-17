@@ -68,7 +68,6 @@
 
 package org.reprap.geometry.polygons;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -90,65 +89,43 @@ public class Polygon {
      * Used to choose the starting point for a randomized-start copy of a
      * polygon
      */
-    private static Random rangen = new Random(918273);
+    private static final Random RANDOM = new Random(918273);
 
     /**
      * The (X, Y) points round the polygon as Rr2Points
      */
-    private List<Point2D> points = null;
-
-    /**
-     * The speed of the machine at each corner
-     */
-    private List<Double> speeds = null;
+    private final List<Point2D> points = new ArrayList<Point2D>();
 
     /**
      * The atributes of the STL object that this polygon represents
      */
-    private Attributes att = null;
+    private final Attributes attributes;
 
     /**
      * The minimum enclosing X-Y box round the polygon
      */
-    private Rectangle box = null;
-
-    /**
-     * The index of the last point to draw to, if there are more that should
-     * just be moved over
-     */
-    private int extrudeEnd;
-
-    /**
-     * The squared distance from the end of the polygon of the extrude end
-     */
-    private double extrudeEndDistance2;
-
-    /**
-     * The index of the last point at which the valve (if any) is open.
-     */
-    private int valveEnd;
-
-    /**
-     * The squared distance from the end of the polygon of the valve end
-     */
-    private double valveEndDistance2;
+    private Rectangle box = new Rectangle();
 
     /**
      * Make an empty polygon
      */
-    public Polygon(final Attributes a, final boolean c) {
-        if (a == null) {
-            Debug.getInstance().errorMessage("RrPolygon(): null attributes!");
+    public Polygon(final Attributes attributes, final boolean closed) {
+        if (attributes == null) {
+            throw new IllegalArgumentException("Polygon(): attributes must not be null");
         }
-        points = new ArrayList<Point2D>();
-        speeds = null;
-        att = a;
-        box = new Rectangle();
-        closed = c;
-        extrudeEnd = -1;
-        valveEnd = -1;
-        extrudeEndDistance2 = 0;
-        valveEndDistance2 = 0;
+        this.attributes = attributes;
+        this.closed = closed;
+    }
+
+    /**
+     * Deep copy - NB: Attributes _not_ deep copied.
+     */
+    Polygon(final Polygon p) {
+        this(p.attributes, p.closed);
+        for (int i = 0; i < p.size(); i++) {
+            add(new Point2D(p.point(i)));
+        }
+        closed = p.closed;
     }
 
     /**
@@ -168,19 +145,6 @@ public class Polygon {
         return points.get(i);
     }
 
-    /**
-     * Get the speed
-     * 
-     * @return i-th point object of polygon
-     */
-    public double speed(final int i) {
-        if (speeds == null) {
-            Debug.getInstance().errorMessage("Rr2Point.speed(int i): speeds null!");
-            return 0;
-        }
-        return speeds.get(i).doubleValue();
-    }
-
     @Override
     public String toString() {
         String result = " Polygon -  vertices: ";
@@ -189,11 +153,7 @@ public class Polygon {
         result += "\n";
         for (int i = 0; i < size(); i++) {
             result += point(i).toString();
-            if (speeds != null) {
-                result += "(" + speed(i) + "); ";
-            } else {
-                result += "; ";
-            }
+            result += "; ";
         }
 
         return result;
@@ -207,42 +167,6 @@ public class Polygon {
     }
 
     /**
-     * Something has been done to the polygon that may require its extrude and
-     * valve endings to be updated
-     */
-    private void updateExtrudeValveEnd() {
-        if (extrudeEnd >= 0) {
-            if (extrudeEndDistance2 <= 0) {
-                extrudeEnd = -1;
-                extrudeEndDistance2 = 0;
-                return;
-            }
-        }
-    }
-
-    /**
-     * What's the last point to plot to?
-     */
-    public int extrudeEnd() {
-        if (extrudeEnd < 0) {
-            return size() - 1;
-        } else {
-            return extrudeEnd;
-        }
-    }
-
-    /**
-     * What's the last point at which the valve should be open to?
-     */
-    public int valveEnd() {
-        if (valveEnd < 0) {
-            return size() - 1;
-        } else {
-            return valveEnd;
-        }
-    }
-
-    /**
      * @return number of points in polygon
      */
     public int size() {
@@ -250,135 +174,32 @@ public class Polygon {
     }
 
     /**
-     * Deep copy - NB: Attributes _not_ deep copied.
-     */
-    Polygon(final Polygon p) {
-        this(p.att, p.closed);
-        for (int i = 0; i < p.size(); i++) {
-            add(new Point2D(p.point(i)));
-        }
-        if (p.speeds != null) {
-            speeds = new ArrayList<Double>();
-            for (int i = 0; i < p.size(); i++) {
-                speeds.add(new Double(p.speed(i)));
-            }
-        }
-        closed = p.closed;
-        extrudeEnd = p.extrudeEnd;
-        valveEnd = p.valveEnd;
-        extrudeEndDistance2 = p.extrudeEndDistance2;
-        valveEndDistance2 = p.valveEndDistance2;
-    }
-
-    /**
      * Add a new point to the polygon
      */
     public void add(final Point2D p) {
-        if (speeds != null) {
-            Debug.getInstance().errorMessage("Rr2Point.add(): adding a point to a polygon with its speeds set.");
-        }
         points.add(new Point2D(p));
         box.expand(p);
-        updateExtrudeValveEnd();
     }
 
     /**
      * Insert a new point into the polygon
      */
     public void add(final int i, final Point2D p) {
-        if (speeds != null) {
-            Debug.getInstance().errorMessage("Rr2Point.add(): adding a point to a polygon with its speeds set.");
-        }
-
         points.add(i, new Point2D(p));
         box.expand(p);
-        boolean update = false;
-        if (i <= extrudeEnd) {
-            extrudeEnd++;
-        } else {
-            update = true;
-        }
-        if (i <= valveEnd) {
-            valveEnd++;
-        } else {
-            update = true;
-        }
-        if (update) {
-            updateExtrudeValveEnd();
-        }
     }
 
     /**
      * Set a point to be p
      */
     public void set(final int i, final Point2D p) {
-        if (speeds != null) {
-            Debug.getInstance().errorMessage("Rr2Point.set(): adding a point to a polygon with its speeds set.");
-        }
         points.set(i, new Point2D(p));
         box.expand(p); // Note if the old point was on the convex hull, and the new one is within, box will be too big after this
-        updateExtrudeValveEnd();
-    }
 
-    /**
-     * Insert a new point and speed into the polygon
-     */
-    private void add(final int i, final Point2D p, final double s) {
-        if (speeds == null) {
-            Debug.getInstance().errorMessage("Rr2Point.add(): adding a point and a speed to a polygon without its speeds set.");
-            return;
-        }
-        points.add(i, new Point2D(p));
-        speeds.add(i, s);
-        box.expand(p);
-        boolean update = false;
-        if (i <= extrudeEnd) {
-            extrudeEnd++;
-        } else {
-            update = true;
-        }
-        if (i <= valveEnd) {
-            valveEnd++;
-        } else {
-            update = true;
-        }
-        if (update) {
-            updateExtrudeValveEnd();
-        }
-    }
-
-    /**
-     * Add a speed to the polygon
-     */
-    private void setSpeed(final int i, final double s) {
-        // Lazy initialization
-        if (speeds == null) {
-            speeds = new ArrayList<Double>();
-            for (int j = 0; j < size(); j++) {
-                speeds.add(new Double(0));
-            }
-        }
-        speeds.set(i, new Double(s));
-    }
-
-    /**
-     * Set the last point to plot to
-     */
-    public void setExtrudeEnd(final int d, final double d2) {
-        extrudeEnd = d;
-        extrudeEndDistance2 = d2;
-    }
-
-    /**
-     * Eet the last point to valve-open to
-     */
-    private void setValveEnd(final int d, final double d2) {
-        valveEnd = d;
-        valveEndDistance2 = d2;
     }
 
     public Attributes getAttributes() {
-        return att;
+        return attributes;
     }
 
     /**
@@ -410,31 +231,11 @@ public class Polygon {
         if (p.size() == 0) {
             return;
         }
-        if (extrudeEnd >= 0 || valveEnd >= 0) {
-            Debug.getInstance().errorMessage(
-                    "Rr2Point.add(): adding a polygon to another polygon with its extrude or valve ending set.");
-        }
         for (int i = 0; i < p.size(); i++) {
             points.add(new Point2D(p.point(i)));
         }
 
         box.expand(p.box);
-        if (speeds == null) {
-            if (p.speeds != null) {
-                Debug.getInstance().errorMessage(
-                        "Rr2Point.add(): adding a polygon to another polygon but discarding it's speeds.");
-            }
-            return;
-        }
-        if (p.speeds == null) {
-            Debug.getInstance().errorMessage(
-                    "Rr2Point.add(): adding a polygon to another polygon, but it has no needed speeds.");
-            return;
-        }
-        for (int i = 0; i < p.size(); i++) {
-            speeds.add(new Double(p.speed(i)));
-        }
-        updateExtrudeValveEnd();
     }
 
     /**
@@ -446,21 +247,11 @@ public class Polygon {
         if (p.size() == 0) {
             return;
         }
-        if (speeds != p.speeds) {
-            Debug.getInstance().errorMessage(
-                    "Rr2Point.add(): attempt to add a polygon to another polygon when one has speeds and the other doesn't.");
-            return;
-        }
         for (int i = 0; i < p.size(); i++) {
-            if (speeds != null) {
-                add(k, new Point2D(p.point(i)), p.speed(i));
-            } else {
-                points.add(k, new Point2D(p.point(i)));
-            }
+            points.add(k, new Point2D(p.point(i)));
             k++;
         }
         box.expand(p.box);
-        updateExtrudeValveEnd();
     }
 
     /**
@@ -480,19 +271,10 @@ public class Polygon {
      * @return reversed polygon object
      */
     Polygon negate() {
-        final Polygon result = new Polygon(att, closed);
+        final Polygon result = new Polygon(attributes, closed);
         for (int i = size() - 1; i >= 0; i--) {
             result.add(point(i));
         }
-        if (speeds == null) {
-            return result;
-        }
-        for (int i = size() - 1; i >= 0; i--) {
-            result.setSpeed(i, speed(i));
-        }
-        result.setExtrudeEnd(extrudeEnd, extrudeEndDistance2);
-        result.setValveEnd(valveEnd, valveEndDistance2);
-        result.updateExtrudeValveEnd();
         return result;
     }
 
@@ -500,7 +282,7 @@ public class Polygon {
      * @return same polygon starting at a random vertex
      */
     public Polygon randomStart() {
-        return newStart(rangen.nextInt(size()));
+        return newStart(RANDOM.nextInt(size()));
     }
 
     /**
@@ -515,20 +297,14 @@ public class Polygon {
             Debug.getInstance().errorMessage("RrPolygon.newStart(i): dud index: " + i);
             return this;
         }
-        final Polygon result = new Polygon(att, closed);
+        final Polygon result = new Polygon(attributes, closed);
         for (int j = 0; j < size(); j++) {
             result.add(point(i));
-            if (speeds != null) {
-                result.setSpeed(j, speed(i));
-            }
             i++;
             if (i >= size()) {
                 i = 0;
             }
         }
-        result.setExtrudeEnd(extrudeEnd, extrudeEndDistance2);
-        result.setValveEnd(valveEnd, valveEndDistance2);
-        result.updateExtrudeValveEnd();
         return result;
     }
 
@@ -579,7 +355,6 @@ public class Polygon {
             final Polygon ro = p.newStart(itsPoint);
             ro.add(0, point(myPoint));
             add(myPoint, ro);
-            updateExtrudeValveEnd();
             return true;
         } else {
             return false;
@@ -625,140 +400,6 @@ public class Polygon {
     }
 
     /**
-     * Backtrack a given distance, inserting a new point there and set
-     * extrudeEnd to it. If extrudeEnd is already set, backtrack from that.
-     * 
-     * @param distance
-     *            to backtrack
-     * @return index of the inserted point
-     */
-    public void backStepExtrude(final double d) {
-        if (d <= 0) {
-            return;
-        }
-
-        Point2D p, q;
-        int start, last;
-
-        if (extrudeEnd >= 0) {
-            start = extrudeEnd;
-            extrudeEndDistance2 = Math.sqrt(extrudeEndDistance2) + d;
-            extrudeEndDistance2 *= extrudeEndDistance2;
-        } else {
-            start = size() - 1;
-            extrudeEndDistance2 = d * d;
-        }
-
-        if (!isClosed() && extrudeEnd < 0) {
-            start--;
-        }
-
-        if (start >= size() - 1) {
-            last = 0;
-        } else {
-            last = start + 1;
-        }
-
-        double sum = 0;
-        for (int i = start; i >= 0; i--) {
-            sum += Point2D.d(point(i), point(last));
-            if (sum > d) {
-                sum = sum - d;
-                q = Point2D.sub(point(last), point(i));
-                p = Point2D.add(point(i), Point2D.mul(sum / q.mod(), q));
-                double s = 0;
-                if (speeds != null) {
-                    s = speeds.get(last) - speeds.get(i);
-                    s = speeds.get(i) + s * sum / q.mod();
-                }
-                final int j = i + 1;
-                if (j < size()) {
-                    points.add(j, p);
-                    if (speeds != null) {
-                        speeds.add(j, new Double(s));
-                    }
-                } else {
-                    points.add(p);
-                    if (speeds != null) {
-                        speeds.add(new Double(s));
-                    }
-                }
-                extrudeEnd = j;
-                return;
-            }
-            last = i;
-        }
-        extrudeEnd = 0;
-    }
-
-    /**
-     * Backtrack a given distance, inserting a new point there and set valveEnd
-     * to it. If valveEnd is already set, backtrack from that.
-     * 
-     * @param distance
-     *            to backtrack
-     * @return index of the inserted point
-     */
-    public void backStepValve(final double d) {
-        if (d <= 0) {
-            return;
-        }
-
-        Point2D p, q;
-        int start, last;
-
-        if (valveEnd >= 0) {
-            start = valveEnd;
-            valveEndDistance2 = Math.sqrt(valveEndDistance2) + d;
-            valveEndDistance2 *= valveEndDistance2;
-        } else {
-            start = size() - 1;
-            valveEndDistance2 = d * d;
-        }
-
-        if (!isClosed() && valveEnd < 0) {
-            start--;
-        }
-
-        if (start >= size() - 1) {
-            last = 0;
-        } else {
-            last = start + 1;
-        }
-
-        double sum = 0;
-        for (int i = start; i >= 0; i--) {
-            sum += Point2D.d(point(i), point(last));
-            if (sum > d) {
-                sum = sum - d;
-                q = Point2D.sub(point(last), point(i));
-                p = Point2D.add(point(i), Point2D.mul(sum / q.mod(), q));
-                double s = 0;
-                if (speeds != null) {
-                    s = speeds.get(last) - speeds.get(i);
-                    s = speeds.get(i) + s * sum / q.mod();
-                }
-                final int j = i + 1;
-                if (j < size()) {
-                    points.add(j, p);
-                    if (speeds != null) {
-                        speeds.add(j, new Double(s));
-                    }
-                } else {
-                    points.add(p);
-                    if (speeds != null) {
-                        speeds.add(new Double(s));
-                    }
-                }
-                valveEnd = j;
-                return;
-            }
-            last = i;
-        }
-        valveEnd = 0;
-    }
-
-    /**
      * @return the vertex at which the polygon deviates from a (nearly) straight
      *         line from v1
      */
@@ -790,7 +431,7 @@ public class Polygon {
         if (leng <= 3) {
             return new Polygon(this);
         }
-        final Polygon r = new Polygon(att, closed);
+        final Polygon r = new Polygon(attributes, closed);
         final double d2 = d * d;
 
         final int v1 = findAngleStart(0, d2);
@@ -825,148 +466,6 @@ public class Polygon {
                 return r;
             }
             r.add(point(v2 % leng));
-        }
-    }
-
-    private Interval accRange(final double startV, final double s, final double acc) {
-        final double vMax = Math.sqrt(2 * acc * s + startV * startV);
-        double vMin = -2 * acc * s + startV * startV;
-        if (vMin <= 0) {
-            vMin = 0;
-        } else {
-            vMin = Math.sqrt(vMin);
-        }
-        return new Interval(vMin, vMax);
-    }
-
-    private void backTrack(int j, double v, final double acceleration, final boolean fixup[]) {
-        Point2D a, b, ab;
-        double backV, s;
-        int i = j - 1;
-        b = point(j);
-        while (i >= 0) {
-            a = point(i);
-            ab = Point2D.sub(b, a);
-            s = ab.mod();
-            ab = Point2D.div(ab, s);
-            backV = Math.sqrt(v * v + 2 * acceleration * s);
-            setSpeed(j, v);
-            if (backV > speed(i)) {
-                fixup[j] = true;
-                return;
-            }
-            setSpeed(i, backV);
-            v = backV;
-            fixup[j] = false;
-            b = a;
-            j = i;
-            i--;
-        }
-    }
-
-    /**
-     * Set the speeds at each vertex so that the polygon can be plotted as fast
-     * as possible
-     */
-    public void setSpeeds(final double airSpeed, final double minSpeed, final double maxSpeed, final double acceleration) {
-        // If not doing RepRap style accelerations, just move in air to the
-        // first point and then go round as fast as possible.
-        try {
-            if (!Preferences.loadGlobalBool("RepRapAccelerations")) {
-                setSpeed(0, airSpeed);
-                for (int i = 1; i < size(); i++) {
-                    setSpeed(i, maxSpeed);
-                }
-                return;
-            }
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        // RepRap-style accelerations
-        final boolean fixup[] = new boolean[size()];
-        setSpeed(0, minSpeed);
-        Point2D a, b, c, ab, bc;
-        double oldV, vCorner, s, newS;
-        int next;
-        a = point(0);
-        b = point(1);
-        ab = Point2D.sub(b, a);
-        s = ab.mod();
-        ab = Point2D.div(ab, s);
-        oldV = minSpeed;
-        fixup[0] = true;
-        for (int i = 1; i < size(); i++) {
-            next = (i + 1) % size();
-            c = point(next);
-            bc = Point2D.sub(c, b);
-            newS = bc.mod();
-            bc = Point2D.div(bc, newS);
-            vCorner = Point2D.mul(ab, bc);
-            if (vCorner >= 0) {
-                vCorner = minSpeed + (maxSpeed - minSpeed) * vCorner;
-            } else {
-                vCorner = 0.5 * minSpeed * (2 + vCorner);
-            }
-
-            if (!isClosed() && i == size() - 1) {
-                vCorner = minSpeed;
-            }
-
-            final Interval aRange = accRange(oldV, s, acceleration);
-
-            if (vCorner <= aRange.low()) {
-                backTrack(i, vCorner, acceleration, fixup);
-            } else if (vCorner < aRange.high()) {
-                setSpeed(i, vCorner);
-                fixup[i] = true;
-            } else {
-                setSpeed(i, aRange.high());
-                fixup[i] = false;
-            }
-            b = c;
-            ab = bc;
-            oldV = speed(i);
-            s = newS;
-        }
-
-        for (int i = isClosed() ? size() : size() - 1; i > 0; i--) {
-            int ib = i;
-            if (ib == size()) {
-                ib = 0;
-            }
-
-            if (fixup[ib]) {
-                final int ia = i - 1;
-                a = point(ia);
-                b = point(ib);
-                ab = Point2D.sub(b, a);
-                s = ab.mod();
-                final double va = speed(ia);
-                final double vb = speed(ib);
-
-                final VelocityProfile vp = new VelocityProfile(s, va, maxSpeed, vb, acceleration);
-                switch (vp.flat()) {
-                case 0:
-                    break;
-
-                case 1:
-                    add(i, Point2D.add(a, Point2D.mul(ab, vp.s1() / s)), vp.v());
-                    break;
-
-                case 2:
-                    add(i, Point2D.add(a, Point2D.mul(ab, vp.s2() / s)), maxSpeed);
-                    add(i, Point2D.add(a, Point2D.mul(ab, vp.s1() / s)), maxSpeed);
-                    break;
-
-                default:
-                    Debug.getInstance().errorMessage("RrPolygon.setSpeeds(): dud VelocityProfile flat value.");
-                }
-            }
-        }
-
-        if (speeds.size() != points.size()) {
-            Debug.getInstance().errorMessage("Speeds and points arrays different: " + speeds.size() + ", " + points.size());
         }
     }
 

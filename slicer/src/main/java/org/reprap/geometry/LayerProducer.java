@@ -4,11 +4,14 @@ import java.io.IOException;
 
 import org.reprap.Attributes;
 import org.reprap.Preferences;
+import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
+import org.reprap.geometry.polygons.Interval;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
+import org.reprap.geometry.polygons.VelocityProfile;
 import org.reprap.utilities.Debug;
 import org.reprap.utilities.RrGraphics;
 
@@ -153,93 +156,96 @@ class LayerProducer {
     /**
      * Plot a polygon
      */
-    private void plot(final Polygon p, final boolean firstOneInLayer) throws Exception {
-        final Attributes att = p.getAttributes();
-        final GCodePrinter printer = layerConditions.getPrinter();
-        final double outlineFeedrate = att.getExtruder().getOutlineFeedrate();
-        final double infillFeedrate = att.getExtruder().getInfillFeedrate();
-
-        final boolean acc = att.getExtruder().getMaxAcceleration() > 0;
-
-        if (p.size() <= 1) {
+    private void plot(final Polygon polygon, final boolean firstOneInLayer) throws Exception {
+        if (polygon.size() <= 1) {
             return;
         }
 
         // If the length of the plot is <0.05mm, don't bother with it.
         // This will not spot an attempt to plot 10,000 points in 1mm.
         double plotDist = 0;
-        Point2D lastPoint = p.point(0);
-        for (int i = 1; i < p.size(); i++) {
-            final Point2D n = p.point(i);
+        Point2D lastPoint = polygon.point(0);
+        for (int i = 1; i < polygon.size(); i++) {
+            final Point2D n = polygon.point(i);
             plotDist += Point2D.d(lastPoint, n);
             lastPoint = n;
         }
         if (plotDist < Preferences.machineResolution() * 0.5) {
-            Debug.getInstance().debugMessage("Rejected line with " + p.size() + " points, length: " + plotDist);
-            //startNearHere = null;
+            Debug.getInstance().debugMessage("Rejected line with " + polygon.size() + " points, length: " + plotDist);
             return;
         }
 
+        final GCodePrinter printer = layerConditions.getPrinter();
         final double currentZ = printer.getZ();
 
         if (firstOneInLayer) {
             // The next line tells the printer that it is already at the first point.  It is not, but code will be added just before this
             // to put it there by the LayerRules function that reverses the top-down order of the layers.
             if (Preferences.loadGlobalBool("RepRapAccelerations")) {
-                printer.singleMove(p.point(0).x(), p.point(0).y(), currentZ, printer.getSlowXYFeedrate(), false);
+                printer.singleMove(polygon.point(0).x(), polygon.point(0).y(), currentZ, printer.getSlowXYFeedrate(), false);
             } else {
-                printer.singleMove(p.point(0).x(), p.point(0).y(), currentZ, printer.getFastXYFeedrate(), false);
+                printer.singleMove(polygon.point(0).x(), polygon.point(0).y(), currentZ, printer.getFastXYFeedrate(), false);
             }
             printer.forceNextExtruder();
         }
-        printer.selectExtruder(att);
+        final Attributes attributes = polygon.getAttributes();
+        printer.selectExtruder(attributes);
 
-        // If getMinLiftedZ() is negative, never lift the head
-        final double liftZ = att.getExtruder().getLift();
-        final Boolean lift = att.getExtruder().getMinLiftedZ() >= 0 || liftZ > 0;
-
-        if (acc) {
-            if (Preferences.loadGlobalBool("RepRapAccelerations")) {
-                p.setSpeeds(printer.getFastXYFeedrate(), att.getExtruder().getSlowXYFeedrate(), p.isClosed() ? outlineFeedrate
-                        : infillFeedrate, att.getExtruder().getMaxAcceleration());
-            } else {
-                p.setSpeeds(printer.getFastXYFeedrate(), att.getExtruder().getFastXYFeedrate(), p.isClosed() ? outlineFeedrate
-                        : infillFeedrate, att.getExtruder().getMaxAcceleration());
-            }
+        if (simulationPlot != null) {
+            final PolygonList pgl = new PolygonList();
+            pgl.add(polygon);
+            simulationPlot.add(pgl);
         }
 
-        final double extrudeBackLength = att.getExtruder().getExtrusionOverRun();
-        final double valveBackLength = att.getExtruder().getValveOverRun();
+        final GCodeExtruder extruder = attributes.getExtruder();
+        final double outlineFeedrate = extruder.getOutlineFeedrate();
+        final double infillFeedrate = extruder.getInfillFeedrate();
+        final ExtrusionPath extrusionPath = toExtrusionPath(polygon, printer.getFastXYFeedrate(), extruder.getSlowXYFeedrate(),
+                polygon.isClosed() ? outlineFeedrate : infillFeedrate, extruder.getMaxAcceleration());
+
+        plotExtrusionPath(extrusionPath, firstOneInLayer, extruder);
+    }
+
+    private void plotExtrusionPath(final ExtrusionPath extrusionPath, final boolean firstOneInLayer,
+            final GCodeExtruder extruder) throws IOException, Exception {
+        final double extrudeBackLength = extruder.getExtrusionOverRun();
+        final double valveBackLength = extruder.getValveOverRun();
         if (extrudeBackLength > 0 && valveBackLength > 0) {
             Debug.getInstance().errorMessage(
                     "LayerProducer.plot(): extruder has both valve backoff and extrude backoff specified.");
         }
 
-        p.backStepExtrude(extrudeBackLength);
-        p.backStepValve(valveBackLength);
+        extrusionPath.backStepExtrude(extrudeBackLength);
+        extrusionPath.backStepValve(valveBackLength);
 
+        final GCodePrinter printer = layerConditions.getPrinter();
+        final double currentZ = printer.getZ();
+        final double liftZ = extruder.getLift();
         if (liftZ > 0) {
             printer.singleMove(printer.getX(), printer.getY(), currentZ + liftZ, printer.getFastFeedrateZ(), true);
         }
 
         currentFeedrate = printer.getFastXYFeedrate();
-        singleMove(p.point(0));
+        singleMove(extrusionPath.point(0));
 
         if (liftZ > 0) {
             printer.singleMove(printer.getX(), printer.getY(), currentZ, printer.getFastFeedrateZ(), true);
         }
 
+        final boolean acc = extruder.getMaxAcceleration() > 0;
         if (acc | (!Preferences.loadGlobalBool("RepRapAccelerations"))) {
-            currentFeedrate = p.speed(0);
+            currentFeedrate = extrusionPath.speed(0);
         } else {
-            if (p.isClosed()) {
+            final double outlineFeedrate = extruder.getOutlineFeedrate();
+            final double infillFeedrate = extruder.getInfillFeedrate();
+            if (extrusionPath.isClosed()) {
                 currentFeedrate = outlineFeedrate;
             } else {
                 currentFeedrate = infillFeedrate;
             }
         }
 
-        plot(p.point(0), p.point(1), false, false);
+        plot(extrusionPath.point(0), extrusionPath.point(1), false, false);
 
         // Print any lead-in.
         printer.printStartDelay(firstOneInLayer);
@@ -248,34 +254,30 @@ class LayerProducer {
         boolean valveOff = false;
         boolean oldexoff;
 
-        final double oldFeedFactor = att.getExtruder().getExtrudeRatio();
+        final double oldFeedFactor = extruder.getExtrudeRatio();
 
-        for (int i = 1; i < p.size(); i++) {
-            final Point2D next = p.point((i + 1) % p.size());
+        for (int i = 1; i < extrusionPath.size(); i++) {
+            final Point2D next = extrusionPath.point((i + 1) % extrusionPath.size());
             if (acc) {
-                currentFeedrate = p.speed(i);
+                currentFeedrate = extrusionPath.speed(i);
             }
             oldexoff = extrudeOff;
-            extrudeOff = (i > p.extrudeEnd() && extrudeBackLength > 0) || i == p.size() - 1;
-            valveOff = (i > p.valveEnd() && valveBackLength > 0) || i == p.size() - 1;
-            plot(p.point(i), next, extrudeOff, valveOff);
+            extrudeOff = (i > extrusionPath.extrudeEnd() && extrudeBackLength > 0) || i == extrusionPath.size() - 1;
+            valveOff = (i > extrusionPath.valveEnd() && valveBackLength > 0) || i == extrusionPath.size() - 1;
+            plot(extrusionPath.point(i), next, extrudeOff, valveOff);
             if (oldexoff ^ extrudeOff) {
                 printer.printEndReverse();
             }
         }
 
         // Restore sanity
-        att.getExtruder().setExtrudeRatio(oldFeedFactor);
-        if (p.isClosed()) {
-            move(p.point(0), false, false, true);
+        extruder.setExtrudeRatio(oldFeedFactor);
+        if (extrusionPath.isClosed()) {
+            move(extrusionPath.point(0), false, false, true);
         }
+        // If getMinLiftedZ() is negative, never lift the head
+        final boolean lift = extruder.getMinLiftedZ() >= 0 || liftZ > 0;
         move(posNow(), lift, lift, true);
-
-        if (simulationPlot != null) {
-            final PolygonList pgl = new PolygonList();
-            pgl.add(p);
-            simulationPlot.add(pgl);
-        }
     }
 
     /**
@@ -291,6 +293,118 @@ class LayerProducer {
                 firstOneInLayer = false;
             }
         }
+    }
+
+    /**
+     * Set the speeds at each vertex so that the polygon can be plotted as fast
+     * as possible
+     * 
+     * @return
+     */
+    public static ExtrusionPath toExtrusionPath(final Polygon polygon, final double airSpeed, final double minSpeed,
+            final double maxSpeed, final double acceleration) {
+        final boolean reprapAccelerations;
+        try {
+            reprapAccelerations = Preferences.loadGlobalBool("RepRapAccelerations");
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        final ExtrusionPath result = new ExtrusionPath(polygon);
+
+        if (!reprapAccelerations) {
+            // If not doing RepRap style accelerations, just move in air to the
+            // first point and then go round as fast as possible.
+            result.setSpeed(0, airSpeed);
+            for (int i = 1; i < result.size(); i++) {
+                result.setSpeed(i, maxSpeed);
+            }
+        } else {
+            // RepRap-style accelerations
+            final boolean fixup[] = new boolean[result.size()];
+            result.setSpeed(0, minSpeed);
+            Point2D a, b, c, ab, bc;
+            double oldV, vCorner, distance, newS;
+            int next;
+            a = result.point(0);
+            b = result.point(1);
+            ab = Point2D.sub(b, a);
+            distance = ab.mod();
+            ab = Point2D.div(ab, distance);
+            oldV = minSpeed;
+            fixup[0] = true;
+            for (int i = 1; i < result.size(); i++) {
+                next = (i + 1) % result.size();
+                c = result.point(next);
+                bc = Point2D.sub(c, b);
+                newS = bc.mod();
+                bc = Point2D.div(bc, newS);
+                vCorner = Point2D.mul(ab, bc);
+                if (vCorner >= 0) {
+                    vCorner = minSpeed + (maxSpeed - minSpeed) * vCorner;
+                } else {
+                    vCorner = 0.5 * minSpeed * (2 + vCorner);
+                }
+
+                if (!result.isClosed() && i == result.size() - 1) {
+                    vCorner = minSpeed;
+                }
+
+                final Interval aRange = ExtrusionPath.accRange(oldV, distance, acceleration);
+
+                if (vCorner <= aRange.low()) {
+                    result.backTrack(i, vCorner, acceleration, fixup);
+                } else if (vCorner < aRange.high()) {
+                    result.setSpeed(i, vCorner);
+                    fixup[i] = true;
+                } else {
+                    result.setSpeed(i, aRange.high());
+                    fixup[i] = false;
+                }
+                b = c;
+                ab = bc;
+                oldV = result.speed(i);
+                distance = newS;
+            }
+
+            for (int i = result.isClosed() ? result.size() : result.size() - 1; i > 0; i--) {
+                int ib = i;
+                if (ib == result.size()) {
+                    ib = 0;
+                }
+
+                if (fixup[ib]) {
+                    final int ia = i - 1;
+                    a = result.point(ia);
+                    b = result.point(ib);
+                    ab = Point2D.sub(b, a);
+                    distance = ab.mod();
+                    final double va = result.speed(ia);
+                    final double vb = result.speed(ib);
+
+                    final VelocityProfile vp = new VelocityProfile(distance, va, maxSpeed, vb, acceleration);
+                    switch (vp.flat()) {
+                    case 0:
+                        break;
+
+                    case 1:
+                        result.add(i, Point2D.add(a, Point2D.mul(ab, vp.s1() / distance)), vp.v());
+                        break;
+
+                    case 2:
+                        result.add(i, Point2D.add(a, Point2D.mul(ab, vp.s2() / distance)), maxSpeed);
+                        result.add(i, Point2D.add(a, Point2D.mul(ab, vp.s1() / distance)), maxSpeed);
+                        break;
+
+                    default:
+                        Debug.getInstance().errorMessage("RrPolygon.setSpeeds(): dud VelocityProfile flat value.");
+                    }
+                }
+            }
+
+            result.validate();
+        }
+        return result;
     }
 
 }

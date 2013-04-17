@@ -140,7 +140,7 @@ public class Point2D {
      *            A scale factor
      * @return The point Rr2Point divided by a factor of a
      */
-    static Point2D div(final Point2D b, final double factor) {
+    public static Point2D div(final Point2D b, final double factor) {
         return mul(b, 1 / factor);
     }
 
