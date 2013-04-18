@@ -67,12 +67,14 @@ import javax.media.j3d.BoundingBox;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.GeometryArray;
 import javax.media.j3d.Group;
+import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.SceneGraphObject;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.vecmath.AxisAngle4d;
+import javax.vecmath.Color3f;
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
@@ -107,19 +109,18 @@ public class STLObject {
     }
 
     /**
-     * Little class to hold tripples of the parts of this STLObject loaded.
-     * 
+     * Holds tripples of the parts of this STLObject loaded.
      */
     private static final class Contents {
-        private String sourceFile = null; // The STL file I was loaded from
+        private File sourceFile = null; // The STL file I was loaded from
         private BranchGroup stl = null; // The actual STL geometry
         private CSG3D csg = null; // CSG if available
         private Attributes att = null; // The attributes associated with it
         private final double volume; // Useful to know
         private int unique = 0;
 
-        Contents(final String s, final BranchGroup st, final CSG3D c, final Attributes a, final double v) {
-            sourceFile = s;
+        Contents(final File file, final BranchGroup st, final CSG3D c, final Attributes a, final double v) {
+            sourceFile = file;
             stl = st;
             csg = c;
             att = a;
@@ -134,6 +135,8 @@ public class STLObject {
             return unique;
         }
     }
+
+    private static final Color3f BLACK = new Color3f(0, 0, 0);
 
     private MouseObject mouse = null; // The mouse, if it is controlling us
     private BranchGroup top = null; // The thing that links us to the world
@@ -197,6 +200,13 @@ public class STLObject {
         bbox = null;
     }
 
+    private static Appearance unselectedApp() {
+        final Color3f unselectedColour = new Color3f((float) 0.3, (float) 0.3, (float) 0.3);
+        final Appearance unselectedApp = new Appearance();
+        unselectedApp.setMaterial(new Material(unselectedColour, BLACK, unselectedColour, BLACK, 0f));
+        return unselectedApp;
+    }
+
     /**
      * Load an STL object from a file with a known offset (set that null to put
      * the object in the middle of the bed) and set its appearance
@@ -205,8 +215,14 @@ public class STLObject {
      * @param offset
      * @param app
      */
-    public Attributes addSTL(final String location, final Vector3d offset, final Appearance app, final STLObject lastPicked) {
-        final Attributes att = new Attributes(null, this, null, app);
+    public Attributes addSTL(final File location, final Vector3d offset, final Appearance app, final STLObject lastPicked) {
+        final Attributes att;
+        if (app == null) {
+            att = new Attributes(null, this, null, unselectedApp());
+        } else {
+            att = new Attributes(null, this, null, app);
+        }
+
         final Contents child = loadSingleSTL(location, att, offset, lastPicked);
         if (child == null) {
             return null;
@@ -225,15 +241,8 @@ public class STLObject {
      * loaded as a new independent STLObject; if not it is added to lastPicked
      * and subsequently is subjected to all the same transforms, so they retain
      * their relative positions. This is how multi-material objects are loaded.
-     * 
-     * @param location
-     * @param att
-     * @param offset
-     * @param lastPicked
-     * @return
      */
-    private Contents loadSingleSTL(final String location, final Attributes att, final Vector3d offset,
-            final STLObject lastPicked) {
+    private Contents loadSingleSTL(final File location, final Attributes att, final Vector3d offset, final STLObject lastPicked) {
         BranchGroup bgResult = null;
         CSG3D csgResult = null;
 
@@ -243,7 +252,7 @@ public class STLObject {
         double volume = 0;
         try {
 
-            scene = loader.load(location);
+            scene = loader.load(location.getAbsolutePath());
             final CSGReader csgr = new CSGReader(location);
             if (csgr.csgAvailable()) {
                 csgResult = csgr.csg();
@@ -360,15 +369,12 @@ public class STLObject {
         return new Vector3d(extent);
     }
 
-    public String fileAndDirectioryItCameFrom(final int i) {
+    public File fileAndDirectioryItCameFrom(final int i) {
         return contents.get(i).sourceFile;
     }
 
     public String fileItCameFrom(final int i) {
-        String fn = fileAndDirectioryItCameFrom(i);
-        final int sepIndex = fn.lastIndexOf(File.separator);
-        fn = fn.substring(sepIndex + 1, fn.length());
-        return fn;
+        return fileAndDirectioryItCameFrom(i).getName();
     }
 
     String toSCAD() {
@@ -927,7 +933,7 @@ public class STLObject {
             return;
         }
 
-        rScale(Preferences.inchesToMillimetres(), false);
+        rScale(Preferences.getInstance().inchesToMillimeters(), false);
     }
 
     /**
@@ -982,5 +988,4 @@ public class STLObject {
         final Point3d f = new Point3d(c.x, c.y, 0);
         return tetVolume(a, b, c, e) + tetVolume(a, e, c, d) + tetVolume(e, f, c, d);
     }
-
 }

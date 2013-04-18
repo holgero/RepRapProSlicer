@@ -1,24 +1,28 @@
 package org.reprap.attributes;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.JarURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
-import javax.media.j3d.Appearance;
-import javax.media.j3d.Material;
-import javax.vecmath.Color3f;
-
-import org.reprap.Main;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.reprap.utilities.Debug;
-import org.reprap.utilities.RepRapUtils;
 
 /**
  * A single centralised repository of the user's current preference settings.
@@ -38,76 +42,73 @@ public class Preferences {
     private static final double TINY = 1.0e-12; // A small number
     private static final double MACHINE_RESOLUTION = 0.05; // RepRap step size in mm
     private static final double INCH_TO_MM = 25.4;
-    private static final Color3f BLACK = new Color3f(0, 0, 0);
 
     private static String propsFile = "reprap.properties";
-    private static Preferences globalPrefs = null;
-    private static boolean displaySimulation = false;
 
-    private final Properties mainPreferences = new Properties();
-
-    public static double gridRes() {
-        return GRID_RESOLUTION;
-    }
-
-    public static double tiny() {
-        return TINY;
-    }
-
-    public static double machineResolution() {
-        return MACHINE_RESOLUTION;
-    }
-
-    public static double inchesToMillimetres() {
-        return INCH_TO_MM;
-    }
-
-    public static boolean simulate() {
-        return displaySimulation;
-    }
-
-    public static void setSimulate(final boolean s) {
-        displaySimulation = s;
-    }
-
-    private Preferences() throws IOException {
-        final File mainDir = new File(getUsersRootDir());
-        if (!mainDir.exists()) {
-            copySystemConfigurations(mainDir);
+    static {
+        final File reprapRootDir = getReprapRootDir();
+        if (!reprapRootDir.exists()) {
+            copySystemConfigurations(reprapRootDir);
         }
+    }
+    private static final Preferences globalPrefs = new Preferences();
+    static {
+        // first thing (after we have set globalPrefs): apply the loaded debug preferences
+        Debug.refreshPreferences(globalPrefs.loadBool("Debug"), false);
+        globalPrefs.comparePreferences();
+    }
 
-        // Construct URL of user properties file
-        final String path = getPropertiesPath();
-        final File mainFile = new File(path);
-        final URL mainUrl = mainFile.toURI().toURL();
-
-        if (mainFile.exists()) {
-            final InputStream preferencesStream = mainUrl.openStream();
-            try {
-                mainPreferences.load(preferencesStream);
-            } finally {
-                preferencesStream.close();
+    private static void copySystemConfigurations(final File usersDir) {
+        try {
+            final URL systemConfigurationURL = getSystemConfiguration();
+            switch (systemConfigurationURL.getProtocol()) {
+            case "file":
+                FileUtils.copyDirectory(toFile(systemConfigurationURL), usersDir);
+                break;
+            case "jar":
+                copyJarTree(systemConfigurationURL, usersDir);
+                break;
+            default:
+                throw new IllegalArgumentException("Cant copy resource stream from " + systemConfigurationURL);
             }
-        } else {
-            Debug.getInstance().errorMessage("Can't find your RepRap configurations: " + getPropertiesPath());
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    private static void copySystemConfigurations(final File usersDir) throws IOException {
-        final URL sysConfig = getSystemConfiguration();
-        RepRapUtils.copyResourceTree(sysConfig, usersDir);
+    private static File toFile(final URL url) {
+        return new File(URI.create(url.toString()));
+    }
+
+    private static void copyJarTree(final URL source, final File target) throws IOException {
+        final JarURLConnection jarConnection = (JarURLConnection) source.openConnection();
+        final String prefix = jarConnection.getEntryName();
+        final JarFile jarFile = jarConnection.getJarFile();
+        for (final JarEntry jarEntry : Collections.list(jarFile.entries())) {
+            final String entryName = jarEntry.getName();
+            if (entryName.startsWith(prefix)) {
+                if (!jarEntry.isDirectory()) {
+                    final String fileName = StringUtils.removeStart(entryName, prefix);
+                    final InputStream fileStream = jarFile.getInputStream(jarEntry);
+                    try {
+                        FileUtils.copyInputStreamToFile(fileStream, new File(target, fileName));
+                    } finally {
+                        fileStream.close();
+                    }
+                }
+            }
+        }
     }
 
     /**
      * Where the user stores all their configuration files
      */
-    public static String getUsersRootDir() {
-        return System.getProperty("user.home") + File.separatorChar + PROPERTIES_FOLDER + File.separatorChar;
+    public static File getReprapRootDir() {
+        return new File(FileUtils.getUserDirectory(), PROPERTIES_FOLDER);
     }
 
     /**
-     * The name of the user's active machine configuration (without the leading
-     * *)
+     * The name of the user's active machine configuration.
      */
     public static String getActiveMachineName() {
         for (final Machine machine : Machine.getAllMachines()) {
@@ -125,15 +126,8 @@ public class Preferences {
      * The directory containing all the user's configuration files for their
      * active machine
      */
-    public static String getActiveMachineDir() {
-        return getUsersRootDir() + getActiveMachineName() + File.separatorChar;
-    }
-
-    /**
-     * Where the user's properties file is
-     */
-    private static String getPropertiesPath() {
-        return getActiveMachineDir() + propsFile;
+    public static File getActiveMachineDir() {
+        return new File(getReprapRootDir(), getActiveMachineName());
     }
 
     /**
@@ -147,33 +141,76 @@ public class Preferences {
         return sysConfig;
     }
 
-    /**
-     * Where the user's build-base STL file is
-     */
-    public static String getBasePath() {
-        return getActiveMachineDir() + BASE_FILE;
+    public static String getDefaultPropsFile() {
+        return propsFile;
+    }
+
+    private final Properties mainPreferences = new Properties();
+    private final Set<PreferenceChangeListener> listeners = new HashSet<>();
+
+    private Preferences() {
+        loadConfiguration(propsFile);
+    }
+
+    public double gridResultion() {
+        return GRID_RESOLUTION;
+    }
+
+    public double tinyValue() {
+        return TINY;
+    }
+
+    public double getMachineResolution() {
+        return MACHINE_RESOLUTION;
+    }
+
+    public double inchesToMillimeters() {
+        return INCH_TO_MM;
+    }
+
+    private void load(final File mainFile) {
+        mainPreferences.clear();
+        try {
+            final InputStream preferencesStream = new FileInputStream(mainFile);
+            try {
+                mainPreferences.load(preferencesStream);
+            } finally {
+                preferencesStream.close();
+            }
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public File getBuildBaseStlFile() {
+        return new File(getActiveMachineDir(), BASE_FILE);
     }
 
     /**
      * Where the user's GCode prologue file is
      */
-    public static String getProloguePath() {
-        return getActiveMachineDir() + PROLOGUE_FILE;
+    public File getPrologueFile() {
+        return new File(getActiveMachineDir(), PROLOGUE_FILE);
     }
 
     /**
      * Where the user's GCode epilogue file is
      */
-    public static String getEpiloguePath() {
-        return getActiveMachineDir() + EPILOGUE_FILE;
+    public File getEpilogueFile() {
+        return new File(getActiveMachineDir(), EPILOGUE_FILE);
     }
 
     /**
      * Compare the user's preferences with the distribution one and report any
      * different names.
      */
-    private void comparePreferences() throws IOException {
-        final Properties sysPreferences = loadSystemProperties();
+    private void comparePreferences() {
+        final Properties sysPreferences;
+        try {
+            sysPreferences = loadSystemProperties();
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
 
         final Enumeration<?> usersLot = mainPreferences.propertyNames();
         final Enumeration<?> distLot = sysPreferences.propertyNames();
@@ -229,129 +266,65 @@ public class Preferences {
     }
 
     private Properties loadSystemProperties() throws IOException {
-        final Properties systemProperties = new Properties();
         final String systemPropertiesPath = PROPERTIES_DIR_DISTRIBUTION + "/" + getActiveMachineName() + "/" + propsFile;
         final URL sysProperties = ClassLoader.getSystemResource(systemPropertiesPath);
-        if (sysProperties != null) {
-            final InputStream sysPropStream = sysProperties.openStream();
-            try {
-                systemProperties.load(sysPropStream);
-            } finally {
-                sysPropStream.close();
-            }
-        } else {
-            Debug.getInstance().errorMessage("Can't find system properties: " + systemPropertiesPath);
+        final InputStream sysPropStream = sysProperties.openStream();
+        try {
+            final Properties systemProperties = new Properties();
+            systemProperties.load(sysPropStream);
+            return systemProperties;
+        } finally {
+            sysPropStream.close();
         }
-        return systemProperties;
     }
 
-    private void save() throws FileNotFoundException, IOException {
-        final String savePath = getPropertiesPath();
-        final File f = new File(savePath);
-        if (!f.exists()) {
-            f.createNewFile();
+    public void save() throws FileNotFoundException, IOException {
+        final OutputStream output = new FileOutputStream(new File(getActiveMachineDir(), propsFile));
+        try {
+            mainPreferences.store(output,
+                    "RepRap machine parameters. See http://reprap.org/wiki/Java_Software_Preferences_File");
+        } finally {
+            output.close();
         }
-
-        final OutputStream output = new FileOutputStream(f);
-        mainPreferences.store(output, "RepRap machine parameters. See http://reprap.org/wiki/Java_Software_Preferences_File");
-
         notifyPreferenceChangeListeners();
     }
 
+    public void registerPreferenceChangeListener(final PreferenceChangeListener listener) {
+        listeners.add(listener);
+    }
+
     private void notifyPreferenceChangeListeners() throws IOException {
-        Main.gui.getPrinter().refreshPreferences();
-        Debug.refreshPreferences(loadGlobalBool("Debug"), false);
-    }
-
-    private String loadString(final String name) {
-        if (mainPreferences.containsKey(name)) {
-            return mainPreferences.getProperty(name);
+        for (final PreferenceChangeListener listener : listeners) {
+            listener.refreshPreferences(this);
         }
-        Debug.getInstance().errorMessage(
-                "RepRap preference: " + name + " not found in your preference file: " + getPropertiesPath());
-        return null;
+        Debug.refreshPreferences(getInstance().loadBool("Debug"), false);
     }
 
-    private int loadInt(final String name) {
-        final String strVal = loadString(name);
-        return Integer.parseInt(strVal);
-    }
-
-    private double loadDouble(final String name) {
-        final String strVal = loadString(name);
-        return Double.parseDouble(strVal);
-    }
-
-    private boolean loadBool(final String name) {
-        final String strVal = loadString(name);
-        if (strVal == null) {
-            return false;
+    public String loadString(final String name) {
+        if (!mainPreferences.containsKey(name)) {
+            Debug.getInstance().errorMessage(
+                    "RepRap preference: " + name + " not found in your preference file: " + getActiveMachineDir() + propsFile);
         }
-        if (strVal.length() == 0) {
-            return false;
-        }
-        if (strVal.compareToIgnoreCase("true") == 0) {
-            return true;
-        }
-        return false;
+        return mainPreferences.getProperty(name);
     }
 
-    public static synchronized boolean loadConfig(final String configName) {
-        propsFile = configName;
-
-        try {
-            globalPrefs = new Preferences();
-            return true;
-        } catch (final IOException e) {
-            return false;
-        }
+    public int loadInt(final String name) {
+        return Integer.parseInt(loadString(name));
     }
 
-    synchronized private static void initIfNeeded() throws IOException {
-        if (globalPrefs == null) {
-            globalPrefs = new Preferences();
-
-            // first thing (after we have set globalPrefs): apply the loaded debug preferences
-            Debug.refreshPreferences(loadGlobalBool("Debug"), false);
-            globalPrefs.comparePreferences();
-        }
+    public double loadDouble(final String name) {
+        return Double.parseDouble(loadString(name));
     }
 
-    public static String loadGlobalString(final String name) throws IOException {
-        initIfNeeded();
-        return globalPrefs.loadString(name);
+    public boolean loadBool(final String name) {
+        return "true".equalsIgnoreCase(loadString(name));
     }
 
-    public static int loadGlobalInt(final String name) throws IOException {
-        initIfNeeded();
-        return globalPrefs.loadInt(name);
+    public void loadConfiguration(final String fileName) {
+        load(new File(getActiveMachineDir(), fileName));
     }
 
-    public static double loadGlobalDouble(final String name) throws IOException {
-        initIfNeeded();
-        return globalPrefs.loadDouble(name);
-    }
-
-    public static boolean loadGlobalBool(final String name) throws IOException {
-        initIfNeeded();
-        return globalPrefs.loadBool(name);
-    }
-
-    public static synchronized void saveGlobal() throws IOException {
-        initIfNeeded();
-        globalPrefs.save();
-    }
-
-    public static String getDefaultPropsFile() {
-        return propsFile;
-    }
-
-    public static void setGlobalString(final String name, final String value) throws IOException {
-        initIfNeeded();
-        globalPrefs.setString(name, value);
-    }
-
-    private void setString(final String name, final String value) {
+    public void setString(final String name, final String value) {
         mainPreferences.setProperty(name, value);
     }
 
@@ -371,7 +344,6 @@ public class Preferences {
     }
 
     public static String[] startsWith(final String prefix) throws IOException {
-        initIfNeeded();
         final Enumeration<?> allOfThem = globalPrefs.mainPreferences.propertyNames();
         final List<String> r = new ArrayList<String>();
 
@@ -391,7 +363,6 @@ public class Preferences {
     }
 
     public static String[] notStartsWith(final String prefix) throws IOException {
-        initIfNeeded();
         final Enumeration<?> allOfThem = globalPrefs.mainPreferences.propertyNames();
         final List<String> r = new ArrayList<String>();
 
@@ -411,15 +382,7 @@ public class Preferences {
         return result;
     }
 
-    public static Appearance unselectedApp() {
-        Color3f unselectedColour = null;
-        try {
-            unselectedColour = new Color3f((float) 0.3, (float) 0.3, (float) 0.3);
-        } catch (final Exception ex) {
-            ex.printStackTrace();
-        }
-        final Appearance unselectedApp = new Appearance();
-        unselectedApp.setMaterial(new Material(unselectedColour, BLACK, unselectedColour, BLACK, 0f));
-        return unselectedApp;
+    public static Preferences getInstance() {
+        return globalPrefs;
     }
 }

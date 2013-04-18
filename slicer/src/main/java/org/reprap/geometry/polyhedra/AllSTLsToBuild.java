@@ -537,7 +537,7 @@ public class AllSTLsToBuild {
         temp = edges.get(0);
         edges.set(0, edges.get(swap));
         edges.set(swap, temp);
-        if (Math.sqrt(d) < Preferences.gridRes()) {
+        if (Math.sqrt(d) < Preferences.getInstance().gridResultion()) {
             Debug.getInstance().debugMessage("AllSTLsToBuild.startLong(): edge length: " + Math.sqrt(d) + " is the longest.");
         }
     }
@@ -759,20 +759,15 @@ public class AllSTLsToBuild {
             Debug.getInstance().errorMessage("AllSTLsToBuild.setUpShield() called when frozen!");
         }
 
-        try {
-            if (!Preferences.loadGlobalBool("Shield")) {
-                return;
-            }
-        } catch (final IOException e) {
-            Debug.getInstance().errorMessage(e.toString());
+        if (!Preferences.getInstance().loadBool("Shield")) {
+            return;
         }
 
         setBoxes();
         final double modelZMax = maxZ();
 
         final STLObject s = new STLObject();
-        final Attributes att = s.addSTL(Preferences.getActiveMachineDir() + "shield.stl", null, Preferences.unselectedApp(),
-                null);
+        final Attributes att = s.addSTL(new File(Preferences.getActiveMachineDir(), "shield.stl"), null, null, null);
 
         final Vector3d shieldSize = s.extent();
 
@@ -927,7 +922,7 @@ public class AllSTLsToBuild {
 
                 if (pgl.size() > 0) {
                     // Remove wrinkles
-                    pgl = pgl.simplify(Preferences.gridRes() * 1.5);
+                    pgl = pgl.simplify(Preferences.getInstance().gridResultion() * 1.5);
 
                     // Fix small radii
                     pgl = AllSTLsToBuild.arcCompensate(pgl);
@@ -1170,7 +1165,7 @@ public class AllSTLsToBuild {
 
         // Multiply the geometrically correct result by factor
         final double factor = e.getArcCompensationFactor();
-        if (factor < Preferences.tiny()) {
+        if (factor < Preferences.getInstance().tinyValue()) {
             return polygon;
         }
 

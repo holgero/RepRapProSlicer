@@ -48,7 +48,7 @@ public class CSGReader {
      * The constructor just checks the file and loads the CSG expression into a
      * String.
      */
-    public CSGReader(final String fileName) {
+    public CSGReader(final File fileName) {
         csgAvailable = readModel(fileName);
     }
 
@@ -105,8 +105,8 @@ public class CSGReader {
      * Read a CSG model from OpenSCAD into a string. Remove the line numbers
      * ("n12:" etc), and all white space.
      */
-    private boolean readModel(final String STLfileName) {
-        final String fileName = CSGFileExists(STLfileName);
+    private boolean readModel(final File stlfile) {
+        final String fileName = CSGFileExists(stlfile.getAbsolutePath());
         if (fileName == null) {
             return false;
         }

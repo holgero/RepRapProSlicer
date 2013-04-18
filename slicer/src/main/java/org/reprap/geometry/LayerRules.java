@@ -3,7 +3,6 @@ package org.reprap.geometry;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.IOException;
 import java.io.PrintStream;
 
 import org.reprap.attributes.Preferences;
@@ -150,7 +149,7 @@ public class LayerRules {
     /**
      * The point at which to purge extruders
      */
-    private Point2D purge;
+    private final Point2D purge;
 
     /**
      * The length of the purge trail in mm
@@ -171,11 +170,8 @@ public class LayerRules {
         astls.setBoxes();
         astls.setLayerRules(this);
 
-        try {
-            purge = new Point2D(Preferences.loadGlobalDouble("DumpX(mm)"), Preferences.loadGlobalDouble("DumpY(mm)"));
-        } catch (final IOException e) {
-            Debug.getInstance().errorMessage(e.toString());
-        }
+        purge = new Point2D(Preferences.getInstance().loadDouble("DumpX(mm)"), Preferences.getInstance()
+                .loadDouble("DumpY(mm)"));
 
         Rectangle gp = astls.ObjectPlanRectangle();
         bBox = new Rectangle(new Point2D(gp.x().low() - 6, gp.y().low() - 6), new Point2D(gp.x().high() + 6, gp.y().high() + 6));
@@ -557,7 +553,7 @@ public class LayerRules {
                         getPrinter().getFastXYFeedrate(), true);
                 copyFile(fileOutStream, getLayerFileName(machineLayer));
 
-                if (Preferences.loadGlobalBool("RepRapAccelerations")) {
+                if (Preferences.getInstance().loadBool("RepRapAccelerations")) {
                     getPrinter().singleMove(getLastPoint(machineLayer).x(), getLastPoint(machineLayer).y(), machineZ,
                             getPrinter().getSlowXYFeedrate(), false);
                 } else {

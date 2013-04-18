@@ -167,9 +167,7 @@ public class PrintTabFrame extends JInternalFrame {
         currentLayerOutOfN = new JLabel();
         progressBar = new JProgressBar();
         fileNameBox = new JLabel();
-
         displayPathsCheck = new JCheckBox();
-        displayPaths(false);
 
         sliceButton.setBackground(new java.awt.Color(51, 204, 0));
         sliceButton.setFont(sliceButton.getFont());
@@ -280,13 +278,6 @@ public class PrintTabFrame extends JInternalFrame {
         });
 
         displayPathsCheck.setText("Show paths when slicing");
-        displayPathsCheck.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(final java.awt.event.MouseEvent evt) {
-                displayPathsCheckMouseClicked();
-            }
-        });
-
         createLayout(variablesButton, helpButton, exitButton, getWebPage, expectedBuildTimeLabel, filesLabel,
                 expectedFinishTimeLabel, changeMachineLabel, progressLabel);
     }
@@ -662,19 +653,15 @@ public class PrintTabFrame extends JInternalFrame {
         org.reprap.Main.gui.saveSCAD(loadedFiles.substring(0, sp));
     }
 
-    private void displayPaths(final boolean disp) {
-        org.reprap.attributes.Preferences.setSimulate(disp);
-    }
-
-    private void displayPathsCheckMouseClicked() {
-        displayPaths(displayPathsCheck.isSelected());
-    }
-
     private void enableSLoad() {
         SLoadOK = true;
         loadSTL.setBackground(new java.awt.Color(0, 204, 255));
         loadRFO.setBackground(new java.awt.Color(0, 204, 255));
         saveRFO.setBackground(new java.awt.Color(0, 204, 255));
         saveSCAD.setBackground(new java.awt.Color(0, 204, 255));
+    }
+
+    public boolean displayPaths() {
+        return displayPathsCheck.isEnabled();
     }
 }

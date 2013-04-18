@@ -556,7 +556,7 @@ public class Polygon {
      */
     private void outsideHull(final List<Integer> inConsideration, final CSG2D hull) {
         Point2D p;
-        final double small = Math.sqrt(Preferences.tiny());
+        final double small = Math.sqrt(Preferences.getInstance().tinyValue());
         for (int i = inConsideration.size() - 1; i >= 0; i--) {
             p = listPoint(i, inConsideration);
             if (hull.value(p) <= small) {

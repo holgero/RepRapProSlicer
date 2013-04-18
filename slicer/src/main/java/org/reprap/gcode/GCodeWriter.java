@@ -60,25 +60,21 @@ public class GCodeWriter {
     /**
      * Copy a file of G Codes straight to output - generally used for canned
      * cycles
+     * 
+     * @throws IOException
      */
-    public void copyFile(final String fileName) {
-        final File f = new File(fileName);
-        if (!f.exists()) {
-            Debug.getInstance().errorMessage("GCodeReaderAndWriter().copyFile: can't find file " + fileName);
+    public void copyFile(final File file) throws IOException {
+        if (!file.exists()) {
+            Debug.getInstance().errorMessage("GCodeReaderAndWriter().copyFile: can't find file " + file.getAbsolutePath());
             return;
         }
-        try {
-            final FileReader fr = new FileReader(f);
-            final BufferedReader br = new BufferedReader(fr);
-            String s;
-            while ((s = br.readLine()) != null) {
-                queue(s);
-            }
-            fr.close();
-        } catch (final Exception e) {
-            Debug.getInstance().errorMessage("GCodeReaderAndWriter().copyFile: exception reading file " + fileName);
-            return;
+        final FileReader fr = new FileReader(file);
+        final BufferedReader br = new BufferedReader(fr);
+        String s;
+        while ((s = br.readLine()) != null) {
+            queue(s);
         }
+        fr.close();
     }
 
     public String setGCodeFileForOutput(final boolean topDown, final String fileRoot) {

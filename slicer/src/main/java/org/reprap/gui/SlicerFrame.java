@@ -31,7 +31,7 @@ public class SlicerFrame extends JFrame {
     }
 
     private void checkPrefs() throws IOException {
-        extruderCount = Preferences.loadGlobalInt("NumberOfExtruders");
+        extruderCount = Preferences.getInstance().loadInt("NumberOfExtruders");
         if (extruderCount < 1) {
             throw new RuntimeException("A Reprap printer must contain at least one extruder");
         }
@@ -59,5 +59,9 @@ public class SlicerFrame extends JFrame {
 
     public void updateProgress() {
         printTabFrame1.updateProgress();
+    }
+
+    public boolean displayPaths() {
+        return printTabFrame1.displayPaths();
     }
 }

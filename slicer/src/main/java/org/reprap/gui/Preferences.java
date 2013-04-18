@@ -59,14 +59,14 @@ public class Preferences extends JFrame {
      * Get the value corresponding to name from the preferences file
      */
     private String loadString(final String name) throws IOException {
-        return org.reprap.attributes.Preferences.loadGlobalString(name);
+        return org.reprap.attributes.Preferences.getInstance().loadString(name);
     }
 
     /**
      * Save the value corresponding to name to the preferences file
      */
     private void saveString(final String name, final String value) throws IOException {
-        org.reprap.attributes.Preferences.setGlobalString(name, value);
+        org.reprap.attributes.Preferences.getInstance().setString(name, value);
     }
 
     private void updatePreferencesValues() {
@@ -119,7 +119,7 @@ public class Preferences extends JFrame {
                 }
             }
 
-            org.reprap.attributes.Preferences.saveGlobal();
+            org.reprap.attributes.Preferences.getInstance().save();
         } catch (final Exception ex) {
             JOptionPane.showMessageDialog(null, "Saving preferences: " + ex);
             ex.printStackTrace();
@@ -228,10 +228,10 @@ public class Preferences extends JFrame {
                 public void actionPerformed(final ActionEvent e) {
                     if ("comboBoxChanged".equals(e.getActionCommand())) {
                         final String configToLoad = (String) configfileList.getSelectedItem() + ".properties";
-                        final String configPath = org.reprap.attributes.Preferences.getUsersRootDir() + configToLoad;
-                        if ((new File(configPath)).exists()) {
+                        final File configFile = new File(org.reprap.attributes.Preferences.getReprapRootDir(), configToLoad);
+                        if (configFile.exists()) {
                             Debug.getInstance().debugMessage("loading config " + configToLoad);
-                            org.reprap.attributes.Preferences.loadConfig(configToLoad);
+                            org.reprap.attributes.Preferences.getInstance().loadConfiguration(configToLoad);
                             updatePreferencesValues();
                         }
                     }
@@ -244,12 +244,11 @@ public class Preferences extends JFrame {
                 @Override
                 public void actionPerformed(final ActionEvent e) {
                     final String configToLoad = (String) configfileList.getSelectedItem() + ".properties";
-                    final String configPath = org.reprap.attributes.Preferences.getUsersRootDir() + configToLoad;
-                    final File configFileObj = new File(configPath);
+                    final File configFileObj = new File(org.reprap.attributes.Preferences.getReprapRootDir(), configToLoad);
                     if (!configFileObj.exists()) {
                         configfileList.addItem((String) configfileList.getSelectedItem());
                         Debug.getInstance().printMessage("loading config " + configToLoad);
-                        org.reprap.attributes.Preferences.loadConfig(configToLoad);
+                        org.reprap.attributes.Preferences.getInstance().loadConfiguration(configToLoad);
                         updatePreferencesValues();
                     }
                 }
@@ -261,10 +260,9 @@ public class Preferences extends JFrame {
                 public void actionPerformed(final ActionEvent e) {
                     String configToDelete = (String) configfileList.getSelectedItem() + ".properties";
                     if (!configToDelete.equals("reprap.properties")) {
-                        final String configPath = org.reprap.attributes.Preferences.getUsersRootDir() + configToDelete;
-                        final File configFileObj = new File(configPath);
-                        if (configFileObj.exists()) {
-                            configFileObj.delete();
+                        final File configFile = new File(org.reprap.attributes.Preferences.getReprapRootDir(), configToDelete);
+                        if (configFile.exists()) {
+                            configFile.delete();
                             configfileList.removeItem(configfileList.getSelectedItem());
                             updatePreferencesValues();
                         } else {

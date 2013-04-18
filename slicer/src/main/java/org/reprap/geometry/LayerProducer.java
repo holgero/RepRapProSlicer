@@ -32,7 +32,7 @@ class LayerProducer {
         if (simulationPlot != null) {
             if (!simulationPlot.isInitialised()) {
                 final Rectangle rec = lc.getBox();
-                if (Preferences.loadGlobalBool("Shield")) {
+                if (Preferences.getInstance().loadBool("Shield")) {
                     rec.expand(Point2D.add(rec.sw(), new Point2D(-7, -7))); // TODO: Yuk - this should be a parameter
                 }
                 simulationPlot.init(rec, "" + lc.getModelLayer() + " (z=" + lc.getModelZ() + ")");
@@ -169,7 +169,7 @@ class LayerProducer {
             plotDist += Point2D.d(lastPoint, n);
             lastPoint = n;
         }
-        if (plotDist < Preferences.machineResolution() * 0.5) {
+        if (plotDist < Preferences.getInstance().getMachineResolution() * 0.5) {
             Debug.getInstance().debugMessage("Rejected line with " + polygon.size() + " points, length: " + plotDist);
             return;
         }
@@ -180,7 +180,7 @@ class LayerProducer {
         if (firstOneInLayer) {
             // The next line tells the printer that it is already at the first point.  It is not, but code will be added just before this
             // to put it there by the LayerRules function that reverses the top-down order of the layers.
-            if (Preferences.loadGlobalBool("RepRapAccelerations")) {
+            if (Preferences.getInstance().loadBool("RepRapAccelerations")) {
                 printer.singleMove(polygon.point(0).x(), polygon.point(0).y(), currentZ, printer.getSlowXYFeedrate(), false);
             } else {
                 printer.singleMove(polygon.point(0).x(), polygon.point(0).y(), currentZ, printer.getFastXYFeedrate(), false);
@@ -232,7 +232,7 @@ class LayerProducer {
         }
 
         final boolean acc = extruder.getMaxAcceleration() > 0;
-        if (acc | (!Preferences.loadGlobalBool("RepRapAccelerations"))) {
+        if (acc | (!Preferences.getInstance().loadBool("RepRapAccelerations"))) {
             currentFeedrate = extrusionPath.speed(0);
         } else {
             final double outlineFeedrate = extruder.getOutlineFeedrate();
@@ -303,11 +303,7 @@ class LayerProducer {
     public static ExtrusionPath toExtrusionPath(final Polygon polygon, final double airSpeed, final double minSpeed,
             final double maxSpeed, final double acceleration) {
         final boolean reprapAccelerations;
-        try {
-            reprapAccelerations = Preferences.loadGlobalBool("RepRapAccelerations");
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
-        }
+        reprapAccelerations = Preferences.getInstance().loadBool("RepRapAccelerations");
 
         final ExtrusionPath result = new ExtrusionPath(polygon);
 

@@ -1,7 +1,6 @@
 package org.reprap.geometry;
 
 import org.reprap.attributes.Attributes;
-import org.reprap.attributes.Preferences;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.BooleanGrid;
@@ -34,7 +33,7 @@ public class Producer {
         layerRules = new LayerRules(pr, allSTLs, true, bld);
         pr.setLayerRules(layerRules);
 
-        if (Preferences.simulate()) {
+        if (slicerFrame.displayPaths()) {
             simulationPlot = new SimulationPlotter("RepRap building simulation");
         } else {
             simulationPlot = null;

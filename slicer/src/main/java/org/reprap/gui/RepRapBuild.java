@@ -93,6 +93,7 @@ import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.File;
 import java.io.IOException;
 
 import javax.media.j3d.AmbientLight;
@@ -120,6 +121,7 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 import org.reprap.attributes.Attributes;
+import org.reprap.attributes.PreferenceChangeListener;
 import org.reprap.attributes.Preferences;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
@@ -135,14 +137,14 @@ import com.sun.j3d.utils.picking.PickTool;
  * working volume, allows you to put STL-file objects in it, move them about to
  * arrange them, and build them in the machine.
  */
-public class RepRapBuild extends JPanel implements MouseListener {
+public class RepRapBuild extends JPanel implements MouseListener, PreferenceChangeListener {
     private static final long serialVersionUID = 1L;
     private MouseObject mouse = null;
     private PickCanvas pickCanvas = null; // The thing picked by a mouse click
     private STLObject lastPicked = null; // The last thing picked
     private final AllSTLsToBuild stls;
     private boolean reordering;
-    private String wv_location = null;
+    private File wv_location = null;
     private double mouse_tf = 50;
     private double mouse_zf = 50;
     private double xwv = 300;
@@ -224,10 +226,8 @@ public class RepRapBuild extends JPanel implements MouseListener {
         // Load the STL file for the working volume
         world = new STLObject(wv_and_stls);
 
-        final String stlFile = getStlBackground();
-
         workingVolume = new STLObject();
-        workingVolume.addSTL(stlFile, wv_offset, wv_app, null);
+        workingVolume.addSTL(getStlBackground(), wv_offset, wv_app, null);
         wv_and_stls.addChild(workingVolume.top());
 
         // Set the mouse to move everything
@@ -298,7 +298,7 @@ public class RepRapBuild extends JPanel implements MouseListener {
         if (number <= 0) {
             return;
         }
-        final String fileName = original.fileAndDirectioryItCameFrom(0);
+        final File file = original.fileAndDirectioryItCameFrom(0);
         final double increment = original.extent().x + 5;
         final Vector3d offset = new Vector3d();
         offset.x = increment;
@@ -306,7 +306,7 @@ public class RepRapBuild extends JPanel implements MouseListener {
         offset.z = 0;
         for (int i = 0; i < number; i++) {
             final STLObject stl = new STLObject();
-            final Attributes newAtt = stl.addSTL(fileName, null, original.getAppearance(), null);
+            final Attributes newAtt = stl.addSTL(file, null, original.getAppearance(), null);
             if (newAtt != null) {
                 newAtt.setMaterial(originalAttributes.getMaterial());
                 stl.translate(offset);
@@ -319,12 +319,12 @@ public class RepRapBuild extends JPanel implements MouseListener {
         }
     }
 
-    public void anotherSTLFile(final String s, final boolean centre) {
-        if (s == null) {
+    public void anotherSTLFile(final File file, final boolean centre) {
+        if (file == null) {
             return;
         }
         final STLObject stl = new STLObject();
-        final Attributes att = stl.addSTL(s, null, Preferences.unselectedApp(), lastPicked);
+        final Attributes att = stl.addSTL(file, null, null, lastPicked);
         if (lastPicked == null && centre) {
 
             final Point2D middle = Point2D.mul(0.5, new Point2D(200, 200));
@@ -368,13 +368,13 @@ public class RepRapBuild extends JPanel implements MouseListener {
     }
 
     // Callback for when the user selects an RFO file to load
-    public void addRFOFile(final String s) {
-        if (s == null) {
+    public void addRFOFile(final File file) {
+        if (file == null) {
             return;
         }
         AllSTLsToBuild newStls;
         try {
-            newStls = RFO.load(s);
+            newStls = RFO.load(file.getAbsolutePath());
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
@@ -488,30 +488,8 @@ public class RepRapBuild extends JPanel implements MouseListener {
         }
     }
 
-    private void refreshPreferences() throws IOException {
-        // Set everything up from the properties file
-        // All this needs to go into Preferences.java
-        wv_location = Preferences.getBasePath();
-        mouse_tf = 50;
-        mouse_zf = 50;
-        RadiusFactor = 0.7;
-        BackFactor = 2.0;
-        FrontFactor = 0.001;
-        BoundFactor = 3.0;
-
-        xwv = Preferences.loadGlobalDouble("WorkingX(mm)");
-        ywv = Preferences.loadGlobalDouble("WorkingY(mm)");
-        zwv = Preferences.loadGlobalDouble("WorkingZ(mm)");
-
-        wv_offset = new Vector3d(0, 0, 0);
-
-        bgColour = new Color3f((float) 0.9, (float) 0.9, (float) 0.9);
-        selectedColour = new Color3f((float) 0.6, (float) 0.2, (float) 0.2);
-        machineColour = new Color3f((float) 0.3, (float) 0.3, (float) 0.3);
-    }
-
     private void initialise() throws IOException {
-        refreshPreferences();
+        refreshPreferences(Preferences.getInstance());
         picked_app = new Appearance();
         picked_app.setMaterial(new Material(selectedColour, RepRapBuild.black, selectedColour, RepRapBuild.black, 0f));
 
@@ -657,8 +635,28 @@ public class RepRapBuild extends JPanel implements MouseListener {
         return tgArray;
     }
 
-    private String getStlBackground() {
+    private File getStlBackground() {
         return wv_location;
+    }
+
+    @Override
+    public void refreshPreferences(final Preferences newPreferences) {
+        // TODO Set everything up from the properties file
+        // TODO All this needs to go into Preferences.java
+        wv_location = Preferences.getInstance().getBuildBaseStlFile();
+        mouse_tf = 50;
+        mouse_zf = 50;
+        RadiusFactor = 0.7;
+        BackFactor = 2.0;
+        FrontFactor = 0.001;
+        BoundFactor = 3.0;
+        xwv = Preferences.getInstance().loadDouble("WorkingX(mm)");
+        ywv = Preferences.getInstance().loadDouble("WorkingY(mm)");
+        zwv = Preferences.getInstance().loadDouble("WorkingZ(mm)");
+        wv_offset = new Vector3d(0, 0, 0);
+        bgColour = new Color3f((float) 0.9, (float) 0.9, (float) 0.9);
+        selectedColour = new Color3f((float) 0.6, (float) 0.2, (float) 0.2);
+        machineColour = new Color3f((float) 0.3, (float) 0.3, (float) 0.3);
     }
 
 }

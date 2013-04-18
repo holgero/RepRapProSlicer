@@ -17,7 +17,7 @@ public class Circle {
         final Point2D lk = Point2D.sub(l, k);
         final Point2D mk = Point2D.sub(m, k);
         final double det = Point2D.op(lk, mk);
-        if (Math.abs(det) < Preferences.tiny()) {
+        if (Math.abs(det) < Preferences.getInstance().tinyValue()) {
             throw new ParallelException("RrCircle: colinear points.");
         }
         final double lk2 = Point2D.mul(lk, lk);

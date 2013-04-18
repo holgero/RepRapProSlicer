@@ -26,7 +26,7 @@ public class GCodeExtruder {
      * Flag to decide if the machine implements 4D extruding (i.e. it processes
      * extrude lengths along with X, Y, and Z lengths in a 4D Bressenham DDA)
      */
-    private boolean fiveD;
+    private final boolean fiveD;
     /**
      * The extrusion width in XY
      */
@@ -170,30 +170,19 @@ public class GCodeExtruder {
     private boolean middleStart;
     private boolean singleLine = false;
     private boolean insideOut = false;
-    /**
-     * Our printer object.
-     */
     private final GCodePrinter printer;
 
-    /**
-     * @param prefs
-     * @param extruderId
-     */
     public GCodeExtruder(final GCodeWriter writer, final int extruderId, final GCodePrinter p) {
-        printer = p;
-        try {
-            fiveD = Preferences.loadGlobalBool("FiveD");
-        } catch (final Exception e) {
-            fiveD = false;
-        }
+        gcode = writer;
         myExtruderID = extruderId;
+        printer = p;
+        fiveD = Preferences.getInstance().loadBool("FiveD");
         separating = false;
         es = new ExtruderState(refreshPreferences());
         es.setReverse(false);
         final double delay = getExtrusionReverseDelay(); // when we are first called (top down calculation means at our top layer) the
         es.setRetraction(es.retraction() + delay); // layer below will have reversed us at its end on the way up in the actual build.
         es.setSpeed(0);
-        gcode = writer;
     }
 
     /**
@@ -215,7 +204,7 @@ public class GCodeExtruder {
             return;
         }
         String s;
-        if (speed < Preferences.tiny()) {
+        if (speed < Preferences.getInstance().tinyValue()) {
             if (!fiveD) {
                 s = "M103";
                 if (Debug.getInstance().isDebug()) {
@@ -310,66 +299,62 @@ public class GCodeExtruder {
         final String prefName = preferencePrefix();
         int result = -1;
         try {
-            result = Preferences.loadGlobalInt(prefName + "Address");
-            extrusionSize = Preferences.loadGlobalDouble(prefName + "ExtrusionSize(mm)");
-            extrusionHeight = Preferences.loadGlobalDouble(prefName + "ExtrusionHeight(mm)");
-            extrusionInfillWidth = Preferences.loadGlobalDouble(prefName + "ExtrusionInfillWidth(mm)");
+            result = Preferences.getInstance().loadInt(prefName + "Address");
+            extrusionSize = Preferences.getInstance().loadDouble(prefName + "ExtrusionSize(mm)");
+            extrusionHeight = Preferences.getInstance().loadDouble(prefName + "ExtrusionHeight(mm)");
+            extrusionInfillWidth = Preferences.getInstance().loadDouble(prefName + "ExtrusionInfillWidth(mm)");
             lowerFineLayers = 2;
-            coolingPeriod = Preferences.loadGlobalDouble(prefName + "CoolingPeriod(s)");
-            fastXYFeedrate = Preferences.loadGlobalDouble(prefName + "FastXYFeedrate(mm/minute)");
-            fastEFeedrate = Preferences.loadGlobalDouble(prefName + "FastEFeedrate(mm/minute)");
-            slowXYFeedrate = Preferences.loadGlobalDouble(prefName + "SlowXYFeedrate(mm/minute)");
-            maxAcceleration = Preferences.loadGlobalDouble(prefName + "MaxAcceleration(mm/minute/minute)");
-            middleStart = Preferences.loadGlobalBool(prefName + "MiddleStart");
-            iSpeed = Preferences.loadGlobalDouble(prefName + "InfillSpeed(0..1)");
-            oSpeed = Preferences.loadGlobalDouble(prefName + "OutlineSpeed(0..1)");
+            coolingPeriod = Preferences.getInstance().loadDouble(prefName + "CoolingPeriod(s)");
+            fastXYFeedrate = Preferences.getInstance().loadDouble(prefName + "FastXYFeedrate(mm/minute)");
+            fastEFeedrate = Preferences.getInstance().loadDouble(prefName + "FastEFeedrate(mm/minute)");
+            slowXYFeedrate = Preferences.getInstance().loadDouble(prefName + "SlowXYFeedrate(mm/minute)");
+            maxAcceleration = Preferences.getInstance().loadDouble(prefName + "MaxAcceleration(mm/minute/minute)");
+            middleStart = Preferences.getInstance().loadBool(prefName + "MiddleStart");
+            iSpeed = Preferences.getInstance().loadDouble(prefName + "InfillSpeed(0..1)");
+            oSpeed = Preferences.getInstance().loadDouble(prefName + "OutlineSpeed(0..1)");
             asLength = -1;
             asFactor = 0.5;
-            material = Preferences.loadGlobalString(prefName + "MaterialType(name)");
-            supportMaterial = Preferences.loadGlobalString(prefName + "SupportMaterialType(name)");
-            inFillMaterial = Preferences.loadGlobalString(prefName + "InFillMaterialType(name)");
+            material = Preferences.getInstance().loadString(prefName + "MaterialType(name)");
+            supportMaterial = Preferences.getInstance().loadString(prefName + "SupportMaterialType(name)");
+            inFillMaterial = Preferences.getInstance().loadString(prefName + "InFillMaterialType(name)");
             shortLength = -1;
             shortSpeed = 1;
-            infillOverlap = Preferences.loadGlobalDouble(prefName + "InfillOverlap(mm)");
-            extrusionDelayForLayer = Preferences.loadGlobalDouble(prefName + "ExtrusionDelayForLayer(ms)");
-            extrusionDelayForPolygon = Preferences.loadGlobalDouble(prefName + "ExtrusionDelayForPolygon(ms)");
-            extrusionOverRun = Preferences.loadGlobalDouble(prefName + "ExtrusionOverRun(mm)");
-            valveDelayForLayer = Preferences.loadGlobalDouble(prefName + "ValveDelayForLayer(ms)");
-            valveDelayForPolygon = Preferences.loadGlobalDouble(prefName + "ValveDelayForPolygon(ms)");
-            extrusionReverseDelay = Preferences.loadGlobalDouble(prefName + "Reverse(ms)");
-            valveOverRun = Preferences.loadGlobalDouble(prefName + "ValveOverRun(mm)");
+            infillOverlap = Preferences.getInstance().loadDouble(prefName + "InfillOverlap(mm)");
+            extrusionDelayForLayer = Preferences.getInstance().loadDouble(prefName + "ExtrusionDelayForLayer(ms)");
+            extrusionDelayForPolygon = Preferences.getInstance().loadDouble(prefName + "ExtrusionDelayForPolygon(ms)");
+            extrusionOverRun = Preferences.getInstance().loadDouble(prefName + "ExtrusionOverRun(mm)");
+            valveDelayForLayer = Preferences.getInstance().loadDouble(prefName + "ValveDelayForLayer(ms)");
+            valveDelayForPolygon = Preferences.getInstance().loadDouble(prefName + "ValveDelayForPolygon(ms)");
+            extrusionReverseDelay = Preferences.getInstance().loadDouble(prefName + "Reverse(ms)");
+            valveOverRun = Preferences.getInstance().loadDouble(prefName + "ValveOverRun(mm)");
             minLiftedZ = -1;
-            valvePulseTime = 0.5 * Preferences.loadGlobalDouble(prefName + "ValvePulseTime(ms)");
-            shells = Preferences.loadGlobalInt(prefName + "NumberOfShells(0..N)");
-            extrusionFoundationWidth = Preferences.loadGlobalDouble(prefName + "ExtrusionFoundationWidth(mm)");
-            arcCompensationFactor = Preferences.loadGlobalDouble(prefName + "ArcCompensationFactor(0..)");
-            arcShortSides = Preferences.loadGlobalDouble(prefName + "ArcShortSides(0..)");
-            extrudeRatio = Preferences.loadGlobalDouble(prefName + "ExtrudeRatio(0..)");
-            lift = Preferences.loadGlobalDouble(prefName + "Lift(mm)");
+            valvePulseTime = 0.5 * Preferences.getInstance().loadDouble(prefName + "ValvePulseTime(ms)");
+            shells = Preferences.getInstance().loadInt(prefName + "NumberOfShells(0..N)");
+            extrusionFoundationWidth = Preferences.getInstance().loadDouble(prefName + "ExtrusionFoundationWidth(mm)");
+            arcCompensationFactor = Preferences.getInstance().loadDouble(prefName + "ArcCompensationFactor(0..)");
+            arcShortSides = Preferences.getInstance().loadDouble(prefName + "ArcShortSides(0..)");
+            extrudeRatio = Preferences.getInstance().loadDouble(prefName + "ExtrudeRatio(0..)");
+            lift = Preferences.getInstance().loadDouble(prefName + "Lift(mm)");
 
-            evenHatchDirection = Preferences.loadGlobalDouble(prefName + "EvenHatchDirection(degrees)");
-            oddHatchDirection = Preferences.loadGlobalDouble(prefName + "OddHatchDirection(degrees)");
+            evenHatchDirection = Preferences.getInstance().loadDouble(prefName + "EvenHatchDirection(degrees)");
+            oddHatchDirection = Preferences.getInstance().loadDouble(prefName + "OddHatchDirection(degrees)");
 
-            final Color3f col = new Color3f((float) Preferences.loadGlobalDouble(prefName + "ColourR(0..1)"),
-                    (float) Preferences.loadGlobalDouble(prefName + "ColourG(0..1)"),
-                    (float) Preferences.loadGlobalDouble(prefName + "ColourB(0..1)"));
+            final Color3f col = new Color3f((float) Preferences.getInstance().loadDouble(prefName + "ColourR(0..1)"),
+                    (float) Preferences.getInstance().loadDouble(prefName + "ColourG(0..1)"), (float) Preferences.getInstance()
+                            .loadDouble(prefName + "ColourB(0..1)"));
             materialColour = new Appearance();
             materialColour.setMaterial(new Material(col, BLACK, col, BLACK, 101f));
-            surfaceLayers = Preferences.loadGlobalInt(prefName + "SurfaceLayers(0..N)");
-            singleLine = Preferences.loadGlobalBool(prefName + "SingleLine");
-            feedDiameter = Preferences.loadGlobalDouble(prefName + "FeedDiameter(mm)");
-            insideOut = Preferences.loadGlobalBool(prefName + "InsideOut");
+            surfaceLayers = Preferences.getInstance().loadInt(prefName + "SurfaceLayers(0..N)");
+            singleLine = Preferences.getInstance().loadBool(prefName + "SingleLine");
+            feedDiameter = Preferences.getInstance().loadDouble(prefName + "FeedDiameter(mm)");
+            insideOut = Preferences.getInstance().loadBool(prefName + "InsideOut");
         } catch (final Exception ex) {
             Debug.getInstance().errorMessage("Refresh extruder preferences: " + ex.toString());
         }
 
-        if (printer == null) {
-            Debug.getInstance().errorMessage("GenericExtruder(): printer is null!");
-        } else {
-            fastXYFeedrate = Math.min(printer.getFastXYFeedrate(), fastXYFeedrate);
-            slowXYFeedrate = Math.min(printer.getSlowXYFeedrate(), slowXYFeedrate);
-            maxAcceleration = Math.min(printer.getMaxXYAcceleration(), maxAcceleration);
-        }
+        fastXYFeedrate = Math.min(printer.getFastXYFeedrate(), fastXYFeedrate);
+        slowXYFeedrate = Math.min(printer.getSlowXYFeedrate(), slowXYFeedrate);
+        maxAcceleration = Math.min(printer.getMaxXYAcceleration(), maxAcceleration);
 
         return result;
     }
@@ -453,7 +438,7 @@ public class GCodeExtruder {
         if (separating) {
             return 3000;
         } else {
-            return Preferences.loadGlobalDouble(preferencePrefix() + "ExtrusionSpeed(mm/minute)");
+            return Preferences.getInstance().loadDouble(preferencePrefix() + "ExtrusionSpeed(mm/minute)");
         }
 
     }
@@ -784,9 +769,9 @@ public class GCodeExtruder {
         final String prefName = "Extruder" + n + "_";
         Color3f col = null;
         try {
-            col = new Color3f((float) Preferences.loadGlobalDouble(prefName + "ColourR(0..1)"),
-                    (float) Preferences.loadGlobalDouble(prefName + "ColourG(0..1)"),
-                    (float) Preferences.loadGlobalDouble(prefName + "ColourB(0..1)"));
+            col = new Color3f((float) Preferences.getInstance().loadDouble(prefName + "ColourR(0..1)"), (float) Preferences
+                    .getInstance().loadDouble(prefName + "ColourG(0..1)"), (float) Preferences.getInstance().loadDouble(
+                    prefName + "ColourB(0..1)"));
         } catch (final Exception ex) {
             Debug.getInstance().errorMessage(ex.toString());
         }

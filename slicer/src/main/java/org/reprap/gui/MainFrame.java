@@ -60,6 +60,7 @@ public class MainFrame extends JFrame {
         final Box builderFrame = new Box(BoxLayout.Y_AXIS);
         builderFrame.add(new JLabel("Arrange items to print on the build bed"));
         builder = new RepRapBuild();
+        org.reprap.attributes.Preferences.getInstance().registerPreferenceChangeListener(builder);
         builderFrame.setMinimumSize(new Dimension(0, 0));
         builderFrame.add(builder);
         builderFrame.setPreferredSize(new Dimension(1000, 800));

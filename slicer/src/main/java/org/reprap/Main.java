@@ -10,6 +10,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
+import org.reprap.attributes.Preferences;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.Producer;
 import org.reprap.gui.MainFrame;
@@ -34,6 +35,7 @@ public class Main {
         final FileFilter filter = new ExtensionFileFilter("STL", new String[] { "STL" });
         chooser.setFileFilter(filter);
         printer = new GCodePrinter();
+        Preferences.getInstance().registerPreferenceChangeListener(printer);
     }
 
     private void createAndShowGUI() throws IOException {
@@ -42,7 +44,7 @@ public class Main {
         JPopupMenu.setDefaultLightWeightPopupEnabled(false);
 
         mainFrame = new MainFrame();
-        slicerFrame = new SlicerFrame(gui.mainFrame);
+        slicerFrame = new SlicerFrame(mainFrame);
     }
 
     public GCodePrinter getPrinter() {
@@ -87,8 +89,7 @@ public class Main {
     }
 
     public File onOpen(final String description, final String[] extensions, final String defaultRoot) {
-        String result = null;
-        File f;
+        File result;
         final FileFilter filter = new ExtensionFileFilter(description, extensions);
 
         chooser.setFileFilter(filter);
@@ -99,15 +100,14 @@ public class Main {
 
         final int returnVal = chooser.showOpenDialog(null);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            f = chooser.getSelectedFile();
-            result = f.getAbsolutePath();
+            result = chooser.getSelectedFile();
             if (extensions[0].toUpperCase().contentEquals("RFO")) {
                 mainFrame.getBuilder().addRFOFile(result);
             }
             if (extensions[0].toUpperCase().contentEquals("STL")) {
                 mainFrame.getBuilder().anotherSTLFile(result, true);
             }
-            return f;
+            return result;
         }
         return null;
     }
