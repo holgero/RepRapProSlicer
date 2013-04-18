@@ -216,17 +216,7 @@ public class Preferences extends JFrame {
         setSize(400, 500);
         try {
             final JPanel panel = new JPanel();
-            String[] configfiles = { "reprap.properties" };
-            final File dir = new File(org.reprap.attributes.Preferences.getMachineFilePath());
-            if (dir.list() != null) {
-                configfiles = dir.list();
-                for (int i = 0; i < configfiles.length; i++) {
-                    if (configfiles[i].indexOf(".properties") != -1) {
-                        configfiles[i] = configfiles[i].substring(0, configfiles[i].indexOf(".properties"));
-                    }
-                }
-            }
-
+            final String[] configfiles = { "reprap.properties" };
             final JComboBox<String> configfileList = new JComboBox<String>(configfiles);
             configfileList.setEditable(true);
 

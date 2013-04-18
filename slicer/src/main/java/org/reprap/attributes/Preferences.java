@@ -1,14 +1,10 @@
 package org.reprap.attributes;
 
-import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -31,41 +27,39 @@ import org.reprap.utilities.RepRapUtils;
  * space.
  */
 public class Preferences {
-    private static final String propsFolder = ".reprap";
-    private static final String MachineFile = "Machine";
-    private static final String propsDirDist = "reprap-configurations";
-    private static final String prologueFile = "prologue.gcode";
-    private static final String epilogueFile = "epilogue.gcode";
-    private static final String baseFile = "base.stl";
-    private static final char activeFlag = '*';
-    private static final int grid = 100;
-    private static final double gridRes = 1.0 / grid;
-    private static final double tiny = 1.0e-12; // A small number
-    private static final double machineResolution = 0.05; // RepRap step size in mm
-    private static final double inToMM = 25.4;
-    private static final Color3f black = new Color3f(0, 0, 0);
+    static final String PROPERTIES_FOLDER = ".reprap";
+    private static final String PROPERTIES_DIR_DISTRIBUTION = "reprap-configurations";
+    private static final String PROLOGUE_FILE = "prologue.gcode";
+    private static final String EPILOGUE_FILE = "epilogue.gcode";
+    private static final String BASE_FILE = "base.stl";
+    private static final char ACTIVE_FLAG = '*';
+    private static final int GRID_SIZE = 100;
+    private static final double GRID_RESOLUTION = 1.0 / GRID_SIZE;
+    private static final double TINY = 1.0e-12; // A small number
+    private static final double MACHINE_RESOLUTION = 0.05; // RepRap step size in mm
+    private static final double INCH_TO_MM = 25.4;
+    private static final Color3f BLACK = new Color3f(0, 0, 0);
 
     private static String propsFile = "reprap.properties";
     private static Preferences globalPrefs = null;
-    private static String[] allMachines = null;
     private static boolean displaySimulation = false;
 
     private final Properties mainPreferences = new Properties();
 
     public static double gridRes() {
-        return gridRes;
+        return GRID_RESOLUTION;
     }
 
     public static double tiny() {
-        return tiny;
+        return TINY;
     }
 
     public static double machineResolution() {
-        return machineResolution;
+        return MACHINE_RESOLUTION;
     }
 
     public static double inchesToMillimetres() {
-        return inToMM;
+        return INCH_TO_MM;
     }
 
     public static boolean simulate() {
@@ -108,40 +102,7 @@ public class Preferences {
      * Where the user stores all their configuration files
      */
     public static String getUsersRootDir() {
-        return System.getProperty("user.home") + File.separatorChar + propsFolder + File.separatorChar;
-    }
-
-    /**
-     * The master file that lists the user's machines and flags the active one
-     * with a * character at the start of its name.
-     */
-    public static String getMachineFilePath() {
-        return getUsersRootDir() + MachineFile;
-    }
-
-    /**
-     * List of all the available RepRap machine types
-     */
-    private static String[] getAllMachines() {
-        final File mf = new File(getMachineFilePath());
-        String[] result = null;
-        try {
-            result = new String[RepRapUtils.countLines(mf)];
-            final FileInputStream fstream = new FileInputStream(mf);
-            final DataInputStream in = new DataInputStream(fstream);
-            final BufferedReader br = new BufferedReader(new InputStreamReader(in));
-            int i = 0;
-            String s;
-            while ((s = br.readLine()) != null) {
-                result[i] = s;
-                i++;
-            }
-            in.close();
-        } catch (final IOException e) {
-            Debug.getInstance().errorMessage("Can't read configuration file: " + mf.toString());
-            e.printStackTrace();
-        }
-        return result;
+        return System.getProperty("user.home") + File.separatorChar + PROPERTIES_FOLDER + File.separatorChar;
     }
 
     /**
@@ -149,16 +110,13 @@ public class Preferences {
      * *)
      */
     public static String getActiveMachineName() {
-        if (allMachines == null) {
-            allMachines = getAllMachines();
-        }
-        for (final String machine : allMachines) {
-            if (machine.charAt(0) == activeFlag) {
-                return machine.substring(1, machine.length());
+        for (final Machine machine : Machine.getAllMachines()) {
+            if (machine.isActive()) {
+                return machine.getName();
             }
         }
         Debug.getInstance().errorMessage(
-                "No active RepRap set (add " + activeFlag + " to the start of a line in the file: " + getMachineFilePath()
+                "No active RepRap set (add " + ACTIVE_FLAG + " to the start of a line in the file: " + Machine.getMachineFile()
                         + ").");
         return "";
     }
@@ -182,9 +140,9 @@ public class Preferences {
      * Where are the system-wide master copies?
      */
     private static URL getSystemConfiguration() {
-        final URL sysConfig = ClassLoader.getSystemResource(propsDirDist);
+        final URL sysConfig = ClassLoader.getSystemResource(PROPERTIES_DIR_DISTRIBUTION);
         if (sysConfig == null) {
-            Debug.getInstance().errorMessage("Can't find system RepRap configurations: " + propsDirDist);
+            Debug.getInstance().errorMessage("Can't find system RepRap configurations: " + PROPERTIES_DIR_DISTRIBUTION);
         }
         return sysConfig;
     }
@@ -193,21 +151,21 @@ public class Preferences {
      * Where the user's build-base STL file is
      */
     public static String getBasePath() {
-        return getActiveMachineDir() + baseFile;
+        return getActiveMachineDir() + BASE_FILE;
     }
 
     /**
      * Where the user's GCode prologue file is
      */
     public static String getProloguePath() {
-        return getActiveMachineDir() + prologueFile;
+        return getActiveMachineDir() + PROLOGUE_FILE;
     }
 
     /**
      * Where the user's GCode epilogue file is
      */
     public static String getEpiloguePath() {
-        return getActiveMachineDir() + epilogueFile;
+        return getActiveMachineDir() + EPILOGUE_FILE;
     }
 
     /**
@@ -272,7 +230,7 @@ public class Preferences {
 
     private Properties loadSystemProperties() throws IOException {
         final Properties systemProperties = new Properties();
-        final String systemPropertiesPath = propsDirDist + "/" + getActiveMachineName() + "/" + propsFile;
+        final String systemPropertiesPath = PROPERTIES_DIR_DISTRIBUTION + "/" + getActiveMachineName() + "/" + propsFile;
         final URL sysProperties = ClassLoader.getSystemResource(systemPropertiesPath);
         if (sysProperties != null) {
             final InputStream sysPropStream = sysProperties.openStream();
@@ -297,6 +255,10 @@ public class Preferences {
         final OutputStream output = new FileOutputStream(f);
         mainPreferences.store(output, "RepRap machine parameters. See http://reprap.org/wiki/Java_Software_Preferences_File");
 
+        notifyPreferenceChangeListeners();
+    }
+
+    private void notifyPreferenceChangeListeners() throws IOException {
         Main.gui.getPrinter().refreshPreferences();
         Debug.refreshPreferences(loadGlobalBool("Debug"), false);
     }
@@ -457,7 +419,7 @@ public class Preferences {
             ex.printStackTrace();
         }
         final Appearance unselectedApp = new Appearance();
-        unselectedApp.setMaterial(new Material(unselectedColour, black, unselectedColour, black, 0f));
+        unselectedApp.setMaterial(new Material(unselectedColour, BLACK, unselectedColour, BLACK, 0f));
         return unselectedApp;
     }
 }
