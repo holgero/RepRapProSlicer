@@ -506,10 +506,6 @@ public class LayerRules {
         stepMachine();
     }
 
-    public void setFractionDone() {
-        org.reprap.gui.SlicerFrame.getBotConsoleFrame().setFractionDone(-1, -1, -1);
-    }
-
     private void copyFile(final PrintStream ps, final String ip) {
         File f = null;
         try {

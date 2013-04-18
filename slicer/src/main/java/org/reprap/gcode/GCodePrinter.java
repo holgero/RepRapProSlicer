@@ -607,11 +607,9 @@ public class GCodePrinter {
         if (lc.getReversing()) {
             gcode.queue(";#!LAYER: " + (lc.getMachineLayer()) + "/" + (lc.getMachineLayerMax() - 1));
         }
-        lc.setFractionDone();
 
         // Don't home the first layer
         // The startup procedure has already done that
-
         if (lc.getMachineLayer() > 0 && Preferences.loadGlobalBool("InterLayerCooling")) {
             double liftZ = -1;
             for (final GCodeExtruder extruder2 : extruders) {

@@ -28,7 +28,6 @@ import org.reprap.attributes.Preferences;
  */
 public class PrintTabFrame extends JInternalFrame {
     private static final long serialVersionUID = 1L;
-    private SlicerFrame parentBotConsoleFrame = null;
     private long startTime = -1;
     private int oldLayer = -1;
     private String loadedFiles = "";
@@ -50,9 +49,13 @@ public class PrintTabFrame extends JInternalFrame {
     private JButton saveSCAD;
     private AbstractButton displayPathsCheck;
 
-    /** Creates new form PrintTabFrame */
-    PrintTabFrame() {
-        initComponents();
+    /**
+     * Creates new form PrintTabFrame
+     * 
+     * @param mainFrame
+     */
+    PrintTabFrame(final MainFrame mainFrame) {
+        initComponents(mainFrame);
         printerFilePlay = null;
         enableSLoad();
     }
@@ -63,35 +66,25 @@ public class PrintTabFrame extends JInternalFrame {
      * 
      * @param fractionDone
      */
-    void updateProgress(double fractionDone, int layer, int layers) {
+    void updateProgress() {
+        final int layers = org.reprap.Main.gui.getLayers();
+
+        final int layer = org.reprap.Main.gui.getLayer();
         if (layer >= 0) {
             currentLayerOutOfN.setText("" + layer + "/" + layers);
         }
 
-        if (layers < 0) {
-            layers = org.reprap.Main.gui.getLayers();
+        if (layer == oldLayer) {
+            return;
         }
 
-        if (layer < 0) {
-            layer = org.reprap.Main.gui.getLayer();
-            if (layer >= 0) {
-                currentLayerOutOfN.setText("" + layer + "/" + layers);
-            }
+        final double fractionDone;
+        if (layer < oldLayer) {
+            fractionDone = (double) (layers - layer) / (double) layers;
+        } else {
+            fractionDone = (double) layer / (double) layers;
         }
-
-        if (fractionDone < 0) {
-            if (layer == oldLayer) {
-                return;
-            }
-
-            final boolean topDown = layer < oldLayer;
-            oldLayer = layer;
-            if (topDown) {
-                fractionDone = (double) (layers - layer) / (double) layers;
-            } else {
-                fractionDone = (double) layer / (double) layers;
-            }
-        }
+        oldLayer = layer;
 
         progressBar.setMinimum(0);
         progressBar.setMaximum(100);
@@ -124,16 +117,7 @@ public class PrintTabFrame extends JInternalFrame {
         }
     }
 
-    /**
-     * So the BotConsoleFrame can let us know who it is
-     * 
-     * @param b
-     */
-    void setConsoleFrame(final SlicerFrame b) {
-        parentBotConsoleFrame = b;
-    }
-
-    private void initComponents() {
+    private void initComponents(final MainFrame mainFrame) {
         final JButton variablesButton = new JButton();
         variablesButton.setActionCommand("preferences");
         variablesButton.setBackground(new java.awt.Color(255, 102, 255));
@@ -171,7 +155,7 @@ public class PrintTabFrame extends JInternalFrame {
         saveSCAD.setText("Save SCAD");
 
         layerPauseCheck = new JCheckBox();
-        layerPause(false);
+        layerPause(mainFrame, false);
         final JButton getWebPage = new JButton();
         final JLabel expectedBuildTimeLabel = new JLabel();
         final JLabel filesLabel = new JLabel();
@@ -215,7 +199,7 @@ public class PrintTabFrame extends JInternalFrame {
         layerPauseCheck.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(final java.awt.event.ActionEvent evt) {
-                layerPauseCheckActionPerformed();
+                layerPause(mainFrame, layerPauseCheck.isSelected());
             }
         });
 
@@ -516,8 +500,6 @@ public class PrintTabFrame extends JInternalFrame {
 
         printLive(false);
 
-        parentBotConsoleFrame.suspendPolling();
-        parentBotConsoleFrame.setFractionDone(-1, -1, -1);
         org.reprap.Main.gui.mouseToWorld();
         int sp = -1;
         if (loadedFiles != null) {
@@ -561,12 +543,8 @@ public class PrintTabFrame extends JInternalFrame {
         System.exit(0);
     }
 
-    private void layerPause(final boolean p) {
-        org.reprap.Main.gui.setLayerPause(p);
-    }
-
-    private void layerPauseCheckActionPerformed() {
-        org.reprap.Main.gui.setLayerPause(layerPauseCheck.isSelected());
+    private void layerPause(final MainFrame mainFrame, final boolean p) {
+        mainFrame.setLayerPause(p);
     }
 
     private void getWebPageActionPerformed() {

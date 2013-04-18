@@ -1,7 +1,5 @@
 package org.reprap.geometry;
 
-import javax.swing.JCheckBoxMenuItem;
-
 import org.reprap.attributes.Attributes;
 import org.reprap.attributes.Preferences;
 import org.reprap.gcode.GCodeExtruder;
@@ -14,6 +12,7 @@ import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.gui.RepRapBuild;
+import org.reprap.gui.SlicerFrame;
 import org.reprap.utilities.Debug;
 
 public class Producer {
@@ -25,9 +24,11 @@ public class Producer {
      */
     private final RepRapBuild bld;
     private final AllSTLsToBuild allSTLs;
+    private final SlicerFrame slicerFrame;
 
-    public Producer(final GCodePrinter pr, final RepRapBuild builder) throws Exception {
+    public Producer(final GCodePrinter pr, final RepRapBuild builder, final SlicerFrame slicerFrame) throws Exception {
         bld = builder;
+        this.slicerFrame = slicerFrame;
 
         allSTLs = bld.getSTLs();
         layerRules = new LayerRules(pr, allSTLs, true, bld);
@@ -38,19 +39,6 @@ public class Producer {
         } else {
             simulationPlot = null;
         }
-    }
-
-    /**
-     * Set the source checkbox used to determine if there should be a pause
-     * between layers.
-     * 
-     * @param layerPause
-     *            The source checkbox used to determine if there should be a
-     *            pause. This is a checkbox rather than a boolean so it can be
-     *            changed on the fly.
-     */
-    public void setLayerPause(final JCheckBoxMenuItem layerPause) {
-        layerRules.getPrinter().setLayerPause(layerPause);
     }
 
     public int getLayers() {
@@ -129,6 +117,7 @@ public class Producer {
             Debug.getInstance().debugMessage(
                     "Commencing model layer " + layerRules.getModelLayer() + " at " + layerRules.getMachineZ());
             reprap.startingLayer(layerRules);
+            slicerFrame.updateProgress();
 
             for (int physicalExtruder = 0; physicalExtruder < allPolygons.length; physicalExtruder++) {
                 allPolygons[physicalExtruder] = new PolygonList();
