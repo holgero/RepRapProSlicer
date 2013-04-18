@@ -10,7 +10,10 @@ import org.reprap.attributes.Preferences;
 import org.reprap.utilities.Debug;
 
 public class GCodeExtruder {
+    private static final Color3f BLACK = new Color3f(0, 0, 0);
+
     private final GCodeWriter gcode;
+
     /**
      * Flag to decide extrude speed
      */
@@ -104,10 +107,6 @@ public class GCodeExtruder {
      */
     private final int myExtruderID;
     /**
-     * prefix for our preferences.
-     */
-    private String prefName;
-    /**
      * The colour of the material to use in the simulation windows
      */
     private Appearance materialColour;
@@ -174,11 +173,7 @@ public class GCodeExtruder {
     /**
      * Our printer object.
      */
-    private GCodePrinter printer = null;
-    /**
-     * The colour black
-     */
-    private static final Color3f black = new Color3f(0, 0, 0);
+    private final GCodePrinter printer;
 
     /**
      * @param prefs
@@ -312,7 +307,7 @@ public class GCodeExtruder {
     }
 
     public int refreshPreferences() {
-        prefName = "Extruder" + myExtruderID + "_";
+        final String prefName = preferencePrefix();
         int result = -1;
         try {
             result = Preferences.loadGlobalInt(prefName + "Address");
@@ -359,7 +354,7 @@ public class GCodeExtruder {
                     (float) Preferences.loadGlobalDouble(prefName + "ColourG(0..1)"),
                     (float) Preferences.loadGlobalDouble(prefName + "ColourB(0..1)"));
             materialColour = new Appearance();
-            materialColour.setMaterial(new Material(col, black, col, black, 101f));
+            materialColour.setMaterial(new Material(col, BLACK, col, BLACK, 101f));
             surfaceLayers = Preferences.loadGlobalInt(prefName + "SurfaceLayers(0..N)");
             singleLine = Preferences.loadGlobalBool(prefName + "SingleLine");
             feedDiameter = Preferences.loadGlobalDouble(prefName + "FeedDiameter(mm)");
@@ -379,8 +374,8 @@ public class GCodeExtruder {
         return result;
     }
 
-    public void setPrinter(final GCodePrinter p) {
-        printer = p;
+    private String preferencePrefix() {
+        return "Extruder" + myExtruderID + "_";
     }
 
     public void stopExtruding() {
@@ -458,7 +453,7 @@ public class GCodeExtruder {
         if (separating) {
             return 3000;
         } else {
-            return Preferences.loadGlobalDouble(prefName + "ExtrusionSpeed(mm/minute)");
+            return Preferences.loadGlobalDouble(preferencePrefix() + "ExtrusionSpeed(mm/minute)");
         }
 
     }
@@ -605,7 +600,7 @@ public class GCodeExtruder {
     }
 
     public GCodeExtruder getSupportExtruder() {
-        return org.reprap.Main.gui.getPrinter().getExtruder(supportMaterial);
+        return printer.getExtruder(supportMaterial);
     }
 
     public int getInfillExtruderNumber() {
@@ -613,7 +608,7 @@ public class GCodeExtruder {
     }
 
     public GCodeExtruder getInfillExtruder() {
-        return org.reprap.Main.gui.getPrinter().getExtruder(inFillMaterial);
+        return printer.getExtruder(inFillMaterial);
     }
 
     public double getExtrusionFoundationWidth() {
@@ -796,7 +791,7 @@ public class GCodeExtruder {
             Debug.getInstance().errorMessage(ex.toString());
         }
         final Appearance a = new Appearance();
-        a.setMaterial(new Material(col, black, col, black, 101f));
+        a.setMaterial(new Material(col, BLACK, col, BLACK, 101f));
         return a;
     }
 

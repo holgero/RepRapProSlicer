@@ -157,8 +157,6 @@ public class GCodePrinter {
                     break;
                 }
             }
-
-            extruders[i].setPrinter(this);
         }
         physicalExtruderUsed = new boolean[physExCount + 1];
         for (int i = 0; i <= physExCount; i++) {
