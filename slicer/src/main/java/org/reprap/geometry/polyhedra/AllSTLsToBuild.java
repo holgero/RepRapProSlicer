@@ -17,7 +17,6 @@ import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
-import org.reprap.Main;
 import org.reprap.attributes.Attributes;
 import org.reprap.attributes.Preferences;
 import org.reprap.gcode.GCodeExtruder;
@@ -34,6 +33,7 @@ import org.reprap.geometry.polygons.PolygonIndexedPoint;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.graphicio.RFO;
+import org.reprap.gui.RepRapBuild;
 import org.reprap.utilities.Debug;
 
 /**
@@ -754,7 +754,7 @@ public class AllSTLsToBuild {
         return infill.computeHatchedPolygons(stl, layerRules, this);
     }
 
-    public void setUpShield() {
+    public void setUpShield(final RepRapBuild builder) {
         if (frozen) {
             Debug.getInstance().errorMessage("AllSTLsToBuild.setUpShield() called when frozen!");
         }
@@ -805,7 +805,7 @@ public class AllSTLsToBuild {
             Debug.getInstance().errorMessage(e.toString());
         }
 
-        Main.gui.getBuilder().anotherSTL(s, att, 0);
+        builder.anotherSTL(s, att, 0);
     }
 
     /**

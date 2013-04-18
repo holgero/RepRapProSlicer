@@ -14,6 +14,7 @@ import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
+import org.reprap.gui.RepRapBuild;
 import org.reprap.utilities.Debug;
 
 /**
@@ -161,7 +162,7 @@ public class LayerRules {
      */
     private int maxAddress = -1;
 
-    LayerRules(final GCodePrinter p, final AllSTLsToBuild astls, final boolean found) {
+    LayerRules(final GCodePrinter p, final AllSTLsToBuild astls, final boolean found, final RepRapBuild builder) {
         printer = p;
         reversing = false;
         alreadyReversed = false;
@@ -245,7 +246,7 @@ public class LayerRules {
                 extruderUsedThisLayer[i][j] = false;
             }
         }
-        astls.setUpShield();
+        astls.setUpShield(builder);
         astls.setBoxes();
         gp = astls.ObjectPlanRectangle();
         bBox = new Rectangle(new Point2D(gp.x().low() - 6, gp.y().low() - 6), new Point2D(gp.x().high() + 6, gp.y().high() + 6));

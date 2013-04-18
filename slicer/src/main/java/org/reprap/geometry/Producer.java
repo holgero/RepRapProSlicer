@@ -30,7 +30,7 @@ public class Producer {
         bld = builder;
 
         allSTLs = bld.getSTLs();
-        layerRules = new LayerRules(pr, allSTLs, true);
+        layerRules = new LayerRules(pr, allSTLs, true, bld);
         pr.setLayerRules(layerRules);
 
         if (Preferences.simulate()) {
