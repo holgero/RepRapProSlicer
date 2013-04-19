@@ -82,7 +82,7 @@ import javax.vecmath.Tuple3d;
 import javax.vecmath.Vector3d;
 
 import org.reprap.attributes.Attributes;
-import org.reprap.attributes.Preferences;
+import org.reprap.attributes.Constants;
 import org.reprap.graphicio.CSGReader;
 import org.reprap.graphicio.StlFile;
 import org.reprap.gui.MouseObject;
@@ -932,8 +932,7 @@ public class STLObject {
         if (mouse == null) {
             return;
         }
-
-        rScale(Preferences.getInstance().inchesToMillimeters(), false);
+        rScale(Constants.INCH_TO_MM, false);
     }
 
     /**

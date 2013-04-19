@@ -2,6 +2,8 @@ package org.reprap.attributes;
 
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
+import javax.media.j3d.Material;
+import javax.vecmath.Color3f;
 
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
@@ -124,10 +126,17 @@ public class Attributes {
     public void setMaterial(final String s) {
         material = s;
         extruder = null;
-        app = GCodeExtruder.getAppearanceFromMaterial(material);
+        app = getAppearanceFromMaterial(material);
         if (parent != null) {
             parent.restoreAppearance();
         }
+    }
+
+    private static Appearance getAppearanceFromMaterial(final String material) {
+        final Appearance a = new Appearance();
+        final Color3f col = Preferences.getInstance().loadMaterialColor(material);
+        a.setMaterial(new Material(col, Constants.BLACK, col, Constants.BLACK, 101f));
+        return a;
     }
 
     /**

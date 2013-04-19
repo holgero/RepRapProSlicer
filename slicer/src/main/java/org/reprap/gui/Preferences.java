@@ -54,19 +54,20 @@ public class Preferences extends JFrame {
     private final JLabel[][] extruders; // Array of Arrays of JLabels for the extruders' key names
     private final PreferencesValue[][] extruderValues; // Array of Arrays of JTextFields for the extruders' variables
     private final PreferenceCategory[][] extruderCats; // What are they?
+    private final org.reprap.attributes.Preferences preferences = org.reprap.attributes.Preferences.getInstance();
 
     /**
      * Get the value corresponding to name from the preferences file
      */
     private String loadString(final String name) throws IOException {
-        return org.reprap.attributes.Preferences.getInstance().loadString(name);
+        return preferences.loadString(name);
     }
 
     /**
      * Save the value corresponding to name to the preferences file
      */
     private void saveString(final String name, final String value) throws IOException {
-        org.reprap.attributes.Preferences.getInstance().setString(name, value);
+        preferences.setString(name, value);
     }
 
     private void updatePreferencesValues() {
@@ -119,7 +120,7 @@ public class Preferences extends JFrame {
                 }
             }
 
-            org.reprap.attributes.Preferences.getInstance().save();
+            preferences.save();
         } catch (final Exception ex) {
             JOptionPane.showMessageDialog(null, "Saving preferences: " + ex);
             ex.printStackTrace();
@@ -231,7 +232,7 @@ public class Preferences extends JFrame {
                         final File configFile = new File(org.reprap.attributes.Preferences.getReprapRootDir(), configToLoad);
                         if (configFile.exists()) {
                             Debug.getInstance().debugMessage("loading config " + configToLoad);
-                            org.reprap.attributes.Preferences.getInstance().loadConfiguration(configToLoad);
+                            preferences.loadConfiguration(configToLoad);
                             updatePreferencesValues();
                         }
                     }
@@ -248,7 +249,7 @@ public class Preferences extends JFrame {
                     if (!configFileObj.exists()) {
                         configfileList.addItem((String) configfileList.getSelectedItem());
                         Debug.getInstance().printMessage("loading config " + configToLoad);
-                        org.reprap.attributes.Preferences.getInstance().loadConfiguration(configToLoad);
+                        preferences.loadConfiguration(configToLoad);
                         updatePreferencesValues();
                     }
                 }

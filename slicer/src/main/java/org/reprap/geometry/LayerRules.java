@@ -161,6 +161,8 @@ public class LayerRules {
      */
     private int maxAddress = -1;
 
+    private final Preferences preferences = Preferences.getInstance();
+
     LayerRules(final GCodePrinter p, final AllSTLsToBuild astls, final boolean found, final RepRapBuild builder) {
         printer = p;
         reversing = false;
@@ -170,8 +172,7 @@ public class LayerRules {
         astls.setBoxes();
         astls.setLayerRules(this);
 
-        purge = new Point2D(Preferences.getInstance().loadDouble("DumpX(mm)"), Preferences.getInstance()
-                .loadDouble("DumpY(mm)"));
+        purge = new Point2D(preferences.loadDouble("DumpX(mm)"), preferences.loadDouble("DumpY(mm)"));
 
         Rectangle gp = astls.ObjectPlanRectangle();
         bBox = new Rectangle(new Point2D(gp.x().low() - 6, gp.y().low() - 6), new Point2D(gp.x().high() + 6, gp.y().high() + 6));
@@ -553,7 +554,7 @@ public class LayerRules {
                         getPrinter().getFastXYFeedrate(), true);
                 copyFile(fileOutStream, getLayerFileName(machineLayer));
 
-                if (Preferences.getInstance().loadBool("RepRapAccelerations")) {
+                if (preferences.loadBool("RepRapAccelerations")) {
                     getPrinter().singleMove(getLastPoint(machineLayer).x(), getLastPoint(machineLayer).y(), machineZ,
                             getPrinter().getSlowXYFeedrate(), false);
                 } else {
@@ -569,5 +570,4 @@ public class LayerRules {
         fileOutStream.close();
         reversing = false;
     }
-
 }

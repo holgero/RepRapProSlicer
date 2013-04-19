@@ -640,19 +640,19 @@ public class RepRapBuild extends JPanel implements MouseListener, PreferenceChan
     }
 
     @Override
-    public void refreshPreferences(final Preferences newPreferences) {
+    public void refreshPreferences(final Preferences preferences) {
         // TODO Set everything up from the properties file
         // TODO All this needs to go into Preferences.java
-        wv_location = Preferences.getInstance().getBuildBaseStlFile();
+        wv_location = preferences.getBuildBaseStlFile();
         mouse_tf = 50;
         mouse_zf = 50;
         RadiusFactor = 0.7;
         BackFactor = 2.0;
         FrontFactor = 0.001;
         BoundFactor = 3.0;
-        xwv = Preferences.getInstance().loadDouble("WorkingX(mm)");
-        ywv = Preferences.getInstance().loadDouble("WorkingY(mm)");
-        zwv = Preferences.getInstance().loadDouble("WorkingZ(mm)");
+        xwv = preferences.loadDouble("WorkingX(mm)");
+        ywv = preferences.loadDouble("WorkingY(mm)");
+        zwv = preferences.loadDouble("WorkingZ(mm)");
         wv_offset = new Vector3d(0, 0, 0);
         bgColour = new Color3f((float) 0.9, (float) 0.9, (float) 0.9);
         selectedColour = new Color3f((float) 0.6, (float) 0.2, (float) 0.2);

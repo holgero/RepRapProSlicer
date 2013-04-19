@@ -16,6 +16,8 @@ import org.reprap.utilities.Debug;
 import org.reprap.utilities.ExtensionFileFilter;
 
 public class GCodeWriter {
+    private static final String COMMENT_CHAR = ";";
+
     /**
      * The root file name for output (without ".gcode" on the end)
      */
@@ -45,9 +47,9 @@ public class GCodeWriter {
     }
 
     /**
-     * Send a G-code command to the machine or into a file.
+     * Writes a G-code command to the file.
      */
-    public void queue(String cmd) throws IOException {
+    private void queue(String cmd) throws IOException {
         cmd = cmd.trim();
         cmd = cmd.replaceAll("  ", " ");
 
@@ -55,6 +57,25 @@ public class GCodeWriter {
             fileOutStream.println(cmd);
             Debug.getInstance().gcodeDebugMessage("G-code: " + cmd + " written to file");
         }
+    }
+
+    /**
+     * Writes a G-code command to the file. If debugging is on, the comment is
+     * also added.
+     */
+    public void writeCommand(final String command, final String comment) throws IOException {
+        if (Debug.getInstance().isDebug()) {
+            queue(command + " " + COMMENT_CHAR + " " + comment);
+        } else {
+            queue(command);
+        }
+    }
+
+    /**
+     * Writes a comment line to the file.
+     */
+    public void writeComment(final String comment) throws IOException {
+        queue(COMMENT_CHAR + comment);
     }
 
     /**

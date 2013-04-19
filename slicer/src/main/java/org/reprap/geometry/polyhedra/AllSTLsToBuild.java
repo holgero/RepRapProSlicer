@@ -18,6 +18,7 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 import org.reprap.attributes.Attributes;
+import org.reprap.attributes.Constants;
 import org.reprap.attributes.Preferences;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.geometry.LayerRules;
@@ -180,6 +181,8 @@ public class AllSTLsToBuild {
      * Recently computed slices
      */
     private SliceCache cache;
+
+    private final Preferences preferences = Preferences.getInstance();
 
     public AllSTLsToBuild() {
         stls = new ArrayList<STLObject>();
@@ -537,7 +540,7 @@ public class AllSTLsToBuild {
         temp = edges.get(0);
         edges.set(0, edges.get(swap));
         edges.set(swap, temp);
-        if (Math.sqrt(d) < Preferences.getInstance().gridResultion()) {
+        if (Math.sqrt(d) < preferences.gridResultion()) {
             Debug.getInstance().debugMessage("AllSTLsToBuild.startLong(): edge length: " + Math.sqrt(d) + " is the longest.");
         }
     }
@@ -759,7 +762,7 @@ public class AllSTLsToBuild {
             Debug.getInstance().errorMessage("AllSTLsToBuild.setUpShield() called when frozen!");
         }
 
-        if (!Preferences.getInstance().loadBool("Shield")) {
+        if (!preferences.loadBool("Shield")) {
             return;
         }
 
@@ -794,12 +797,7 @@ public class AllSTLsToBuild {
             s.translate(new Vector3d(xOff, yOff, zOff));
         }
 
-        try {
-            att.setMaterial(Preferences.allMaterials()[0]);
-        } catch (final IOException e) {
-            Debug.getInstance().errorMessage(e.toString());
-        }
-
+        att.setMaterial(preferences.getAllMaterials()[0]);
         builder.anotherSTL(s, att, 0);
     }
 
@@ -922,7 +920,7 @@ public class AllSTLsToBuild {
 
                 if (pgl.size() > 0) {
                     // Remove wrinkles
-                    pgl = pgl.simplify(Preferences.getInstance().gridResultion() * 1.5);
+                    pgl = pgl.simplify(preferences.gridResultion() * 1.5);
 
                     // Fix small radii
                     pgl = AllSTLsToBuild.arcCompensate(pgl);
@@ -1165,7 +1163,7 @@ public class AllSTLsToBuild {
 
         // Multiply the geometrically correct result by factor
         final double factor = e.getArcCompensationFactor();
-        if (factor < Preferences.getInstance().tinyValue()) {
+        if (factor < Constants.TINY_VALUE) {
             return polygon;
         }
 

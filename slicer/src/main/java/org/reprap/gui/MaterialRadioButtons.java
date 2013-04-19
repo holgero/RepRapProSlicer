@@ -65,7 +65,7 @@ class MaterialRadioButtons extends JPanel {
         jLabel1.setHorizontalAlignment(SwingConstants.CENTER);
 
         try {
-            names = Preferences.allMaterials();
+            names = Preferences.getInstance().getAllMaterials();
             String matname = att.getMaterial();
             if (matname == null) {
                 matname = "";

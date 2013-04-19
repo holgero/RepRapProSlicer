@@ -1,13 +1,7 @@
 package org.reprap.gui;
 
-import java.io.IOException;
-
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
-
-import org.reprap.attributes.Preferences;
-import org.reprap.utilities.Debug;
 
 /**
  * @author Ed Sells, March 2008
@@ -15,26 +9,11 @@ import org.reprap.utilities.Debug;
 public class SlicerFrame extends JFrame {
     private JTabbedPane jTabbedPane1;
     private PrintTabFrame printTabFrame1;
-    private int extruderCount;
 
     public SlicerFrame(final MainFrame mainFrame) {
-        try {
-            checkPrefs();
-        } catch (final Exception e) {
-            Debug.getInstance().errorMessage("Failure trying to initialise comms in botConsole: " + e);
-            JOptionPane.showMessageDialog(null, e.getMessage());
-            return;
-        }
         initComponents(mainFrame);
         setTitle("RepRapPro Slicer");
         setVisible(true);
-    }
-
-    private void checkPrefs() throws IOException {
-        extruderCount = Preferences.getInstance().loadInt("NumberOfExtruders");
-        if (extruderCount < 1) {
-            throw new RuntimeException("A Reprap printer must contain at least one extruder");
-        }
     }
 
     private void initComponents(final MainFrame mainFrame) {

@@ -19,6 +19,7 @@ class LayerProducer {
     private LayerRules layerConditions = null;
     private final PolygonList allPolygons[];
     private double currentFeedrate;
+    private final Preferences preferences = Preferences.getInstance();
 
     /**
      * Set up a normal layer
@@ -32,7 +33,7 @@ class LayerProducer {
         if (simulationPlot != null) {
             if (!simulationPlot.isInitialised()) {
                 final Rectangle rec = lc.getBox();
-                if (Preferences.getInstance().loadBool("Shield")) {
+                if (preferences.loadBool("Shield")) {
                     rec.expand(Point2D.add(rec.sw(), new Point2D(-7, -7))); // TODO: Yuk - this should be a parameter
                 }
                 simulationPlot.init(rec, "" + lc.getModelLayer() + " (z=" + lc.getModelZ() + ")");
@@ -169,7 +170,8 @@ class LayerProducer {
             plotDist += Point2D.d(lastPoint, n);
             lastPoint = n;
         }
-        if (plotDist < Preferences.getInstance().getMachineResolution() * 0.5) {
+
+        if (plotDist < preferences.getMachineResolution() * 0.5) {
             Debug.getInstance().debugMessage("Rejected line with " + polygon.size() + " points, length: " + plotDist);
             return;
         }
@@ -180,7 +182,7 @@ class LayerProducer {
         if (firstOneInLayer) {
             // The next line tells the printer that it is already at the first point.  It is not, but code will be added just before this
             // to put it there by the LayerRules function that reverses the top-down order of the layers.
-            if (Preferences.getInstance().loadBool("RepRapAccelerations")) {
+            if (preferences.loadBool("RepRapAccelerations")) {
                 printer.singleMove(polygon.point(0).x(), polygon.point(0).y(), currentZ, printer.getSlowXYFeedrate(), false);
             } else {
                 printer.singleMove(polygon.point(0).x(), polygon.point(0).y(), currentZ, printer.getFastXYFeedrate(), false);
@@ -232,7 +234,7 @@ class LayerProducer {
         }
 
         final boolean acc = extruder.getMaxAcceleration() > 0;
-        if (acc | (!Preferences.getInstance().loadBool("RepRapAccelerations"))) {
+        if (acc | (!preferences.loadBool("RepRapAccelerations"))) {
             currentFeedrate = extrusionPath.speed(0);
         } else {
             final double outlineFeedrate = extruder.getOutlineFeedrate();

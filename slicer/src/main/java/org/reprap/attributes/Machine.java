@@ -23,25 +23,36 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.reprap.utilities.Debug;
 
 public final class Machine {
     private static final String MACHINE_FILE = "Machine";
+    private static Machine activeMachine = null;
 
-    private static Machine[] allMachines;
-
-    private final String name;
-    private final boolean isActive;
-
-    static synchronized Machine[] getAllMachines() {
-        if (allMachines == null) {
-            allMachines = loadMachines();
+    static synchronized String getActiveMachine() {
+        if (activeMachine == null) {
+            findActiveMachine();
         }
-        return allMachines;
+        if (activeMachine == null) {
+            Debug.getInstance().errorMessage(
+                    "No active RepRap set (add '*' to the start of a line in the file: " + getMachineFile() + ").");
+        }
+        return activeMachine.getName();
     }
 
-    private static Machine[] loadMachines() {
+    private static void findActiveMachine() {
+        for (final Machine machine : loadMachines()) {
+            if (machine.isActive()) {
+                activeMachine = machine;
+                break;
+            }
+        }
+    }
+
+    private static List<Machine> loadMachines() {
         final ArrayList<Machine> list = new ArrayList<Machine>();
         final File machineFile = getMachineFile();
         try {
@@ -60,10 +71,10 @@ public final class Machine {
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
-        return list.toArray(new Machine[list.size()]);
+        return list;
     }
 
-    static File getMachineFile() {
+    private static File getMachineFile() {
         return new File(new File(FileUtils.getUserDirectory(), Preferences.PROPERTIES_FOLDER), MACHINE_FILE);
     }
 
@@ -73,6 +84,9 @@ public final class Machine {
         }
         return new Machine(line, false);
     }
+
+    private final String name;
+    private final boolean isActive;
 
     Machine(final String name, final boolean isActive) {
         super();

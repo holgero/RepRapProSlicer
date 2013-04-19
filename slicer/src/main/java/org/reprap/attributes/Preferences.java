@@ -20,6 +20,8 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import javax.vecmath.Color3f;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.reprap.utilities.Debug;
@@ -36,13 +38,9 @@ public class Preferences {
     private static final String PROLOGUE_FILE = "prologue.gcode";
     private static final String EPILOGUE_FILE = "epilogue.gcode";
     private static final String BASE_FILE = "base.stl";
-    private static final char ACTIVE_FLAG = '*';
     private static final int GRID_SIZE = 100;
     private static final double GRID_RESOLUTION = 1.0 / GRID_SIZE;
-    private static final double TINY = 1.0e-12; // A small number
     private static final double MACHINE_RESOLUTION = 0.05; // RepRap step size in mm
-    private static final double INCH_TO_MM = 25.4;
-
     private static String propsFile = "reprap.properties";
 
     static {
@@ -111,15 +109,7 @@ public class Preferences {
      * The name of the user's active machine configuration.
      */
     public static String getActiveMachineName() {
-        for (final Machine machine : Machine.getAllMachines()) {
-            if (machine.isActive()) {
-                return machine.getName();
-            }
-        }
-        Debug.getInstance().errorMessage(
-                "No active RepRap set (add " + ACTIVE_FLAG + " to the start of a line in the file: " + Machine.getMachineFile()
-                        + ").");
-        return "";
+        return Machine.getActiveMachine();
     }
 
     /**
@@ -156,16 +146,8 @@ public class Preferences {
         return GRID_RESOLUTION;
     }
 
-    public double tinyValue() {
-        return TINY;
-    }
-
     public double getMachineResolution() {
         return MACHINE_RESOLUTION;
-    }
-
-    public double inchesToMillimeters() {
-        return INCH_TO_MM;
     }
 
     private void load(final File mainFile) {
@@ -297,7 +279,7 @@ public class Preferences {
         for (final PreferenceChangeListener listener : listeners) {
             listener.refreshPreferences(this);
         }
-        Debug.refreshPreferences(getInstance().loadBool("Debug"), false);
+        Debug.refreshPreferences(globalPrefs.loadBool("Debug"), false);
     }
 
     public String loadString(final String name) {
@@ -328,19 +310,43 @@ public class Preferences {
         mainPreferences.setProperty(name, value);
     }
 
+    public int getNumberFromMaterial(final String material) {
+        if (material.equalsIgnoreCase("null")) {
+            return -1;
+        }
+
+        final String[] names = getAllMaterials();
+        for (int i = 0; i < names.length; i++) {
+            if (names[i].equals(material)) {
+                return i;
+            }
+        }
+        Debug.getInstance().debugMessage("getNumberFromMaterial - can't find " + material);
+        return -1;
+    }
+
     /**
      * @return an array of all the names of all the materials in extruders
      */
-    public static String[] allMaterials() throws IOException {
-        final int extruderCount = globalPrefs.loadInt("NumberOfExtruders");
+    public String[] getAllMaterials() {
+        final int extruderCount = loadInt("NumberOfExtruders");
         final String[] result = new String[extruderCount];
 
         for (int i = 0; i < extruderCount; i++) {
             final String prefix = "Extruder" + i + "_";
-            result[i] = globalPrefs.loadString(prefix + "MaterialType(name)");
+            result[i] = loadString(prefix + "MaterialType(name)");
         }
 
         return result;
+    }
+
+    Color3f loadMaterialColor(final String material) {
+        final String prefix = "Extruder" + getNumberFromMaterial(material) + "_";
+        return new Color3f(loadColorComponent(prefix, "R"), loadColorComponent(prefix, "G"), loadColorComponent(prefix, "B"));
+    }
+
+    private float loadColorComponent(final String prefix, final String component) {
+        return (float) loadDouble(prefix + "Colour" + component + "(0..1)");
     }
 
     public static String[] startsWith(final String prefix) throws IOException {
