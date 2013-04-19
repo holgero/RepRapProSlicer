@@ -24,7 +24,7 @@ import javax.vecmath.Color3f;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
-import org.reprap.utilities.Debug;
+import org.reprap.debug.Debug;
 
 /**
  * A single centralised repository of the user's current preference settings.

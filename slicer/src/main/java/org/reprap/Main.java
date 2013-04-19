@@ -12,11 +12,11 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.reprap.attributes.Preferences;
+import org.reprap.debug.Debug;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.Producer;
 import org.reprap.gui.MainFrame;
 import org.reprap.gui.SlicerFrame;
-import org.reprap.utilities.Debug;
 
 /**
  * Main RepRapProSlicer software overview. Please see http://reprap.org/ for

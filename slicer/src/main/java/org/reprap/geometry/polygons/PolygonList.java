@@ -59,7 +59,7 @@ package org.reprap.geometry.polygons;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.reprap.utilities.Debug;
+import org.reprap.debug.Debug;
 
 /**
  * RrPolygonList: A collection of 2D polygons List of polygons class. This too

@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.reprap.attributes.Attributes;
 import org.reprap.attributes.Preferences;
-import org.reprap.utilities.Debug;
+import org.reprap.debug.Debug;
 
 /**
  * This class stores a rectangular grid at the same grid resolution as the

@@ -74,7 +74,7 @@ import java.util.Random;
 
 import org.reprap.attributes.Attributes;
 import org.reprap.attributes.Constants;
-import org.reprap.utilities.Debug;
+import org.reprap.debug.Debug;
 
 /**
  * The main boundary-representation polygon class

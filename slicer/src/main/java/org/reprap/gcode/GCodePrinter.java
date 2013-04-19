@@ -20,11 +20,11 @@ import org.reprap.attributes.Attributes;
 import org.reprap.attributes.Constants;
 import org.reprap.attributes.PreferenceChangeListener;
 import org.reprap.attributes.Preferences;
+import org.reprap.debug.Debug;
 import org.reprap.geometry.LayerRules;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polygons.VelocityProfile;
-import org.reprap.utilities.Debug;
 
 public class GCodePrinter implements PreferenceChangeListener {
     private final GCodeWriter gcode = new GCodeWriter();

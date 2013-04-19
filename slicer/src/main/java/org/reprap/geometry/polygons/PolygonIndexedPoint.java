@@ -1,6 +1,6 @@
 package org.reprap.geometry.polygons;
 
-import org.reprap.utilities.Debug;
+import org.reprap.debug.Debug;
 
 /**
  * Holds a polygon index and the index of a point within it

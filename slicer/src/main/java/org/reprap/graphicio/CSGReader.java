@@ -9,9 +9,9 @@ import java.util.ArrayList;
 
 import javax.vecmath.Matrix4d;
 
+import org.reprap.debug.Debug;
 import org.reprap.geometry.polygons.CSGOp;
 import org.reprap.geometry.polyhedra.CSG3D;
-import org.reprap.utilities.Debug;
 
 /**
  * This class reads in an OpenSCAD (http://openscad.org) CSG expression, parses

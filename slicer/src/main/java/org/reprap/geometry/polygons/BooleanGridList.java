@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.reprap.utilities.Debug;
+import org.reprap.debug.Debug;
 
 /**
  * Class to hold a list of BooleanGrids with associated attributes for each

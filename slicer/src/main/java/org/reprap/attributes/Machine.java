@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.reprap.utilities.Debug;
+import org.reprap.debug.Debug;
 
 public final class Machine {
     private static final String MACHINE_FILE = "Machine";

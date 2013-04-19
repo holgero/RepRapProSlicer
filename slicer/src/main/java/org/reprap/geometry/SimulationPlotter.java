@@ -72,11 +72,11 @@ import javax.swing.JFrame;
 import javax.vecmath.Color3f;
 
 import org.reprap.attributes.Attributes;
+import org.reprap.debug.Debug;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
-import org.reprap.utilities.Debug;
 
 /**
  * Class to plot images of geometrical structures for debugging.

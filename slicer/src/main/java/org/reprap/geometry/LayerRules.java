@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.PrintStream;
 
 import org.reprap.attributes.Preferences;
+import org.reprap.debug.Debug;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.HalfPlane;
@@ -14,7 +15,6 @@ import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.gui.RepRapBuild;
-import org.reprap.utilities.Debug;
 
 /**
  * This stores a set of facts about the layer currently being made, and the

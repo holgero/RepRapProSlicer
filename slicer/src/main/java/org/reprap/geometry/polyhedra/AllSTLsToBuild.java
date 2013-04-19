@@ -20,6 +20,7 @@ import javax.vecmath.Vector3d;
 import org.reprap.attributes.Attributes;
 import org.reprap.attributes.Constants;
 import org.reprap.attributes.Preferences;
+import org.reprap.debug.Debug;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.geometry.LayerRules;
 import org.reprap.geometry.polygons.BooleanGrid;
@@ -35,7 +36,6 @@ import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.graphicio.RFO;
 import org.reprap.gui.RepRapBuild;
-import org.reprap.utilities.Debug;
 
 /**
  * This class holds a list of STLObjects that represents everything that is to

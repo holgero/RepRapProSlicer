@@ -19,9 +19,9 @@ import javax.vecmath.Matrix4d;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.reprap.debug.Debug;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.geometry.polyhedra.STLObject;
-import org.reprap.utilities.Debug;
 
 /**
  * A .rfo file is a compressed archive containing multiple objects that are all

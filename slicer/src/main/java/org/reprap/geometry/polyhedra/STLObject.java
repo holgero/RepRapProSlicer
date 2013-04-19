@@ -83,10 +83,10 @@ import javax.vecmath.Vector3d;
 
 import org.reprap.attributes.Attributes;
 import org.reprap.attributes.Constants;
+import org.reprap.debug.Debug;
 import org.reprap.graphicio.CSGReader;
 import org.reprap.graphicio.StlFile;
 import org.reprap.gui.MouseObject;
-import org.reprap.utilities.Debug;
 
 import com.sun.j3d.loaders.Scene;
 import com.sun.j3d.utils.picking.PickTool;

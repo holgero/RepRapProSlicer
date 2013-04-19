@@ -1,5 +1,6 @@
 package org.reprap.geometry.polyhedra;
 
+import org.reprap.debug.Debug;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.geometry.LayerRules;
 import org.reprap.geometry.polygons.BooleanGrid;
@@ -8,7 +9,6 @@ import org.reprap.geometry.polygons.HalfPlane;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
-import org.reprap.utilities.Debug;
 
 /**
  * Class to hold infill patterns

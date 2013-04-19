@@ -55,7 +55,7 @@
 
 package org.reprap.geometry.polygons;
 
-import org.reprap.utilities.Debug;
+import org.reprap.debug.Debug;
 
 /**
  * Real 1D intervals

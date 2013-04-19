@@ -4,8 +4,8 @@ import java.io.File;
 
 import javax.media.j3d.Transform3D;
 
+import org.reprap.debug.Debug;
 import org.reprap.geometry.polyhedra.STLObject;
-import org.reprap.utilities.Debug;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;

@@ -1,8 +1,8 @@
 package org.reprap.geometry.polyhedra;
 
 import org.reprap.attributes.Attributes;
+import org.reprap.debug.Debug;
 import org.reprap.geometry.polygons.Point2D;
-import org.reprap.utilities.Debug;
 
 /**
  * Line segment consisting of two points.

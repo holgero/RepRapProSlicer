@@ -52,11 +52,11 @@ package org.reprap.geometry.polyhedra;
 
 import javax.vecmath.Matrix4d;
 
+import org.reprap.debug.Debug;
 import org.reprap.geometry.polygons.CSG2D;
 import org.reprap.geometry.polygons.CSGOp;
 import org.reprap.geometry.polygons.HalfPlane;
 import org.reprap.geometry.polygons.ParallelException;
-import org.reprap.utilities.Debug;
 
 /**
  * RepRap Constructive Solid Geometry class

@@ -12,8 +12,8 @@ import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import org.reprap.debug.Debug;
 import org.reprap.geometry.LayerRules;
-import org.reprap.utilities.Debug;
 
 public class GCodeWriter {
     private static final String COMMENT_CHAR = ";";

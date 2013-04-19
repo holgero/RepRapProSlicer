@@ -21,8 +21,8 @@ import javax.swing.WindowConstants;
 
 import org.reprap.attributes.Attributes;
 import org.reprap.attributes.Preferences;
+import org.reprap.debug.Debug;
 import org.reprap.geometry.polyhedra.STLObject;
-import org.reprap.utilities.Debug;
 
 /**
  * Radio button menu so you can set what material something is to be made from.

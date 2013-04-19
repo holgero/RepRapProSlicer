@@ -21,7 +21,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 
-import org.reprap.utilities.Debug;
+import org.reprap.debug.Debug;
 
 /**
  * This reads in the preferences file and constructs a set of menus from it to

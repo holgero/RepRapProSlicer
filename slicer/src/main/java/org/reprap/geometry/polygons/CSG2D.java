@@ -50,7 +50,7 @@
 
 package org.reprap.geometry.polygons;
 
-import org.reprap.utilities.Debug;
+import org.reprap.debug.Debug;
 
 /**
  * RepRap Constructive Solid Geometry class

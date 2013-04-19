@@ -1,6 +1,7 @@
 package org.reprap.geometry;
 
 import org.reprap.attributes.Attributes;
+import org.reprap.debug.Debug;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.BooleanGrid;
@@ -12,7 +13,6 @@ import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.gui.RepRapBuild;
 import org.reprap.gui.SlicerFrame;
-import org.reprap.utilities.Debug;
 
 public class Producer {
     private LayerRules layerRules = null;

@@ -1,6 +1,6 @@
 package org.reprap.geometry.polygons;
 
-import org.reprap.utilities.Debug;
+import org.reprap.debug.Debug;
 
 /**
  * Computes the optimum velocity profile given a starting and an ending

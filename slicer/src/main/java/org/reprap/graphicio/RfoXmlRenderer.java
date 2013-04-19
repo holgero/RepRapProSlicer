@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 
-import org.reprap.utilities.Debug;
+import org.reprap.debug.Debug;
 
 final class RfoXmlRenderer {
     /**

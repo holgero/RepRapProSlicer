@@ -5,10 +5,10 @@ import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Material;
 import javax.vecmath.Color3f;
 
+import org.reprap.debug.Debug;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polyhedra.STLObject;
-import org.reprap.utilities.Debug;
 
 /**
  * Holds RepRap attributes that are attached to Java3D shapes as user data,
