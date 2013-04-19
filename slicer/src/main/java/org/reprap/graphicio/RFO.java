@@ -201,15 +201,12 @@ public class RFO {
 
     /**
      * Warn the user of an overwrite
-     * 
-     * @return
      */
-    public static boolean checkFile(final String pth, final String nm) {
-        final File file = new File(pth + nm);
+    public static boolean checkFile(final File file) {
         if (file.exists()) {
             final String[] options = { "OK", "Cancel" };
-            final int r = JOptionPane.showOptionDialog(null, "The file " + nm + " exists.  Overwrite it?", "Warning",
-                    JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+            final int r = JOptionPane.showOptionDialog(null, "The file " + file.getName() + " exists.  Overwrite it?",
+                    "Warning", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
             return r == 0;
         }
         return true;
@@ -224,7 +221,7 @@ public class RFO {
             fn += ".rfo";
         }
         final RFO rfo = new RFO(fn, allSTL);
-        if (!RFO.checkFile(rfo.path, rfo.fileName)) {
+        if (!RFO.checkFile(new File(rfo.path, rfo.fileName))) {
             return;
         }
         final File rfoDir = new File(rfo.tempDir, "rfo");

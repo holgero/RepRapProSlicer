@@ -407,7 +407,7 @@ public class STLObject {
         result += new BigDecimal(Double.toString(m.m33)).toPlainString() + "]]) \n   {\n";
 
         for (int i = 0; i < contents.size(); i++) {
-            result += "      import_stl(\"";
+            result += "      import(\"";
             result += fileItCameFrom(i) + "\", convexity = 10);\n";
         }
         result += "   }\n";

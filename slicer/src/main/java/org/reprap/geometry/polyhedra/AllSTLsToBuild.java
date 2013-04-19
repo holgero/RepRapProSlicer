@@ -295,43 +295,22 @@ public class AllSTLsToBuild {
     /**
      * Write everything to an OpenSCAD program.
      * 
-     * @param fn
-     *            the directory to write into
      * @throws IOException
      */
-    public void saveSCAD(String fn) throws IOException {
-        if (fn.charAt(fn.length() - 1) == File.separator.charAt(0)) {
-            fn = fn.substring(0, fn.length() - 1);
-        }
-        final int sepIndex = fn.lastIndexOf(File.separator);
-        final int fIndex = fn.indexOf("file:");
-        String name = fn.substring(sepIndex + 1, fn.length());
-        String path;
-        if (sepIndex >= 0) {
-            if (fIndex >= 0) {
-                path = fn.substring(fIndex + 5, sepIndex + 1);
-            } else {
-                path = fn.substring(0, sepIndex + 1);
-            }
-        } else {
-            path = "";
-        }
-        path += name + File.separator;
-        name += scad;
-        if (!RFO.checkFile(path, name)) {
+    public void saveSCAD(final File file) throws IOException {
+        if (!RFO.checkFile(file)) {
             return;
         }
-        final File file = new File(path);
-        if (!file.exists()) {
-            file.mkdir();
+        final File directory = file.getParentFile();
+        if (!directory.exists()) {
+            directory.mkdir();
         }
-        RFO.copySTLs(this, file);
+        RFO.copySTLs(this, directory);
+        final PrintWriter out = new PrintWriter(new FileWriter(file));
         try {
-            final PrintWriter out = new PrintWriter(new FileWriter(path + name));
             out.println(toSCAD());
+        } finally {
             out.close();
-        } catch (final Exception e) {
-            Debug.getInstance().errorMessage("AllSTLsToBuild.saveSCAD(): can't open file: " + path + name);
         }
     }
 

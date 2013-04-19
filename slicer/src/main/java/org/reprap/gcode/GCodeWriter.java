@@ -10,10 +10,10 @@ import java.io.PrintStream;
 
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.reprap.geometry.LayerRules;
 import org.reprap.utilities.Debug;
-import org.reprap.utilities.ExtensionFileFilter;
 
 public class GCodeWriter {
     private static final String COMMENT_CHAR = ";";
@@ -103,7 +103,7 @@ public class GCodeWriter {
         final JFileChooser chooser = new JFileChooser();
         chooser.setSelectedFile(defaultFile);
         FileFilter filter;
-        filter = new ExtensionFileFilter("G Code file to write to", new String[] { "gcode" });
+        filter = new FileNameExtensionFilter("G Code file to write to", new String[] { "gcode" });
         chooser.setFileFilter(filter);
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 

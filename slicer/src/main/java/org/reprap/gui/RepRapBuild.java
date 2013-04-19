@@ -388,8 +388,8 @@ public class RepRapBuild extends JPanel implements MouseListener, PreferenceChan
         RFO.save(s, stls);
     }
 
-    public void saveSCADFile(final String s) throws IOException {
-        stls.saveSCAD(s);
+    public void saveSCADFile(final File selectedFile) throws IOException {
+        stls.saveSCAD(selectedFile);
     }
 
     private void addCanvas3D(final Canvas3D c3d) {

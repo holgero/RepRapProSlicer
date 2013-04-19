@@ -9,6 +9,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.reprap.attributes.Preferences;
 import org.reprap.gcode.GCodePrinter;
@@ -16,7 +17,6 @@ import org.reprap.geometry.Producer;
 import org.reprap.gui.MainFrame;
 import org.reprap.gui.SlicerFrame;
 import org.reprap.utilities.Debug;
-import org.reprap.utilities.ExtensionFileFilter;
 
 /**
  * Main RepRapProSlicer software overview. Please see http://reprap.org/ for
@@ -32,8 +32,6 @@ public class Main {
     private SlicerFrame slicerFrame;
 
     public Main() throws IOException {
-        final FileFilter filter = new ExtensionFileFilter("STL", new String[] { "STL" });
-        chooser.setFileFilter(filter);
         printer = new GCodePrinter();
         Preferences.getInstance().registerPreferenceChangeListener(printer);
     }
@@ -90,7 +88,7 @@ public class Main {
 
     public File onOpen(final String description, final String[] extensions, final String defaultRoot) {
         File result;
-        final FileFilter filter = new ExtensionFileFilter(description, extensions);
+        final FileFilter filter = new FileNameExtensionFilter(description, extensions);
 
         chooser.setFileFilter(filter);
         if (!defaultRoot.contentEquals("") && extensions.length == 1) {
@@ -120,7 +118,7 @@ public class Main {
         final File defaultFile = new File(fileRoot + ".rfo");
         final JFileChooser rfoChooser = new JFileChooser();
         rfoChooser.setSelectedFile(defaultFile);
-        filter = new ExtensionFileFilter("RFO file to write to", new String[] { "rfo" });
+        filter = new FileNameExtensionFilter("RFO file to write to", "rfo");
         rfoChooser.setFileFilter(filter);
         rfoChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
@@ -138,29 +136,20 @@ public class Main {
     }
 
     public String saveSCAD(final String fileRoot) {
-        String result = null;
-        File f;
-        FileFilter filter;
-
         final File defaultFile = new File(fileRoot + ".scad");
         final JFileChooser scadChooser = new JFileChooser();
         scadChooser.setSelectedFile(defaultFile);
-        filter = new ExtensionFileFilter("Directory to put OpenSCAD files in", new String[] { "" });
-        scadChooser.setFileFilter(filter);
-        scadChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-        scadChooser.setFileFilter(filter);
-
+        scadChooser.setFileFilter(new FileNameExtensionFilter("OpenSCAD files", "scad"));
+        scadChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         final int returnVal = scadChooser.showSaveDialog(null);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            f = scadChooser.getSelectedFile();
-            result = "file:" + f.getAbsolutePath();
+            final File selectedFile = scadChooser.getSelectedFile();
             try {
-                mainFrame.getBuilder().saveSCADFile(result);
+                mainFrame.getBuilder().saveSCADFile(selectedFile);
             } catch (final IOException e) {
-                Debug.getInstance().errorMessage("failed to save " + result);
+                Debug.getInstance().errorMessage("failed to save " + selectedFile.getAbsolutePath());
             }
-            return f.getName();
+            return selectedFile.getName();
         }
         return "";
     }
