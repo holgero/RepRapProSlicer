@@ -662,6 +662,6 @@ public class PrintTabFrame extends JInternalFrame {
     }
 
     public boolean displayPaths() {
-        return displayPathsCheck.isEnabled();
+        return displayPathsCheck.isSelected();
     }
 }
