@@ -71,8 +71,9 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.vecmath.Color3f;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.reprap.attributes.Attributes;
-import org.reprap.debug.Debug;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
@@ -84,6 +85,8 @@ import org.reprap.geometry.polygons.Rectangle;
  * @author ensab
  */
 public class SimulationPlotter extends JComponent {
+    private static final Logger LOGGER = LogManager.getLogger(SimulationPlotter.class);
+
     private static final Color BOX_COLOR = Color.blue;
 
     /**
@@ -265,7 +268,7 @@ public class SimulationPlotter extends JComponent {
             return;
         }
         if (p.getAttributes().getAppearance() == null) {
-            Debug.getInstance().errorMessage("SimulationPlotter: polygon with size > 0 has null appearance.");
+            LOGGER.error("SimulationPlotter: polygon with size > 0 has null appearance.");
             return;
         }
 

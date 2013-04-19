@@ -1,6 +1,7 @@
 package org.reprap.geometry.polyhedra;
 
-import org.reprap.debug.Debug;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.geometry.LayerRules;
 import org.reprap.geometry.polygons.BooleanGrid;
@@ -16,6 +17,7 @@ import org.reprap.geometry.polygons.PolygonList;
  * @author ensab
  */
 final class InFillPatterns {
+    private static final Logger LOGGER = LogManager.getLogger(InFillPatterns.class);
     private BooleanGridList bridges;
     private BooleanGridList insides;
     private BooleanGridList surfaces;
@@ -164,14 +166,14 @@ final class InFillPatterns {
                 landPattern = BooleanGrid.difference(landPattern, land1);
 
                 if (cen1 == null) {
-                    Debug.getInstance().errorMessage("AllSTLsToBuild.bridges(): First land found with no centroid!");
+                    LOGGER.error("AllSTLsToBuild.bridges(): First land found with no centroid!");
                     continue;
                 }
 
                 // Find the bridge that goes with the land
                 final int bridgesIndex = findBridge(bridges, cen1);
                 if (bridgesIndex < 0) {
-                    Debug.getInstance().debugMessage("AllSTLsToBuild.bridges(): Land found with no corresponding bridge.");
+                    LOGGER.debug("AllSTLsToBuild.bridges(): Land found with no corresponding bridge.");
                     continue;
                 }
                 final BooleanGrid bridgeStart = bridges.get(bridgesIndex);
@@ -189,7 +191,7 @@ final class InFillPatterns {
                 // Find the middle of this land
                 final Point2D cen2 = land2.findCentroid();
                 if (cen2 == null) {
-                    Debug.getInstance().debugMessage("AllSTLsToBuild.bridges(): Second land found with no centroid.");
+                    LOGGER.debug("AllSTLsToBuild.bridges(): Second land found with no centroid.");
 
                     // No second land implies a ring of support - just infill it.
                     hatchedPolygons.add(bridge.hatch(

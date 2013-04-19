@@ -1,6 +1,5 @@
 package org.reprap.geometry.polygons;
 
-import org.reprap.debug.Debug;
 
 /**
  * Holds a polygon index and the index of a point within it
@@ -43,7 +42,7 @@ public class PolygonIndexedPoint {
         }
 
         if (i < 0 || i > pol.size() - 1 || j < 0 || j > pol.size() - 1) {
-            Debug.getInstance().errorMessage("RrPolygonList.midPoint(): i and/or j wrong: i = " + i + ", j = " + j);
+            throw new RuntimeException("RrPolygonList.midPoint(): i and/or j wrong: i = " + i + ", j = " + j);
         }
 
         Point2D p = Point2D.add(pol.point(i), pol.point(j));

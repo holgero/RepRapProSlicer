@@ -2,7 +2,6 @@ package org.reprap.attributes;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,7 +23,8 @@ import javax.vecmath.Color3f;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
-import org.reprap.debug.Debug;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * A single centralised repository of the user's current preference settings.
@@ -33,6 +33,7 @@ import org.reprap.debug.Debug;
  * space.
  */
 public class Preferences {
+    private static final Logger LOGGER = LogManager.getLogger(Preferences.class);
     static final String PROPERTIES_FOLDER = ".reprap";
     private static final String PROPERTIES_DIR_DISTRIBUTION = "reprap-configurations";
     private static final String PROLOGUE_FILE = "prologue.gcode";
@@ -50,11 +51,6 @@ public class Preferences {
         }
     }
     private static final Preferences globalPrefs = new Preferences();
-    static {
-        // first thing (after we have set globalPrefs): apply the loaded debug preferences
-        Debug.refreshPreferences(globalPrefs.loadBool("Debug"), false);
-        globalPrefs.comparePreferences();
-    }
 
     private static void copySystemConfigurations(final File usersDir) {
         try {
@@ -126,7 +122,7 @@ public class Preferences {
     private static URL getSystemConfiguration() {
         final URL sysConfig = ClassLoader.getSystemResource(PROPERTIES_DIR_DISTRIBUTION);
         if (sysConfig == null) {
-            Debug.getInstance().errorMessage("Can't find system RepRap configurations: " + PROPERTIES_DIR_DISTRIBUTION);
+            throw new RuntimeException("Can't find system RepRap configurations: " + PROPERTIES_DIR_DISTRIBUTION);
         }
         return sysConfig;
     }
@@ -162,6 +158,7 @@ public class Preferences {
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
+        comparePreferences();
     }
 
     public File getBuildBaseStlFile() {
@@ -216,7 +213,7 @@ public class Preferences {
                 result += "is";
             }
             result += " not in the distribution preferences file.";
-            Debug.getInstance().debugMessage(result);
+            LOGGER.debug(result);
             noDifference = false;
         }
 
@@ -238,12 +235,12 @@ public class Preferences {
                 result += "is";
             }
             result += " not in your preferences file.";
-            Debug.getInstance().debugMessage(result);
+            LOGGER.debug(result);
             noDifference = false;
         }
 
         if (noDifference) {
-            Debug.getInstance().debugMessage("The distribution preferences file and yours match.  This is good.");
+            LOGGER.debug("The distribution preferences file and yours match.  This is good.");
         }
     }
 
@@ -260,7 +257,7 @@ public class Preferences {
         }
     }
 
-    public void save() throws FileNotFoundException, IOException {
+    public void save() throws IOException {
         final OutputStream output = new FileOutputStream(new File(getActiveMachineDir(), propsFile));
         try {
             mainPreferences.store(output,
@@ -279,13 +276,12 @@ public class Preferences {
         for (final PreferenceChangeListener listener : listeners) {
             listener.refreshPreferences(this);
         }
-        Debug.refreshPreferences(globalPrefs.loadBool("Debug"), false);
     }
 
     public String loadString(final String name) {
         if (!mainPreferences.containsKey(name)) {
-            Debug.getInstance().errorMessage(
-                    "RepRap preference: " + name + " not found in your preference file: " + getActiveMachineDir() + propsFile);
+            LOGGER.error("RepRap preference: " + name + " not found in your preference file: " + getActiveMachineDir()
+                    + propsFile);
         }
         return mainPreferences.getProperty(name);
     }
@@ -321,7 +317,7 @@ public class Preferences {
                 return i;
             }
         }
-        Debug.getInstance().debugMessage("getNumberFromMaterial - can't find " + material);
+        LOGGER.debug("getNumberFromMaterial - can't find " + material);
         return -1;
     }
 

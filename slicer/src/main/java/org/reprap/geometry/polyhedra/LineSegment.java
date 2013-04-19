@@ -1,7 +1,6 @@
 package org.reprap.geometry.polyhedra;
 
 import org.reprap.attributes.Attributes;
-import org.reprap.debug.Debug;
 import org.reprap.geometry.polygons.Point2D;
 
 /**
@@ -25,9 +24,6 @@ final class LineSegment {
      * Constructor takes two intersection points with an STL triangle edge.
      */
     LineSegment(final Point2D p, final Point2D q, final Attributes at) {
-        if (at == null) {
-            Debug.getInstance().errorMessage("LineSegment(): null attributes!");
-        }
         a = p;
         b = q;
         attribute = at;

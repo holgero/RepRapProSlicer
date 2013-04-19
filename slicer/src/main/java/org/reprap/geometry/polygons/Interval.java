@@ -55,7 +55,6 @@
 
 package org.reprap.geometry.polygons;
 
-import org.reprap.debug.Debug;
 
 /**
  * Real 1D intervals
@@ -159,8 +158,11 @@ public class Interval {
      * @return new interval based on addition of intervals a and b
      */
     public static Interval add(final Interval a, final Interval b) {
-        if (a.empty || b.empty) {
-            Debug.getInstance().errorMessage("RrInterval.add(...): adding empty interval(s).");
+        if (a.empty) {
+            throw new IllegalArgumentException("a must not be empty");
+        }
+        if (b.empty) {
+            throw new IllegalArgumentException("b must not be empty");
         }
         return new Interval(a.low + b.low, a.high + b.high);
     }
@@ -170,7 +172,7 @@ public class Interval {
      */
     public static Interval add(final Interval a, final double b) {
         if (a.empty) {
-            Debug.getInstance().errorMessage("RrInterval.add(...): adding an empty interval.");
+            throw new IllegalArgumentException("a must not be empty");
         }
         return new Interval(a.low + b, a.high + b);
     }
@@ -181,7 +183,7 @@ public class Interval {
      */
     public static Interval mul(final Interval a, final double f) {
         if (a.empty) {
-            Debug.getInstance().errorMessage("RrInterval.mul(...): multiplying an empty interval.");
+            throw new IllegalArgumentException("a must not be empty");
         }
         if (f > 0) {
             return new Interval(a.low * f, a.high * f);

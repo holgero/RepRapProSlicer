@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.reprap.debug.Debug;
 
 public final class Machine {
     private static final String MACHINE_FILE = "Machine";
@@ -37,8 +36,8 @@ public final class Machine {
             findActiveMachine();
         }
         if (activeMachine == null) {
-            Debug.getInstance().errorMessage(
-                    "No active RepRap set (add '*' to the start of a line in the file: " + getMachineFile() + ").");
+            throw new RuntimeException("No active RepRap set (add '*' to the start of a line in the file: " + getMachineFile()
+                    + ").");
         }
         return activeMachine.getName();
     }

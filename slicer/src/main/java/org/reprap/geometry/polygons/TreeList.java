@@ -3,8 +3,6 @@ package org.reprap.geometry.polygons;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.reprap.debug.Debug;
-
 /**
  * tree - class to hold lists to build a containment tree (that is a
  * representation of which polygon is inside which, like a Venn diagram).
@@ -49,8 +47,7 @@ class TreeList {
      */
     private TreeList getChild(final int i) {
         if (children == null) {
-            Debug.getInstance().errorMessage("treeList: attempt to get child from null list!");
-            return null;
+            throw new RuntimeException("treeList: attempt to get child from null list!");
         }
         return children.get(i);
     }

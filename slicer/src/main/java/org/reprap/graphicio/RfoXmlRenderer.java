@@ -1,54 +1,41 @@
 package org.reprap.graphicio;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
-
-import org.reprap.debug.Debug;
+import java.util.Stack;
 
 final class RfoXmlRenderer {
-    /**
-     * XML stack top. If it gets 100 deep we're in trouble...
-     */
-    private static final int top = 100;
-
     private final PrintStream XMLStream;
-    private final String[] stack;
-    private int sp;
+    private final Stack<String> stack = new Stack<String>();
 
     /**
      * Create an XML file called LegendFile starting with XML entry start.
      */
     RfoXmlRenderer(final File legendFile, final String start) {
-        FileOutputStream fileStream = null;
         try {
-            fileStream = new FileOutputStream(legendFile);
-        } catch (final Exception e) {
-            Debug.getInstance().errorMessage("XMLOut(): " + e);
+            final FileOutputStream fileStream = new FileOutputStream(legendFile);
+            XMLStream = new PrintStream(fileStream);
+            push(start);
+        } catch (final FileNotFoundException e) {
+            throw new RuntimeException(e);
         }
-        XMLStream = new PrintStream(fileStream);
-        stack = new String[top];
-        sp = 0;
-        push(start);
     }
 
     /**
      * Start item s
      */
     void push(final String s) {
-        for (int i = 0; i < sp; i++) {
+        for (int i = 0; i < stack.size(); i++) {
             XMLStream.print(" ");
         }
         XMLStream.println("<" + s + ">");
         final int end = s.indexOf(" ");
         if (end < 0) {
-            stack[sp] = s;
+            stack.push(s);
         } else {
-            stack[sp] = s.substring(0, end);
-        }
-        sp++;
-        if (sp >= top) {
-            Debug.getInstance().errorMessage("RFO: XMLOut stack overflow on " + s);
+            stack.push(s.substring(0, end));
         }
     }
 
@@ -56,7 +43,7 @@ final class RfoXmlRenderer {
      * Output a complete item s all in one go.
      */
     void write(final String s) {
-        for (int i = 0; i < sp; i++) {
+        for (int i = 0; i < stack.size(); i++) {
             XMLStream.print(" ");
         }
         XMLStream.println("<" + s + "/>");
@@ -66,21 +53,18 @@ final class RfoXmlRenderer {
      * End the current item.
      */
     void pop() {
-        sp--;
-        for (int i = 0; i < sp; i++) {
+        final String element = stack.pop();
+        for (int i = 0; i < stack.size(); i++) {
             XMLStream.print(" ");
         }
-        if (sp < 0) {
-            Debug.getInstance().errorMessage("RFO: XMLOut stack underflow.");
-        }
-        XMLStream.println("</" + stack[sp] + ">");
+        XMLStream.println("</" + element + ">");
     }
 
     /**
      * Wind it up.
      */
     void close() {
-        while (sp > 0) {
+        while (stack.size() > 0) {
             pop();
         }
         XMLStream.close();

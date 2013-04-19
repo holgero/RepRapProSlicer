@@ -12,7 +12,6 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.reprap.attributes.Preferences;
-import org.reprap.debug.Debug;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.Producer;
 import org.reprap.gui.MainFrame;
@@ -147,7 +146,7 @@ public class Main {
             try {
                 mainFrame.getBuilder().saveSCADFile(selectedFile);
             } catch (final IOException e) {
-                Debug.getInstance().errorMessage("failed to save " + selectedFile.getAbsolutePath());
+                throw new RuntimeException(e);
             }
             return selectedFile.getName();
         }

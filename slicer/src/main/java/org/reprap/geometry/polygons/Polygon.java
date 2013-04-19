@@ -72,14 +72,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.reprap.attributes.Attributes;
 import org.reprap.attributes.Constants;
-import org.reprap.debug.Debug;
 
 /**
  * The main boundary-representation polygon class
  */
 public class Polygon {
+    private static final Logger LOGGER = LogManager.getLogger(Polygon.class);
     /**
      * End joined to beginning?
      */
@@ -290,12 +292,11 @@ public class Polygon {
      */
     public Polygon newStart(int i) {
         if (!isClosed()) {
-            Debug.getInstance().errorMessage("RrPolygon.newStart(i): reordering an open polygon!");
+            throw new RuntimeException("attempt to reorder an open polygon");
         }
 
         if (i < 0 || i >= size()) {
-            Debug.getInstance().errorMessage("RrPolygon.newStart(i): dud index: " + i);
-            return this;
+            throw new ArrayIndexOutOfBoundsException("polygon size " + size() + ", invalid index: " + i);
         }
         final Polygon result = new Polygon(attributes, closed);
         for (int j = 0; j < size(); j++) {
@@ -322,7 +323,7 @@ public class Polygon {
             }
         }
         if (result < 0) {
-            Debug.getInstance().errorMessage("RrPolygon.nearestVertex(): no point found!");
+            throw new RuntimeException("found no point nearest to: " + p);
         }
         return result;
     }
@@ -336,7 +337,7 @@ public class Polygon {
      */
     boolean nearestVertexReorderMerge(final Polygon p, final double linkUp) {
         if (!p.isClosed()) {
-            Debug.getInstance().errorMessage("RrPolygon.nearestVertexReorder(): called for non-closed polygon.");
+            throw new RuntimeException("attempt to reorder an open polygon");
         }
 
         double d = Double.POSITIVE_INFINITY;
@@ -376,7 +377,7 @@ public class Polygon {
             }
         }
         if (result < 0) {
-            Debug.getInstance().errorMessage("RrPolygon.maximalVertex(): no point found!");
+            throw new RuntimeException("found no maximal projection point to line: " + ln);
         }
         return result;
     }
@@ -416,7 +417,7 @@ public class Polygon {
                 }
             }
         }
-        Debug.getInstance().debugMessage("RrPolygon.findAngleStart(): polygon is all one straight line!");
+        LOGGER.debug("RrPolygon.findAngleStart(): polygon is all one straight line!");
         return -1;
     }
 
@@ -452,7 +453,7 @@ public class Polygon {
             // We get back -1 if the points are in a straight line. 
             v2 = findAngleStart(v2, d2);
             if (v2 < 0) {
-                Debug.getInstance().errorMessage("RrPolygon.simplify(): points were not in a straight line; now they are!");
+                LOGGER.error("RrPolygon.simplify(): points were not in a straight line; now they are!");
                 return (r);
             }
 
@@ -531,7 +532,7 @@ public class Polygon {
                 a.set(1, k);
             }
         } else {
-            Debug.getInstance().errorMessage("clockWise(): not called for a triangle!");
+            throw new RuntimeException("cannot order clockWise a polygon that is not a triangle: " + a);
         }
     }
 
@@ -571,8 +572,7 @@ public class Polygon {
      */
     private List<Integer> convexHull(final List<Integer> subList) {
         if (subList.size() < 3) {
-            Debug.getInstance().errorMessage("convexHull(): attempt to compute hull for " + subList.size() + " points!");
-            return new ArrayList<Integer>();
+            throw new RuntimeException("attempt to compute hull for " + subList.size() + " points!");
         }
 
         final List<Integer> inConsideration = new ArrayList<Integer>(subList);
@@ -625,8 +625,7 @@ public class Polygon {
                 result.add(after, inConsideration.get(corner));
                 inConsideration.remove(corner);
             } else if (inConsideration.size() > 0) {
-                Debug.getInstance().errorMessage("convexHull(): points left, but none included!");
-                return result;
+                throw new RuntimeException("convexHull(): points left, but none included!");
             }
 
             // Get the first triangle in the right order
@@ -715,8 +714,7 @@ public class Polygon {
         level++;
         final List<Integer> ch = convexHull(a);
         if (ch.size() < 3) {
-            Debug.getInstance().errorMessage("toCSGRecursive() - null convex hull: " + ch.size() + " points.");
-            return CSG2D.nothing();
+            throw new RuntimeException("null convex hull: " + ch.size() + " points.");
         }
 
         flagSet(level, ch, flags);

@@ -189,14 +189,14 @@ public class GCodeExtruder {
     /**
      * Zero the extruded length
      */
-    public void zeroExtrudedLength(final boolean really) throws Exception {
+    public void zeroExtrudedLength(final boolean really) throws IOException {
         extruderState.zero();
         if (really) {
             gcode.writeCommand("G92 E0", "zero the extruded length");
         }
     }
 
-    public void setExtrusion(final double speed, final boolean reverse) throws Exception {
+    public void setExtrusion(final double speed, final boolean reverse) throws IOException {
         if (getExtruderSpeed() < 0) {
             return;
         }
@@ -228,7 +228,7 @@ public class GCodeExtruder {
     }
 
     //TODO: make these real G codes.
-    public void setCooler(final boolean coolerOn, final boolean really) throws Exception {
+    public void setCooler(final boolean coolerOn, final boolean really) throws IOException {
         if (really) {
             if (coolerOn) {
                 gcode.writeCommand("M106", "cooler on");
@@ -238,7 +238,7 @@ public class GCodeExtruder {
         }
     }
 
-    public void setValve(final boolean valveOpen) throws Exception {
+    public void setValve(final boolean valveOpen) throws IOException {
         if (valvePulseTime <= 0) {
             return;
         }
@@ -327,7 +327,7 @@ public class GCodeExtruder {
         }
     }
 
-    public void setMotor(final boolean motorOn) throws Exception {
+    public void setMotor(final boolean motorOn) throws IOException {
         if (getExtruderSpeed() < 0) {
             return;
         }
@@ -387,7 +387,7 @@ public class GCodeExtruder {
         separating = s;
     }
 
-    public double getExtruderSpeed() throws IOException {
+    public double getExtruderSpeed() {
         if (separating) {
             return 3000;
         } else {

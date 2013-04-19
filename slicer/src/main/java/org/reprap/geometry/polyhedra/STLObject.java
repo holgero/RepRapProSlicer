@@ -57,6 +57,7 @@ This version: 14 April 2006
 package org.reprap.geometry.polyhedra;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -81,13 +82,16 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Tuple3d;
 import javax.vecmath.Vector3d;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.reprap.attributes.Attributes;
 import org.reprap.attributes.Constants;
-import org.reprap.debug.Debug;
 import org.reprap.graphicio.CSGReader;
 import org.reprap.graphicio.StlFile;
 import org.reprap.gui.MouseObject;
 
+import com.sun.j3d.loaders.IncorrectFormatException;
+import com.sun.j3d.loaders.ParsingErrorException;
 import com.sun.j3d.loaders.Scene;
 import com.sun.j3d.utils.picking.PickTool;
 
@@ -100,6 +104,8 @@ import com.sun.j3d.utils.picking.PickTool;
  * @author adrian
  */
 public class STLObject {
+    private static final Logger LOGGER = LogManager.getLogger(STLObject.class);
+
     /**
      * Offsets of loaded STL objects
      */
@@ -135,8 +141,6 @@ public class STLObject {
             return unique;
         }
     }
-
-    private static final Color3f BLACK = new Color3f(0, 0, 0);
 
     private MouseObject mouse = null; // The mouse, if it is controlling us
     private BranchGroup top = null; // The thing that links us to the world
@@ -203,17 +207,13 @@ public class STLObject {
     private static Appearance unselectedApp() {
         final Color3f unselectedColour = new Color3f((float) 0.3, (float) 0.3, (float) 0.3);
         final Appearance unselectedApp = new Appearance();
-        unselectedApp.setMaterial(new Material(unselectedColour, BLACK, unselectedColour, BLACK, 0f));
+        unselectedApp.setMaterial(new Material(unselectedColour, Constants.BLACK, unselectedColour, Constants.BLACK, 0f));
         return unselectedApp;
     }
 
     /**
      * Load an STL object from a file with a known offset (set that null to put
      * the object in the middle of the bed) and set its appearance
-     * 
-     * @param location
-     * @param offset
-     * @param app
      */
     public Attributes addSTL(final File location, final Vector3d offset, final Appearance app, final STLObject lastPicked) {
         final Attributes att;
@@ -223,16 +223,24 @@ public class STLObject {
             att = new Attributes(null, this, null, app);
         }
 
-        final Contents child = loadSingleSTL(location, att, offset, lastPicked);
-        if (child == null) {
-            return null;
+        try {
+            final Contents child = loadSingleSTL(location, att, offset, lastPicked);
+            if (child == null) {
+                return null;
+            }
+            if (lastPicked == null) {
+                contents.add(child);
+            } else {
+                lastPicked.contents.add(child);
+            }
+            return att;
+        } catch (final FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (final IncorrectFormatException e) {
+            throw new RuntimeException(e);
+        } catch (final ParsingErrorException e) {
+            throw new RuntimeException(e);
         }
-        if (lastPicked == null) {
-            contents.add(child);
-        } else {
-            lastPicked.contents.add(child);
-        }
-        return att;
     }
 
     /**
@@ -242,73 +250,64 @@ public class STLObject {
      * and subsequently is subjected to all the same transforms, so they retain
      * their relative positions. This is how multi-material objects are loaded.
      */
-    private Contents loadSingleSTL(final File location, final Attributes att, final Vector3d offset, final STLObject lastPicked) {
-        BranchGroup bgResult = null;
-        CSG3D csgResult = null;
-
+    private Contents loadSingleSTL(final File location, final Attributes att, final Vector3d offset, final STLObject lastPicked)
+            throws FileNotFoundException, IncorrectFormatException, ParsingErrorException {
         final StlFile loader = new StlFile();
-
-        Scene scene;
         double volume = 0;
-        try {
+        final Scene scene = loader.load(location.getAbsolutePath());
+        final CSGReader csgr = new CSGReader(location);
+        CSG3D csgResult = null;
+        if (csgr.csgAvailable()) {
+            csgResult = csgr.csg();
+        }
+        BranchGroup bgResult = null;
+        if (scene != null) {
+            bgResult = scene.getSceneGroup();
+            bgResult.setCapability(Node.ALLOW_BOUNDS_READ);
+            bgResult.setCapability(Group.ALLOW_CHILDREN_READ);
+            bgResult.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
 
-            scene = loader.load(location.getAbsolutePath());
-            final CSGReader csgr = new CSGReader(location);
-            if (csgr.csgAvailable()) {
-                csgResult = csgr.csg();
-            }
-            if (scene != null) {
-                bgResult = scene.getSceneGroup();
-                bgResult.setCapability(Node.ALLOW_BOUNDS_READ);
-                bgResult.setCapability(Group.ALLOW_CHILDREN_READ);
-                bgResult.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
+            // Recursively add its attribute
+            final Hashtable<?, ?> namedObjects = scene.getNamedObjects();
+            final java.util.Enumeration<?> enumValues = namedObjects.elements();
 
-                // Recursively add its attribute
-                final Hashtable<?, ?> namedObjects = scene.getNamedObjects();
-                final java.util.Enumeration<?> enumValues = namedObjects.elements();
+            if (enumValues != null) {
+                while (enumValues.hasMoreElements()) {
+                    final Object tt = enumValues.nextElement();
+                    if (tt instanceof Shape3D) {
+                        final Shape3D value = (Shape3D) tt;
+                        volume += s3dVolume(value);
+                        bbox = (BoundingBox) value.getBounds();
 
-                if (enumValues != null) {
-                    while (enumValues.hasMoreElements()) {
-                        final Object tt = enumValues.nextElement();
-                        if (tt instanceof Shape3D) {
-                            final Shape3D value = (Shape3D) tt;
-                            volume += s3dVolume(value);
-                            bbox = (BoundingBox) value.getBounds();
+                        value.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
+                        final GeometryArray g = (GeometryArray) value.getGeometry();
+                        g.setCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
 
-                            value.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
-                            final GeometryArray g = (GeometryArray) value.getGeometry();
-                            g.setCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
-
-                            recursiveSetUserData(value, att);
-                        }
+                        recursiveSetUserData(value, att);
                     }
                 }
-
-                att.setPart(bgResult);
-                bgResult.setUserData(att);
-                Offsets off;
-                if (lastPicked != null) {
-                    // Add this object to lastPicked
-                    csgResult = setOffset(bgResult, csgResult, lastPicked.rootOffset);
-                    lastPicked.stl.addChild(bgResult);
-                    lastPicked.setAppearance(lastPicked.getAppearance());
-                    lastPicked.updateBox(bbox);
-                } else {
-                    // New independent object.
-                    stl.addChild(bgResult);
-                    off = getOffsets(bgResult, offset);
-                    rootOffset = off.centreToOrigin;
-                    csgResult = setOffset(stl, csgResult, rootOffset);
-                    final Transform3D temp_t = new Transform3D();
-                    temp_t.set(off.bottomLeftShift);
-                    trans.setTransform(temp_t);
-                    restoreAppearance();
-                }
             }
 
-        } catch (final Exception e) {
-            Debug.getInstance().errorMessage("loadSingelSTL(): Exception loading STL file from: " + location);
-            e.printStackTrace();
+            att.setPart(bgResult);
+            bgResult.setUserData(att);
+            Offsets off;
+            if (lastPicked != null) {
+                // Add this object to lastPicked
+                csgResult = setOffset(bgResult, csgResult, lastPicked.rootOffset);
+                lastPicked.stl.addChild(bgResult);
+                lastPicked.setAppearance(lastPicked.getAppearance());
+                lastPicked.updateBox(bbox);
+            } else {
+                // New independent object.
+                stl.addChild(bgResult);
+                off = getOffsets(bgResult, offset);
+                rootOffset = off.centreToOrigin;
+                csgResult = setOffset(stl, csgResult, rootOffset);
+                final Transform3D temp_t = new Transform3D();
+                temp_t.set(off.bottomLeftShift);
+                trans.setTransform(temp_t);
+                restoreAppearance();
+            }
         }
 
         return new Contents(location, bgResult, csgResult, att, volume);
@@ -434,17 +433,14 @@ public class STLObject {
     /**
      * Find how to move the object by actually changing all its coordinates
      * (i.e. don't just add a transform). Also record its size.
-     * 
-     * @param child
-     * @param offset
      */
     private Offsets getOffsets(final BranchGroup child, final Vector3d userOffset) {
-        final Offsets result = new Offsets();
         Vector3d offset = null;
         if (userOffset != null) {
             offset = new Vector3d(userOffset);
         }
 
+        final Offsets result = new Offsets();
         if (child != null && bbox != null) {
             final javax.vecmath.Point3d p0 = new javax.vecmath.Point3d();
             final javax.vecmath.Point3d p1 = new javax.vecmath.Point3d();
@@ -452,7 +448,6 @@ public class STLObject {
             bbox.getUpper(p1);
 
             // If no offset requested, set it to bottom-left-at-origin
-
             if (offset == null) {
                 offset = new Vector3d();
                 offset.x = -p0.x;
@@ -461,35 +456,20 @@ public class STLObject {
             }
 
             // How big?
-
             extent = new Vector3d(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z);
 
             // Position us centre at origin:
-
             offset = add(offset, neg(scale(extent, 0.5)));
 
             // Recursively apply that.  N.B. we do not apply a transform to the
             // loaded object; we actually shift all its points to put it in this
             // standard place.
-
-            //setOffset(offset);
-
             result.centreToOrigin = offset;
 
-            //System.out.println("centreToOrigin = " + offset.toString());
-
             // Now shift us to have bottom left at origin using our transform.
-
-            //Transform3D temp_t = new Transform3D();
-            //temp_t.set(scale(size, 0.5));
             result.bottomLeftShift = scale(extent, 0.5);
-            //System.out.println("half-size = " + result.bottomLeftShift.toString());
-            //trans.setTransform(temp_t);
-
-            //restoreAppearance();
-
         } else {
-            Debug.getInstance().errorMessage("applyOffset(): no bounding box or child.");
+            LOGGER.error("applyOffset(): no bounding box or child.");
         }
 
         return result;
@@ -746,14 +726,13 @@ public class STLObject {
                 if (att != null) {
                     setAppearance_r(b, att.getAppearance());
                 } else {
-                    Debug.getInstance().errorMessage("restoreAppearance(): no Attributes!");
+                    LOGGER.error("restoreAppearance(): no Attributes!");
                 }
             }
         }
     }
 
     // Why the !*$! aren't these in Vector3d???
-
     private static Vector3d add(final Vector3d a, final Vector3d b) {
         final Vector3d result = new Vector3d();
         result.x = a.x + b.x;
@@ -775,7 +754,6 @@ public class STLObject {
     }
 
     // Put a vector in the positive octant (sort of abs for vectors)
-
     private Vector3d posOct(final Vector3d v) {
         final Vector3d result = new Vector3d();
         result.x = Math.abs(v.x);
@@ -787,14 +765,12 @@ public class STLObject {
     // Apply a rotating click transform about one of the coordinate axes,
     // which should be set in t.  This can only be done if we're being controlled
     // by the mouse, making us the active object.
-
     private void rClick(final Transform3D t) {
         if (mouse == null) {
             return;
         }
 
         // Get the mouse transform and split it into a rotation and a translation
-
         final Transform3D mtrans = new Transform3D();
         mouse.getTransform(mtrans);
         Vector3d mouseTranslation = new Vector3d();
@@ -803,17 +779,14 @@ public class STLObject {
 
         // Subtract the part of the translation that puts the bottom left corner
         // at the origin.
-
         Vector3d zero = scale(extent, 0.5);
         mouseTranslation = add(mouseTranslation, neg(zero));
 
         // Click the size record round by t
-
         t.transform(extent);
         extent = posOct(extent);
 
         // Apply the new rotation to the existing one
-
         final Transform3D spin = new Transform3D();
         spin.setRotation(mouseRotation);
         t.mul(spin);

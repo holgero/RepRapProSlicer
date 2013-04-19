@@ -5,7 +5,8 @@ import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Material;
 import javax.vecmath.Color3f;
 
-import org.reprap.debug.Debug;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polyhedra.STLObject;
@@ -17,6 +18,7 @@ import org.reprap.geometry.polyhedra.STLObject;
  * @author adrian
  */
 public class Attributes {
+    private static final Logger LOGGER = LogManager.getLogger(Attributes.class);
     /**
      * The name of the material
      */
@@ -108,12 +110,12 @@ public class Attributes {
         if (extruder == null) {
             final GCodePrinter p = org.reprap.Main.gui.getPrinter();
             if (p == null) {
-                Debug.getInstance().errorMessage("Attributes.getExtruder(): null printer!");
+                LOGGER.error("Attributes.getExtruder(): null printer!");
                 return null;
             }
             extruder = p.getExtruder(material);
             if (extruder == null) {
-                Debug.getInstance().errorMessage("Attributes.getExtruder(): null extruder for " + material);
+                LOGGER.error("Attributes.getExtruder(): null extruder for " + material);
                 return null;
             }
         }

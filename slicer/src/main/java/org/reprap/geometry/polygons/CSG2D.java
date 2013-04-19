@@ -50,8 +50,6 @@
 
 package org.reprap.geometry.polygons;
 
-import org.reprap.debug.Debug;
-
 /**
  * RepRap Constructive Solid Geometry class
  * 
@@ -149,31 +147,26 @@ public class CSG2D {
         case LEAF:
             result = result + white + hp.toString() + "\n";
             break;
-
         case NULL:
             result = result + white + "0\n";
             break;
-
         case UNIVERSE:
             result = result + white + "U\n";
             break;
-
         case UNION:
             result = result + white + "+\n";
             white = white + " ";
             result = c1.toString_r(result, white);
             result = c2.toString_r(result, white);
             break;
-
         case INTERSECTION:
             result = result + white + "&\n";
             white = white + " ";
             result = c1.toString_r(result, white);
             result = c2.toString_r(result, white);
             break;
-
         default:
-            Debug.getInstance().errorMessage("toString_r(): invalid operator.");
+            throw new RuntimeException("invalid operator: " + op);
         }
         return result;
     }
@@ -272,30 +265,23 @@ public class CSG2D {
             return comp;
         }
 
-        CSG2D result;
-
+        final CSG2D result;
         switch (op) {
         case LEAF:
             result = new CSG2D(hp.complement());
             break;
-
         case NULL:
             return universe();
-
         case UNIVERSE:
             return nothing();
-
         case UNION:
             result = intersection(c1.complement(), c2.complement());
             break;
-
         case INTERSECTION:
             result = union(c1.complement(), c2.complement());
             break;
-
         default:
-            Debug.getInstance().errorMessage("complement(): invalid operator.");
-            return nothing();
+            throw new RuntimeException("invalid operator: " + op);
         }
 
         comp = result;
@@ -331,30 +317,25 @@ public class CSG2D {
      * @return potential value of a point
      */
     double value(final Point2D p) {
-        double result = 1;
+        final double result;
         switch (op) {
         case LEAF:
             result = hp.value(p);
             break;
-
         case NULL:
             result = 1;
             break;
-
         case UNIVERSE:
             result = -1;
             break;
-
         case UNION:
             result = Math.min(c1.value(p), c2.value(p));
             break;
-
         case INTERSECTION:
             result = Math.max(c1.value(p), c2.value(p));
             break;
-
         default:
-            Debug.getInstance().errorMessage("RrCSG.value(): dud operator.");
+            throw new RuntimeException("invalid operator: " + op);
         }
         return result;
     }
@@ -366,31 +347,24 @@ public class CSG2D {
      */
     Interval value(final Rectangle b) {
         Interval result;
-
         switch (op) {
         case LEAF:
             result = hp.value(b);
             break;
-
         case NULL:
             result = new Interval(1, 1.01); // Is this clever?  Or dumb?
             break;
-
         case UNIVERSE:
             result = new Interval(-1.01, -1); // Ditto.
             break;
-
         case UNION:
             result = Interval.min(c1.value(b), c2.value(b));
             break;
-
         case INTERSECTION:
             result = Interval.max(c1.value(b), c2.value(b));
             break;
-
         default:
-            Debug.getInstance().errorMessage("value(RrBox): invalid operator.");
-            result = new Interval();
+            throw new RuntimeException("invalid operator: " + op);
         }
 
         return result;
@@ -402,34 +376,35 @@ public class CSG2D {
      * @return pruned box as new CSG object
      */
     CSG2D prune(final Rectangle b) {
-        CSG2D result = this;
+        final CSG2D result;
 
         switch (op) {
         case LEAF:
             final Interval i = hp.value(b);
             if (i.empty()) {
-                Debug.getInstance().errorMessage("RrCSG.prune(RrBox): empty interval!");
+                throw new IllegalStateException("prune(): empty interval");
             } else if (i.neg()) {
                 result = universe();
             } else if (i.pos()) {
                 result = nothing();
+            } else {
+                throw new IllegalStateException("interval neither positive nor negative: " + i);
             }
             break;
-
         case NULL:
-        case UNIVERSE:
+            result = this;
             break;
-
+        case UNIVERSE:
+            result = this;
+            break;
         case UNION:
             result = union(c1.prune(b), c2.prune(b));
             break;
-
         case INTERSECTION:
             result = intersection(c1.prune(b), c2.prune(b));
             break;
-
         default:
-            Debug.getInstance().errorMessage("RrCSG.prune(RrBox): dud op value!");
+            throw new RuntimeException("invalid operator: " + op);
         }
 
         return result;

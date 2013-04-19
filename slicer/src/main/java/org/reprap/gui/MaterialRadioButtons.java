@@ -21,7 +21,6 @@ import javax.swing.WindowConstants;
 
 import org.reprap.attributes.Attributes;
 import org.reprap.attributes.Preferences;
-import org.reprap.debug.Debug;
 import org.reprap.geometry.polyhedra.STLObject;
 
 /**
@@ -39,81 +38,75 @@ class MaterialRadioButtons extends JPanel {
 
     private MaterialRadioButtons(final double volume) {
         super(new BorderLayout());
-        JPanel radioPanel;
-        final ButtonGroup bGroup = new ButtonGroup();
-        String[] names;
-        radioPanel = new JPanel(new GridLayout(0, 1));
+        final JPanel radioPanel = new JPanel(new GridLayout(0, 1));
         radioPanel.setSize(300, 200);
 
         final JLabel jLabel0 = new JLabel();
-        radioPanel.add(jLabel0);
         jLabel0.setText("Volume of object: " + Math.round(volume) + " mm^3");
         jLabel0.setHorizontalAlignment(SwingConstants.CENTER);
+        radioPanel.add(jLabel0);
 
         final JLabel jLabel2 = new JLabel();
-        radioPanel.add(jLabel2);
         jLabel2.setText(" Number of copies of the object just loaded to print: ");
         jLabel2.setHorizontalAlignment(SwingConstants.CENTER);
+        radioPanel.add(jLabel2);
+
         copies = new JTextField("1");
         copies.setSize(20, 10);
         copies.setHorizontalAlignment(SwingConstants.CENTER);
         radioPanel.add(copies);
 
         final JLabel jLabel1 = new JLabel();
-        radioPanel.add(jLabel1);
         jLabel1.setText(" Select the material for the object(s): ");
         jLabel1.setHorizontalAlignment(SwingConstants.CENTER);
+        radioPanel.add(jLabel1);
 
-        try {
-            names = Preferences.getInstance().getAllMaterials();
-            String matname = att.getMaterial();
-            if (matname == null) {
-                matname = "";
-            }
-            int matnumber = -1;
-            for (int i = 0; i < names.length; i++) {
-                if (matname.contentEquals(names[i])) {
-                    matnumber = i;
-                }
-                final JRadioButton b = new JRadioButton(names[i]);
-                b.setActionCommand(names[i]);
-                b.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(final ActionEvent e) {
-                        att.setMaterial(e.getActionCommand());
-                    }
-                });
-                if (i == matnumber) {
-                    b.setSelected(true);
-                }
-                bGroup.add(b);
-                radioPanel.add(b);
-            }
-            if (matnumber < 0) {
-                att.setMaterial(names[0]);
-                final JRadioButton b = (JRadioButton) bGroup.getElements().nextElement();
-                b.setSelected(true);
-            } else {
-                copies.setEnabled(false); // If it's already loaded, don't make multiple copies (FUTURE: why not...?)
-            }
+        final String[] names = Preferences.getInstance().getAllMaterials();
+        String matname = att.getMaterial();
+        if (matname == null) {
+            matname = "";
+        }
 
-            final JButton okButton = new JButton();
-            radioPanel.add(okButton);
-            okButton.setText("OK");
-            okButton.addActionListener(new ActionListener() {
+        final ButtonGroup bGroup = new ButtonGroup();
+        int matnumber = -1;
+        for (int i = 0; i < names.length; i++) {
+            if (matname.contentEquals(names[i])) {
+                matnumber = i;
+            }
+            final JRadioButton b = new JRadioButton(names[i]);
+            b.setActionCommand(names[i]);
+            b.addActionListener(new ActionListener() {
                 @Override
-                public void actionPerformed(final ActionEvent evt) {
-                    OKHandler();
+                public void actionPerformed(final ActionEvent e) {
+                    att.setMaterial(e.getActionCommand());
                 }
             });
-
-            add(radioPanel, BorderLayout.LINE_START);
-            setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        } catch (final Exception ex) {
-            Debug.getInstance().errorMessage(ex.toString());
-            ex.printStackTrace();
+            if (i == matnumber) {
+                b.setSelected(true);
+            }
+            bGroup.add(b);
+            radioPanel.add(b);
         }
+        if (matnumber < 0) {
+            att.setMaterial(names[0]);
+            final JRadioButton b = (JRadioButton) bGroup.getElements().nextElement();
+            b.setSelected(true);
+        } else {
+            copies.setEnabled(false); // If it's already loaded, don't make multiple copies (FUTURE: why not...?)
+        }
+
+        final JButton okButton = new JButton();
+        radioPanel.add(okButton);
+        okButton.setText("OK");
+        okButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent evt) {
+                OKHandler();
+            }
+        });
+
+        add(radioPanel, BorderLayout.LINE_START);
+        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
     }
 
     private static void OKHandler() {

@@ -17,10 +17,11 @@ import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.reprap.attributes.Attributes;
 import org.reprap.attributes.Constants;
 import org.reprap.attributes.Preferences;
-import org.reprap.debug.Debug;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.geometry.LayerRules;
 import org.reprap.geometry.polygons.BooleanGrid;
@@ -48,6 +49,8 @@ import org.reprap.gui.RepRapBuild;
  * @author Adrian
  */
 public class AllSTLsToBuild {
+    private static final Logger LOGGER = LogManager.getLogger(AllSTLsToBuild.class);
+
     /**
      * Ring buffer cache to hold previously computed slices for doing infill and
      * support material calculations.
@@ -64,7 +67,7 @@ public class AllSTLsToBuild {
 
         private SliceCache(final LayerRules lr) {
             if (lr == null) {
-                Debug.getInstance().errorMessage("SliceCache(): null LayerRules!");
+                LOGGER.error("SliceCache(): null LayerRules!");
             }
             ringSize = lr.sliceCacheSize();
             sliceRing = new BooleanGridList[ringSize][stls.size()];
@@ -143,11 +146,6 @@ public class AllSTLsToBuild {
     }
 
     /**
-     * OpenSCAD file extension
-     */
-    private static final String scad = ".scad";
-
-    /**
      * The list of things to be built
      */
     private List<STLObject> stls;
@@ -196,7 +194,7 @@ public class AllSTLsToBuild {
 
     public void add(final STLObject s) {
         if (frozen) {
-            Debug.getInstance().errorMessage("AllSTLsToBuild.add(): adding an item to a frozen list.");
+            LOGGER.error("AllSTLsToBuild.add(): adding an item to a frozen list.");
         }
         stls.add(s);
     }
@@ -206,7 +204,7 @@ public class AllSTLsToBuild {
      */
     public void add(final int index, final STLObject s) {
         if (frozen) {
-            Debug.getInstance().errorMessage("AllSTLsToBuild.add(): adding an item to a frozen list.");
+            LOGGER.error("AllSTLsToBuild.add(): adding an item to a frozen list.");
         }
         stls.add(index, s);
     }
@@ -216,7 +214,7 @@ public class AllSTLsToBuild {
      */
     public void add(final AllSTLsToBuild a) {
         if (frozen) {
-            Debug.getInstance().errorMessage("AllSTLsToBuild.add(): adding a collection to a frozen list.");
+            LOGGER.error("AllSTLsToBuild.add(): adding a collection to a frozen list.");
         }
         for (int i = 0; i < a.size(); i++) {
             stls.add(a.get(i));
@@ -232,7 +230,7 @@ public class AllSTLsToBuild {
 
     public void remove(final int i) {
         if (frozen) {
-            Debug.getInstance().errorMessage("AllSTLsToBuild.remove(): removing an item from a frozen list.");
+            LOGGER.error("AllSTLsToBuild.remove(): removing an item from a frozen list.");
         }
         stls.remove(i);
     }
@@ -242,7 +240,7 @@ public class AllSTLsToBuild {
      */
     private int findSTL(final STLObject st) {
         if (size() <= 0) {
-            Debug.getInstance().errorMessage("AllSTLsToBuild.findSTL(): no objects to pick from!");
+            LOGGER.error("AllSTLsToBuild.findSTL(): no objects to pick from!");
             return -1;
         }
         int index = -1;
@@ -253,7 +251,7 @@ public class AllSTLsToBuild {
             }
         }
         if (index < 0) {
-            Debug.getInstance().errorMessage("AllSTLsToBuild.findSTL(): dud object submitted.");
+            LOGGER.error("AllSTLsToBuild.findSTL(): dud object submitted.");
             return -1;
         }
         return index;
@@ -325,7 +323,7 @@ public class AllSTLsToBuild {
      */
     public boolean reorderAdd(final STLObject st) {
         if (frozen) {
-            Debug.getInstance().debugMessage("AllSTLsToBuild.reorderAdd(): attempting to reorder a frozen list.");
+            LOGGER.debug("AllSTLsToBuild.reorderAdd(): attempting to reorder a frozen list.");
         }
 
         if (newstls == null) {
@@ -392,7 +390,7 @@ public class AllSTLsToBuild {
                 }
             }
             if (rectangles.get(i) == null) {
-                Debug.getInstance().errorMessage("AllSTLsToBuild:ObjectPlanRectangle(): object " + i + " is empty");
+                LOGGER.error("AllSTLsToBuild:ObjectPlanRectangle(): object " + i + " is empty");
             }
         }
     }
@@ -406,7 +404,7 @@ public class AllSTLsToBuild {
             return;
         }
         if (layerRules == null) {
-            Debug.getInstance().errorMessage("AllSTLsToBuild.freeze(): layerRules not set!");
+            LOGGER.error("AllSTLsToBuild.freeze(): layerRules not set!");
         }
         frozen = true;
 
@@ -473,7 +471,7 @@ public class AllSTLsToBuild {
      */
     public Rectangle ObjectPlanRectangle() {
         if (XYZbox == null) {
-            Debug.getInstance().errorMessage("AllSTLsToBuild.ObjectPlanRectangle(): null XYZbox!");
+            LOGGER.error("AllSTLsToBuild.ObjectPlanRectangle(): null XYZbox!");
         }
         return XYZbox.XYbox;
     }
@@ -483,7 +481,7 @@ public class AllSTLsToBuild {
      */
     public double maxZ() {
         if (XYZbox == null) {
-            Debug.getInstance().errorMessage("AllSTLsToBuild.maxZ(): null XYZbox!");
+            LOGGER.error("AllSTLsToBuild.maxZ(): null XYZbox!");
         }
         return XYZbox.Zint.high();
     }
@@ -513,14 +511,14 @@ public class AllSTLsToBuild {
             }
         }
         if (swap < 0) {
-            Debug.getInstance().errorMessage("AllSTLsToBuild.startLong(): no edges found!");
+            LOGGER.error("AllSTLsToBuild.startLong(): no edges found!");
             return;
         }
         temp = edges.get(0);
         edges.set(0, edges.get(swap));
         edges.set(swap, temp);
         if (Math.sqrt(d) < preferences.gridResultion()) {
-            Debug.getInstance().debugMessage("AllSTLsToBuild.startLong(): edge length: " + Math.sqrt(d) + " is the longest.");
+            LOGGER.debug("AllSTLsToBuild.startLong(): edge length: " + Math.sqrt(d) + " is the longest.");
         }
     }
 
@@ -529,7 +527,7 @@ public class AllSTLsToBuild {
      */
     private Polygon getNextPolygon(final ArrayList<LineSegment> edges) {
         if (!frozen) {
-            Debug.getInstance().errorMessage("AllSTLsToBuild:getNextPolygon() called for an unfrozen list!");
+            LOGGER.error("AllSTLsToBuild:getNextPolygon() called for an unfrozen list!");
             freeze();
         }
         if (edges.size() <= 0) {
@@ -586,7 +584,7 @@ public class AllSTLsToBuild {
             }
         }
 
-        Debug.getInstance().debugMessage("AllSTLsToBuild.getNextPolygon(): exhausted edge list!");
+        LOGGER.debug("AllSTLsToBuild.getNextPolygon(): exhausted edge list!");
 
         return result;
     }
@@ -596,7 +594,7 @@ public class AllSTLsToBuild {
      */
     private PolygonList simpleCull(final ArrayList<LineSegment> edges) {
         if (!frozen) {
-            Debug.getInstance().errorMessage("AllSTLsToBuild:simpleCull() called for an unfrozen list!");
+            LOGGER.error("AllSTLsToBuild:simpleCull() called for an unfrozen list!");
             freeze();
         }
         final PolygonList result = new PolygonList();
@@ -687,7 +685,7 @@ public class AllSTLsToBuild {
             final BooleanGrid grid = support.get(i);
             final GCodeExtruder e = grid.attribute().getExtruder().getSupportExtruder();
             if (e == null) {
-                Debug.getInstance().errorMessage("AllSTLsToBuild.computeSupport(): null support extruder specified!");
+                LOGGER.error("AllSTLsToBuild.computeSupport(): null support extruder specified!");
                 continue;
             }
             grid.forceAttribute(new Attributes(e.getMaterial(), null, null, e.getAppearance()));
@@ -738,7 +736,7 @@ public class AllSTLsToBuild {
 
     public void setUpShield(final RepRapBuild builder) {
         if (frozen) {
-            Debug.getInstance().errorMessage("AllSTLsToBuild.setUpShield() called when frozen!");
+            LOGGER.error("AllSTLsToBuild.setUpShield() called when frozen!");
         }
 
         if (!preferences.loadBool("Shield")) {
@@ -821,7 +819,7 @@ public class AllSTLsToBuild {
      */
     BooleanGridList slice(final int stlIndex, final int layer) {
         if (!frozen) {
-            Debug.getInstance().errorMessage("AllSTLsToBuild.slice() called when unfrozen!");
+            LOGGER.error("AllSTLsToBuild.slice() called when unfrozen!");
             freeze();
         }
 
@@ -858,8 +856,8 @@ public class AllSTLsToBuild {
 
         for (extruderID = 0; extruderID < extruders.length; extruderID++) {
             if (extruders[extruderID].getID() != extruderID) {
-                Debug.getInstance().errorMessage(
-                        "AllSTLsToBuild.slice(): extruder " + extruderID + "out of sequence: " + extruders[extruderID].getID());
+                LOGGER.error("AllSTLsToBuild.slice(): extruder " + extruderID + "out of sequence: "
+                        + extruders[extruderID].getID());
             }
             edges[extruderID] = new ArrayList<LineSegment>();
             csgs[extruderID] = new ArrayList<CSG3D>();
@@ -973,7 +971,7 @@ public class AllSTLsToBuild {
             even2 = q;
             break;
         default:
-            Debug.getInstance().errorMessage("addEdge(): the | function doesn't seem to work...");
+            LOGGER.error("addEdge(): the | function doesn't seem to work...");
         }
 
         // Work out the intersection line segment (e1 -> e2) between the z plane and the triangle
@@ -1005,7 +1003,7 @@ public class AllSTLsToBuild {
         final Point3d q3 = new Point3d();
 
         if (g.getVertexCount() % 3 != 0) {
-            Debug.getInstance().errorMessage("addAllEdges(): shape3D with vertices not a multiple of 3!");
+            LOGGER.error("addAllEdges(): shape3D with vertices not a multiple of 3!");
         }
         for (int i = 0; i < g.getVertexCount(); i += 3) {
             g.getCoordinate(i, p1);
@@ -1063,7 +1061,7 @@ public class AllSTLsToBuild {
                 outline = outline.newStart(outline.maximalVertex(l));
 
                 final Point2D start = outline.point(0);
-                final PolygonIndexedPoint pp = hatching.ppSearch(start, -1, outline.getAttributes().getExtruder()
+                final PolygonIndexedPoint pp = hatching.ppSearch(start, outline.getAttributes().getExtruder()
                         .getPhysicalExtruderNumber());
                 boolean failed = true;
                 if (pp != null) {
@@ -1243,7 +1241,7 @@ public class AllSTLsToBuild {
             final double multiplier) {
         final boolean foundation = lc.getLayingSupport();
         if (outline && foundation) {
-            Debug.getInstance().errorMessage("Offsetting a foundation outline!");
+            LOGGER.error("Offsetting a foundation outline!");
         }
 
         BooleanGridList result = new BooleanGridList();
@@ -1251,7 +1249,7 @@ public class AllSTLsToBuild {
             final BooleanGrid grid = gridList.get(i);
             final Attributes att = grid.attribute();
             if (att == null) {
-                Debug.getInstance().errorMessage("BooleanGridList.offset(): null attribute!");
+                LOGGER.error("BooleanGridList.offset(): null attribute!");
             } else {
                 final GCodeExtruder[] es = lc.getPrinter().getExtruders();
                 GCodeExtruder e;

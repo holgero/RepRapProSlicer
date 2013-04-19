@@ -19,7 +19,6 @@ import javax.vecmath.Matrix4d;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.reprap.debug.Debug;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.geometry.polyhedra.STLObject;
 
@@ -144,9 +143,8 @@ public class RFO {
      * Create the legend file
      */
     private void createLegend(final File rfoDir) {
-        if (uNames == null) {
-            Debug.getInstance().errorMessage("RFO.createLegend(): no list of unique names saved.");
-            return;
+        if (rfoDir == null) {
+            throw new IllegalArgumentException("rfoDir must not be null");
         }
         xml = new RfoXmlRenderer(new File(rfoDir, legendName), "reprap-fab-at-home-build version=\"0.1\"");
         for (int i = 0; i < astl.size(); i++) {
@@ -280,11 +278,7 @@ public class RFO {
         final RFO rfo = new RFO(fn, null);
         rfo.astl = new AllSTLsToBuild();
         rfo.unCompress();
-        try {
-            rfo.interpretLegend();
-        } catch (final Exception e) {
-            Debug.getInstance().errorMessage("RFO.load(): exception - " + e.toString());
-        }
+        rfo.interpretLegend();
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {

@@ -1,7 +1,8 @@
 package org.reprap.geometry;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.reprap.attributes.Attributes;
-import org.reprap.debug.Debug;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.BooleanGrid;
@@ -15,6 +16,7 @@ import org.reprap.gui.RepRapBuild;
 import org.reprap.gui.SlicerFrame;
 
 public class Producer {
+    private static final Logger LOGGER = LogManager.getLogger(Producer.class);
     private LayerRules layerRules = null;
     private SimulationPlotter simulationPlot = null;
 
@@ -74,7 +76,7 @@ public class Producer {
         layerRules.getPrinter().setSeparating(false);
         final GCodePrinter reprap = layerRules.getPrinter();
         while (layerRules.getMachineLayer() >= 0) {
-            Debug.getInstance().debugMessage("Commencing foundation layer at " + layerRules.getMachineZ());
+            LOGGER.debug("Commencing foundation layer at " + layerRules.getMachineZ());
             reprap.startingLayer(layerRules);
             fillFoundationRectangle(reprap, gp);
             reprap.finishedLayer(layerRules);
@@ -93,10 +95,9 @@ public class Producer {
             if (thisExtruder > lastExtruder) {
                 totalPhysicalExtruders++;
                 if (thisExtruder - lastExtruder != 1) {
-                    Debug.getInstance().errorMessage(
-                            "Producer.produceAdditiveTopDown(): Physical extruders out of sequence: " + lastExtruder + " then "
-                                    + thisExtruder);
-                    Debug.getInstance().errorMessage("(Extruder addresses should be monotonically increasing starting at 0.)");
+                    LOGGER.error("Producer.produceAdditiveTopDown(): Physical extruders out of sequence: " + lastExtruder
+                            + " then " + thisExtruder);
+                    LOGGER.error("(Extruder addresses should be monotonically increasing starting at 0.)");
                 }
                 lastExtruder = thisExtruder;
             }
@@ -113,8 +114,7 @@ public class Producer {
                 reprap.setSeparating(false);
             }
 
-            Debug.getInstance().debugMessage(
-                    "Commencing model layer " + layerRules.getModelLayer() + " at " + layerRules.getMachineZ());
+            LOGGER.debug("Commencing model layer " + layerRules.getModelLayer() + " at " + layerRules.getMachineZ());
             reprap.startingLayer(layerRules);
             slicerFrame.updateProgress();
 

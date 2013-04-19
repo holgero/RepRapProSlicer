@@ -12,32 +12,43 @@ import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import org.reprap.debug.Debug;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.MarkerManager;
+import org.reprap.attributes.PreferenceChangeListener;
+import org.reprap.attributes.Preferences;
 import org.reprap.geometry.LayerRules;
 
-public class GCodeWriter {
+public class GCodeWriter implements PreferenceChangeListener {
+    private static final Logger LOGGER = LogManager.getLogger(GCodeWriter.class);
+    private static final Marker GCODE_MARKER = MarkerManager.getMarker("GCODE");
     private static final String COMMENT_CHAR = ";";
+    private static final String GCODE_EXTENSION = ".gcode";
+    /**
+     * How does the first file name in a multiple set end?
+     */
+    private static final String FIRST_ENDING = "_prologue";
+    /**
+     * Flag for temporary files
+     */
 
     /**
      * The root file name for output (without ".gcode" on the end)
      */
     private String opFileName;
-
     private String layerFileNames;
+    private boolean debugGcode;
 
-    private static final String GCODE_EXTENSION = ".gcode";
-
-    /**
-     * How does the first file name in a multiple set end?
-     */
-    private static final String FIRST_ENDING = "_prologue";
-
-    /**
-     * Flag for temporary files
-     */
     private static final String TMP_STRING = "_TeMpOrArY_";
 
     private PrintStream fileOutStream = null;
+
+    public GCodeWriter() {
+        final Preferences preferences = Preferences.getInstance();
+        preferences.registerPreferenceChangeListener(this);
+        refreshPreferences(preferences);
+    }
 
     /**
      * Force the output stream - use with caution
@@ -55,7 +66,7 @@ public class GCodeWriter {
 
         if (fileOutStream != null) {
             fileOutStream.println(cmd);
-            Debug.getInstance().gcodeDebugMessage("G-code: " + cmd + " written to file");
+            LOGGER.debug(GCODE_MARKER, "G-code: {} written to file", cmd);
         }
     }
 
@@ -64,7 +75,7 @@ public class GCodeWriter {
      * also added.
      */
     public void writeCommand(final String command, final String comment) throws IOException {
-        if (Debug.getInstance().isDebug()) {
+        if (debugGcode) {
             queue(command + " " + COMMENT_CHAR + " " + comment);
         } else {
             queue(command);
@@ -85,10 +96,6 @@ public class GCodeWriter {
      * @throws IOException
      */
     public void copyFile(final File file) throws IOException {
-        if (!file.exists()) {
-            Debug.getInstance().errorMessage("GCodeReaderAndWriter().copyFile: can't find file " + file.getAbsolutePath());
-            return;
-        }
         final FileReader fr = new FileReader(file);
         final BufferedReader br = new BufferedReader(fr);
         String s;
@@ -115,40 +122,39 @@ public class GCodeWriter {
                 opFileName = opFileName.substring(0, opFileName.length() - 6);
             }
 
-            try {
-                boolean doe = false;
-                String fn = opFileName;
-                if (topDown) {
-                    fn += FIRST_ENDING;
-                    fn += TMP_STRING;
-                    doe = true;
-                }
-                fn += GCODE_EXTENSION;
-
-                Debug.getInstance().debugMessage("opening: " + fn);
-                final File fl = new File(fn);
-                if (doe) {
-                    fl.deleteOnExit();
-                }
-                final FileOutputStream fileStream = new FileOutputStream(fl);
-                fileOutStream = new PrintStream(fileStream);
-                String shortName = chooser.getSelectedFile().getName();
-                if (!shortName.endsWith(GCODE_EXTENSION)) {
-                    shortName += GCODE_EXTENSION;
-                }
-                layerFileNames = System.getProperty("java.io.tmpdir") + File.separator + shortName;
-                final File rfod = new File(layerFileNames);
-                if (!rfod.mkdir()) {
-                    throw new RuntimeException(layerFileNames);
-                }
-                rfod.deleteOnExit();
-                layerFileNames += File.separator;
-                return shortName;
-            } catch (final FileNotFoundException e) {
-                Debug.getInstance().errorMessage("Can't write to file '" + opFileName);
-                opFileName = null;
-                fileOutStream = null;
+            boolean doe = false;
+            String fn = opFileName;
+            if (topDown) {
+                fn += FIRST_ENDING;
+                fn += TMP_STRING;
+                doe = true;
             }
+            fn += GCODE_EXTENSION;
+
+            LOGGER.debug("opening: " + fn);
+            final File fl = new File(fn);
+            if (doe) {
+                fl.deleteOnExit();
+            }
+            final FileOutputStream fileStream;
+            try {
+                fileStream = new FileOutputStream(fl);
+            } catch (final FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+            fileOutStream = new PrintStream(fileStream);
+            String shortName = chooser.getSelectedFile().getName();
+            if (!shortName.endsWith(GCODE_EXTENSION)) {
+                shortName += GCODE_EXTENSION;
+            }
+            layerFileNames = System.getProperty("java.io.tmpdir") + File.separator + shortName;
+            final File rfod = new File(layerFileNames);
+            if (!rfod.mkdir()) {
+                throw new RuntimeException(layerFileNames);
+            }
+            rfod.deleteOnExit();
+            layerFileNames += File.separator;
+            return shortName;
         } else {
             fileOutStream = null;
         }
@@ -158,13 +164,13 @@ public class GCodeWriter {
     public void startingLayer(final LayerRules lc) {
         lc.setLayerFileName(layerFileNames + "reprap" + lc.getMachineLayer() + TMP_STRING + GCODE_EXTENSION);
         if (!lc.getReversing()) {
+            final File fl = new File(lc.getLayerFileName());
+            fl.deleteOnExit();
             try {
-                final File fl = new File(lc.getLayerFileName());
-                fl.deleteOnExit();
                 final FileOutputStream fileStream = new FileOutputStream(fl);
                 fileOutStream = new PrintStream(fileStream);
-            } catch (final Exception e) {
-                Debug.getInstance().errorMessage("Can't write to file " + lc.getLayerFileName());
+            } catch (final FileNotFoundException e) {
+                throw new RuntimeException(e);
             }
         }
     }
@@ -177,5 +183,10 @@ public class GCodeWriter {
 
     public String getOutputFilename() {
         return opFileName + GCODE_EXTENSION;
+    }
+
+    @Override
+    public void refreshPreferences(final Preferences preferences) {
+        debugGcode = preferences.loadBool("Debug");
     }
 }

@@ -16,17 +16,19 @@ import java.util.Date;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JOptionPane;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.reprap.attributes.Attributes;
 import org.reprap.attributes.Constants;
 import org.reprap.attributes.PreferenceChangeListener;
 import org.reprap.attributes.Preferences;
-import org.reprap.debug.Debug;
 import org.reprap.geometry.LayerRules;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polygons.VelocityProfile;
 
 public class GCodePrinter implements PreferenceChangeListener {
+    private static final Logger LOGGER = LogManager.getLogger(GCodePrinter.class);
     private final GCodeWriter gcode = new GCodeWriter();
     private LayerRules layerRules = null;
     /**
@@ -139,7 +141,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         currentExtruder = 0;
     }
 
-    private void qFeedrate(final double feedrate) throws Exception {
+    private void qFeedrate(final double feedrate) throws IOException {
         if (currentFeedrate == feedrate) {
             return;
         }
@@ -170,8 +172,7 @@ public class GCodePrinter implements PreferenceChangeListener {
 
         final double xyFeedrate = round(extruders[currentExtruder].getFastXYFeedrate(), 1);
         if (xyFeedrate < feedrate && Math.abs(extrudeLength) > Constants.TINY_VALUE) {
-            Debug.getInstance().debugMessage(
-                    "GCodeRepRap().qXYMove: extruding feedrate (" + feedrate + ") exceeds maximum (" + xyFeedrate + ").");
+            LOGGER.debug("GCodeRepRap().qXYMove: extruding feedrate (" + feedrate + ") exceeds maximum (" + xyFeedrate + ").");
             feedrate = xyFeedrate;
         }
 
@@ -210,8 +211,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         final double zFeedrate = round(getMaxFeedrateZ(), 1);
 
         if (zFeedrate < feedrate) {
-            Debug.getInstance().debugMessage(
-                    "GCodeRepRap().qZMove: feedrate (" + feedrate + ") exceeds maximum (" + zFeedrate + ").");
+            LOGGER.debug("GCodeRepRap().qZMove: feedrate (" + feedrate + ") exceeds maximum (" + zFeedrate + ").");
             feedrate = zFeedrate;
         }
 
@@ -271,9 +271,8 @@ public class GCodePrinter implements PreferenceChangeListener {
         final boolean xyMove = dx != 0 || dy != 0;
 
         if (zMove && xyMove) {
-            Debug.getInstance().debugMessage(
-                    "GcodeRepRap.moveTo(): attempt to move in X|Y and Z simultaneously: (x, y, z) = (" + currentX + "->" + x
-                            + ", " + currentY + "->" + y + ", " + currentZ + "->" + z + ", " + ")");
+            LOGGER.debug("GcodeRepRap.moveTo(): attempt to move in X|Y and Z simultaneously: (x, y, z) = (" + currentX + "->"
+                    + x + ", " + currentY + "->" + y + ", " + currentZ + "->" + z + ", " + ")");
         }
 
         final double zFeedrate = round(getMaxFeedrateZ(), 1);
@@ -329,9 +328,8 @@ public class GCodePrinter implements PreferenceChangeListener {
 
     private double checkCoordinate(final String name, final double value, final double minimumValue, final double maximumValue) {
         if (value > maximumValue || value < minimumValue) {
-            Debug.getInstance().errorMessage(
-                    "Attempt to move " + name + " to " + value + " which is outside [" + minimumValue + ", " + maximumValue
-                            + "]");
+            LOGGER.error("Attempt to move " + name + " to " + value + " which is outside [" + minimumValue + ", "
+                    + maximumValue + "]");
         }
         return Math.max(0, Math.min(value, maximumValue));
     }
@@ -355,9 +353,8 @@ public class GCodePrinter implements PreferenceChangeListener {
         final boolean xyMove = dx != 0 || dy != 0;
 
         if (zMove && xyMove) {
-            Debug.getInstance().debugMessage(
-                    "GcodeRepRap.singleMove(): attempt to move in X|Y and Z simultaneously: (x, y, z) = (" + x + ", " + y
-                            + ", " + z + ")");
+            LOGGER.debug("GcodeRepRap.singleMove(): attempt to move in X|Y and Z simultaneously: (x, y, z) = (" + x + ", " + y
+                    + ", " + z + ")");
         }
 
         if (!really) {
@@ -409,7 +406,7 @@ public class GCodePrinter implements PreferenceChangeListener {
                     break;
 
                 default:
-                    Debug.getInstance().errorMessage("GCodeRepRap.singleMove(): dud VelocityProfile XY flat value.");
+                    LOGGER.error("GCodeRepRap.singleMove(): dud VelocityProfile XY flat value.");
                 }
             }
 
@@ -440,11 +437,11 @@ public class GCodePrinter implements PreferenceChangeListener {
                     break;
 
                 default:
-                    Debug.getInstance().errorMessage("GCodeRepRap.singleMove(): dud VelocityProfile Z flat value.");
+                    LOGGER.error("GCodeRepRap.singleMove(): dud VelocityProfile Z flat value.");
                 }
             }
         } catch (final Exception e) {
-            Debug.getInstance().errorMessage(e.toString());
+            LOGGER.error(e.toString());
         }
     }
 
@@ -460,18 +457,19 @@ public class GCodePrinter implements PreferenceChangeListener {
         }
     }
 
-    public void startRun(final LayerRules lc) throws Exception {
+    public void startRun(final LayerRules lc) throws IOException {
         gcode.writeComment(" GCode generated by RepRap Java Host Software");
         final Date myDate = new Date();
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd:HH-mm-ss");
         final String myDateString = sdf.format(myDate);
         gcode.writeComment(" Created: " + myDateString);
         gcode.writeComment("#!RECTANGLE: " + lc.getBox() + ", height: " + lc.getMachineZMAx());
-        if (Debug.getInstance().isDebug()) {
+        final boolean debugGcode = preferences.loadBool("Debug");
+        if (debugGcode) {
             gcode.writeComment(" Prologue:");
         }
         gcode.copyFile(preferences.getPrologueFile());
-        if (Debug.getInstance().isDebug()) {
+        if (debugGcode) {
             gcode.writeComment(" ------");
         }
         currentX = 0;
@@ -527,7 +525,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         }
     }
 
-    public void startingLayer(final LayerRules lc) throws Exception {
+    public void startingLayer(final LayerRules lc) throws IOException {
         currentFeedrate = -1; // Force it to set the feedrate
         gcode.startingLayer(lc);
         if (lc.getReversing()) {
@@ -571,13 +569,13 @@ public class GCodePrinter implements PreferenceChangeListener {
         lc.moveZAtStartOfLayer(lc.getReversing());
     }
 
-    public void finishedLayer(final LayerRules lc) throws Exception {
+    public void finishedLayer(final LayerRules lc) throws IOException {
         final double coolTime = getExtruder().getCoolingPeriod();
         startedCooling = -1;
 
         if (coolTime > 0 && !lc.notStartedYet()) {
             getExtruder().setCooler(true, lc.getReversing());
-            Debug.getInstance().debugMessage("Start of cooling period");
+            LOGGER.debug("Start of cooling period");
             // Go home. Seek (0,0) then callibrate X first
             homeToZeroXYE(lc.getReversing());
             startedCooling = System.currentTimeMillis();
@@ -585,23 +583,24 @@ public class GCodePrinter implements PreferenceChangeListener {
         gcode.finishedLayer(lc);
     }
 
-    public void terminate(final LayerRules lc) throws Exception {
+    public void terminate(final LayerRules lc) throws IOException {
         final int topLayer = lc.realTopLayer();
         final Point2D p = lc.getLastPoint(topLayer);
         currentX = round(p.x(), 2);
         currentY = round(p.y(), 2);
         currentZ = round(lc.getLayerZ(topLayer), 1);
 
-        if (Debug.getInstance().isDebug()) {
+        final boolean debugGcode = preferences.loadBool("Debug");
+        if (debugGcode) {
             gcode.writeComment(" Epilogue:");
         }
         gcode.copyFile(preferences.getEpilogueFile());
-        if (Debug.getInstance().isDebug()) {
+        if (debugGcode) {
             gcode.writeComment(" ------");
         }
     }
 
-    private void delay(final long millis, final boolean fastExtrude, final boolean really) throws Exception {
+    private void delay(final long millis, final boolean fastExtrude, final boolean really) throws IOException {
         double extrudeLength = getExtruder().getDistanceFromTime(millis);
 
         if (extrudeLength > 0) {
@@ -671,17 +670,17 @@ public class GCodePrinter implements PreferenceChangeListener {
         gcode.writeCommand("G4 P" + millis, "delay");
     }
 
-    private void homeToZeroX() throws Exception {
+    private void homeToZeroX() throws IOException {
         gcode.writeCommand("G28 X0", "set x 0");
         currentX = 0.0;
     }
 
-    private void homeToZeroY() throws Exception {
+    private void homeToZeroY() throws IOException {
         gcode.writeCommand("G28 Y0", "set y 0");
         currentY = 0.0;
     }
 
-    private void homeToZeroXYE(final boolean really) throws Exception {
+    private void homeToZeroXYE(final boolean really) throws IOException {
         if (XYEAtZero) {
             return;
         }
@@ -711,13 +710,8 @@ public class GCodePrinter implements PreferenceChangeListener {
      * All machine dwells and delays are routed via this function, rather than
      * calling Thread.sleep - this allows them to generate the right G codes
      * (G4) etc.
-     * 
-     * The RS232/USB etc comms system doesn't use this - it sets its own delays.
-     * 
-     * @param milliseconds
-     * @throws Exception
      */
-    private void machineWait(final double milliseconds, final boolean fastExtrude, final boolean really) throws Exception {
+    private void machineWait(final double milliseconds, final boolean fastExtrude, final boolean really) throws IOException {
         if (milliseconds <= 0) {
             return;
         }
@@ -736,7 +730,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         currentZ = round(z, 4);
     }
 
-    private void selectExtruder(final int materialIndex, final boolean really, final boolean update) throws Exception {
+    private void selectExtruder(final int materialIndex, final boolean really, final boolean update) throws IOException {
         final int oldPhysicalExtruder = getExtruder().getPhysicalExtruderNumber();
         final GCodeExtruder oldExtruder = getExtruder();
         final int newPhysicalExtruder = extruders[materialIndex].getPhysicalExtruderNumber();
@@ -749,7 +743,7 @@ public class GCodePrinter implements PreferenceChangeListener {
 
                 if (!false) {
                     if (materialIndex < 0 || materialIndex >= extruders.length) {
-                        Debug.getInstance().errorMessage("Selected material (" + materialIndex + ") is out of range.");
+                        LOGGER.error("Selected material (" + materialIndex + ") is out of range.");
                         currentExtruder = 0;
                     } else {
                         currentExtruder = materialIndex;
@@ -835,7 +829,7 @@ public class GCodePrinter implements PreferenceChangeListener {
                 return;
             }
         }
-        Debug.getInstance().errorMessage("selectExtruder() - extruder not found for: " + att.getMaterial());
+        LOGGER.error("selectExtruder() - extruder not found for: " + att.getMaterial());
     }
 
     public double getX() {
@@ -872,7 +866,7 @@ public class GCodePrinter implements PreferenceChangeListener {
      * before we try to move the extruder. But first take up the slack from any
      * previous reverse.
      */
-    public void printStartDelay(final boolean firstOneInLayer) throws Exception {
+    public void printStartDelay(final boolean firstOneInLayer) throws IOException {
         final double rDelay = getExtruder().getExtruderState().retraction();
 
         if (rDelay > 0) {
@@ -909,7 +903,7 @@ public class GCodePrinter implements PreferenceChangeListener {
      * Extrude backwards for the given time in milliseconds, so that polymer is
      * stopped flowing at the end of a track. Return the amount reversed.
      */
-    public double printEndReverse() throws Exception {
+    public double printEndReverse() throws IOException {
         final double delay = getExtruder().getExtrusionReverseDelay();
 
         if (delay <= 0) {

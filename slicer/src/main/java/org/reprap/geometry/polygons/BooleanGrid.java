@@ -4,9 +4,10 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.reprap.attributes.Attributes;
 import org.reprap.attributes.Preferences;
-import org.reprap.debug.Debug;
 
 /**
  * This class stores a rectangular grid at the same grid resolution as the
@@ -26,6 +27,7 @@ import org.reprap.debug.Debug;
  * @author Adrian Bowyer
  */
 public class BooleanGrid {
+    private static final Logger LOGGER = LogManager.getLogger(BooleanGrid.class);
     /**
      * The resolution of the RepRap machine
      */
@@ -255,7 +257,7 @@ public class BooleanGrid {
      */
     private void set(final Integer2DPoint p, final boolean v) {
         if (!inside(p)) {
-            Debug.getInstance().errorMessage("BoolenGrid.set(): attempt to set pixel beyond boundary!");
+            LOGGER.error("BoolenGrid.set(): attempt to set pixel beyond boundary!");
             return;
         }
         bits.set(pixI(p), v);
@@ -379,7 +381,7 @@ public class BooleanGrid {
      */
     private void vSet(final Integer2DPoint p, final boolean v) {
         if (!inside(p)) {
-            Debug.getInstance().errorMessage("BoolenGrid.vSet(): attempt to set pixel beyond boundary!");
+            LOGGER.error("BoolenGrid.vSet(): attempt to set pixel beyond boundary!");
             return;
         }
         if (visited == null) {
@@ -511,7 +513,7 @@ public class BooleanGrid {
         // Special case - a single vertical line of pixels
         if (xd <= 1) {
             if (yd <= 1) {
-                Debug.getInstance().errorMessage("BooleanGrid.generateQuadTree: attempt to divide single pixel!");
+                LOGGER.error("BooleanGrid.generateQuadTree: attempt to divide single pixel!");
             }
             sw = new Integer2DPoint(x0, y0);
             ne = new Integer2DPoint(x0, ym);
@@ -646,7 +648,7 @@ public class BooleanGrid {
         case 8:
             return 4;
         default:
-            Debug.getInstance().errorMessage("BooleanGrid.neighbourIndex(): not a neighbour point!" + n.toString());
+            LOGGER.error("BooleanGrid.neighbourIndex(): not a neighbour point!" + n.toString());
         }
         return 0;
     }
@@ -682,7 +684,7 @@ public class BooleanGrid {
             }
         }
         if (result < 0) {
-            Debug.getInstance().errorMessage("BooleanGrid.directionToNeighbour(): scalar product error!" + p.toString());
+            LOGGER.error("BooleanGrid.directionToNeighbour(): scalar product error!" + p.toString());
         }
         return result;
     }
@@ -791,7 +793,7 @@ public class BooleanGrid {
                 if (this.get(q) && !result.get(q)) {
                     sp++;
                     if (sp >= top) {
-                        Debug.getInstance().errorMessage("BooleanGrid.floodCopy(): stack overflow!");
+                        LOGGER.error("BooleanGrid.floodCopy(): stack overflow!");
                         return result;
                     }
                     stack[sp] = q;
@@ -922,9 +924,8 @@ public class BooleanGrid {
                 }
                 break;
             case 6:
-                Debug.getInstance().errorMessage(
-                        "BooleanGrid.marchRound() - dud 2x2 grid: " + m + " at " + here.toString() + "\n"
-                                + printNearby(here, 4) + "\n\n");
+                LOGGER.error("BooleanGrid.marchRound() - dud 2x2 grid: " + m + " at " + here.toString() + "\n"
+                        + printNearby(here, 4) + "\n\n");
                 step = false;
                 pix = here.add(neighbour[3]);
                 set(pix, false);
@@ -938,9 +939,8 @@ public class BooleanGrid {
                         result.remove(result.size() - 1);
                         here = result.point(result.size() - 1);
                         if (!get(here)) {
-                            Debug.getInstance().errorMessage(
-                                    "BooleanGrid.marchRound() - backtracked to an unfilled point!" + printNearby(here, 4)
-                                            + "\n\n");
+                            LOGGER.error("BooleanGrid.marchRound() - backtracked to an unfilled point!" + printNearby(here, 4)
+                                    + "\n\n");
                             result.remove(result.size() - 1);
                             here = result.point(result.size() - 1);
                         }
@@ -970,9 +970,8 @@ public class BooleanGrid {
                 }
                 break;
             case 9:
-                Debug.getInstance().errorMessage(
-                        "BooleanGrid.marchRound() - dud 2x2 grid: " + m + " at " + here.toString() + "\n"
-                                + printNearby(here, 4) + "\n\n");
+                LOGGER.error("BooleanGrid.marchRound() - dud 2x2 grid: " + m + " at " + here.toString() + "\n"
+                        + printNearby(here, 4) + "\n\n");
                 step = false;
                 set(here, false);
                 vSet(here, false);
@@ -988,9 +987,8 @@ public class BooleanGrid {
                         result.remove(result.size() - 1);
                         here = result.point(result.size() - 1);
                         if (!get(here)) {
-                            Debug.getInstance().errorMessage(
-                                    "BooleanGrid.marchRound() - backtracked to an unfilled point!" + printNearby(here, 4)
-                                            + "\n\n");
+                            LOGGER.error("BooleanGrid.marchRound() - backtracked to an unfilled point!" + printNearby(here, 4)
+                                    + "\n\n");
                             result.remove(result.size() - 1);
                             here = result.point(result.size() - 1);
                         }
@@ -1059,9 +1057,8 @@ public class BooleanGrid {
                 break;
 
             default:
-                Debug.getInstance().errorMessage(
-                        "BooleanGrid.marchRound() - dud 2x2 grid: " + m + " at " + here.toString() + "\n"
-                                + printNearby(here, 4) + "\n\n");
+                LOGGER.error("BooleanGrid.marchRound() - dud 2x2 grid: " + m + " at " + here.toString() + "\n"
+                        + printNearby(here, 4) + "\n\n");
                 return result;
             }
             if (step) {
@@ -1119,7 +1116,7 @@ public class BooleanGrid {
         final Integer2DPoint s = rec.convertToInteger2DPoint(h.pLine().point(se.low()));
         final Integer2DPoint e = rec.convertToInteger2DPoint(h.pLine().point(se.high()));
         if (get(s)) {
-            Debug.getInstance().errorMessage("BooleanGrid.hatch(): start point is in solid!");
+            LOGGER.error("BooleanGrid.hatch(): start point is in solid!");
         }
         final DigitalDifferentialAnalyzer dda = new DigitalDifferentialAnalyzer(s, e);
 
@@ -1142,12 +1139,12 @@ public class BooleanGrid {
         }
 
         if (get(e)) {
-            Debug.getInstance().errorMessage("BooleanGrid.hatch(): end point is in solid!");
+            LOGGER.error("BooleanGrid.hatch(): end point is in solid!");
             result.add(e);
         }
 
         if (result.size() % 2 != 0) {
-            Debug.getInstance().errorMessage("BooleanGrid.hatch(): odd number of crossings: " + result.size());
+            LOGGER.error("BooleanGrid.hatch(): odd number of crossings: " + result.size());
         }
         return result;
     }
@@ -1171,7 +1168,7 @@ public class BooleanGrid {
         }
 
         if (!get(start)) {
-            Debug.getInstance().errorMessage("BooleanGrid.goToPlane(): start is not solid!");
+            LOGGER.error("BooleanGrid.goToPlane(): start is not solid!");
             return null;
         }
 
@@ -1212,7 +1209,7 @@ public class BooleanGrid {
             return new SnakeEnd(track, originP);
         }
 
-        Debug.getInstance().errorMessage("BooleanGrid.goToPlane(): invalid ending!");
+        LOGGER.error("BooleanGrid.goToPlane(): invalid ending!");
 
         return null;
     }
@@ -1233,7 +1230,7 @@ public class BooleanGrid {
         int dir = directionToNeighbour(new Point2D(diff.x, diff.y));
 
         if (!get(start)) {
-            Debug.getInstance().errorMessage("BooleanGrid.goToPlane(): start is not solid!");
+            LOGGER.error("BooleanGrid.goToPlane(): start is not solid!");
             return null;
         }
 
@@ -1511,7 +1508,7 @@ public class BooleanGrid {
      */
     public BooleanGrid lines(final BooleanGrid shrunk, final double dist) {
         if (dist >= 0) {
-            Debug.getInstance().errorMessage("BooleanGrid.lines() called with non-negative offset: " + dist);
+            LOGGER.error("BooleanGrid.lines() called with non-negative offset: " + dist);
             return new BooleanGrid();
         }
         return difference(this, shrunk.offset(-dist));
@@ -1600,9 +1597,8 @@ public class BooleanGrid {
     static BooleanGrid union(final BooleanGrid d, final BooleanGrid e) {
         final BooleanGrid result = union(d, e, d.att);
         if (result != nothingThere && d.att != e.att) {
-            Debug.getInstance().errorMessage(
-                    "BooleanGrid.union(): attempt to union two bitmaps of different materials: " + d.attribute().getMaterial()
-                            + " and " + e.attribute().getMaterial());
+            LOGGER.error("BooleanGrid.union(): attempt to union two bitmaps of different materials: "
+                    + d.attribute().getMaterial() + " and " + e.attribute().getMaterial());
         }
         return result;
     }
@@ -1644,9 +1640,8 @@ public class BooleanGrid {
     public static BooleanGrid intersection(final BooleanGrid d, final BooleanGrid e) {
         final BooleanGrid result = intersection(d, e, d.att);
         if (result != nothingThere && d.att != e.att) {
-            Debug.getInstance().errorMessage(
-                    "BooleanGrid.intersection(): attempt to intersect two bitmaps of different materials: "
-                            + d.attribute().getMaterial() + " and " + e.attribute().getMaterial());
+            LOGGER.error("BooleanGrid.intersection(): attempt to intersect two bitmaps of different materials: "
+                    + d.attribute().getMaterial() + " and " + e.attribute().getMaterial());
         }
         return result;
     }
@@ -1695,9 +1690,8 @@ public class BooleanGrid {
     public static BooleanGrid difference(final BooleanGrid d, final BooleanGrid e) {
         final BooleanGrid result = difference(d, e, d.att);
         if (result != nothingThere && d.att != e.att) {
-            Debug.getInstance().errorMessage(
-                    "BooleanGrid.difference(): attempt to subtract two bitmaps of different materials: "
-                            + d.attribute().getMaterial() + " and " + e.attribute().getMaterial());
+            LOGGER.error("BooleanGrid.difference(): attempt to subtract two bitmaps of different materials: "
+                    + d.attribute().getMaterial() + " and " + e.attribute().getMaterial());
         }
         return result;
     }

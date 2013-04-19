@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.reprap.debug.Debug;
-
 /**
  * Class to hold a list of BooleanGrids with associated attributes for each
  * 
@@ -49,8 +47,7 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
      */
     public void add(final BooleanGrid b) {
         if (b == null) {
-            Debug.getInstance().errorMessage("BooleanGridList.add(): attempt to add null BooleanGrid.");
-            return;
+            throw new IllegalArgumentException("b must not be null");
         }
         if (b != BooleanGrid.nullBooleanGrid()) {
             shapes.add(b);

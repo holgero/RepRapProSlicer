@@ -59,13 +59,15 @@ package org.reprap.geometry.polygons;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.reprap.debug.Debug;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * RrPolygonList: A collection of 2D polygons List of polygons class. This too
  * maintains a maximum enclosing rectangle.
  */
 public class PolygonList {
+    private static final Logger LOGGER = LogManager.getLogger(PolygonList.class);
     private final List<Polygon> polygons = new ArrayList<Polygon>();
     private final Rectangle box = new Rectangle();
 
@@ -262,8 +264,7 @@ public class PolygonList {
             }
 
             if (near < 0) {
-                Debug.getInstance().errorMessage("RrPolygonList.nearEnds(): no nearest end found to start point!");
-                return result;
+                throw new RuntimeException("RrPolygonList.nearEnds(): no nearest end found to start point!");
             }
 
             result.swap(0, near);
@@ -352,9 +353,8 @@ public class PolygonList {
         final int physicalExtruder = polygon(0).getAttributes().getExtruder().getPhysicalExtruderNumber();
         for (int i = 1; i < size(); i++) {
             if (polygon(i).getAttributes().getExtruder().getPhysicalExtruderNumber() != physicalExtruder) {
-                Debug.getInstance().errorMessage(
+                throw new RuntimeException(
                         "RrPolygonList.radicalReOrder(): more than one physical extruder needed by the list!");
-                return;
             }
         }
 
@@ -470,8 +470,7 @@ public class PolygonList {
                     }
 
                 } else {
-                    // ... Horrible impossibility
-                    Debug.getInstance().errorMessage("RrPolygonList.radicalReOrder(): Polygons are neither closed nor open!");
+                    throw new RuntimeException("RrPolygonList.radicalReOrder(): Polygons are neither closed nor open!");
                 }
             }
         }
@@ -515,37 +514,30 @@ public class PolygonList {
 
     /**
      * Search a polygon list to find the nearest point on all the polygons
-     * within it to the point p. If omit is non-negative, ignore that polygon in
-     * the search.
+     * within it to the point p.
      * 
      * Only polygons with the same physical extruder are compared.
      */
-    public PolygonIndexedPoint ppSearch(final Point2D p, final int omit, final int physicalExtruder) {
-        double d = Double.POSITIVE_INFINITY;
-        PolygonIndexedPoint result = null;
-
+    public PolygonIndexedPoint ppSearch(final Point2D p, final int physicalExtruder) {
         if (size() <= 0) {
-            return result;
+            return null;
         }
-
+        double minDistance = Double.POSITIVE_INFINITY;
+        PolygonIndexedPoint result = null;
         for (int i = 0; i < size(); i++) {
-            if (i != omit) {
-                final Polygon pgon = polygon(i);
-                if (physicalExtruder == pgon.getAttributes().getExtruder().getPhysicalExtruderNumber()) {
-                    final int n = pgon.nearestVertex(p);
-                    final double d2 = Point2D.dSquared(p, pgon.point(n));
-                    if (d2 < d) {
-                        result = new PolygonIndexedPoint(n, i, pgon);
-                        d = d2;
-                    }
+            final Polygon pgon = polygon(i);
+            if (physicalExtruder == pgon.getAttributes().getExtruder().getPhysicalExtruderNumber()) {
+                final int n = pgon.nearestVertex(p);
+                final double distance = Point2D.dSquared(p, pgon.point(n));
+                if (distance < minDistance) {
+                    result = new PolygonIndexedPoint(n, i, pgon);
+                    minDistance = distance;
                 }
             }
         }
-
         if (result == null) {
-            Debug.getInstance().debugMessage("RrPolygonList.ppSearch(): no point found!");
+            throw new RuntimeException("no point found!");
         }
-
         return result;
     }
 
@@ -570,13 +562,14 @@ public class PolygonList {
      * @return true if the polygon is inside the CSG polygon, false if otherwise
      */
     private boolean inside(final int i, final int j, final List<CSG2D> csgPols) {
+        // FIXME: check twice??? What.
         final CSG2D exp = csgPols.get(j);
         Point2D p = polygon(i).point(0);
         final boolean a = (exp.value(p) <= 0);
         p = polygon(i).point(polygon(i).size() / 2);
         final boolean b = (exp.value(p) <= 0);
         if (a != b) {
-            Debug.getInstance().errorMessage("RrPolygonList:inside() - i is both inside and outside j!");
+            LOGGER.error("RrPolygonList:inside() - i is both inside and outside j!");
             // casting vote...
             p = polygon(i).point(polygon(i).size() / 3);
             return exp.value(p) <= 0;
@@ -626,7 +619,7 @@ public class PolygonList {
         for (i = 0; i < size(); i++) {
             final TreeList isList = universe.walkFind(i);
             if (isList == null) {
-                Debug.getInstance().errorMessage("RrPolygonList.resolveInsides() - can't find list for polygon " + i);
+                throw new RuntimeException("RrPolygonList.resolveInsides() - can't find list for polygon " + i);
             }
             TreeList parent = isList.getParent();
             if (parent != null) {

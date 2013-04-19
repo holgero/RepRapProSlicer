@@ -1,12 +1,13 @@
 package org.reprap.graphicio;
 
 import java.io.File;
+import java.io.IOException;
 
 import javax.media.j3d.Transform3D;
 
-import org.reprap.debug.Debug;
 import org.reprap.geometry.polyhedra.STLObject;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.helpers.XMLReaderFactory;
@@ -70,21 +71,16 @@ final class RfoXmlHandler extends DefaultHandler {
         mElements = new double[16];
         setMToIdentity();
 
-        XMLReader xr = null;
         try {
-            xr = XMLReaderFactory.createXMLReader();
-        } catch (final Exception e) {
-            Debug.getInstance().errorMessage("XMLIn() 1: " + e);
-        }
-
-        xr.setContentHandler(this);
-        xr.setErrorHandler(this);
-        try {
+            final XMLReader xr = XMLReaderFactory.createXMLReader();
+            xr.setContentHandler(this);
+            xr.setErrorHandler(this);
             xr.parse(new InputSource(legendFile));
-        } catch (final Exception e) {
-            Debug.getInstance().errorMessage("XMLIn() 2: " + e);
+        } catch (final SAXException e) {
+            throw new RuntimeException(e);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
         }
-
     }
 
     /**
@@ -125,7 +121,7 @@ final class RfoXmlHandler extends DefaultHandler {
             filetype = atts.getValue("filetype");
             material = atts.getValue("material");
             if (!filetype.equalsIgnoreCase("application/sla")) {
-                Debug.getInstance().errorMessage(
+                throw new RuntimeException(
                         "XMLIn.startElement(): unreconised object file type (should be \"application/sla\"): " + filetype);
             }
         } else if (element.equalsIgnoreCase("transform3D")) {
@@ -135,7 +131,7 @@ final class RfoXmlHandler extends DefaultHandler {
                 mElements[rowNumber * 4 + column] = Double.parseDouble(atts.getValue("m" + rowNumber + column));
             }
         } else {
-            Debug.getInstance().errorMessage("XMLIn.startElement(): unreconised RFO element: " + element);
+            throw new RuntimeException("XMLIn.startElement(): unreconised RFO element: " + element);
         }
     }
 
@@ -165,14 +161,14 @@ final class RfoXmlHandler extends DefaultHandler {
 
         } else if (element.equalsIgnoreCase("transform3D")) {
             if (rowNumber != 4) {
-                Debug.getInstance().errorMessage(
-                        "XMLIn.endElement(): incomplete Transform3D matrix - last row number is not 4: " + rowNumber);
+                throw new RuntimeException("XMLIn.endElement(): incomplete Transform3D matrix - last row number is not 4: "
+                        + rowNumber);
             }
             transform = new Transform3D(mElements);
         } else if (element.equalsIgnoreCase("row")) {
             rowNumber++;
         } else {
-            Debug.getInstance().errorMessage("XMLIn.endElement(): unreconised RFO element: " + element);
+            throw new RuntimeException("XMLIn.endElement(): unreconised RFO element: " + element);
         }
     }
 }

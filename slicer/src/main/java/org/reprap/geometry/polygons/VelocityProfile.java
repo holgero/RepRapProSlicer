@@ -1,6 +1,7 @@
 package org.reprap.geometry.polygons;
 
-import org.reprap.debug.Debug;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Computes the optimum velocity profile given a starting and an ending
@@ -18,6 +19,7 @@ import org.reprap.debug.Debug;
  * 
  */
 public class VelocityProfile {
+    private static final Logger LOGGER = LogManager.getLogger(VelocityProfile.class);
     private double v, s1, s2;
     private int flat;
 
@@ -32,7 +34,7 @@ public class VelocityProfile {
         v = Math.sqrt(2 * acceleration * s1 + vStart * vStart);
         double f = s1 / s;
         if (f < 0 || f > 1) {
-            Debug.getInstance().debugMessage("VelocityProfile - sm/s: " + f);
+            LOGGER.debug("VelocityProfile - sm/s: " + f);
             s1 = Math.max(Math.min(s, s1), 0);
         }
         if (v <= maxSpeed) {
@@ -41,13 +43,13 @@ public class VelocityProfile {
             s2 = s - 0.5 * (maxSpeed * maxSpeed - vEnd * vEnd) / acceleration;
             f = s2 / s;
             if (f < 0 || f > 1) {
-                Debug.getInstance().debugMessage("VelocityProfile - s2/s: " + f);
+                LOGGER.debug("VelocityProfile - s2/s: " + f);
                 s2 = Math.max(Math.min(s, s2), 0);
             }
             s1 = 0.5 * (maxSpeed * maxSpeed - vStart * vStart) / acceleration;
             f = s1 / s;
             if (f < 0 || f > 1) {
-                Debug.getInstance().debugMessage("VelocityProfile - s1/s: " + f);
+                LOGGER.debug("VelocityProfile - s1/s: " + f);
                 s1 = Math.max(Math.min(s, s1), 0);
             }
             flat = 2;

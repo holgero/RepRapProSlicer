@@ -52,7 +52,6 @@ package org.reprap.geometry.polyhedra;
 
 import javax.vecmath.Matrix4d;
 
-import org.reprap.debug.Debug;
 import org.reprap.geometry.polygons.CSG2D;
 import org.reprap.geometry.polygons.CSGOp;
 import org.reprap.geometry.polygons.HalfPlane;
@@ -174,31 +173,26 @@ public class CSG3D {
         case LEAF:
             result = result + white + hp.toString() + "\n";
             break;
-
         case NULL:
             result = result + white + "0\n";
             break;
-
         case UNIVERSE:
             result = result + white + "U\n";
             break;
-
         case UNION:
             result = result + white + "+\n";
             white = white + " ";
             result = c1.toString_r(result, white);
             result = c2.toString_r(result, white);
             break;
-
         case INTERSECTION:
             result = result + white + "&\n";
             white = white + " ";
             result = c1.toString_r(result, white);
             result = c2.toString_r(result, white);
             break;
-
         default:
-            Debug.getInstance().errorMessage("toString_r(): invalid operator.");
+            throw new RuntimeException("invalid operator: " + op);
         }
         return result;
     }
@@ -297,30 +291,24 @@ public class CSG3D {
             return comp;
         }
 
-        CSG3D result;
+        final CSG3D result;
 
         switch (op) {
         case LEAF:
             result = new CSG3D(hp.complement());
             break;
-
         case NULL:
             return universe();
-
         case UNIVERSE:
             return nothing();
-
         case UNION:
             result = intersection(c1.complement(), c2.complement());
             break;
-
         case INTERSECTION:
             result = union(c1.complement(), c2.complement());
             break;
-
         default:
-            Debug.getInstance().errorMessage("complement(): invalid operator.");
-            return nothing();
+            throw new RuntimeException("invalid operator: " + op);
         }
 
         comp = result;
@@ -333,30 +321,24 @@ public class CSG3D {
      * Move somewhere else. Note - this expects the inverse transform
      */
     private CSG3D xform(final Matrix4d iM) {
-        CSG3D result;
+        final CSG3D result;
 
         switch (op) {
         case LEAF:
             result = new CSG3D(hp.transform(iM));
             break;
-
         case NULL:
             return nothing();
-
         case UNIVERSE:
             return universe();
-
         case UNION:
             result = union(c1.xform(iM), c2.xform(iM));
             break;
-
         case INTERSECTION:
             result = intersection(c1.xform(iM), c2.xform(iM));
             break;
-
         default:
-            Debug.getInstance().errorMessage("transform(): invalid operator.");
-            return nothing();
+            throw new RuntimeException("invalid operator: " + op);
         }
 
         return result;
@@ -388,19 +370,16 @@ public class CSG3D {
                 }
             }
         case NULL:
-            Debug.getInstance().errorMessage("CSG2D constructor from CSG3D: null set in tree!");
-            break;
+            throw new RuntimeException("CSG2D constructor from CSG3D: null set in tree!");
         case UNIVERSE:
-            Debug.getInstance().errorMessage("CSG2D constructor from CSG3D: universal set in tree!");
-            break;
+            throw new RuntimeException("CSG2D constructor from CSG3D: universal set in tree!");
         case UNION:
             return CSG2D.union(slice(t.c_1(), z), slice(t.c_2(), z));
         case INTERSECTION:
             return CSG2D.intersection(slice(t.c_1(), z), slice(t.c_2(), z));
         default:
-            Debug.getInstance().errorMessage("CSG2D constructor from CSG3D: invalid operator " + t.operator());
+            throw new RuntimeException("invalid operator: " + t.operator());
         }
-        return null;
     }
 
     /**

@@ -21,7 +21,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 
-import org.reprap.debug.Debug;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This reads in the preferences file and constructs a set of menus from it to
@@ -46,6 +47,7 @@ import org.reprap.debug.Debug;
  * 
  */
 public class Preferences extends JFrame {
+    private static final Logger LOGGER = LogManager.getLogger(Preferences.class);
     private static final long serialVersionUID = 1L;
     private int extruderCount;
     private JLabel[] globals; // Array of JLabels for the general key names
@@ -99,12 +101,10 @@ public class Preferences extends JFrame {
             for (int i = 0; i < globals.length; i++) {
                 final String s = globalValues[i].getText();
                 if (category(s) != globalCats[i]) {
-                    Debug.getInstance().errorMessage("Preferences window: Dud format for " + globals[i].getText() + ": " + s);
-                } else {
-                    saveString(globals[i].getText(), s);
+                    throw new RuntimeException("Preferences window: Dud format for " + globals[i].getText() + ": " + s);
                 }
+                saveString(globals[i].getText(), s);
             }
-
             for (int j = 0; j < extruderCount; j++) {
                 final JLabel[] enames = extruders[j];
                 final PreferencesValue[] evals = extruderValues[j];
@@ -112,18 +112,14 @@ public class Preferences extends JFrame {
                 for (int i = 0; i < enames.length; i++) {
                     final String s = evals[i].getText();
                     if (category(s) != cats[i]) {
-                        Debug.getInstance()
-                                .errorMessage("Preferences window: Dud format for " + enames[i].getText() + ": " + s);
-                    } else {
-                        saveString(enames[i].getText(), s);
+                        throw new RuntimeException("Preferences window: Dud format for " + enames[i].getText() + ": " + s);
                     }
+                    saveString(enames[i].getText(), s);
                 }
             }
-
             preferences.save();
-        } catch (final Exception ex) {
-            JOptionPane.showMessageDialog(null, "Saving preferences: " + ex);
-            ex.printStackTrace();
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -133,31 +129,20 @@ public class Preferences extends JFrame {
      * them.
      */
     public Preferences() {
-        // Start with everything that isn't an extruder value.
         try {
+            // Start with everything that isn't an extruder value.
             final String[] g = org.reprap.attributes.Preferences.notStartsWith("Extruder");
             Arrays.sort(g);
             globals = makeLabels(g);
             globalValues = makeValues(globals);
             globalCats = categorise(globalValues);
-        } catch (final Exception ex) {
-            Debug.getInstance().errorMessage("Preferences window: Can't load the globals!");
-            ex.printStackTrace();
-        }
-
-        // Next we need to know how many extruders we've got.
-        try {
+            // Next we need to know how many extruders we've got.
             extruderCount = Integer.parseInt(loadString("NumberOfExtruders"));
-        } catch (final Exception ex) {
-            Debug.getInstance().errorMessage("Preferences window: Can't load the extruder count!");
-            ex.printStackTrace();
-        }
 
-        // Now build a set of arrays for each extruder in turn.
-        extruders = new JLabel[extruderCount][];
-        extruderValues = new PreferencesValue[extruderCount][];
-        extruderCats = new PreferenceCategory[extruderCount][];
-        try {
+            // Now build a set of arrays for each extruder in turn.
+            extruders = new JLabel[extruderCount][];
+            extruderValues = new PreferencesValue[extruderCount][];
+            extruderCats = new PreferenceCategory[extruderCount][];
             for (int i = 0; i < extruderCount; i++) {
                 final String[] a = org.reprap.attributes.Preferences.startsWith("Extruder" + i);
                 Arrays.sort(a);
@@ -165,13 +150,12 @@ public class Preferences extends JFrame {
                 extruderValues[i] = makeValues(extruders[i]);
                 extruderCats[i] = categorise(extruderValues[i]);
             }
-        } catch (final Exception ex) {
-            Debug.getInstance().errorMessage("Preferences window: Can't load extruder(s)!");
-            ex.printStackTrace();
-        }
 
-        // Paint the lot on the screen...
-        initGUI();
+            // Paint the lot on the screen...
+            initGUI();
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private JButton OKButton() {
@@ -231,7 +215,7 @@ public class Preferences extends JFrame {
                         final String configToLoad = (String) configfileList.getSelectedItem() + ".properties";
                         final File configFile = new File(org.reprap.attributes.Preferences.getReprapRootDir(), configToLoad);
                         if (configFile.exists()) {
-                            Debug.getInstance().debugMessage("loading config " + configToLoad);
+                            LOGGER.debug("loading config " + configToLoad);
                             preferences.loadConfiguration(configToLoad);
                             updatePreferencesValues();
                         }
@@ -248,7 +232,6 @@ public class Preferences extends JFrame {
                     final File configFileObj = new File(org.reprap.attributes.Preferences.getReprapRootDir(), configToLoad);
                     if (!configFileObj.exists()) {
                         configfileList.addItem((String) configfileList.getSelectedItem());
-                        Debug.getInstance().printMessage("loading config " + configToLoad);
                         preferences.loadConfiguration(configToLoad);
                         updatePreferencesValues();
                     }

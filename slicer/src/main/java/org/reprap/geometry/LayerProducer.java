@@ -2,9 +2,10 @@ package org.reprap.geometry;
 
 import java.io.IOException;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.reprap.attributes.Attributes;
 import org.reprap.attributes.Preferences;
-import org.reprap.debug.Debug;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.Interval;
@@ -15,6 +16,7 @@ import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polygons.VelocityProfile;
 
 class LayerProducer {
+    private static final Logger LOGGER = LogManager.getLogger(LayerProducer.class);
     private SimulationPlotter simulationPlot = null;
     private LayerRules layerConditions = null;
     private final PolygonList allPolygons[];
@@ -172,7 +174,7 @@ class LayerProducer {
         }
 
         if (plotDist < preferences.getMachineResolution() * 0.5) {
-            Debug.getInstance().debugMessage("Rejected line with " + polygon.size() + " points, length: " + plotDist);
+            LOGGER.debug("Rejected line with " + polygon.size() + " points, length: " + plotDist);
             return;
         }
 
@@ -212,7 +214,7 @@ class LayerProducer {
         final double extrudeBackLength = extruder.getExtrusionOverRun();
         final double valveBackLength = extruder.getValveOverRun();
         if (extrudeBackLength > 0 && valveBackLength > 0) {
-            Debug.getInstance().errorMessage(
+            throw new IllegalStateException(
                     "LayerProducer.plot(): extruder has both valve backoff and extrude backoff specified.");
         }
 
@@ -394,7 +396,7 @@ class LayerProducer {
                         break;
 
                     default:
-                        Debug.getInstance().errorMessage("RrPolygon.setSpeeds(): dud VelocityProfile flat value.");
+                        throw new RuntimeException("invalid VelocityProfile flat value:" + vp.flat());
                     }
                 }
             }

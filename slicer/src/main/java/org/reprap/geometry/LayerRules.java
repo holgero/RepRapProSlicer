@@ -3,10 +3,12 @@ package org.reprap.geometry;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.PrintStream;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.reprap.attributes.Preferences;
-import org.reprap.debug.Debug;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.HalfPlane;
@@ -21,6 +23,7 @@ import org.reprap.gui.RepRapBuild;
  * rules for such things as infill patterns, support patterns etc.
  */
 public class LayerRules {
+    private static final Logger LOGGER = LogManager.getLogger(LayerRules.class);
     /**
      * The coordinates of the first point plotted in a layer
      */
@@ -212,9 +215,8 @@ public class LayerRules {
         for (int i = 0; i < es.length; i++) {
             final long thin = Math.round(es[i].getExtrusionHeight() * 1000.0);
             if (thick % thin != 0) {
-                Debug.getInstance().errorMessage(
-                        "LayerRules(): the layer height for extruder " + i + "(" + es[i].getLowerFineLayers()
-                                + ") is not an integer divisor of the layer height for layer height " + thickestZStep);
+                throw new RuntimeException("the layer height for extruder " + i + "(" + es[i].getLowerFineLayers()
+                        + ") is not an integer divisor of the layer height for layer height " + thickestZStep);
             }
         }
 
@@ -359,9 +361,9 @@ public class LayerRules {
         while (firstPoint[rtl] == null && rtl > 0) {
             final String s = "LayerRules.realTopLayer(): layer " + rtl + " from " + machineLayerMax + " is empty!";
             if (machineLayerMax - rtl > 1) {
-                Debug.getInstance().errorMessage(s);
+                LOGGER.error(s);
             } else {
-                Debug.getInstance().debugMessage(s);
+                LOGGER.debug(s);
             }
             rtl--;
         }
@@ -503,27 +505,24 @@ public class LayerRules {
         stepMachine();
     }
 
-    private void copyFile(final PrintStream ps, final String ip) {
-        File f = null;
+    private void copyFile(final PrintStream ps, final String ip) throws IOException {
+        final File f = new File(ip);
+        final FileReader fr = new FileReader(f);
         try {
-            f = new File(ip);
-            final FileReader fr = new FileReader(f);
             int character;
             while ((character = fr.read()) >= 0) {
                 ps.print((char) character);
             }
             ps.flush();
+        } finally {
             fr.close();
-        } catch (final Exception e) {
-            Debug.getInstance().errorMessage("Error copying file: " + e.toString());
-            e.printStackTrace();
         }
     }
 
-    void reverseLayers() {
+    void reverseLayers() throws IOException {
         // Stop this being called twice...
         if (alreadyReversed) {
-            Debug.getInstance().debugMessage("LayerRules.reverseLayers(): called twice.");
+            LOGGER.debug("LayerRules.reverseLayers(): called twice.");
             return;
         }
         alreadyReversed = true;
@@ -531,18 +530,10 @@ public class LayerRules {
 
         final String fileName = getPrinter().getOutputFilename();
 
-        PrintStream fileOutStream = null;
+        final FileOutputStream fileStream = new FileOutputStream(fileName);
         try {
-            final FileOutputStream fileStream = new FileOutputStream(fileName);
-            fileOutStream = new PrintStream(fileStream);
-        } catch (final Exception e) {
-            Debug.getInstance().errorMessage("Can't write to file " + fileName);
-            return;
-        }
-
-        getPrinter().forceOutputFile(fileOutStream);
-
-        try {
+            final PrintStream fileOutStream = new PrintStream(fileStream);
+            getPrinter().forceOutputFile(fileOutStream);
             getPrinter().startRun(this); // Sets current X, Y, Z to 0 and optionally plots an outline
             final int top = realTopLayer();
 
@@ -564,10 +555,9 @@ public class LayerRules {
                 getPrinter().finishedLayer(this);
             }
             getPrinter().terminate(this);
-        } catch (final Exception e) {
-            e.printStackTrace();
+        } finally {
+            fileStream.close();
         }
-        fileOutStream.close();
         reversing = false;
     }
 }
