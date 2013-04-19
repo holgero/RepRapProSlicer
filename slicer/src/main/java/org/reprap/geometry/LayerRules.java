@@ -8,6 +8,7 @@ import java.io.PrintStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.Main;
 import org.reprap.configuration.Preferences;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
@@ -351,9 +352,11 @@ public class LayerRules {
             return;
         }
         firstPoint[machineLayer] = pl[bottom].polygon(0).point(0);
-        firstExtruder[machineLayer] = pl[bottom].polygon(0).getAttributes().getExtruder().getID();
+        pl[bottom].polygon(0).getAttributes();
+        firstExtruder[machineLayer] = Main.getExtruder(pl[bottom].polygon(0).getAttributes().getMaterial()).getID();
         lastPoint[machineLayer] = pl[top].polygon(pl[top].size() - 1).point(pl[top].polygon(pl[top].size() - 1).size() - 1);
-        lastExtruder[machineLayer] = pl[top].polygon(pl[top].size() - 1).getAttributes().getExtruder().getID();
+        pl[top].polygon(pl[top].size() - 1).getAttributes();
+        lastExtruder[machineLayer] = Main.getExtruder(pl[top].polygon(pl[top].size() - 1).getAttributes().getMaterial()).getID();
     }
 
     public int realTopLayer() {

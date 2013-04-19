@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.Main;
 import org.reprap.configuration.Preferences;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
@@ -200,7 +201,7 @@ class LayerProducer {
             simulationPlot.add(pgl);
         }
 
-        final GCodeExtruder extruder = attributes.getExtruder();
+        final GCodeExtruder extruder = Main.getExtruder(attributes.getMaterial());
         final double outlineFeedrate = extruder.getOutlineFeedrate();
         final double infillFeedrate = extruder.getInfillFeedrate();
         final ExtrusionPath extrusionPath = toExtrusionPath(polygon, printer.getFastXYFeedrate(), extruder.getSlowXYFeedrate(),

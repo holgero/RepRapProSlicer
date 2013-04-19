@@ -11,7 +11,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Preferences;
+import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.Producer;
 import org.reprap.gui.MainFrame;
@@ -22,6 +25,8 @@ import org.reprap.gui.SlicerFrame;
  * more details.
  */
 public class Main {
+    private static final Logger LOGGER = LogManager.getLogger(Main.class);
+
     public static Main gui;
 
     private Producer producer = null;
@@ -62,7 +67,10 @@ public class Main {
         return producer.getLayer();
     }
 
-    public void onProduceB() {
+    public boolean slice(final String gcodeFileName) {
+        if (printer.setGCodeFileForOutput(gcodeFileName) == null) {
+            return false;
+        }
         mainFrame.producing(true);
         final Thread t = new Thread() {
             @Override
@@ -83,6 +91,7 @@ public class Main {
             }
         };
         t.start();
+        return true;
     }
 
     public File onOpen(final String description, final String[] extensions, final String defaultRoot) {
@@ -157,9 +166,16 @@ public class Main {
         mainFrame.getBuilder().mouseToWorld();
     }
 
+    public static GCodeExtruder getExtruder(final String material) {
+        final GCodeExtruder extruder = gui.getPrinter().getExtruder(material);
+        if (extruder == null) {
+            LOGGER.error("null extruder for " + material);
+        }
+        return extruder;
+    }
+
     public static void main(final String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
-
             @Override
             public void run() {
                 Thread.currentThread().setName("RepRap");

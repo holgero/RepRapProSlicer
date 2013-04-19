@@ -170,7 +170,7 @@ public class BooleanGrid {
      * The empty grid
      */
     private BooleanGrid() {
-        att = new Attributes(null, null, null, null);
+        att = new Attributes(null, null, null);
         rec = new Integer2DRectangle();
         bits = new BitSet(1);
         isThin = false;

@@ -19,6 +19,7 @@ import javax.vecmath.Vector3d;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.Main;
 import org.reprap.configuration.Constants;
 import org.reprap.configuration.Preferences;
 import org.reprap.gcode.GCodeExtruder;
@@ -667,7 +668,7 @@ public class AllSTLsToBuild {
             for (int i = 0; i < previousSupport.size(); i++) {
                 final BooleanGrid above = previousSupport.get(i);
                 a = above.attribute();
-                final GCodeExtruder e = a.getExtruder().getSupportExtruder();
+                final GCodeExtruder e = Main.getExtruder(a.getMaterial()).getSupportExtruder();
                 if (e != null) {
                     if (layerRules.extruderLiveThisLayer(e.getID())) {
                         support.add(BooleanGrid.difference(above, unionOfThisLayer, a));
@@ -682,12 +683,13 @@ public class AllSTLsToBuild {
 
         for (int i = 0; i < support.size(); i++) {
             final BooleanGrid grid = support.get(i);
-            final GCodeExtruder e = grid.attribute().getExtruder().getSupportExtruder();
+            grid.attribute();
+            final GCodeExtruder e = Main.getExtruder(grid.attribute().getMaterial()).getSupportExtruder();
             if (e == null) {
                 LOGGER.error("AllSTLsToBuild.computeSupport(): null support extruder specified!");
                 continue;
             }
-            grid.forceAttribute(new Attributes(e.getMaterial(), null, null, e.getAppearance()));
+            grid.forceAttribute(new Attributes(e.getMaterial(), null, e.getAppearance()));
         }
 
         return AllSTLsToBuild.hatch(support, layerRules, false, null, true);
@@ -708,12 +710,13 @@ public class AllSTLsToBuild {
         final BooleanGridList neededSlice = new BooleanGridList();
         for (int i = 0; i < allLayer.size(); i++) {
             GCodeExtruder e;
+            final Attributes attribute = allLayer.get(i).attribute();
             if (infill) {
-                e = allLayer.get(i).attribute().getExtruder().getInfillExtruder();
+                e = Main.getExtruder(attribute.getMaterial()).getInfillExtruder();
             } else if (support) {
-                e = allLayer.get(i).attribute().getExtruder().getSupportExtruder();
+                e = Main.getExtruder(attribute.getMaterial()).getSupportExtruder();
             } else {
-                e = allLayer.get(i).attribute().getExtruder();
+                e = Main.getExtruder(attribute.getMaterial());
             }
             if (e != null) {
                 if (layerRules.extruderLiveThisLayer(e.getID())) {
@@ -868,14 +871,13 @@ public class AllSTLsToBuild {
         final Matrix4d m4 = new Matrix4d();
         trans.get(m4);
 
-        //BranchGroup bg = stlObject.getSTL();
         for (int i = 0; i < stlObject.getCount(); i++) {
             final BranchGroup bg1 = stlObject.getSTL(i);
             final Attributes attr = (Attributes) (bg1.getUserData());
-            atts[attr.getExtruder().getID()] = attr;
+            atts[Main.getExtruder(attr.getMaterial()).getID()] = attr;
             final CSG3D csg = stlObject.getCSG(i);
             if (csg != null) {
-                csgs[attr.getExtruder().getID()].add(csg.transform(m4));
+                csgs[Main.getExtruder(attr.getMaterial()).getID()].add(csg.transform(m4));
             } else {
                 recursiveSetEdges(attr.getPart(), trans, z, attr, edges);
             }
@@ -984,7 +986,7 @@ public class AllSTLsToBuild {
         e2 = new Point2D(e2.x(), e2.y());
 
         // Too short?
-        edges[att.getExtruder().getID()].add(new LineSegment(e1, e2, att));
+        edges[Main.getExtruder(att.getMaterial()).getID()].add(new LineSegment(e1, e2, att));
     }
 
     /**
@@ -1051,7 +1053,8 @@ public class AllSTLsToBuild {
             final BooleanGridList slice) {
         for (int i = 0; i < list.size(); i++) {
             Polygon outline = list.polygon(i);
-            final GCodeExtruder ex = outline.getAttributes().getExtruder();
+            outline.getAttributes();
+            final GCodeExtruder ex = Main.getExtruder(outline.getAttributes().getMaterial());
             if (ex.getMiddleStart()) {
                 Line l = lc.getHatchDirection(ex, false).pLine();
                 if (i % 2 != 0 ^ lc.getMachineLayer() % 4 > 1) {
@@ -1060,8 +1063,9 @@ public class AllSTLsToBuild {
                 outline = outline.newStart(outline.maximalVertex(l));
 
                 final Point2D start = outline.point(0);
-                final PolygonIndexedPoint pp = hatching.ppSearch(start, outline.getAttributes().getExtruder()
-                        .getPhysicalExtruderNumber());
+                outline.getAttributes();
+                final PolygonIndexedPoint pp = hatching.ppSearch(start,
+                        Main.getExtruder(outline.getAttributes().getMaterial()).getPhysicalExtruderNumber());
                 boolean failed = true;
                 if (pp != null) {
                     pp.findLongEnough(10, 30);
@@ -1135,7 +1139,7 @@ public class AllSTLsToBuild {
      */
     static Polygon arcCompensate(final Polygon polygon) {
         final Attributes attributes = polygon.getAttributes();
-        final GCodeExtruder e = attributes.getExtruder();
+        final GCodeExtruder e = Main.getExtruder(attributes.getMaterial());
 
         // Multiply the geometrically correct result by factor
         final double factor = e.getArcCompensationFactor();
@@ -1208,13 +1212,13 @@ public class AllSTLsToBuild {
             if (foundation) {
                 e = es[0]; // Extruder 0 is used for foundations
             } else {
-                e = att.getExtruder();
+                e = Main.getExtruder(att.getMaterial());
             }
             GCodeExtruder ei;
             if (!surface) {
                 ei = e.getInfillExtruder();
                 if (ei != null) {
-                    att = new Attributes(ei.getMaterial(), null, null, ei.getAppearance());
+                    att = new Attributes(ei.getMaterial(), null, ei.getAppearance());
                 }
             } else {
                 ei = e;
@@ -1257,7 +1261,7 @@ public class AllSTLsToBuild {
                     e = es[0]; // By convention extruder 0 builds the foundation
                     shells = 1;
                 } else {
-                    e = att.getExtruder();
+                    e = Main.getExtruder(att.getMaterial());
                     shells = e.getShells();
                 }
                 if (outline) {

@@ -9,8 +9,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Constants;
 import org.reprap.configuration.Preferences;
-import org.reprap.gcode.GCodeExtruder;
-import org.reprap.gcode.GCodePrinter;
 
 /**
  * Holds RepRap attributes that are attached to Java3D shapes as user data,
@@ -19,7 +17,7 @@ import org.reprap.gcode.GCodePrinter;
  * @author adrian
  */
 public class Attributes {
-    private static final Logger LOGGER = LogManager.getLogger(Attributes.class);
+    public static final Logger LOGGER = LogManager.getLogger(Attributes.class);
     /**
      * The name of the material
      */
@@ -41,12 +39,6 @@ public class Attributes {
     private Appearance app;
 
     /**
-     * The extruder corresponsing to this material. This is lazily evaluated
-     * (I.e. it is not set until there are some extruders around to use).
-     */
-    private GCodeExtruder extruder;
-
-    /**
      * Constructor - it is permissible to set any argument null. If you know
      * what you're doing of course...
      * 
@@ -54,17 +46,13 @@ public class Attributes {
      *            The name of the material
      * @param p
      *            Parent STLObject
-     * @param b
-     *            Where in p
      * @param a
      *            what it looks like
      */
-    public Attributes(final String s, final STLObject p, final BranchGroup b, final Appearance a) {
+    public Attributes(final String s, final STLObject p, final Appearance a) {
         material = s;
         parent = p;
-        part = b;
         app = a;
-        extruder = null;
     }
 
     @Override
@@ -101,34 +89,10 @@ public class Attributes {
     }
 
     /**
-     * Find my extruder in the list (if not known) or just return it (if known).
-     * 
-     * @param es
-     *            The extruders currently in the printer.
-     * @return my extruder
-     */
-    public GCodeExtruder getExtruder() {
-        if (extruder == null) {
-            final GCodePrinter p = org.reprap.Main.gui.getPrinter();
-            if (p == null) {
-                LOGGER.error("Attributes.getExtruder(): null printer!");
-                return null;
-            }
-            extruder = p.getExtruder(material);
-            if (extruder == null) {
-                LOGGER.error("Attributes.getExtruder(): null extruder for " + material);
-                return null;
-            }
-        }
-        return extruder;
-    }
-
-    /**
      * Change the material name
      */
     public void setMaterial(final String s) {
         material = s;
-        extruder = null;
         app = getAppearanceFromMaterial(material);
         if (parent != null) {
             parent.restoreAppearance();

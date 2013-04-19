@@ -30,11 +30,9 @@ public class PrintTabFrame extends JInternalFrame {
     private static final long serialVersionUID = 1L;
     private long startTime = -1;
     private int oldLayer = -1;
-    private String loadedFiles = "";
-    private boolean loadedFilesLong = false;
+    private File loadedFile;
     private boolean gcodeLoaded = false;
     private boolean slicing = false;
-    private Thread printerFilePlay;
     private boolean SLoadOK = false;
     private JLabel currentLayerOutOfN;
     private JProgressBar progressBar;
@@ -56,7 +54,6 @@ public class PrintTabFrame extends JInternalFrame {
      */
     PrintTabFrame(final MainFrame mainFrame) {
         initComponents(mainFrame);
-        printerFilePlay = null;
         enableSLoad();
     }
 
@@ -109,12 +106,6 @@ public class PrintTabFrame extends JInternalFrame {
             expectedBuildTime.setText("" + h + ":0" + m);
         }
         expectedFinishTime.setText(dateFormat.format(new Date(startTime + f)));
-
-        if (printerFilePlay != null) {
-            if (!printerFilePlay.isAlive()) {
-                printDone();
-            }
-        }
     }
 
     private void initComponents(final MainFrame mainFrame) {
@@ -438,28 +429,10 @@ public class PrintTabFrame extends JInternalFrame {
                                         org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)).addContainerGap(24, Short.MAX_VALUE)));
     }
 
-    private void printLive(final boolean p) {
+    private void printLive() {
         slicing = true;
-        if (p) {
-            sliceButton.setText("Printing...");
-        } else {
-            sliceButton.setText("Slicing...");
-        }
+        sliceButton.setText("Slicing...");
         sliceButton.setBackground(Color.gray);
-    }
-
-    private void restoreSliceButton() {
-        slicing = false;
-        sliceButton.setText("Slice");
-        sliceButton.setBackground(new java.awt.Color(51, 204, 0));
-        printerFilePlay = null;
-    }
-
-    private void printDone() {
-        restoreSliceButton();
-        final String[] options = { "Exit" };
-        JOptionPane.showOptionDialog(null, "The file has been processed.", "Message", JOptionPane.DEFAULT_OPTION,
-                JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
     }
 
     private boolean worthSaving() {
@@ -477,40 +450,37 @@ public class PrintTabFrame extends JInternalFrame {
             case JOptionPane.YES_OPTION:
                 saveRFO();
                 break;
-
             case JOptionPane.NO_OPTION:
                 break;
-
             case JOptionPane.CANCEL_OPTION:
                 return;
-
             default:
                 saveRFO();
             }
         }
 
-        printLive(false);
-
         org.reprap.Main.gui.mouseToWorld();
-        int sp = -1;
-        if (loadedFiles != null) {
-            sp = loadedFiles.length();
-        }
-        if (sp <= 0) {
+        if (loadedFile == null) {
             JOptionPane.showMessageDialog(null, "There are no STLs/RFOs loaded to slice to file.");
-            restoreSliceButton();
             return;
         }
-        sp = Math.max(loadedFiles.indexOf(".stl"),
-                Math.max(loadedFiles.indexOf(".STL"), Math.max(loadedFiles.indexOf(".rfo"), loadedFiles.indexOf(".RFO"))));
-        if (sp <= 0) {
+        if (!isStlOrRfoFile(loadedFile)) {
             JOptionPane.showMessageDialog(null, "The loaded file is not an STL or an RFO file.");
-        }
-        if (Main.gui.getPrinter().setGCodeFileForOutput(loadedFiles.substring(0, sp)) == null) {
-            restoreSliceButton();
             return;
         }
-        org.reprap.Main.gui.onProduceB();
+        if (Main.gui.slice(stripExtension(loadedFile))) {
+            printLive();
+        }
+    }
+
+    private String stripExtension(final File file) {
+        final String path = file.getAbsolutePath();
+        return path.substring(0, path.length() - ".rfo".length());
+    }
+
+    private boolean isStlOrRfoFile(final File file) {
+        final String lowerName = file.getName().toLowerCase();
+        return lowerName.endsWith(".stl") || lowerName.endsWith(".rfo");
     }
 
     private void exitButtonActionPerformed() throws IOException {
@@ -560,20 +530,12 @@ public class PrintTabFrame extends JInternalFrame {
             if (response == 1) {
                 return;
             }
-            loadedFiles = "";
+            loadedFile = null;
         }
         final File stlFile = Main.gui.onOpen("STL triangulation file", new String[] { "stl" }, "");
-        if (loadedFilesLong) {
-            return;
-        }
-        if (loadedFiles.length() > 50) {
-            loadedFiles += "...";
-            loadedFilesLong = true;
-        } else {
-            loadedFiles += stlFile.getName() + " ";
-        }
+        loadedFile = stlFile;
 
-        fileNameBox.setText(loadedFiles);
+        fileNameBox.setText(loadedFile.getName());
         gcodeLoaded = false;
     }
 
@@ -588,22 +550,13 @@ public class PrintTabFrame extends JInternalFrame {
             if (response == 1) {
                 return;
             }
-            loadedFiles = "";
+            loadedFile = null;
         }
 
         final File rfoFile = Main.gui.onOpen("RFO multiple-object file", new String[] { "rfo" }, "");
+        loadedFile = rfoFile;
 
-        if (loadedFilesLong) {
-            return;
-        }
-        if (loadedFiles.length() > 50) {
-            loadedFiles += "...";
-            loadedFilesLong = true;
-        } else {
-            loadedFiles += rfoFile.getName() + " ";
-        }
-
-        fileNameBox.setText(loadedFiles);
+        fileNameBox.setText(loadedFile.getName());
         gcodeLoaded = false;
     }
 
@@ -625,32 +578,28 @@ public class PrintTabFrame extends JInternalFrame {
         if (!SLoadOK) {
             return;
         }
-        if (loadedFiles.contentEquals("")) {
+        if (loadedFile == null) {
             JOptionPane.showMessageDialog(null, "There's nothing to save...");
             return;
         }
-        final int sp = Math.max(loadedFiles.indexOf(".stl"),
-                Math.max(loadedFiles.indexOf(".STL"), Math.max(loadedFiles.indexOf(".rfo"), loadedFiles.indexOf(".RFO"))));
-        if (sp <= 0) {
+        if (!isStlOrRfoFile(loadedFile)) {
             JOptionPane.showMessageDialog(null, "The loaded file is not an STL or an RFO file.");
         }
-        Main.gui.saveRFO(loadedFiles.substring(0, sp));
+        Main.gui.saveRFO(stripExtension(loadedFile));
     }
 
     private void saveSCAD() {
         if (!SLoadOK) {
             return;
         }
-        if (loadedFiles.contentEquals("")) {
+        if (loadedFile == null) {
             JOptionPane.showMessageDialog(null, "There's nothing to save...");
             return;
         }
-        final int sp = Math.max(loadedFiles.indexOf(".stl"),
-                Math.max(loadedFiles.indexOf(".STL"), Math.max(loadedFiles.indexOf(".rfo"), loadedFiles.indexOf(".RFO"))));
-        if (sp <= 0) {
+        if (!isStlOrRfoFile(loadedFile)) {
             JOptionPane.showMessageDialog(null, "The loaded file is not an STL or an RFO file.");
         }
-        org.reprap.Main.gui.saveSCAD(loadedFiles.substring(0, sp));
+        Main.gui.saveSCAD(stripExtension(loadedFile));
     }
 
     private void enableSLoad() {

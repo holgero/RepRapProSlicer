@@ -61,6 +61,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.Main;
 
 /**
  * RrPolygonList: A collection of 2D polygons List of polygons class. This too
@@ -349,10 +350,12 @@ public class PolygonList {
             return;
         }
 
+        polygon(0).getAttributes();
         // First check that we all have the same physical extruder
-        final int physicalExtruder = polygon(0).getAttributes().getExtruder().getPhysicalExtruderNumber();
+        final int physicalExtruder = Main.getExtruder(polygon(0).getAttributes().getMaterial()).getPhysicalExtruderNumber();
         for (int i = 1; i < size(); i++) {
-            if (polygon(i).getAttributes().getExtruder().getPhysicalExtruderNumber() != physicalExtruder) {
+            polygon(i).getAttributes();
+            if (Main.getExtruder(polygon(i).getAttributes().getMaterial()).getPhysicalExtruderNumber() != physicalExtruder) {
                 throw new RuntimeException(
                         "RrPolygonList.radicalReOrder(): more than one physical extruder needed by the list!");
             }
@@ -526,7 +529,8 @@ public class PolygonList {
         PolygonIndexedPoint result = null;
         for (int i = 0; i < size(); i++) {
             final Polygon pgon = polygon(i);
-            if (physicalExtruder == pgon.getAttributes().getExtruder().getPhysicalExtruderNumber()) {
+            pgon.getAttributes();
+            if (physicalExtruder == Main.getExtruder(pgon.getAttributes().getMaterial()).getPhysicalExtruderNumber()) {
                 final int n = pgon.nearestVertex(p);
                 final double distance = Point2D.dSquared(p, pgon.point(n));
                 if (distance < minDistance) {
@@ -549,7 +553,8 @@ public class PolygonList {
 
         for (int i = 0; i < size(); i++) {
             final Polygon p = polygon(i);
-            if (p.getLength() > p.getAttributes().getExtruder().getExtrusionInfillWidth() * 3) {
+            p.getAttributes();
+            if (p.getLength() > Main.getExtruder(p.getAttributes().getMaterial()).getExtrusionInfillWidth() * 3) {
                 r.add(p);
             }
         }

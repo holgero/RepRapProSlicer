@@ -105,7 +105,7 @@ public class GCodeWriter implements PreferenceChangeListener {
         fr.close();
     }
 
-    public String setGCodeFileForOutput(final boolean topDown, final String fileRoot) {
+    public String setGCodeFileForOutput(final String fileRoot) {
         final File defaultFile = new File(fileRoot + ".gcode");
         final JFileChooser chooser = new JFileChooser();
         chooser.setSelectedFile(defaultFile);
@@ -122,20 +122,10 @@ public class GCodeWriter implements PreferenceChangeListener {
                 opFileName = opFileName.substring(0, opFileName.length() - 6);
             }
 
-            boolean doe = false;
-            String fn = opFileName;
-            if (topDown) {
-                fn += FIRST_ENDING;
-                fn += TMP_STRING;
-                doe = true;
-            }
-            fn += GCODE_EXTENSION;
-
+            final String fn = opFileName + FIRST_ENDING + TMP_STRING + GCODE_EXTENSION;
             LOGGER.debug("opening: " + fn);
             final File fl = new File(fn);
-            if (doe) {
-                fl.deleteOnExit();
-            }
+            fl.deleteOnExit();
             final FileOutputStream fileStream;
             try {
                 fileStream = new FileOutputStream(fl);

@@ -2,6 +2,7 @@ package org.reprap.geometry;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.Main;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.BooleanGrid;
@@ -57,7 +58,7 @@ public class Producer {
     private void fillFoundationRectangle(final GCodePrinter reprap, final Rectangle gp) throws Exception {
         final PolygonList shield = new PolygonList();
         final GCodeExtruder e = reprap.getExtruder();
-        final Attributes fa = new Attributes(e.getMaterial(), null, null, e.getAppearance());
+        final Attributes fa = new Attributes(e.getMaterial(), null, e.getAppearance());
         final CSG2D rect = CSG2D.RrCSGFromBox(gp);
         final BooleanGrid bg = new BooleanGrid(rect, gp.scale(1.1), fa);
         final PolygonList h[] = { shield,
@@ -135,20 +136,24 @@ public class Producer {
                 }
                 for (int pol = 0; pol < borders.size(); pol++) {
                     final Polygon p = borders.polygon(pol);
-                    tempBorderPolygons[p.getAttributes().getExtruder().getPhysicalExtruderNumber()].add(p);
+                    p.getAttributes();
+                    tempBorderPolygons[Main.getExtruder(p.getAttributes().getMaterial()).getPhysicalExtruderNumber()].add(p);
                 }
                 for (int pol = 0; pol < fills.size(); pol++) {
                     final Polygon p = fills.polygon(pol);
-                    tempFillPolygons[p.getAttributes().getExtruder().getPhysicalExtruderNumber()].add(p);
+                    p.getAttributes();
+                    tempFillPolygons[Main.getExtruder(p.getAttributes().getMaterial()).getPhysicalExtruderNumber()].add(p);
                 }
                 for (int pol = 0; pol < support.size(); pol++) {
                     final Polygon p = support.polygon(pol);
-                    tempFillPolygons[p.getAttributes().getExtruder().getPhysicalExtruderNumber()].add(p);
+                    p.getAttributes();
+                    tempFillPolygons[Main.getExtruder(p.getAttributes().getMaterial()).getPhysicalExtruderNumber()].add(p);
                 }
 
                 for (int physicalExtruder = 0; physicalExtruder < allPolygons.length; physicalExtruder++) {
                     if (tempBorderPolygons[physicalExtruder].size() > 0) {
-                        double linkUp = tempBorderPolygons[physicalExtruder].polygon(0).getAttributes().getExtruder()
+                        tempBorderPolygons[physicalExtruder].polygon(0).getAttributes();
+                        double linkUp = Main.getExtruder(tempBorderPolygons[physicalExtruder].polygon(0).getAttributes().getMaterial())
                                 .getExtrusionSize();
                         linkUp = (4 * linkUp * linkUp);
                         tempBorderPolygons[physicalExtruder].radicalReOrder(linkUp);
@@ -162,7 +167,8 @@ public class Producer {
                         allPolygons[physicalExtruder].add(tempBorderPolygons[physicalExtruder]);
                     }
                     if (tempFillPolygons[physicalExtruder].size() > 0) {
-                        double linkUp = tempFillPolygons[physicalExtruder].polygon(0).getAttributes().getExtruder()
+                        tempFillPolygons[physicalExtruder].polygon(0).getAttributes();
+                        double linkUp = Main.getExtruder(tempFillPolygons[physicalExtruder].polygon(0).getAttributes().getMaterial())
                                 .getExtrusionSize();
                         linkUp = (4 * linkUp * linkUp);
                         tempFillPolygons[physicalExtruder].radicalReOrder(linkUp);

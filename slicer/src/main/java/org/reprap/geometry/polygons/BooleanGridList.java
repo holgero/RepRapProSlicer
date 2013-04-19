@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.reprap.Main;
+
 /**
  * Class to hold a list of BooleanGrids with associated attributes for each
  * 
@@ -100,11 +102,13 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
         for (int i = 0; i < size() - 1; i++) {
             if (!usedUp[i]) {
                 BooleanGrid union = get(i);
-                final int iExId = union.attribute().getExtruder().getID();
+                union.attribute();
+                final int iExId = Main.getExtruder(union.attribute().getMaterial()).getID();
                 for (int j = i + 1; j < size(); j++) {
                     if (!usedUp[j]) {
                         final BooleanGrid jg = get(j);
-                        if (iExId == jg.attribute().getExtruder().getID()) {
+                        jg.attribute();
+                        if (iExId == Main.getExtruder(jg.attribute().getMaterial()).getID()) {
                             union = BooleanGrid.union(union, jg);
                             usedUp[j] = true;
                         }
@@ -156,7 +160,9 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
             boolean aMatched = false;
             for (int j = 0; j < b.size(); j++) {
                 final BooleanGrid grid = b.get(j);
-                if (abg.attribute().getExtruder().getID() == grid.attribute().getExtruder().getID()) {
+                abg.attribute();
+                grid.attribute();
+                if (Main.getExtruder(abg.attribute().getMaterial()).getID() == Main.getExtruder(grid.attribute().getMaterial()).getID()) {
                     result.add(BooleanGrid.union(abg, grid));
                     bMatched[j] = true;
                     aMatched = true;
@@ -199,7 +205,9 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
             final BooleanGrid abg = a.get(i);
             for (int j = 0; j < b.size(); j++) {
                 final BooleanGrid grid = b.get(j);
-                if (abg.attribute().getExtruder().getID() == grid.attribute().getExtruder().getID()) {
+                abg.attribute();
+                grid.attribute();
+                if (Main.getExtruder(abg.attribute().getMaterial()).getID() == Main.getExtruder(grid.attribute().getMaterial()).getID()) {
                     result.add(BooleanGrid.intersection(abg, grid));
                     break;
                 }
@@ -216,7 +224,8 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
         final BooleanGridList result = new BooleanGridList();
 
         for (int i = 0; i < size(); i++) {
-            if (get(i).attribute().getExtruder().getSupportExtruderNumber() < 0) {
+            get(i).attribute();
+            if (Main.getExtruder(get(i).attribute().getMaterial()).getSupportExtruderNumber() < 0) {
                 result.add(get(i));
             }
         }
@@ -258,7 +267,10 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
             boolean aMatched = false;
             for (int j = 0; j < b.size(); j++) {
                 final BooleanGrid grid = b.get(j);
-                if (ignoreAttributes || (abg.attribute().getExtruder().getID() == grid.attribute().getExtruder().getID())) {
+                abg.attribute();
+                grid.attribute();
+                if (ignoreAttributes
+                        || (Main.getExtruder(abg.attribute().getMaterial()).getID() == Main.getExtruder(grid.attribute().getMaterial()).getID())) {
                     result.add(BooleanGrid.difference(abg, grid, abg.attribute()));
                     if (!ignoreAttributes) {
                         aMatched = true;

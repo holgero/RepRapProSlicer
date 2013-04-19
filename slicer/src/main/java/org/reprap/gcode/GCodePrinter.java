@@ -719,7 +719,7 @@ public class GCodePrinter implements PreferenceChangeListener {
     }
 
     public String setGCodeFileForOutput(final String fileRoot) {
-        return gcode.setGCodeFileForOutput(true, fileRoot);
+        return gcode.setGCodeFileForOutput(fileRoot);
     }
 
     /**
