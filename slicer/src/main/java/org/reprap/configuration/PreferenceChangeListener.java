@@ -1,4 +1,4 @@
-package org.reprap.attributes;
+package org.reprap.configuration;
 
 public interface PreferenceChangeListener {
     void refreshPreferences(Preferences newPreferences);

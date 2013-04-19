@@ -1,4 +1,4 @@
-package org.reprap.attributes;
+package org.reprap.geometry.polyhedra;
 
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
@@ -7,9 +7,10 @@ import javax.vecmath.Color3f;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.configuration.Constants;
+import org.reprap.configuration.Preferences;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
-import org.reprap.geometry.polyhedra.STLObject;
 
 /**
  * Holds RepRap attributes that are attached to Java3D shapes as user data,

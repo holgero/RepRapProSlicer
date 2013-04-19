@@ -6,8 +6,8 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.attributes.Attributes;
-import org.reprap.attributes.Preferences;
+import org.reprap.configuration.Preferences;
+import org.reprap.geometry.polyhedra.Attributes;
 
 /**
  * This class stores a rectangular grid at the same grid resolution as the

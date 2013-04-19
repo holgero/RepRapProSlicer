@@ -19,8 +19,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
-import org.reprap.attributes.Attributes;
-import org.reprap.attributes.Preferences;
+import org.reprap.configuration.Preferences;
+import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.geometry.polyhedra.STLObject;
 
 /**

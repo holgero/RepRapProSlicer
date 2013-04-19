@@ -11,7 +11,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import org.reprap.attributes.Preferences;
+import org.reprap.configuration.Preferences;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.Producer;
 import org.reprap.gui.MainFrame;

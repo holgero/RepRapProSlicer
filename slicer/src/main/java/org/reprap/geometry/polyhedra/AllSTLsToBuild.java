@@ -19,9 +19,8 @@ import javax.vecmath.Vector3d;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.attributes.Attributes;
-import org.reprap.attributes.Constants;
-import org.reprap.attributes.Preferences;
+import org.reprap.configuration.Constants;
+import org.reprap.configuration.Preferences;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.geometry.LayerRules;
 import org.reprap.geometry.polygons.BooleanGrid;

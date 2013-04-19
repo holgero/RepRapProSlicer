@@ -3,7 +3,7 @@ package org.reprap.geometry.polygons;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.reprap.attributes.Attributes;
+import org.reprap.geometry.polyhedra.Attributes;
 
 /**
  * Integer-point polygon

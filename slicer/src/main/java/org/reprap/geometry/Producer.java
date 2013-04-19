@@ -2,7 +2,6 @@ package org.reprap.geometry;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.attributes.Attributes;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.BooleanGrid;
@@ -12,6 +11,7 @@ import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
+import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.gui.RepRapBuild;
 import org.reprap.gui.SlicerFrame;
 

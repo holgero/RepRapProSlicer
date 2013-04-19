@@ -60,8 +60,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.List;
 
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BoundingBox;
@@ -84,8 +86,7 @@ import javax.vecmath.Vector3d;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.attributes.Attributes;
-import org.reprap.attributes.Constants;
+import org.reprap.configuration.Constants;
 import org.reprap.graphicio.CSGReader;
 import org.reprap.graphicio.StlFile;
 import org.reprap.gui.MouseObject;
@@ -106,90 +107,26 @@ import com.sun.j3d.utils.picking.PickTool;
 public class STLObject {
     private static final Logger LOGGER = LogManager.getLogger(STLObject.class);
 
-    /**
-     * Offsets of loaded STL objects
-     */
-    private static final class Offsets {
-        private Vector3d centreToOrigin;
-        private Vector3d bottomLeftShift;
-    }
-
-    /**
-     * Holds tripples of the parts of this STLObject loaded.
-     */
-    private static final class Contents {
-        private File sourceFile = null; // The STL file I was loaded from
-        private BranchGroup stl = null; // The actual STL geometry
-        private CSG3D csg = null; // CSG if available
-        private Attributes att = null; // The attributes associated with it
-        private final double volume; // Useful to know
-        private int unique = 0;
-
-        Contents(final File file, final BranchGroup st, final CSG3D c, final Attributes a, final double v) {
-            sourceFile = file;
-            stl = st;
-            csg = c;
-            att = a;
-            volume = v;
-        }
-
-        void setUnique(final int i) {
-            unique = i;
-        }
-
-        int getUnique() {
-            return unique;
-        }
-    }
-
+    private final BranchGroup top = new BranchGroup(); // The thing that links us to the world
+    private final BranchGroup handle = new BranchGroup(); // Internal handle for the mouse to grab
+    private final TransformGroup trans = new TransformGroup(); // Static transform for when the mouse is away
+    private final BranchGroup stl = new BranchGroup(); // The actual STL geometry; a tree duplicated flat in the list contents
+    private final List<STLFileContents> contents = new ArrayList<STLFileContents>();
     private MouseObject mouse = null; // The mouse, if it is controlling us
-    private BranchGroup top = null; // The thing that links us to the world
-    private BranchGroup handle = null; // Internal handle for the mouse to grab
-    private TransformGroup trans = null;// Static transform for when the mouse is away
-    private BranchGroup stl = null; // The actual STL geometry; a tree duplicated flat in the list contents
     private Vector3d extent = null; // X, Y and Z extent
     private BoundingBox bbox = null; // Temporary storage for the bounding box while loading
     private Vector3d rootOffset = null; // Offset of the first-loaded STL under stl
-    private ArrayList<Contents> contents = null;
 
     public STLObject() {
-        stl = new BranchGroup();
-
-        contents = new ArrayList<Contents>();
-
-        // No mouse yet
-
-        mouse = null;
-
-        // Set up our bit of the scene graph
-
-        top = new BranchGroup();
-        handle = new BranchGroup();
-        trans = new TransformGroup();
-
+        setCommonCapabilities(top, handle, stl, trans);
         top.setCapability(BranchGroup.ALLOW_DETACH);
-        top.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-        top.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        top.setCapability(Group.ALLOW_CHILDREN_READ);
         top.setCapability(Node.ALLOW_AUTO_COMPUTE_BOUNDS_READ);
         top.setCapability(Node.ALLOW_BOUNDS_READ);
-
         handle.setCapability(BranchGroup.ALLOW_DETACH);
-        handle.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-        handle.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        handle.setCapability(Group.ALLOW_CHILDREN_READ);
-
-        trans.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-        trans.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        trans.setCapability(Group.ALLOW_CHILDREN_READ);
-        trans.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        trans.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-
-        stl.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-        stl.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        stl.setCapability(Group.ALLOW_CHILDREN_READ);
         stl.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
         stl.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
+        trans.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+        trans.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
 
         trans.addChild(stl);
         handle.addChild(trans);
@@ -200,8 +137,14 @@ public class STLObject {
         handle.setUserData(nullAtt);
         trans.setUserData(nullAtt);
         stl.setUserData(nullAtt);
+    }
 
-        bbox = null;
+    private void setCommonCapabilities(final SceneGraphObject... objects) {
+        for (final SceneGraphObject object : objects) {
+            object.setCapability(Group.ALLOW_CHILDREN_EXTEND);
+            object.setCapability(Group.ALLOW_CHILDREN_WRITE);
+            object.setCapability(Group.ALLOW_CHILDREN_READ);
+        }
     }
 
     private static Appearance unselectedApp() {
@@ -224,7 +167,7 @@ public class STLObject {
         }
 
         try {
-            final Contents child = loadSingleSTL(location, att, offset, lastPicked);
+            final STLFileContents child = loadSingleSTL(location, att, offset, lastPicked);
             if (child == null) {
                 return null;
             }
@@ -250,67 +193,88 @@ public class STLObject {
      * and subsequently is subjected to all the same transforms, so they retain
      * their relative positions. This is how multi-material objects are loaded.
      */
-    private Contents loadSingleSTL(final File location, final Attributes att, final Vector3d offset, final STLObject lastPicked)
+    private STLFileContents loadSingleSTL(final File location, final Attributes att, final Vector3d offset, final STLObject lastPicked)
             throws FileNotFoundException, IncorrectFormatException, ParsingErrorException {
-        final StlFile loader = new StlFile();
-        double volume = 0;
-        final Scene scene = loader.load(location.getAbsolutePath());
         final CSGReader csgr = new CSGReader(location);
         CSG3D csgResult = null;
         if (csgr.csgAvailable()) {
             csgResult = csgr.csg();
         }
-        BranchGroup bgResult = null;
-        if (scene != null) {
-            bgResult = scene.getSceneGroup();
-            bgResult.setCapability(Node.ALLOW_BOUNDS_READ);
-            bgResult.setCapability(Group.ALLOW_CHILDREN_READ);
-            bgResult.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
 
-            // Recursively add its attribute
-            final Hashtable<?, ?> namedObjects = scene.getNamedObjects();
-            final java.util.Enumeration<?> enumValues = namedObjects.elements();
+        final StlFile loader = new StlFile();
+        final Scene scene = loader.load(location.getAbsolutePath());
+        if (scene == null) {
+            return new STLFileContents(location, null, csgResult, att, 0);
+        }
 
-            if (enumValues != null) {
-                while (enumValues.hasMoreElements()) {
-                    final Object tt = enumValues.nextElement();
-                    if (tt instanceof Shape3D) {
-                        final Shape3D value = (Shape3D) tt;
-                        volume += s3dVolume(value);
-                        bbox = (BoundingBox) value.getBounds();
+        final BranchGroup bgResult = scene.getSceneGroup();
+        bgResult.setCapability(Node.ALLOW_BOUNDS_READ);
+        bgResult.setCapability(Group.ALLOW_CHILDREN_READ);
+        bgResult.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
 
-                        value.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
-                        final GeometryArray g = (GeometryArray) value.getGeometry();
-                        g.setCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
-
-                        recursiveSetUserData(value, att);
-                    }
-                }
-            }
-
-            att.setPart(bgResult);
-            bgResult.setUserData(att);
-            Offsets off;
-            if (lastPicked != null) {
-                // Add this object to lastPicked
-                csgResult = setOffset(bgResult, csgResult, lastPicked.rootOffset);
-                lastPicked.stl.addChild(bgResult);
-                lastPicked.setAppearance(lastPicked.getAppearance());
-                lastPicked.updateBox(bbox);
-            } else {
-                // New independent object.
-                stl.addChild(bgResult);
-                off = getOffsets(bgResult, offset);
-                rootOffset = off.centreToOrigin;
-                csgResult = setOffset(stl, csgResult, rootOffset);
-                final Transform3D temp_t = new Transform3D();
-                temp_t.set(off.bottomLeftShift);
-                trans.setTransform(temp_t);
-                restoreAppearance();
+        double volume = 0;
+        // Recursively add its attribute
+        final Hashtable<?, ?> namedObjects = scene.getNamedObjects();
+        for (final Object tt : Collections.list(namedObjects.elements())) {
+            if (tt instanceof Shape3D) {
+                final Shape3D value = (Shape3D) tt;
+                volume += s3dVolume(value);
+                bbox = (BoundingBox) value.getBounds();
+                value.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
+                final GeometryArray g = (GeometryArray) value.getGeometry();
+                g.setCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+                recursiveSetUserData(value, att);
             }
         }
 
-        return new Contents(location, bgResult, csgResult, att, volume);
+        att.setPart(bgResult);
+        bgResult.setUserData(att);
+        if (lastPicked != null) {
+            // Add this object to lastPicked
+            csgResult = setOffset(bgResult, csgResult, lastPicked.rootOffset);
+            lastPicked.stl.addChild(bgResult);
+            lastPicked.setAppearance(lastPicked.getAppearance());
+            lastPicked.updateBox(bbox);
+        } else {
+            // New independent object.
+            stl.addChild(bgResult);
+
+            Vector3d bottomLeftShift;
+
+            if (bbox != null) {
+                final javax.vecmath.Point3d p0 = new javax.vecmath.Point3d();
+                final javax.vecmath.Point3d p1 = new javax.vecmath.Point3d();
+                bbox.getLower(p0);
+                bbox.getUpper(p1);
+
+                if (offset != null) {
+                    rootOffset = new Vector3d(offset);
+                } else {
+                    // If no offset requested, set it to bottom-left-at-origin
+                    rootOffset = new Vector3d(-p0.x, -p0.y, -p0.z);
+                }
+
+                // How big?
+                extent = new Vector3d(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z);
+                final Vector3d centre = scale(extent, 0.5);
+
+                // Position us centre at origin:
+                rootOffset = add(rootOffset, neg(centre));
+                bottomLeftShift = centre;
+            } else {
+                bottomLeftShift = null;
+                rootOffset = null;
+                LOGGER.error("applyOffset(): no bounding box or child.");
+            }
+
+            csgResult = setOffset(stl, csgResult, rootOffset);
+            final Transform3D temp_t = new Transform3D();
+            temp_t.set(bottomLeftShift);
+            trans.setTransform(temp_t);
+            restoreAppearance();
+        }
+
+        return new STLFileContents(location, bgResult, csgResult, att, volume);
     }
 
     private void updateBox(final BoundingBox bb) {
@@ -369,7 +333,7 @@ public class STLObject {
     }
 
     public File fileAndDirectioryItCameFrom(final int i) {
-        return contents.get(i).sourceFile;
+        return contents.get(i).getSourceFile();
     }
 
     public String fileItCameFrom(final int i) {
@@ -415,7 +379,7 @@ public class STLObject {
     }
 
     public Attributes attributes(final int i) {
-        return contents.get(i).att;
+        return contents.get(i).getAtt();
     }
 
     public int size() {
@@ -428,51 +392,6 @@ public class STLObject {
 
     public int getUnique(final int i) {
         return contents.get(i).getUnique();
-    }
-
-    /**
-     * Find how to move the object by actually changing all its coordinates
-     * (i.e. don't just add a transform). Also record its size.
-     */
-    private Offsets getOffsets(final BranchGroup child, final Vector3d userOffset) {
-        Vector3d offset = null;
-        if (userOffset != null) {
-            offset = new Vector3d(userOffset);
-        }
-
-        final Offsets result = new Offsets();
-        if (child != null && bbox != null) {
-            final javax.vecmath.Point3d p0 = new javax.vecmath.Point3d();
-            final javax.vecmath.Point3d p1 = new javax.vecmath.Point3d();
-            bbox.getLower(p0);
-            bbox.getUpper(p1);
-
-            // If no offset requested, set it to bottom-left-at-origin
-            if (offset == null) {
-                offset = new Vector3d();
-                offset.x = -p0.x;
-                offset.y = -p0.y;
-                offset.z = -p0.z;
-            }
-
-            // How big?
-            extent = new Vector3d(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z);
-
-            // Position us centre at origin:
-            offset = add(offset, neg(scale(extent, 0.5)));
-
-            // Recursively apply that.  N.B. we do not apply a transform to the
-            // loaded object; we actually shift all its points to put it in this
-            // standard place.
-            result.centreToOrigin = offset;
-
-            // Now shift us to have bottom left at origin using our transform.
-            result.bottomLeftShift = scale(extent, 0.5);
-        } else {
-            LOGGER.error("applyOffset(): no bounding box or child.");
-        }
-
-        return result;
     }
 
     /**
@@ -637,7 +556,7 @@ public class STLObject {
     }
 
     BranchGroup getSTL(final int i) {
-        return contents.get(i).stl;
+        return contents.get(i).getStl();
     }
 
     int getCount() {
@@ -645,7 +564,7 @@ public class STLObject {
     }
 
     CSG3D getCSG(final int i) {
-        return contents.get(i).csg;
+        return contents.get(i).getCsg();
     }
 
     // Get the number of objects
@@ -918,7 +837,7 @@ public class STLObject {
         if (contents.size() <= 0) {
             return 0;
         }
-        return contents.get(contents.size() - 1).volume;
+        return contents.get(contents.size() - 1).getVolume();
     }
 
     /**

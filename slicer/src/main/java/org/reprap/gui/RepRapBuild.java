@@ -120,11 +120,11 @@ import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
-import org.reprap.attributes.Attributes;
-import org.reprap.attributes.PreferenceChangeListener;
-import org.reprap.attributes.Preferences;
+import org.reprap.configuration.PreferenceChangeListener;
+import org.reprap.configuration.Preferences;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
+import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.geometry.polyhedra.STLObject;
 import org.reprap.graphicio.RFO;
 

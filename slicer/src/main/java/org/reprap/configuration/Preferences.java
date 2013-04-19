@@ -1,4 +1,4 @@
-package org.reprap.attributes;
+package org.reprap.configuration;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -336,7 +336,7 @@ public class Preferences {
         return result;
     }
 
-    Color3f loadMaterialColor(final String material) {
+    public Color3f loadMaterialColor(final String material) {
         final String prefix = "Extruder" + getNumberFromMaterial(material) + "_";
         return new Color3f(loadColorComponent(prefix, "R"), loadColorComponent(prefix, "G"), loadColorComponent(prefix, "B"));
     }

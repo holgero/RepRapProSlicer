@@ -388,7 +388,7 @@ public class CSG2D {
             } else if (i.pos()) {
                 result = nothing();
             } else {
-                throw new IllegalStateException("interval neither positive nor negative: " + i);
+                result = this;
             }
             break;
         case NULL:

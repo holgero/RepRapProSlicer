@@ -16,8 +16,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
-import org.reprap.attributes.PreferenceChangeListener;
-import org.reprap.attributes.Preferences;
+import org.reprap.configuration.PreferenceChangeListener;
+import org.reprap.configuration.Preferences;
 import org.reprap.geometry.LayerRules;
 
 public class GCodeWriter implements PreferenceChangeListener {

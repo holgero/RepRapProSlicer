@@ -4,8 +4,7 @@ import java.io.IOException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.attributes.Attributes;
-import org.reprap.attributes.Preferences;
+import org.reprap.configuration.Preferences;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.Interval;
@@ -14,6 +13,7 @@ import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polygons.VelocityProfile;
+import org.reprap.geometry.polyhedra.Attributes;
 
 class LayerProducer {
     private static final Logger LOGGER = LogManager.getLogger(LayerProducer.class);

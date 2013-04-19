@@ -21,7 +21,7 @@ import javax.swing.JProgressBar;
 import javax.swing.SwingConstants;
 
 import org.reprap.Main;
-import org.reprap.attributes.Preferences;
+import org.reprap.configuration.Preferences;
 
 /**
  * @author ensab
