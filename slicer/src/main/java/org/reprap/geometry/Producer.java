@@ -14,7 +14,6 @@ import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.geometry.polyhedra.BoundingBox;
-import org.reprap.gui.SlicerFrame;
 
 public class Producer {
     private static final Logger LOGGER = LogManager.getLogger(Producer.class);
@@ -25,13 +24,12 @@ public class Producer {
      * The list of objects to be built
      */
     private final ProducerStlList stlList;
-    private final SlicerFrame slicerFrame;
     private final Preferences preferences = Preferences.getInstance();
+    private final ProductionProgressListener progressListener;
 
-    public Producer(final GCodePrinter pr, final AllSTLsToBuild allStls, final SlicerFrame slicerFrame,
+    public Producer(final GCodePrinter pr, final AllSTLsToBuild allStls, final ProductionProgressListener listener,
             final boolean displayPaths) throws Exception {
-        this.slicerFrame = slicerFrame;
-
+        progressListener = listener;
         final Point2D purge = new Point2D(preferences.loadDouble("DumpX(mm)"), preferences.loadDouble("DumpY(mm)"));
         final BoundingBox buildVolume = ProducerStlList.calculateBoundingBox(allStls, purge);
         layerRules = new LayerRules(pr, buildVolume, purge);
@@ -118,7 +116,7 @@ public class Producer {
 
             LOGGER.debug("Commencing model layer " + layerRules.getModelLayer() + " at " + layerRules.getMachineZ());
             printer.startingLayer(layerRules);
-            slicerFrame.updateProgress();
+            progressListener.productionProgress(layerRules.getMachineLayer(), layerRules.getMachineLayerMax());
 
             for (int physicalExtruder = 0; physicalExtruder < allPolygons.length; physicalExtruder++) {
                 allPolygons[physicalExtruder] = new PolygonList();

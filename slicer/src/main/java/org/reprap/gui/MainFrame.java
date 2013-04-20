@@ -48,18 +48,17 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.reprap.configuration.Preferences;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.Producer;
+import org.reprap.geometry.ProductionProgressListener;
 
 public class MainFrame extends JFrame {
     private final JMenuItem produceProduceB;
     private final JMenuItem cancelMenuItem;
     private final JCheckBoxMenuItem layerPause;
     private final RepRapBuild builder;
-
-    private Producer producer = null;
     private final JFileChooser chooser = new JFileChooser();
     private final SlicerFrame slicerFrame;
-
     private final GCodePrinter printer;
+    private Producer producer = null;
 
     public MainFrame() throws HeadlessException, IOException {
         super("RepRap build bed    |     mouse:  left - rotate   middle - zoom   right - translate     |    grid: 20 mm");
@@ -213,42 +212,16 @@ public class MainFrame extends JFrame {
         builder.zRotate(angle);
     }
 
-    public JCheckBoxMenuItem getLayerPause() {
-        return layerPause;
-    }
-
-    public void setLayerPause(final boolean state) {
+    void setLayerPause(final boolean state) {
         layerPause.setState(state);
     }
 
-    public RepRapBuild getBuilder() {
-        return builder;
-    }
-
-    public void producing(final boolean state) {
+    private void producing(final boolean state) {
         cancelMenuItem.setEnabled(state);
         produceProduceB.setEnabled(!state);
     }
 
-    public int getLayer() {
-        if (producer == null) {
-            return 0;
-        }
-        return producer.getLayer();
-    }
-
-    public int getLayers() {
-        if (producer == null) {
-            return 0;
-        }
-        return producer.getLayers();
-    }
-
-    public void mouseToWorld() {
-        getBuilder().mouseToWorld();
-    }
-
-    public File onOpen(final String description, final String[] extensions, final String defaultRoot) {
+    File onOpen(final String description, final String[] extensions, final String defaultRoot) {
         File result;
         final FileFilter filter = new FileNameExtensionFilter(description, extensions);
 
@@ -262,17 +235,17 @@ public class MainFrame extends JFrame {
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             result = chooser.getSelectedFile();
             if (extensions[0].toUpperCase().contentEquals("RFO")) {
-                getBuilder().addRFOFile(result);
+                builder.addRFOFile(result);
             }
             if (extensions[0].toUpperCase().contentEquals("STL")) {
-                getBuilder().anotherSTLFile(result, true);
+                builder.anotherSTLFile(result, true);
             }
             return result;
         }
         return null;
     }
 
-    public String saveRFO(final String fileRoot) throws IOException {
+    String saveRFO(final String fileRoot) throws IOException {
         String result = null;
         File f;
         FileFilter filter;
@@ -291,13 +264,13 @@ public class MainFrame extends JFrame {
             f = rfoChooser.getSelectedFile();
             result = "file:" + f.getAbsolutePath();
 
-            getBuilder().saveRFOFile(result);
+            builder.saveRFOFile(result);
             return f.getName();
         }
         return "";
     }
 
-    public String saveSCAD(final String fileRoot) {
+    String saveSCAD(final String fileRoot) {
         final File defaultFile = new File(fileRoot + ".scad");
         final JFileChooser scadChooser = new JFileChooser();
         scadChooser.setSelectedFile(defaultFile);
@@ -307,7 +280,7 @@ public class MainFrame extends JFrame {
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             final File selectedFile = scadChooser.getSelectedFile();
             try {
-                getBuilder().saveSCADFile(selectedFile);
+                builder.saveSCADFile(selectedFile);
             } catch (final IOException e) {
                 throw new RuntimeException(e);
             }
@@ -316,7 +289,7 @@ public class MainFrame extends JFrame {
         return "";
     }
 
-    public boolean slice(final String gcodeFileName) {
+    boolean slice(final String gcodeFileName, final ProductionProgressListener listener) {
         if (printer.setGCodeFileForOutput(gcodeFileName) == null) {
             return false;
         }
@@ -327,8 +300,8 @@ public class MainFrame extends JFrame {
                 Thread.currentThread().setName("Producer");
                 try {
                     builder.mouseToWorld();
-                    producer = new Producer(printer, builder.getSTLs(), slicerFrame, slicerFrame.displayPaths());
-                    printer.setLayerPause(getLayerPause());
+                    producer = new Producer(printer, builder.getSTLs(), listener, slicerFrame.displayPaths());
+                    printer.setLayerPause(layerPause);
                     producer.produce();
                     producer = null;
                     producing(false);

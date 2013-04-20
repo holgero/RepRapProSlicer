@@ -6,9 +6,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.GregorianCalendar;
 
 import javax.swing.AbstractButton;
 import javax.swing.ImageIcon;
@@ -27,14 +24,10 @@ import org.reprap.configuration.Preferences;
  */
 public class PrintTabFrame extends JInternalFrame {
     private static final long serialVersionUID = 1L;
-    private long startTime = -1;
-    private int oldLayer = -1;
     private File loadedFile;
     private boolean gcodeLoaded = false;
     private boolean slicing = false;
-    private boolean SLoadOK = false;
     private JLabel currentLayerOutOfN;
-    private JProgressBar progressBar;
     private JLabel expectedBuildTime;
     private JLabel expectedFinishTime;
     private AbstractButton sliceButton;
@@ -45,6 +38,7 @@ public class PrintTabFrame extends JInternalFrame {
     private JButton saveRFO;
     private JButton saveSCAD;
     private AbstractButton displayPathsCheck;
+    private JProgressBar progressBar;
     private final MainFrame mainFrame;
 
     /**
@@ -53,57 +47,6 @@ public class PrintTabFrame extends JInternalFrame {
     PrintTabFrame(final MainFrame mainFrame) {
         this.mainFrame = mainFrame;
         initComponents();
-        enableSLoad();
-    }
-
-    /**
-     * Keep the user amused. If fractionDone is negative, the function queries
-     * the layer statistics. If it is 0 or positive, the function uses it.
-     * 
-     * @param fractionDone
-     */
-    void updateProgress() {
-        final int layers = mainFrame.getLayers();
-        final int layer = mainFrame.getLayer();
-        if (layer >= 0) {
-            currentLayerOutOfN.setText("" + layer + "/" + layers);
-        }
-
-        if (layer == oldLayer) {
-            return;
-        }
-
-        final double fractionDone;
-        if (layer < oldLayer) {
-            fractionDone = (double) (layers - layer) / (double) layers;
-        } else {
-            fractionDone = (double) layer / (double) layers;
-        }
-        oldLayer = layer;
-
-        progressBar.setMinimum(0);
-        progressBar.setMaximum(100);
-        progressBar.setValue((int) (100 * fractionDone));
-
-        final GregorianCalendar cal = new GregorianCalendar();
-        final SimpleDateFormat dateFormat = new SimpleDateFormat("EE HH:mm:ss Z");
-        final Date d = cal.getTime();
-        final long e = d.getTime();
-        if (startTime < 0) {
-            startTime = e;
-            return;
-        }
-
-        final long f = (long) ((e - startTime) / fractionDone);
-        final int h = (int) (f / 60000) / 60;
-        final int m = (int) (f / 60000) % 60;
-
-        if (m > 9) {
-            expectedBuildTime.setText("" + h + ":" + m);
-        } else {
-            expectedBuildTime.setText("" + h + ":0" + m);
-        }
-        expectedFinishTime.setText(dateFormat.format(new Date(startTime + f)));
     }
 
     private void initComponents() {
@@ -130,36 +73,8 @@ public class PrintTabFrame extends JInternalFrame {
         helpButton.setText("   Help   ");
 
         sliceButton = new JButton();
-        final JButton exitButton = new JButton();
-        loadSTL = new JButton();
-        loadRFO = new JButton();
-        saveRFO = new JButton();
-        saveSCAD = new JButton();
-
-        sliceButton.setText("Slice");
-        exitButton.setText("Exit");
-        loadSTL.setText("Load STL/CSG");
-        loadRFO.setText("Load RFO");
-        saveRFO.setText("Save RFO");
-        saveSCAD.setText("Save SCAD");
-
-        layerPauseCheck = new JCheckBox();
-        layerPause(false);
-        final JButton getWebPage = new JButton();
-        final JLabel expectedBuildTimeLabel = new JLabel();
-        final JLabel filesLabel = new JLabel();
-        expectedBuildTime = new JLabel();
-        final JLabel expectedFinishTimeLabel = new JLabel();
-        final JLabel changeMachineLabel = new JLabel();
-        expectedFinishTime = new JLabel();
-        final JLabel progressLabel = new JLabel();
-        currentLayerOutOfN = new JLabel();
-        progressBar = new JProgressBar();
-        fileNameBox = new JLabel();
-        displayPathsCheck = new JCheckBox();
-
         sliceButton.setBackground(new java.awt.Color(51, 204, 0));
-        sliceButton.setFont(sliceButton.getFont());
+        sliceButton.setText("Slice");
         sliceButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(final java.awt.event.ActionEvent evt) {
@@ -171,60 +86,10 @@ public class PrintTabFrame extends JInternalFrame {
             }
         });
 
-        exitButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(final java.awt.event.ActionEvent evt) {
-                try {
-                    exitButtonActionPerformed();
-                } catch (final IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-
-        layerPauseCheck.setText("Pause between layers");
-        layerPauseCheck.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(final java.awt.event.ActionEvent evt) {
-                layerPause(layerPauseCheck.isSelected());
-            }
-        });
-
-        getWebPage.setIcon(new ImageIcon(ClassLoader.getSystemResource("reprappro_logo-0.5.png")));
-        getWebPage.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(final java.awt.event.ActionEvent evt) {
-                getWebPageActionPerformed();
-            }
-        });
-
-        expectedBuildTimeLabel.setFont(new java.awt.Font("Tahoma", 0, 12));
-        expectedBuildTimeLabel.setText("Expected slice time:");
-
-        filesLabel.setFont(new java.awt.Font("Tahoma", 0, 12));
-        filesLabel.setText("File(s): ");
-
-        expectedBuildTime.setFont(new java.awt.Font("Tahoma", 0, 12));
-        expectedBuildTime.setText("00:00");
-
-        expectedFinishTimeLabel.setFont(new java.awt.Font("Tahoma", 0, 12));
-        expectedFinishTimeLabel.setText("Expected to finish at:");
-
-        expectedFinishTime.setFont(new java.awt.Font("Tahoma", 0, 12));
-        expectedFinishTime.setText("    -");
-
-        changeMachineLabel.setFont(new java.awt.Font("Tahoma", 0, 15));
-        changeMachineLabel.setText("RepRap in use: " + Preferences.getActiveMachineName());
-
-        progressLabel.setFont(new java.awt.Font("Tahoma", 0, 12));
-        progressLabel.setText("Top down layer progress:");
-
-        currentLayerOutOfN.setFont(new java.awt.Font("Tahoma", 0, 12));
-        currentLayerOutOfN.setHorizontalAlignment(SwingConstants.RIGHT);
-        currentLayerOutOfN.setText("000/000");
-
-        loadSTL.setActionCommand("loadSTL");
+        loadSTL = new JButton();
         loadSTL.setBackground(new java.awt.Color(0, 204, 255));
+        loadSTL.setText("Load STL/CSG");
+        loadSTL.setActionCommand("loadSTL");
         loadSTL.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(final java.awt.event.ActionEvent evt) {
@@ -232,8 +97,10 @@ public class PrintTabFrame extends JInternalFrame {
             }
         });
 
-        loadRFO.setActionCommand("loadRFO");
+        loadRFO = new JButton();
         loadRFO.setBackground(new java.awt.Color(0, 204, 255));
+        loadRFO.setText("Load RFO");
+        loadRFO.setActionCommand("loadRFO");
         loadRFO.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(final java.awt.event.ActionEvent evt) {
@@ -241,11 +108,10 @@ public class PrintTabFrame extends JInternalFrame {
             }
         });
 
-        fileNameBox.setFont(new java.awt.Font("Tahoma", 0, 12));
-        fileNameBox.setText(" - ");
-
+        saveRFO = new JButton();
+        saveRFO.setBackground(new java.awt.Color(0, 204, 255));
+        saveRFO.setText("Save RFO");
         saveRFO.setActionCommand("saveRFO");
-        saveRFO.setBackground(new java.awt.Color(153, 153, 153));
         saveRFO.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(final java.awt.event.ActionEvent evt) {
@@ -257,14 +123,89 @@ public class PrintTabFrame extends JInternalFrame {
             }
         });
 
+        saveSCAD = new JButton();
+        saveSCAD.setBackground(new java.awt.Color(0, 204, 255));
+        saveSCAD.setText("Save SCAD");
         saveSCAD.setActionCommand("saveSCAD");
-        saveSCAD.setBackground(new java.awt.Color(153, 153, 153));
         saveSCAD.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(final java.awt.event.ActionEvent evt) {
                 saveSCAD();
             }
         });
+
+        final JButton exitButton = new JButton();
+        exitButton.setText("Exit");
+        exitButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                try {
+                    exitButtonActionPerformed();
+                } catch (final IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+
+        layerPause(false);
+        layerPauseCheck = new JCheckBox();
+        layerPauseCheck.setText("Pause between layers");
+        layerPauseCheck.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                layerPause(layerPauseCheck.isSelected());
+            }
+        });
+
+        final JButton getWebPage = new JButton();
+        getWebPage.setIcon(new ImageIcon(ClassLoader.getSystemResource("reprappro_logo-0.5.png")));
+        getWebPage.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                getWebPageActionPerformed();
+            }
+        });
+
+        final JLabel expectedBuildTimeLabel = new JLabel();
+        expectedBuildTimeLabel.setFont(new java.awt.Font("Tahoma", 0, 12));
+        expectedBuildTimeLabel.setText("Expected slice time:");
+
+        expectedBuildTime = new JLabel();
+        expectedBuildTime.setFont(new java.awt.Font("Tahoma", 0, 12));
+        expectedBuildTime.setText("00:00");
+
+        final JLabel filesLabel = new JLabel();
+        filesLabel.setFont(new java.awt.Font("Tahoma", 0, 12));
+        filesLabel.setText("File(s): ");
+
+        final JLabel expectedFinishTimeLabel = new JLabel();
+        expectedFinishTimeLabel.setFont(new java.awt.Font("Tahoma", 0, 12));
+        expectedFinishTimeLabel.setText("Expected to finish at:");
+
+        expectedFinishTime = new JLabel();
+        expectedFinishTime.setFont(new java.awt.Font("Tahoma", 0, 12));
+        expectedFinishTime.setText("    -");
+
+        final JLabel changeMachineLabel = new JLabel();
+        changeMachineLabel.setFont(new java.awt.Font("Tahoma", 0, 15));
+        changeMachineLabel.setText("RepRap in use: " + Preferences.getActiveMachineName());
+
+        final JLabel progressLabel = new JLabel();
+        progressLabel.setFont(new java.awt.Font("Tahoma", 0, 12));
+        progressLabel.setText("Top down layer progress:");
+
+        currentLayerOutOfN = new JLabel();
+        currentLayerOutOfN.setFont(new java.awt.Font("Tahoma", 0, 12));
+        currentLayerOutOfN.setHorizontalAlignment(SwingConstants.RIGHT);
+        currentLayerOutOfN.setText("000/000");
+
+        progressBar = new JProgressBar();
+
+        fileNameBox = new JLabel();
+        fileNameBox.setFont(new java.awt.Font("Tahoma", 0, 12));
+        fileNameBox.setText(" - ");
+
+        displayPathsCheck = new JCheckBox();
         displayPathsCheck.setText("Show paths when slicing");
         createLayout(variablesButton, helpButton, exitButton, getWebPage, expectedBuildTimeLabel, filesLabel,
                 expectedFinishTimeLabel, changeMachineLabel, progressLabel);
@@ -448,7 +389,8 @@ public class PrintTabFrame extends JInternalFrame {
             JOptionPane.showMessageDialog(null, "The loaded file is not an STL or an RFO file.");
             return;
         }
-        if (mainFrame.slice(stripExtension(loadedFile))) {
+        if (mainFrame.slice(stripExtension(loadedFile), new ProgressBarUpdater(currentLayerOutOfN, progressBar,
+                expectedBuildTime, expectedBuildTime, System.currentTimeMillis()))) {
             printLive();
         }
     }
@@ -500,9 +442,6 @@ public class PrintTabFrame extends JInternalFrame {
     }
 
     private void loadSTL() {
-        if (!SLoadOK) {
-            return;
-        }
         if (gcodeLoaded) {
             final int response = JOptionPane
                     .showOptionDialog(null, "This will abandon the G Code file you loaded.", "Load STL",
@@ -520,9 +459,6 @@ public class PrintTabFrame extends JInternalFrame {
     }
 
     private void loadRFO() {
-        if (!SLoadOK) {
-            return;
-        }
         if (gcodeLoaded) {
             final int response = JOptionPane
                     .showOptionDialog(null, "This will abandon the previous GCode file you loaded.", "Load RFO",
@@ -555,9 +491,6 @@ public class PrintTabFrame extends JInternalFrame {
     }
 
     private void saveRFO() throws IOException {
-        if (!SLoadOK) {
-            return;
-        }
         if (loadedFile == null) {
             JOptionPane.showMessageDialog(null, "There's nothing to save...");
             return;
@@ -569,9 +502,6 @@ public class PrintTabFrame extends JInternalFrame {
     }
 
     private void saveSCAD() {
-        if (!SLoadOK) {
-            return;
-        }
         if (loadedFile == null) {
             JOptionPane.showMessageDialog(null, "There's nothing to save...");
             return;
@@ -580,14 +510,6 @@ public class PrintTabFrame extends JInternalFrame {
             JOptionPane.showMessageDialog(null, "The loaded file is not an STL or an RFO file.");
         }
         mainFrame.saveSCAD(stripExtension(loadedFile));
-    }
-
-    private void enableSLoad() {
-        SLoadOK = true;
-        loadSTL.setBackground(new java.awt.Color(0, 204, 255));
-        loadRFO.setBackground(new java.awt.Color(0, 204, 255));
-        saveRFO.setBackground(new java.awt.Color(0, 204, 255));
-        saveSCAD.setBackground(new java.awt.Color(0, 204, 255));
     }
 
     public boolean displayPaths() {

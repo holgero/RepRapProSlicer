@@ -36,10 +36,6 @@ public class SlicerFrame extends JFrame {
         pack();
     }
 
-    public void updateProgress() {
-        printTabFrame1.updateProgress();
-    }
-
     public boolean displayPaths() {
         return printTabFrame1.displayPaths();
     }
