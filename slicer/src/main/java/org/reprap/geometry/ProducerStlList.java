@@ -22,6 +22,8 @@ package org.reprap.geometry;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
 
 import javax.media.j3d.BranchGroup;
@@ -57,330 +59,137 @@ import org.reprap.geometry.polyhedra.CSG3D;
 import org.reprap.geometry.polyhedra.LineSegment;
 import org.reprap.geometry.polyhedra.STLObject;
 
-public class ProducerStlList {
+class ProducerStlList {
     private static final Logger LOGGER = LogManager.getLogger(Producer.class);
 
-    /**
-     * Ring buffer cache to hold previously computed slices for doing infill and
-     * support material calculations.
-     * 
-     * @author ensab
-     */
-    private final class SliceCache {
-        private final BooleanGridList[][] sliceRing;
-        private final BooleanGridList[][] supportRing;
-        private final int[] layerNumber;
-        private int ringPointer;
-        private final int noLayer = Integer.MIN_VALUE;
-        private int ringSize = 10;
-
-        private SliceCache(final LayerRules lr) {
-            if (lr == null) {
-                LOGGER.error("SliceCache(): null LayerRules!");
-            }
-            ringSize = lr.sliceCacheSize();
-            sliceRing = new BooleanGridList[ringSize][stls.size()];
-            supportRing = new BooleanGridList[ringSize][stls.size()];
-            layerNumber = new int[ringSize];
-            ringPointer = 0;
-            for (int layer = 0; layer < ringSize; layer++) {
-                for (int stl = 0; stl < stls.size(); stl++) {
-                    sliceRing[layer][stl] = null;
-                    supportRing[layer][stl] = null;
-                    layerNumber[layer] = noLayer;
-                }
-            }
-        }
-
-        private int getTheRingLocationForWrite(final int layer) {
-            for (int i = 0; i < ringSize; i++) {
-                if (layerNumber[i] == layer) {
-                    return i;
-                }
-            }
-
-            final int rp = ringPointer;
-            for (int s = 0; s < stls.size(); s++) {
-                sliceRing[rp][s] = null;
-                supportRing[rp][s] = null;
-            }
-            ringPointer++;
-            if (ringPointer >= ringSize) {
-                ringPointer = 0;
-            }
-            return rp;
-        }
-
-        private void setSlice(final BooleanGridList slice, final int layer, final int stl) {
-            final int rp = getTheRingLocationForWrite(layer);
-            layerNumber[rp] = layer;
-            sliceRing[rp][stl] = slice;
-        }
-
-        private void setSupport(final BooleanGridList support, final int layer, final int stl) {
-            final int rp = getTheRingLocationForWrite(layer);
-            layerNumber[rp] = layer;
-            supportRing[rp][stl] = support;
-        }
-
-        private int getTheRingLocationForRead(final int layer) {
-            int rp = ringPointer;
-            for (int i = 0; i < ringSize; i++) {
-                rp--;
-                if (rp < 0) {
-                    rp = ringSize - 1;
-                }
-                if (layerNumber[rp] == layer) {
-                    return rp;
-                }
-            }
-            return -1;
-        }
-
-        private BooleanGridList getSlice(final int layer, final int stl) {
-            final int rp = getTheRingLocationForRead(layer);
-            if (rp >= 0) {
-                return sliceRing[rp][stl];
-            }
-            return null;
-        }
-
-        private BooleanGridList getSupport(final int layer, final int stl) {
-            final int rp = getTheRingLocationForRead(layer);
-            if (rp >= 0) {
-                return supportRing[rp][stl];
-            }
-            return null;
-        }
+    static BoundingBox calculateBoundingBox(final AllSTLsToBuild allStls, final Point2D purge) {
+        final List<STLObject> stlList = new ArrayList<>();
+        copyAllStls(allStls, stlList);
+        setUpShield(purge, stlList, Preferences.getInstance());
+        return getBoundingBox(stlList);
     }
 
-    /**
-     * The list of things to be built
-     */
-    private final List<STLObject> stls;
-
-    /**
-     * The building layer rules
-     */
-    private LayerRules layerRules = null;
-
+    private final Preferences preferences = Preferences.getInstance();
+    private final List<STLObject> stlsToBuild = new ArrayList<STLObject>();
     /**
      * A plan box round each item
      */
-    private List<Rectangle> rectangles;
+    private final List<Rectangle> rectangles = new ArrayList<Rectangle>();
+    private final LayerRules layerRules;
+    private final SliceCache cache;
 
-    /**
-     * The XYZ box around everything
-     */
-    private BoundingBox XYZbox;
-
-    /**
-     * Is the list editable?
-     */
-    private boolean frozen;
-
-    /**
-     * Recently computed slices
-     */
-    private SliceCache cache;
-
-    private final Preferences preferences = Preferences.getInstance();
-
-    public ProducerStlList() {
-        stls = new ArrayList<STLObject>();
-        rectangles = null;
-        XYZbox = null;
-        frozen = false;
-        cache = null;
-        layerRules = null;
-    }
-
-    /**
-     * Get the i-th STLObject
-     */
-    public STLObject get(final int i) {
-        return stls.get(i);
-    }
-
-    /**
-     * Find an object in the list
-     */
-    private int findSTL(final STLObject st) {
-        if (size() <= 0) {
-            LOGGER.error("AllSTLsToBuild.findSTL(): no objects to pick from!");
-            return -1;
-        }
-        int index = -1;
-        for (int i = 0; i < size(); i++) {
-            if (get(i) == st) {
-                index = i;
-                break;
-            }
-        }
-        if (index < 0) {
-            LOGGER.error("AllSTLsToBuild.findSTL(): dud object submitted.");
-            return -1;
-        }
-        return index;
-    }
-
-    /**
-     * Find an object in the list and return the next one.
-     */
-    public STLObject getNextOne(final STLObject st) {
-        int index = findSTL(st);
-        index++;
-        if (index >= size()) {
-            index = 0;
-        }
-        return get(index);
+    ProducerStlList(final AllSTLsToBuild allStls, final Point2D purge, final LayerRules layerRules) {
+        copyAllStls(allStls, stlsToBuild);
+        setUpShield(purge, stlsToBuild, preferences);
+        setRectangles(stlsToBuild, rectangles);
+        this.layerRules = layerRules;
+        cache = new SliceCache(layerRules, stlsToBuild);
     }
 
     /**
      * Return the number of objects.
      */
-    public int size() {
-        return stls.size();
+    int size() {
+        return stlsToBuild.size();
     }
 
     /**
-     * Scan everything loaded and set up the bounding boxes
+     * calculate the bounding box of all STLs in a list.
      */
-    public void setBoxes() {
-        rectangles = new ArrayList<Rectangle>();
-        for (int i = 0; i < stls.size(); i++) {
-            rectangles.add(null);
-        }
+    private static BoundingBox getBoundingBox(final List<STLObject> stls) {
+        BoundingBox result = null;
 
         for (int i = 0; i < stls.size(); i++) {
             final STLObject stl = stls.get(i);
             final Transform3D trans = stl.getTransform();
-
             final BranchGroup bg = stl.getSTL();
-
-            final java.util.Enumeration<?> enumKids = bg.getAllChildren();
-
-            while (enumKids.hasMoreElements()) {
-                final Object ob = enumKids.nextElement();
-
-                if (ob instanceof BranchGroup) {
-                    final BranchGroup bg1 = (BranchGroup) ob;
-                    final Attributes att = (Attributes) (bg1.getUserData());
-                    if (XYZbox == null) {
-                        XYZbox = BBox(att.getPart(), trans);
-                        if (rectangles.get(i) == null) {
-                            rectangles.set(i, new Rectangle(XYZbox.getXYbox()));
-                        } else {
-                            rectangles.set(i, Rectangle.union(rectangles.get(i), XYZbox.getXYbox()));
-                        }
-                    } else {
-                        final BoundingBox s = BBox(att.getPart(), trans);
-                        if (s != null) {
-                            XYZbox.expand(s);
-                            if (rectangles.get(i) == null) {
-                                rectangles.set(i, new Rectangle(s.getXYbox()));
-                            } else {
-                                rectangles.set(i, Rectangle.union(rectangles.get(i), s.getXYbox()));
-                            }
-                        }
+            for (final Object object : Collections.list((Enumeration<?>) bg.getAllChildren())) {
+                if (result == null) {
+                    result = createBoundingBox(object, trans);
+                } else {
+                    final BoundingBox s = createBoundingBox(object, trans);
+                    if (s != null) {
+                        result.expand(s);
                     }
                 }
             }
-            if (rectangles.get(i) == null) {
-                LOGGER.error("AllSTLsToBuild:ObjectPlanRectangle(): object " + i + " is empty");
-            }
         }
+        return result;
     }
 
     /**
-     * Freeze the list - no more editing. Also compute the XY box round
-     * everything. Also compute the individual plan boxes round each STLObject.
+     * Scan everything loaded and set up the rectangles
      */
-    private void freeze() {
-        if (frozen) {
-            return;
-        }
-        if (layerRules == null) {
-            LOGGER.error("AllSTLsToBuild.freeze(): layerRules not set!");
-        }
-        frozen = true;
-
-        if (cache == null) {
-            cache = new SliceCache(layerRules);
-        }
-        setBoxes();
-    }
-
-    /**
-     * Run through a Shape3D and find its enclosing XYZ box
-     */
-    private BoundingBox BBoxPoints(final Shape3D shape, final Transform3D trans) {
-        BoundingBox b = null;
-        final GeometryArray g = (GeometryArray) shape.getGeometry();
-        final Point3d p1 = new Point3d();
-        final Point3d q1 = new Point3d();
-
-        if (g != null) {
-            for (int i = 0; i < g.getVertexCount(); i++) {
-                g.getCoordinate(i, p1);
-                trans.transform(p1, q1);
-                if (b == null) {
-                    b = new BoundingBox(q1);
-                } else {
-                    b.expand(q1);
+    private static void setRectangles(final List<STLObject> stls, final List<Rectangle> rectangles) {
+        for (int i = 0; i < stls.size(); i++) {
+            final STLObject stl = stls.get(i);
+            final Transform3D trans = stl.getTransform();
+            final BranchGroup bg = stl.getSTL();
+            for (final Object object : Collections.list((Enumeration<?>) bg.getAllChildren())) {
+                final BoundingBox s = createBoundingBox(object, trans);
+                if (s != null) {
+                    if (i < rectangles.size()) {
+                        rectangles.set(i, Rectangle.union(rectangles.get(i), s.getXYbox()));
+                    } else {
+                        rectangles.add(new Rectangle(s.getXYbox()));
+                    }
                 }
             }
+            if (rectangles.size() <= i) {
+                LOGGER.error("object " + i + " is empty");
+                rectangles.add(null);
+            }
         }
-        return b;
     }
 
     /**
      * Unpack the Shape3D(s) from value and find their enclosing XYZ box
      */
-    private BoundingBox BBox(final Object value, final Transform3D trans) {
-        BoundingBox b = null;
+    private static BoundingBox createBoundingBox(final Object value, final Transform3D trans) {
+        BoundingBox result = null;
 
         if (value instanceof SceneGraphObject) {
-            final SceneGraphObject sg = (SceneGraphObject) value;
-            if (sg instanceof Group) {
-                final Group g = (Group) sg;
-                final java.util.Enumeration<?> enumKids = g.getAllChildren();
-                while (enumKids.hasMoreElements()) {
-                    if (b == null) {
-                        b = BBox(enumKids.nextElement(), trans);
+            final SceneGraphObject sceneGraph = (SceneGraphObject) value;
+            if (sceneGraph instanceof Group) {
+                final Group group = (Group) sceneGraph;
+                for (final Object object : Collections.list((Enumeration<?>) group.getAllChildren())) {
+                    if (result == null) {
+                        result = createBoundingBox(object, trans);
                     } else {
-                        final BoundingBox s = BBox(enumKids.nextElement(), trans);
+                        final BoundingBox s = createBoundingBox(object, trans);
                         if (s != null) {
-                            b.expand(s);
+                            result.expand(s);
                         }
                     }
                 }
-            } else if (sg instanceof Shape3D) {
-                b = BBoxPoints((Shape3D) sg, trans);
+            } else if (sceneGraph instanceof Shape3D) {
+                result = createShapeBoundingBox((Shape3D) sceneGraph, trans);
             }
         }
 
-        return b;
+        return result;
     }
 
     /**
-     * Return the XY box round everything
+     * Run through a Shape3D and find its enclosing XYZ box
      */
-    public Rectangle ObjectPlanRectangle() {
-        if (XYZbox == null) {
-            LOGGER.error("AllSTLsToBuild.ObjectPlanRectangle(): null XYZbox!");
+    private static BoundingBox createShapeBoundingBox(final Shape3D shape, final Transform3D trans) {
+        BoundingBox result = null;
+        final GeometryArray geometry = (GeometryArray) shape.getGeometry();
+        if (geometry != null) {
+            final Point3d vertex = new Point3d();
+            final Point3d transformed = new Point3d();
+            for (int i = 0; i < geometry.getVertexCount(); i++) {
+                geometry.getCoordinate(i, vertex);
+                trans.transform(vertex, transformed);
+                if (result == null) {
+                    result = new BoundingBox(transformed);
+                } else {
+                    result.expand(transformed);
+                }
+            }
         }
-        return XYZbox.getXYbox();
-    }
-
-    /**
-     * Find the top of the highest object.
-     */
-    public double maxZ() {
-        if (XYZbox == null) {
-            LOGGER.error("AllSTLsToBuild.maxZ(): null XYZbox!");
-        }
-        return XYZbox.getZint().high();
+        return result;
     }
 
     /**
@@ -408,14 +217,14 @@ public class ProducerStlList {
             }
         }
         if (swap < 0) {
-            LOGGER.error("AllSTLsToBuild.startLong(): no edges found!");
+            LOGGER.error("startLong(): no edges found!");
             return;
         }
         temp = edges.get(0);
         edges.set(0, edges.get(swap));
         edges.set(swap, temp);
         if (Math.sqrt(d) < preferences.gridResultion()) {
-            LOGGER.debug("AllSTLsToBuild.startLong(): edge length: " + Math.sqrt(d) + " is the longest.");
+            LOGGER.debug("startLong(): edge length: " + Math.sqrt(d) + " is the longest.");
         }
     }
 
@@ -423,10 +232,6 @@ public class ProducerStlList {
      * Stitch together the some of the edges to form a polygon.
      */
     private Polygon getNextPolygon(final ArrayList<LineSegment> edges) {
-        if (!frozen) {
-            LOGGER.error("AllSTLsToBuild:getNextPolygon() called for an unfrozen list!");
-            freeze();
-        }
         if (edges.size() <= 0) {
             return null;
         }
@@ -481,7 +286,7 @@ public class ProducerStlList {
             }
         }
 
-        LOGGER.debug("AllSTLsToBuild.getNextPolygon(): exhausted edge list!");
+        LOGGER.debug("getNextPolygon(): exhausted edge list!");
 
         return result;
     }
@@ -490,10 +295,6 @@ public class ProducerStlList {
      * Get all the polygons represented by the edges.
      */
     private PolygonList simpleCull(final ArrayList<LineSegment> edges) {
-        if (!frozen) {
-            LOGGER.error("AllSTLsToBuild:simpleCull() called for an unfrozen list!");
-            freeze();
-        }
         final PolygonList result = new PolygonList();
         Polygon next = getNextPolygon(edges);
         while (next != null) {
@@ -509,17 +310,13 @@ public class ProducerStlList {
     /**
      * Compute the support hatching polygons for this set of patterns
      */
-    public PolygonList computeSupport(final int stl) {
-        // No more additions or movements, please
-        freeze();
-
+    PolygonList computeSupport(final int stl) {
         // We start by computing the union of everything in this layer because
         // that is everywhere that support _isn't_ needed.
         // We give the union the attribute of the first thing found, though
         // clearly it will - in general - represent many different substances.
         // But it's only going to be subtracted from other shapes, so what it's made
         // from doesn't matter.
-
         final int layer = layerRules.getModelLayer();
 
         final BooleanGridList thisLayer = slice(stl, layer);
@@ -531,7 +328,7 @@ public class ProducerStlList {
             unionOfThisLayer = thisLayer.get(0);
             a = unionOfThisLayer.attribute();
         } else {
-            a = stls.get(stl).attributes(0);
+            a = stlsToBuild.get(stl).attributes(0);
             unionOfThisLayer = BooleanGrid.nullBooleanGrid();
         }
         for (int i = 1; i < thisLayer.size(); i++) {
@@ -540,7 +337,6 @@ public class ProducerStlList {
 
         // Expand the union of this layer a bit, so that any support is a little clear of 
         // this layer's boundaries.
-
         BooleanGridList allThis = new BooleanGridList();
         allThis.add(unionOfThisLayer);
         allThis = offset(allThis, layerRules, true, 2); // 2mm gap is a bit of a hack...
@@ -552,13 +348,11 @@ public class ProducerStlList {
 
         // Get the layer above and union it with this layer.  That's what needs
         // support on the next layer down.
-
         final BooleanGridList previousSupport = cache.getSupport(layer + 1, stl);
 
         cache.setSupport(BooleanGridList.unions(previousSupport, thisLayer), layer, stl);
 
         // Now we subtract the union of this layer from all the stuff requiring support in the layer above.
-
         BooleanGridList support = new BooleanGridList();
 
         if (previousSupport != null) {
@@ -576,25 +370,17 @@ public class ProducerStlList {
 
         // Now force the attributes of the support pattern to be the support extruders
         // for all the materials in it.  If the material isn't active in this layer, remove it from the list
-
         for (int i = 0; i < support.size(); i++) {
             final BooleanGrid grid = support.get(i);
             final GCodeExtruder e = layerRules.getPrinter().getExtruder(grid.attribute().getMaterial()).getSupportExtruder();
             if (e == null) {
-                LOGGER.error("AllSTLsToBuild.computeSupport(): null support extruder specified!");
+                LOGGER.error("computeSupport(): null support extruder specified!");
                 continue;
             }
             grid.forceAttribute(new Attributes(e.getMaterial(), null, e.getAppearance()));
         }
 
         return hatch(support, layerRules, false, null, true);
-    }
-
-    /**
-     * Set the building layer rules as soon as we know them
-     */
-    public void setLayerRules(final LayerRules lr) {
-        layerRules = lr;
     }
 
     /**
@@ -625,62 +411,52 @@ public class ProducerStlList {
     /**
      * Compute the infill hatching polygons for this set of patterns
      */
-    public PolygonList computeInfill(final int stl) {
-        final InFillPatterns infill = new InFillPatterns();
-        freeze();
-        return infill.computeHatchedPolygons(stl, layerRules, this);
+    PolygonList computeInfill(final int stl) {
+        return new InFillPatterns().computeHatchedPolygons(stl, layerRules, this);
     }
 
-    public void setUpShield() {
-        if (frozen) {
-            LOGGER.error("AllSTLsToBuild.setUpShield() called when frozen!");
-        }
-
+    private static void setUpShield(final Point2D purge, final List<STLObject> stls, final Preferences preferences) {
         if (!preferences.loadBool("Shield")) {
             return;
         }
+        final BoundingBox boxWithoutShield = getBoundingBox(stls);
+        final double modelZMax = boxWithoutShield.getZint().high();
+        final String material = preferences.getAllMaterials()[0];
+        final STLObject shield = new STLObject();
+        final Attributes att = shield.addSTL(new File(Preferences.getActiveMachineDir(), "shield.stl"), null, null, null);
 
-        setBoxes();
-        final double modelZMax = maxZ();
+        final Vector3d shieldSize = shield.extent();
 
-        final STLObject s = new STLObject();
-        final Attributes att = s.addSTL(new File(Preferences.getActiveMachineDir(), "shield.stl"), null, null, null);
-
-        final Vector3d shieldSize = s.extent();
-
-        final Point2D shieldPos = layerRules.getPurgeMiddle();
-        double xOff = shieldPos.x();
-        double yOff = shieldPos.y();
+        double xOff = purge.x();
+        double yOff = purge.y();
 
         final double zScale = modelZMax / shieldSize.z;
         final double zOff = 0.5 * (modelZMax - shieldSize.z);
 
-        s.rScale(zScale, true);
+        shield.rScale(zScale, true);
 
-        if (!layerRules.purgeXOriented()) {
-            s.translate(new Vector3d(-0.5 * shieldSize.x, -0.5 * shieldSize.y, 0));
-            final Transform3D t3d1 = s.getTransform();
+        if (!LayerRules.purgeXOriented(purge)) {
+            shield.translate(new Vector3d(-0.5 * shieldSize.x, -0.5 * shieldSize.y, 0));
+            final Transform3D t3d1 = shield.getTransform();
             final Transform3D t3d2 = new Transform3D();
             t3d2.rotZ(0.5 * Math.PI);
             t3d1.mul(t3d2);
-            s.setTransform(t3d1);
-            s.translate(new Vector3d(yOff, -xOff, zOff));
+            shield.setTransform(t3d1);
+            shield.translate(new Vector3d(yOff, -xOff, zOff));
         } else {
             xOff -= 0.5 * shieldSize.x;
             yOff -= shieldSize.y;
-            s.translate(new Vector3d(xOff, yOff, zOff));
+            shield.translate(new Vector3d(xOff, yOff, zOff));
         }
 
-        att.setMaterial(preferences.getAllMaterials()[0]);
-        stls.add(0, s);
+        att.setMaterial(material);
+        stls.add(0, shield);
     }
 
     /**
      * Compute the outline polygons for this set of patterns.
      */
-    public PolygonList computeOutlines(final int stl, final PolygonList hatchedPolygons) {
-        freeze();
-
+    PolygonList computeOutlines(final int stl, final PolygonList hatchedPolygons) {
         // The shapes to outline.
         BooleanGridList slice = slice(stl, layerRules.getModelLayer());
 
@@ -715,11 +491,6 @@ public class ProducerStlList {
      * STLObject stl at height z.
      */
     BooleanGridList slice(final int stlIndex, final int layer) {
-        if (!frozen) {
-            LOGGER.error("AllSTLsToBuild.slice() called when unfrozen!");
-            freeze();
-        }
-
         if (layer < 0) {
             return new BooleanGridList();
         }
@@ -753,15 +524,14 @@ public class ProducerStlList {
 
         for (extruderID = 0; extruderID < extruders.length; extruderID++) {
             if (extruders[extruderID].getID() != extruderID) {
-                LOGGER.error("AllSTLsToBuild.slice(): extruder " + extruderID + "out of sequence: "
-                        + extruders[extruderID].getID());
+                LOGGER.error("slice(): extruder " + extruderID + "out of sequence: " + extruders[extruderID].getID());
             }
             edges[extruderID] = new ArrayList<LineSegment>();
             csgs[extruderID] = new ArrayList<CSG3D>();
         }
 
         // Generate all the edges for STLObject i at this z
-        final STLObject stlObject = stls.get(stlIndex);
+        final STLObject stlObject = stlsToBuild.get(stlIndex);
         final Transform3D trans = stlObject.getTransform();
         final Matrix4d m4 = new Matrix4d();
         trans.get(m4);
@@ -774,8 +544,7 @@ public class ProducerStlList {
             if (csg != null) {
                 csgs[layerRules.getPrinter().getExtruder(attr.getMaterial()).getID()].add(csg.transform(m4));
             } else {
-                recursiveSetEdges(attr.getPart(), trans, z, attr, edges[layerRules.getPrinter().getExtruder(attr.getMaterial())
-                        .getID()]);
+                recursiveSetEdges(bg1, trans, z, attr, edges[layerRules.getPrinter().getExtruder(attr.getMaterial()).getID()]);
             }
         }
 
@@ -945,7 +714,7 @@ public class ProducerStlList {
      * 
      * Only hatches and outlines whose physical extruders match are altered.
      */
-    public static void middleStarts(final PolygonList list, final PolygonList hatching, final LayerRules lc,
+    private static void middleStarts(final PolygonList list, final PolygonList hatching, final LayerRules lc,
             final BooleanGridList slice) {
         for (int i = 0; i < list.size(); i++) {
             Polygon outline = list.polygon(i);
@@ -1090,7 +859,7 @@ public class ProducerStlList {
      * that is used as the hatch direction. Otherwise the hatch is provided by
      * layerConditions.
      */
-    public static PolygonList hatch(final BooleanGridList list, final LayerRules layerConditions, final boolean surface,
+    static PolygonList hatch(final BooleanGridList list, final LayerRules layerConditions, final boolean surface,
             final HalfPlane overrideDirection, final boolean support) {
         final PolygonList result = new PolygonList();
         final boolean foundation = layerConditions.getLayingSupport();
@@ -1130,7 +899,7 @@ public class ProducerStlList {
     /**
      * Offset all the shapes in the list for this layer
      */
-    public static BooleanGridList offset(final BooleanGridList gridList, final LayerRules lc, final boolean outline,
+    static BooleanGridList offset(final BooleanGridList gridList, final LayerRules lc, final boolean outline,
             final double multiplier) {
         final boolean foundation = lc.getLayingSupport();
         if (outline && foundation) {
@@ -1199,9 +968,9 @@ public class ProducerStlList {
         return result;
     }
 
-    public void addAll(final AllSTLsToBuild astls) {
-        for (int i = 0; i < astls.size(); i++) {
-            stls.add(astls.get(i));
+    private static void copyAllStls(final AllSTLsToBuild allStls, final List<STLObject> stlList) {
+        for (int i = 0; i < allStls.size(); i++) {
+            stlList.add(allStls.get(i));
         }
     }
 }

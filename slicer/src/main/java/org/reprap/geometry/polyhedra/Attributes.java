@@ -1,7 +1,6 @@
 package org.reprap.geometry.polyhedra;
 
 import javax.media.j3d.Appearance;
-import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Material;
 import javax.vecmath.Color3f;
 
@@ -27,11 +26,6 @@ public class Attributes {
      * The STLObject of which this is a part
      */
     private final STLObject parent;
-
-    /**
-     * Where this is in the STLObject of which it is a part
-     */
-    private BranchGroup part;
 
     /**
      * The appearance (colour) in the loading and simulation windows
@@ -75,13 +69,6 @@ public class Attributes {
     }
 
     /**
-     * @return the bit of the STLObject that this is
-     */
-    public BranchGroup getPart() {
-        return part;
-    }
-
-    /**
      * @return what colour am I?
      */
     public Appearance getAppearance() {
@@ -104,12 +91,5 @@ public class Attributes {
         final Color3f col = Preferences.getInstance().loadMaterialColor(material);
         a.setMaterial(new Material(col, Constants.BLACK, col, Constants.BLACK, 101f));
         return a;
-    }
-
-    /**
-     * To be used in conjunction with changing the parent
-     */
-    public void setPart(final BranchGroup b) {
-        part = b;
     }
 }

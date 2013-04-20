@@ -227,7 +227,6 @@ public class STLObject {
             }
         }
 
-        att.setPart(bgResult);
         bgResult.setUserData(att);
         if (lastPicked != null) {
             // Add this object to lastPicked

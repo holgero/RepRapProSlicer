@@ -16,6 +16,7 @@ import org.reprap.geometry.polygons.HalfPlane;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
+import org.reprap.geometry.polyhedra.BoundingBox;
 
 /**
  * This stores a set of facts about the layer currently being made, and the
@@ -61,13 +62,11 @@ public class LayerRules {
     /**
      * Are we reversing the layer orders?
      */
-    private boolean reversing;
-
+    private boolean reversing = false;
     /**
      * Flag to remember if we have reversed the layer order in the output file
      */
-    private boolean alreadyReversed;
-
+    private boolean alreadyReversed = false;
     /**
      * The machine
      */
@@ -116,8 +115,7 @@ public class LayerRules {
     /**
      * Putting down foundations?
      */
-    private boolean layingSupport;
-
+    private boolean layingSupport = true;
     /**
      * The smallest step height of all the extruders
      */
@@ -136,12 +134,11 @@ public class LayerRules {
     /**
      * This is true until it is first read, when it becomes false
      */
-    private boolean notStartedYet;
-
+    private boolean notStartedYet = true;
     /**
      * The XY rectangle that bounds the build
      */
-    private Rectangle bBox;
+    private final Rectangle bBox;
 
     /**
      * The maximum number of surface layers requested by any extruder
@@ -164,32 +161,19 @@ public class LayerRules {
     private int maxAddress = -1;
 
     private final Preferences preferences = Preferences.getInstance();
+    private final boolean purgeXOriented;
 
-    LayerRules(final GCodePrinter p, final ProducerStlList stlList) {
-        printer = p;
-        reversing = false;
-        alreadyReversed = false;
-        notStartedYet = true;
-
-        stlList.setBoxes();
-        stlList.setLayerRules(this);
-
-        purge = new Point2D(preferences.loadDouble("DumpX(mm)"), preferences.loadDouble("DumpY(mm)"));
-
-        Rectangle gp = stlList.ObjectPlanRectangle();
-        bBox = new Rectangle(new Point2D(gp.x().low() - 6, gp.y().low() - 6), new Point2D(gp.x().high() + 6, gp.y().high() + 6));
-
-        modelZMax = stlList.maxZ();
+    LayerRules(final GCodePrinter printer, final BoundingBox box, final Point2D purge) {
+        this.printer = printer;
+        this.purge = purge;
+        purgeXOriented = purgeXOriented(purge);
 
         // Run through the extruders checking their layer heights and the
         // Actual physical extruder used.
-
-        layingSupport = true;
         final GCodeExtruder[] es = printer.getExtruders();
         zStep = es[0].getExtrusionHeight();
         thickestZStep = zStep;
         int fineLayers = es[0].getLowerFineLayers();
-
         if (es.length > 1) {
             for (int i = 1; i < es.length; i++) {
                 if (es[i].getLowerFineLayers() > fineLayers) {
@@ -219,6 +203,7 @@ public class LayerRules {
             }
         }
 
+        modelZMax = box.getZint().high();
         final int foundationLayers = Math.max(0, printer.getFoundationLayers());
         modelLayerMax = (int) (modelZMax / zStep) + 1;
         machineLayerMax = modelLayerMax + foundationLayers;
@@ -230,7 +215,6 @@ public class LayerRules {
         addToStep = 0;
 
         // Set up the records of the layers for later reversing (top->down ==>> bottom->up)
-
         firstPoint = new Point2D[machineLayerMax + 1];
         firstExtruder = new int[machineLayerMax + 1];
         lastPoint = new Point2D[machineLayerMax + 1];
@@ -244,15 +228,17 @@ public class LayerRules {
                 extruderUsedThisLayer[i][j] = false;
             }
         }
-        stlList.setUpShield();
-        stlList.setBoxes();
-        gp = stlList.ObjectPlanRectangle();
+
+        final Rectangle gp = box.getXYbox();
         bBox = new Rectangle(new Point2D(gp.x().low() - 6, gp.y().low() - 6), new Point2D(gp.x().high() + 6, gp.y().high() + 6));
     }
 
-    public boolean purgeXOriented() {
-        final Point2D middle = Point2D.mul(0.5, printer.getBedNorthEast());
-        return Math.abs(middle.y() - purge.y()) > Math.abs(middle.x() - purge.x());
+    static boolean purgeXOriented(final Point2D purge) {
+        final Preferences preferences = Preferences.getInstance();
+        final double maximumXvalue = preferences.loadDouble("WorkingX(mm)");
+        final double maximumYvalue = preferences.loadDouble("WorkingY(mm)");
+
+        return Math.abs(maximumYvalue / 2 - purge.y()) > Math.abs(maximumXvalue / 2 - purge.x());
     }
 
     public Point2D getPurgeEnd(final boolean low, final int pass) {
@@ -262,7 +248,7 @@ public class LayerRules {
         }
         final double b = 4 * printer.getExtruder().getExtrusionSize()
                 - (printer.getExtruder().getPhysicalExtruderNumber() * 3 + pass) * printer.getExtruder().getExtrusionSize();
-        if (purgeXOriented()) {
+        if (purgeXOriented) {
             return Point2D.add(purge, new Point2D(a, b));
         } else {
             return Point2D.add(purge, new Point2D(b, a));

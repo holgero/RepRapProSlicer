@@ -3,6 +3,7 @@ package org.reprap.geometry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.Main;
+import org.reprap.configuration.Preferences;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.BooleanGrid;
@@ -13,6 +14,7 @@ import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.geometry.polyhedra.Attributes;
+import org.reprap.geometry.polyhedra.BoundingBox;
 import org.reprap.gui.SlicerFrame;
 
 public class Producer {
@@ -23,14 +25,17 @@ public class Producer {
     /**
      * The list of objects to be built
      */
-    private final ProducerStlList stlList = new ProducerStlList();
+    private final ProducerStlList stlList;
     private final SlicerFrame slicerFrame;
+    private final Preferences preferences = Preferences.getInstance();
 
     public Producer(final GCodePrinter pr, final AllSTLsToBuild allStls, final SlicerFrame slicerFrame) throws Exception {
-        stlList.addAll(allStls);
         this.slicerFrame = slicerFrame;
 
-        layerRules = new LayerRules(pr, stlList);
+        final Point2D purge = new Point2D(preferences.loadDouble("DumpX(mm)"), preferences.loadDouble("DumpY(mm)"));
+        final BoundingBox buildVolume = ProducerStlList.calculateBoundingBox(allStls, purge);
+        layerRules = new LayerRules(pr, buildVolume, purge);
+        stlList = new ProducerStlList(allStls, purge, layerRules);
         pr.setLayerRules(layerRules);
 
         if (slicerFrame.displayPaths()) {
