@@ -20,7 +20,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.SwingConstants;
 
-import org.reprap.Main;
 import org.reprap.configuration.Preferences;
 
 /**
@@ -46,14 +45,14 @@ public class PrintTabFrame extends JInternalFrame {
     private JButton saveRFO;
     private JButton saveSCAD;
     private AbstractButton displayPathsCheck;
-    private final Main main;
+    private final MainFrame mainFrame;
 
     /**
      * Creates new form PrintTabFrame
      */
-    PrintTabFrame(final Main main, final MainFrame mainFrame) {
-        this.main = main;
-        initComponents(mainFrame);
+    PrintTabFrame(final MainFrame mainFrame) {
+        this.mainFrame = mainFrame;
+        initComponents();
         enableSLoad();
     }
 
@@ -64,8 +63,8 @@ public class PrintTabFrame extends JInternalFrame {
      * @param fractionDone
      */
     void updateProgress() {
-        final int layers = main.getLayers();
-        final int layer = main.getLayer();
+        final int layers = mainFrame.getLayers();
+        final int layer = mainFrame.getLayer();
         if (layer >= 0) {
             currentLayerOutOfN.setText("" + layer + "/" + layers);
         }
@@ -107,7 +106,7 @@ public class PrintTabFrame extends JInternalFrame {
         expectedFinishTime.setText(dateFormat.format(new Date(startTime + f)));
     }
 
-    private void initComponents(final MainFrame mainFrame) {
+    private void initComponents() {
         final JButton variablesButton = new JButton();
         variablesButton.setActionCommand("preferences");
         variablesButton.setBackground(new java.awt.Color(255, 102, 255));
@@ -145,7 +144,7 @@ public class PrintTabFrame extends JInternalFrame {
         saveSCAD.setText("Save SCAD");
 
         layerPauseCheck = new JCheckBox();
-        layerPause(mainFrame, false);
+        layerPause(false);
         final JButton getWebPage = new JButton();
         final JLabel expectedBuildTimeLabel = new JLabel();
         final JLabel filesLabel = new JLabel();
@@ -187,7 +186,7 @@ public class PrintTabFrame extends JInternalFrame {
         layerPauseCheck.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(final java.awt.event.ActionEvent evt) {
-                layerPause(mainFrame, layerPauseCheck.isSelected());
+                layerPause(layerPauseCheck.isSelected());
             }
         });
 
@@ -441,23 +440,6 @@ public class PrintTabFrame extends JInternalFrame {
         if (slicing) {
             return;
         }
-
-        if (worthSaving()) {
-            final int toDo = JOptionPane.showConfirmDialog(null, "First save the build as an RFO file?");
-            switch (toDo) {
-            case JOptionPane.YES_OPTION:
-                saveRFO();
-                break;
-            case JOptionPane.NO_OPTION:
-                break;
-            case JOptionPane.CANCEL_OPTION:
-                return;
-            default:
-                saveRFO();
-            }
-        }
-
-        main.mouseToWorld();
         if (loadedFile == null) {
             JOptionPane.showMessageDialog(null, "There are no STLs/RFOs loaded to slice to file.");
             return;
@@ -466,7 +448,7 @@ public class PrintTabFrame extends JInternalFrame {
             JOptionPane.showMessageDialog(null, "The loaded file is not an STL or an RFO file.");
             return;
         }
-        if (main.slice(stripExtension(loadedFile))) {
+        if (mainFrame.slice(stripExtension(loadedFile))) {
             printLive();
         }
     }
@@ -502,7 +484,7 @@ public class PrintTabFrame extends JInternalFrame {
         System.exit(0);
     }
 
-    private void layerPause(final MainFrame mainFrame, final boolean p) {
+    private void layerPause(final boolean p) {
         mainFrame.setLayerPause(p);
     }
 
@@ -530,7 +512,7 @@ public class PrintTabFrame extends JInternalFrame {
             }
             loadedFile = null;
         }
-        final File stlFile = main.onOpen("STL triangulation file", new String[] { "stl" }, "");
+        final File stlFile = mainFrame.onOpen("STL triangulation file", new String[] { "stl" }, "");
         loadedFile = stlFile;
 
         fileNameBox.setText(loadedFile.getName());
@@ -551,7 +533,7 @@ public class PrintTabFrame extends JInternalFrame {
             loadedFile = null;
         }
 
-        final File rfoFile = main.onOpen("RFO multiple-object file", new String[] { "rfo" }, "");
+        final File rfoFile = mainFrame.onOpen("RFO multiple-object file", new String[] { "rfo" }, "");
         loadedFile = rfoFile;
 
         fileNameBox.setText(loadedFile.getName());
@@ -583,7 +565,7 @@ public class PrintTabFrame extends JInternalFrame {
         if (!isStlOrRfoFile(loadedFile)) {
             JOptionPane.showMessageDialog(null, "The loaded file is not an STL or an RFO file.");
         }
-        main.saveRFO(stripExtension(loadedFile));
+        mainFrame.saveRFO(stripExtension(loadedFile));
     }
 
     private void saveSCAD() {
@@ -597,7 +579,7 @@ public class PrintTabFrame extends JInternalFrame {
         if (!isStlOrRfoFile(loadedFile)) {
             JOptionPane.showMessageDialog(null, "The loaded file is not an STL or an RFO file.");
         }
-        main.saveSCAD(stripExtension(loadedFile));
+        mainFrame.saveSCAD(stripExtension(loadedFile));
     }
 
     private void enableSLoad() {
@@ -610,5 +592,11 @@ public class PrintTabFrame extends JInternalFrame {
 
     public boolean displayPaths() {
         return displayPathsCheck.isSelected();
+    }
+
+    void slicingFinished() {
+        slicing = false;
+        sliceButton.setText("Slice");
+        sliceButton.setBackground(new java.awt.Color(51, 204, 0));
     }
 }

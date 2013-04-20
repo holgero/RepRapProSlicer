@@ -26,18 +26,28 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.io.IOException;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 import javax.swing.WindowConstants;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
+import org.reprap.configuration.Preferences;
+import org.reprap.gcode.GCodePrinter;
+import org.reprap.geometry.Producer;
 
 public class MainFrame extends JFrame {
     private final JMenuItem produceProduceB;
@@ -45,9 +55,20 @@ public class MainFrame extends JFrame {
     private final JCheckBoxMenuItem layerPause;
     private final RepRapBuild builder;
 
+    private Producer producer = null;
+    private final JFileChooser chooser = new JFileChooser();
+    private final SlicerFrame slicerFrame;
+
+    private final GCodePrinter printer;
+
     public MainFrame() throws HeadlessException, IOException {
         super("RepRap build bed    |     mouse:  left - rotate   middle - zoom   right - translate     |    grid: 20 mm");
+        JFrame.setDefaultLookAndFeelDecorated(false);
+        JPopupMenu.setDefaultLightWeightPopupEnabled(false);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+
+        printer = new GCodePrinter();
+        Preferences.getInstance().registerPreferenceChangeListener(printer);
 
         final JMenuBar menubar = new JMenuBar();
         menubar.add(createMenu());
@@ -73,6 +94,8 @@ public class MainFrame extends JFrame {
         setVisible(true);
         setFocusable(true);
         requestFocus();
+
+        slicerFrame = new SlicerFrame(this);
     }
 
     private JMenu createMenu() {
@@ -205,5 +228,119 @@ public class MainFrame extends JFrame {
     public void producing(final boolean state) {
         cancelMenuItem.setEnabled(state);
         produceProduceB.setEnabled(!state);
+    }
+
+    public int getLayer() {
+        if (producer == null) {
+            return 0;
+        }
+        return producer.getLayer();
+    }
+
+    public int getLayers() {
+        if (producer == null) {
+            return 0;
+        }
+        return producer.getLayers();
+    }
+
+    public void mouseToWorld() {
+        getBuilder().mouseToWorld();
+    }
+
+    public File onOpen(final String description, final String[] extensions, final String defaultRoot) {
+        File result;
+        final FileFilter filter = new FileNameExtensionFilter(description, extensions);
+
+        chooser.setFileFilter(filter);
+        if (!defaultRoot.contentEquals("") && extensions.length == 1) {
+            final File defaultFile = new File(defaultRoot + "." + extensions[0]);
+            chooser.setSelectedFile(defaultFile);
+        }
+
+        final int returnVal = chooser.showOpenDialog(null);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            result = chooser.getSelectedFile();
+            if (extensions[0].toUpperCase().contentEquals("RFO")) {
+                getBuilder().addRFOFile(result);
+            }
+            if (extensions[0].toUpperCase().contentEquals("STL")) {
+                getBuilder().anotherSTLFile(result, true);
+            }
+            return result;
+        }
+        return null;
+    }
+
+    public String saveRFO(final String fileRoot) throws IOException {
+        String result = null;
+        File f;
+        FileFilter filter;
+
+        final File defaultFile = new File(fileRoot + ".rfo");
+        final JFileChooser rfoChooser = new JFileChooser();
+        rfoChooser.setSelectedFile(defaultFile);
+        filter = new FileNameExtensionFilter("RFO file to write to", "rfo");
+        rfoChooser.setFileFilter(filter);
+        rfoChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+        rfoChooser.setFileFilter(filter);
+
+        final int returnVal = rfoChooser.showSaveDialog(null);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            f = rfoChooser.getSelectedFile();
+            result = "file:" + f.getAbsolutePath();
+
+            getBuilder().saveRFOFile(result);
+            return f.getName();
+        }
+        return "";
+    }
+
+    public String saveSCAD(final String fileRoot) {
+        final File defaultFile = new File(fileRoot + ".scad");
+        final JFileChooser scadChooser = new JFileChooser();
+        scadChooser.setSelectedFile(defaultFile);
+        scadChooser.setFileFilter(new FileNameExtensionFilter("OpenSCAD files", "scad"));
+        scadChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        final int returnVal = scadChooser.showSaveDialog(null);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            final File selectedFile = scadChooser.getSelectedFile();
+            try {
+                getBuilder().saveSCADFile(selectedFile);
+            } catch (final IOException e) {
+                throw new RuntimeException(e);
+            }
+            return selectedFile.getName();
+        }
+        return "";
+    }
+
+    public boolean slice(final String gcodeFileName) {
+        if (printer.setGCodeFileForOutput(gcodeFileName) == null) {
+            return false;
+        }
+        producing(true);
+        final Thread t = new Thread() {
+            @Override
+            public void run() {
+                Thread.currentThread().setName("Producer");
+                try {
+                    builder.mouseToWorld();
+                    producer = new Producer(printer, builder.getSTLs(), slicerFrame, slicerFrame.displayPaths());
+                    printer.setLayerPause(getLayerPause());
+                    producer.produce();
+                    producer = null;
+                    producing(false);
+                    JOptionPane.showMessageDialog(MainFrame.this, "Slicing complete");
+                    slicerFrame.slicingFinished();
+                } catch (final Exception ex) {
+                    JOptionPane.showMessageDialog(MainFrame.this, "Production exception: " + ex);
+                    ex.printStackTrace();
+                }
+            }
+        };
+        t.start();
+        return true;
     }
 }

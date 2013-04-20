@@ -28,7 +28,8 @@ public class Producer {
     private final SlicerFrame slicerFrame;
     private final Preferences preferences = Preferences.getInstance();
 
-    public Producer(final GCodePrinter pr, final AllSTLsToBuild allStls, final SlicerFrame slicerFrame) throws Exception {
+    public Producer(final GCodePrinter pr, final AllSTLsToBuild allStls, final SlicerFrame slicerFrame,
+            final boolean displayPaths) throws Exception {
         this.slicerFrame = slicerFrame;
 
         final Point2D purge = new Point2D(preferences.loadDouble("DumpX(mm)"), preferences.loadDouble("DumpY(mm)"));
@@ -37,7 +38,7 @@ public class Producer {
         stlList = new ProducerStlList(allStls, purge, layerRules);
         pr.setLayerRules(layerRules);
 
-        if (slicerFrame.displayPaths()) {
+        if (displayPaths) {
             simulationPlot = new SimulationPlotter("RepRap building simulation");
         } else {
             simulationPlot = null;
