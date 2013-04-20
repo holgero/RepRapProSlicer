@@ -3,6 +3,8 @@ package org.reprap.gui;
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
+import org.reprap.Main;
+
 /**
  * @author Ed Sells, March 2008
  */
@@ -10,15 +12,15 @@ public class SlicerFrame extends JFrame {
     private JTabbedPane jTabbedPane1;
     private PrintTabFrame printTabFrame1;
 
-    public SlicerFrame(final MainFrame mainFrame) {
-        initComponents(mainFrame);
+    public SlicerFrame(final Main main, final MainFrame mainFrame) {
+        initComponents(main, mainFrame);
         setTitle("RepRapPro Slicer");
         setVisible(true);
     }
 
-    private void initComponents(final MainFrame mainFrame) {
+    private void initComponents(final Main main, final MainFrame mainFrame) {
         jTabbedPane1 = new javax.swing.JTabbedPane();
-        printTabFrame1 = new PrintTabFrame(mainFrame);
+        printTabFrame1 = new PrintTabFrame(main, mainFrame);
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         jTabbedPane1.setRequestFocusEnabled(false);
         jTabbedPane1.addTab("Slice", printTabFrame1);

@@ -28,7 +28,7 @@ import org.reprap.gui.SlicerFrame;
 public class Main {
     private static final Logger LOGGER = LogManager.getLogger(Main.class);
 
-    public static Main gui;
+    private static Main gui;
 
     private Producer producer = null;
     private final GCodePrinter printer;
@@ -47,7 +47,7 @@ public class Main {
         JPopupMenu.setDefaultLightWeightPopupEnabled(false);
 
         mainFrame = new MainFrame();
-        slicerFrame = new SlicerFrame(mainFrame);
+        slicerFrame = new SlicerFrame(this, mainFrame);
     }
 
     private GCodePrinter getPrinter() {

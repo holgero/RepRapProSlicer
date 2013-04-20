@@ -46,13 +46,13 @@ public class PrintTabFrame extends JInternalFrame {
     private JButton saveRFO;
     private JButton saveSCAD;
     private AbstractButton displayPathsCheck;
+    private final Main main;
 
     /**
      * Creates new form PrintTabFrame
-     * 
-     * @param mainFrame
      */
-    PrintTabFrame(final MainFrame mainFrame) {
+    PrintTabFrame(final Main main, final MainFrame mainFrame) {
+        this.main = main;
         initComponents(mainFrame);
         enableSLoad();
     }
@@ -64,9 +64,8 @@ public class PrintTabFrame extends JInternalFrame {
      * @param fractionDone
      */
     void updateProgress() {
-        final int layers = org.reprap.Main.gui.getLayers();
-
-        final int layer = org.reprap.Main.gui.getLayer();
+        final int layers = main.getLayers();
+        final int layer = main.getLayer();
         if (layer >= 0) {
             currentLayerOutOfN.setText("" + layer + "/" + layers);
         }
@@ -458,7 +457,7 @@ public class PrintTabFrame extends JInternalFrame {
             }
         }
 
-        org.reprap.Main.gui.mouseToWorld();
+        main.mouseToWorld();
         if (loadedFile == null) {
             JOptionPane.showMessageDialog(null, "There are no STLs/RFOs loaded to slice to file.");
             return;
@@ -467,7 +466,7 @@ public class PrintTabFrame extends JInternalFrame {
             JOptionPane.showMessageDialog(null, "The loaded file is not an STL or an RFO file.");
             return;
         }
-        if (Main.gui.slice(stripExtension(loadedFile))) {
+        if (main.slice(stripExtension(loadedFile))) {
             printLive();
         }
     }
@@ -531,7 +530,7 @@ public class PrintTabFrame extends JInternalFrame {
             }
             loadedFile = null;
         }
-        final File stlFile = Main.gui.onOpen("STL triangulation file", new String[] { "stl" }, "");
+        final File stlFile = main.onOpen("STL triangulation file", new String[] { "stl" }, "");
         loadedFile = stlFile;
 
         fileNameBox.setText(loadedFile.getName());
@@ -552,7 +551,7 @@ public class PrintTabFrame extends JInternalFrame {
             loadedFile = null;
         }
 
-        final File rfoFile = Main.gui.onOpen("RFO multiple-object file", new String[] { "rfo" }, "");
+        final File rfoFile = main.onOpen("RFO multiple-object file", new String[] { "rfo" }, "");
         loadedFile = rfoFile;
 
         fileNameBox.setText(loadedFile.getName());
@@ -584,7 +583,7 @@ public class PrintTabFrame extends JInternalFrame {
         if (!isStlOrRfoFile(loadedFile)) {
             JOptionPane.showMessageDialog(null, "The loaded file is not an STL or an RFO file.");
         }
-        Main.gui.saveRFO(stripExtension(loadedFile));
+        main.saveRFO(stripExtension(loadedFile));
     }
 
     private void saveSCAD() {
@@ -598,7 +597,7 @@ public class PrintTabFrame extends JInternalFrame {
         if (!isStlOrRfoFile(loadedFile)) {
             JOptionPane.showMessageDialog(null, "The loaded file is not an STL or an RFO file.");
         }
-        Main.gui.saveSCAD(stripExtension(loadedFile));
+        main.saveSCAD(stripExtension(loadedFile));
     }
 
     private void enableSLoad() {
