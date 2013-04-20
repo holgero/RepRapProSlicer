@@ -2,7 +2,6 @@ package org.reprap.geometry.polyhedra;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.Main;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.geometry.LayerRules;
 import org.reprap.geometry.polygons.BooleanGrid;
@@ -38,10 +37,9 @@ final class InFillPatterns {
 
         int surfaceLayers = 1;
         for (int i = 0; i < slice.size(); i++) {
-            slice.get(i).attribute();
-            final GCodeExtruder e = Main.getExtruder(slice.get(i).attribute().getMaterial());
-            if (e.getSurfaceLayers() > surfaceLayers) {
-                surfaceLayers = e.getSurfaceLayers();
+            final GCodeExtruder extruder = layerRules.getPrinter().getExtruder(slice.get(i).attribute().getMaterial());
+            if (extruder.getSurfaceLayers() > surfaceLayers) {
+                surfaceLayers = extruder.getSurfaceLayers();
             }
         }
 
@@ -192,15 +190,13 @@ final class InFillPatterns {
 
                 // Find the middle of this land
                 final Point2D cen2 = land2.findCentroid();
+                final Attributes attribute = bridge.attribute();
+                final GCodeExtruder extruder = layerConditions.getPrinter().getExtruder(attribute.getMaterial());
                 if (cen2 == null) {
                     LOGGER.debug("AllSTLsToBuild.bridges(): Second land found with no centroid.");
-
-                    bridge.attribute();
-                    bridge.attribute();
                     // No second land implies a ring of support - just infill it.
-                    hatchedPolygons.add(bridge.hatch(layerConditions.getHatchDirection(
-                            Main.getExtruder(bridge.attribute().getMaterial()), false), Main.getExtruder(bridge.attribute().getMaterial())
-                            .getExtrusionInfillWidth(), bridge.attribute()));
+                    hatchedPolygons.add(bridge.hatch(layerConditions.getHatchDirection(extruder, false),
+                            extruder.getExtrusionInfillWidth(), attribute));
 
                     // Remove this bridge (in fact, just its lands) from the other infill patterns.
                     final BooleanGridList b = new BooleanGridList();
@@ -218,7 +214,7 @@ final class InFillPatterns {
                     // Fine the edge of the bridge that is nearest parallel to that, and use that as the fill direction
                     double spMax = Double.NEGATIVE_INFINITY;
                     double sp;
-                    final PolygonList bridgeOutline = bridge.allPerimiters(bridge.attribute());
+                    final PolygonList bridgeOutline = bridge.allPerimiters(attribute);
                     for (int pol = 0; pol < bridgeOutline.size(); pol++) {
                         final Polygon polygon = bridgeOutline.polygon(pol);
 
@@ -237,10 +233,9 @@ final class InFillPatterns {
                         }
                     }
 
-                    bridge.attribute();
                     // Build the bridge
                     hatchedPolygons.add(bridge.hatch(new HalfPlane(new Point2D(0, 0), bridgeDirection),
-                            Main.getExtruder(bridge.attribute().getMaterial()).getExtrusionInfillWidth(), bridge.attribute()));
+                            extruder.getExtrusionInfillWidth(), attribute));
 
                     // Remove this bridge (in fact, just its lands) from the other infill patterns. 
                     final BooleanGridList b = new BooleanGridList();

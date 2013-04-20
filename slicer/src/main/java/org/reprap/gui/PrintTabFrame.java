@@ -267,7 +267,6 @@ public class PrintTabFrame extends JInternalFrame {
                 saveSCAD();
             }
         });
-
         displayPathsCheck.setText("Show paths when slicing");
         createLayout(variablesButton, helpButton, exitButton, getWebPage, expectedBuildTimeLabel, filesLabel,
                 expectedFinishTimeLabel, changeMachineLabel, progressLabel);

@@ -69,10 +69,10 @@ import com.sun.j3d.utils.behaviors.mouse.MouseTranslate;
 import com.sun.j3d.utils.behaviors.mouse.MouseZoom;
 
 public class MouseObject {
-    private BranchGroup top = null; // Attach this to the rest of the tree
-    private TransformGroup free = null; // Mouse transform with no restrictions
-    private TransformGroup slide = null; // Mouse transform that only does XY sliding
-    private TransformGroup trans = null; // Set to one of the two above   
+    private final BranchGroup top; // Attach this to the rest of the tree
+    private final TransformGroup free; // Mouse transform with no restrictions
+    private final TransformGroup slide; // Mouse transform that only does XY sliding
+    private TransformGroup trans; // Set to one of the two above   
     private STLObject movingThing = null; // The part of the scene being moved
 
     // Constructor takes the bounds of the world and two factors for translate
@@ -112,9 +112,6 @@ public class MouseObject {
         // Set up the thing to attach and detach
         top = new BranchGroup();
 
-        // We aren't attached to anything yet
-        movingThing = null;
-
         // ALLOW_EVERYTHING would be useful...
         top.setCapability(BranchGroup.ALLOW_DETACH);
         top.setCapability(Group.ALLOW_CHILDREN_EXTEND);
@@ -146,7 +143,6 @@ public class MouseObject {
 
         // Take the thing we were moving, set its transform to a fixed version
         // of what we are now, and tell it we aren't controlling it any more.
-
         if (movingThing != null) {
             movingThing.setTransform(t3d);
             movingThing.handle().detach();

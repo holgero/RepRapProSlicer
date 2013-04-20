@@ -49,7 +49,7 @@ public class Main {
         slicerFrame = new SlicerFrame(mainFrame);
     }
 
-    public GCodePrinter getPrinter() {
+    private GCodePrinter getPrinter() {
         return printer;
     }
 
