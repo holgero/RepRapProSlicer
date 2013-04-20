@@ -18,6 +18,7 @@ import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.Producer;
 import org.reprap.gui.MainFrame;
+import org.reprap.gui.RepRapBuild;
 import org.reprap.gui.SlicerFrame;
 
 /**
@@ -77,7 +78,9 @@ public class Main {
             public void run() {
                 Thread.currentThread().setName("Producer");
                 try {
-                    producer = new Producer(printer, mainFrame.getBuilder(), slicerFrame);
+                    final RepRapBuild builder = mainFrame.getBuilder();
+                    builder.mouseToWorld();
+                    producer = new Producer(printer, builder.getSTLs(), slicerFrame);
                     printer.setLayerPause(mainFrame.getLayerPause());
                     producer.produce();
                     producer = null;

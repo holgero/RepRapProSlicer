@@ -13,7 +13,6 @@ import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.geometry.polyhedra.Attributes;
-import org.reprap.gui.RepRapBuild;
 import org.reprap.gui.SlicerFrame;
 
 public class Producer {
@@ -24,16 +23,14 @@ public class Producer {
     /**
      * The list of objects to be built
      */
-    private final RepRapBuild bld;
-    private final AllSTLsToBuild allSTLs;
+    private final ProducerStlList stlList = new ProducerStlList();
     private final SlicerFrame slicerFrame;
 
-    public Producer(final GCodePrinter pr, final RepRapBuild builder, final SlicerFrame slicerFrame) throws Exception {
-        bld = builder;
+    public Producer(final GCodePrinter pr, final AllSTLsToBuild allStls, final SlicerFrame slicerFrame) throws Exception {
+        stlList.addAll(allStls);
         this.slicerFrame = slicerFrame;
 
-        allSTLs = bld.getSTLs();
-        layerRules = new LayerRules(pr, allSTLs, true, bld);
+        layerRules = new LayerRules(pr, stlList);
         pr.setLayerRules(layerRules);
 
         if (slicerFrame.displayPaths()) {
@@ -86,7 +83,6 @@ public class Producer {
     }
 
     private void produceAdditiveTopDown() throws Exception {
-        bld.mouseToWorld();
         final GCodePrinter reprap = layerRules.getPrinter();
         layerRules.setLayingSupport(false);
         int lastExtruder = -1;
@@ -124,11 +120,11 @@ public class Producer {
             }
 
             Point2D startNearHere = new Point2D(0, 0);
-            for (int stl = 0; stl < allSTLs.size(); stl++) {
-                PolygonList fills = allSTLs.computeInfill(stl);
-                final PolygonList borders = allSTLs.computeOutlines(stl, fills);
+            for (int stl = 0; stl < stlList.size(); stl++) {
+                PolygonList fills = stlList.computeInfill(stl);
+                final PolygonList borders = stlList.computeOutlines(stl, fills);
                 fills = fills.cullShorts();
-                final PolygonList support = allSTLs.computeSupport(stl);
+                final PolygonList support = stlList.computeSupport(stl);
 
                 for (int physicalExtruder = 0; physicalExtruder < allPolygons.length; physicalExtruder++) {
                     tempBorderPolygons[physicalExtruder] = new PolygonList();
@@ -153,7 +149,8 @@ public class Producer {
                 for (int physicalExtruder = 0; physicalExtruder < allPolygons.length; physicalExtruder++) {
                     if (tempBorderPolygons[physicalExtruder].size() > 0) {
                         tempBorderPolygons[physicalExtruder].polygon(0).getAttributes();
-                        double linkUp = Main.getExtruder(tempBorderPolygons[physicalExtruder].polygon(0).getAttributes().getMaterial())
+                        double linkUp = Main.getExtruder(
+                                tempBorderPolygons[physicalExtruder].polygon(0).getAttributes().getMaterial())
                                 .getExtrusionSize();
                         linkUp = (4 * linkUp * linkUp);
                         tempBorderPolygons[physicalExtruder].radicalReOrder(linkUp);
@@ -168,8 +165,8 @@ public class Producer {
                     }
                     if (tempFillPolygons[physicalExtruder].size() > 0) {
                         tempFillPolygons[physicalExtruder].polygon(0).getAttributes();
-                        double linkUp = Main.getExtruder(tempFillPolygons[physicalExtruder].polygon(0).getAttributes().getMaterial())
-                                .getExtrusionSize();
+                        double linkUp = Main.getExtruder(
+                                tempFillPolygons[physicalExtruder].polygon(0).getAttributes().getMaterial()).getExtrusionSize();
                         linkUp = (4 * linkUp * linkUp);
                         tempFillPolygons[physicalExtruder].radicalReOrder(linkUp);
                         tempFillPolygons[physicalExtruder] = tempFillPolygons[physicalExtruder].nearEnds(startNearHere, false,

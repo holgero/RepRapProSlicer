@@ -7,7 +7,7 @@ import org.reprap.geometry.polygons.Point2D;
  * 
  * @author Adrian
  */
-final class LineSegment {
+public final class LineSegment {
     /**
      * The ends of the line segment
      */
@@ -22,21 +22,21 @@ final class LineSegment {
     /**
      * Constructor takes two intersection points with an STL triangle edge.
      */
-    LineSegment(final Point2D p, final Point2D q, final Attributes at) {
+    public LineSegment(final Point2D p, final Point2D q, final Attributes at) {
         a = p;
         b = q;
         attribute = at;
     }
 
-    Point2D getA() {
+    public Point2D getA() {
         return a;
     }
 
-    Point2D getB() {
+    public Point2D getB() {
         return b;
     }
 
-    Attributes getAttribute() {
+    public Attributes getAttribute() {
         return attribute;
     }
 }

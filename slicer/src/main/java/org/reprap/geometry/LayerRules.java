@@ -16,8 +16,6 @@ import org.reprap.geometry.polygons.HalfPlane;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
-import org.reprap.geometry.polyhedra.AllSTLsToBuild;
-import org.reprap.gui.RepRapBuild;
 
 /**
  * This stores a set of facts about the layer currently being made, and the
@@ -167,26 +165,26 @@ public class LayerRules {
 
     private final Preferences preferences = Preferences.getInstance();
 
-    LayerRules(final GCodePrinter p, final AllSTLsToBuild astls, final boolean found, final RepRapBuild builder) {
+    LayerRules(final GCodePrinter p, final ProducerStlList stlList) {
         printer = p;
         reversing = false;
         alreadyReversed = false;
         notStartedYet = true;
 
-        astls.setBoxes();
-        astls.setLayerRules(this);
+        stlList.setBoxes();
+        stlList.setLayerRules(this);
 
         purge = new Point2D(preferences.loadDouble("DumpX(mm)"), preferences.loadDouble("DumpY(mm)"));
 
-        Rectangle gp = astls.ObjectPlanRectangle();
+        Rectangle gp = stlList.ObjectPlanRectangle();
         bBox = new Rectangle(new Point2D(gp.x().low() - 6, gp.y().low() - 6), new Point2D(gp.x().high() + 6, gp.y().high() + 6));
 
-        modelZMax = astls.maxZ();
+        modelZMax = stlList.maxZ();
 
         // Run through the extruders checking their layer heights and the
         // Actual physical extruder used.
 
-        layingSupport = found;
+        layingSupport = true;
         final GCodeExtruder[] es = printer.getExtruders();
         zStep = es[0].getExtrusionHeight();
         thickestZStep = zStep;
@@ -246,9 +244,9 @@ public class LayerRules {
                 extruderUsedThisLayer[i][j] = false;
             }
         }
-        astls.setUpShield(builder);
-        astls.setBoxes();
-        gp = astls.ObjectPlanRectangle();
+        stlList.setUpShield();
+        stlList.setBoxes();
+        gp = stlList.ObjectPlanRectangle();
         bBox = new Rectangle(new Point2D(gp.x().low() - 6, gp.y().low() - 6), new Point2D(gp.x().high() + 6, gp.y().high() + 6));
     }
 
@@ -356,7 +354,8 @@ public class LayerRules {
         firstExtruder[machineLayer] = Main.getExtruder(pl[bottom].polygon(0).getAttributes().getMaterial()).getID();
         lastPoint[machineLayer] = pl[top].polygon(pl[top].size() - 1).point(pl[top].polygon(pl[top].size() - 1).size() - 1);
         pl[top].polygon(pl[top].size() - 1).getAttributes();
-        lastExtruder[machineLayer] = Main.getExtruder(pl[top].polygon(pl[top].size() - 1).getAttributes().getMaterial()).getID();
+        lastExtruder[machineLayer] = Main.getExtruder(pl[top].polygon(pl[top].size() - 1).getAttributes().getMaterial())
+                .getID();
     }
 
     public int realTopLayer() {

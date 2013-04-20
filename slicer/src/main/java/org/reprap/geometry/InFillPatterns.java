@@ -1,36 +1,36 @@
-package org.reprap.geometry.polyhedra;
+package org.reprap.geometry;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.gcode.GCodeExtruder;
-import org.reprap.geometry.LayerRules;
 import org.reprap.geometry.polygons.BooleanGrid;
 import org.reprap.geometry.polygons.BooleanGridList;
 import org.reprap.geometry.polygons.HalfPlane;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
+import org.reprap.geometry.polyhedra.Attributes;
 
 /**
  * Class to hold infill patterns
  * 
  * @author ensab
  */
-final class InFillPatterns {
+public final class InFillPatterns {
     private static final Logger LOGGER = LogManager.getLogger(InFillPatterns.class);
     private BooleanGridList bridges;
     private BooleanGridList insides;
     private BooleanGridList surfaces;
     private final PolygonList hatchedPolygons;
 
-    InFillPatterns() {
+    public InFillPatterns() {
         bridges = new BooleanGridList();
         insides = new BooleanGridList();
         surfaces = new BooleanGridList();
         hatchedPolygons = new PolygonList();
     }
 
-    PolygonList computeHatchedPolygons(final int stl, final LayerRules layerRules, final AllSTLsToBuild slicer) {
+    PolygonList computeHatchedPolygons(final int stl, final LayerRules layerRules, final ProducerStlList slicer) {
         // Where are we and what does the current slice look like?
         final int layer = layerRules.getModelLayer();
         BooleanGridList slice = slicer.slice(stl, layer);
@@ -45,9 +45,9 @@ final class InFillPatterns {
 
         // Get the bottom out of the way - no fancy calculations needed.
         if (layer <= surfaceLayers) {
-            slice = AllSTLsToBuild.offset(slice, layerRules, false, -1);
+            slice = ProducerStlList.offset(slice, layerRules, false, -1);
             slice = slicer.neededThisLayer(slice, false, false);
-            return AllSTLsToBuild.hatch(slice, layerRules, true, null, false);
+            return ProducerStlList.hatch(slice, layerRules, true, null, false);
         }
 
         // If we are solid but the slices above or below us weren't, we need some fine infill as
@@ -88,7 +88,7 @@ final class InFillPatterns {
         // Make the bridges fatter, then crop them to the slice.
         // This will make them interpenetrate at their ends/sides to give
         // bridge landing areas.
-        bridges = AllSTLsToBuild.offset(bridges, layerRules, false, 2);
+        bridges = ProducerStlList.offset(bridges, layerRules, false, 2);
         bridges = BooleanGridList.intersections(bridges, slice);
 
         // Find the landing areas as a separate set of shapes that go with the bridges.
@@ -96,9 +96,9 @@ final class InFillPatterns {
 
         // Shapes will be outlined, and so need to be shrunk to allow for that.  But they
         // must not also shrink from each other internally.  So initially expand them so they overlap
-        bridges = AllSTLsToBuild.offset(bridges, layerRules, false, 1);
-        insides = AllSTLsToBuild.offset(insides, layerRules, false, 1);
-        surfaces = AllSTLsToBuild.offset(surfaces, layerRules, false, 1);
+        bridges = ProducerStlList.offset(bridges, layerRules, false, 1);
+        insides = ProducerStlList.offset(insides, layerRules, false, 1);
+        surfaces = ProducerStlList.offset(surfaces, layerRules, false, 1);
 
         // Now intersect them with the slice so the outer edges are back where they should be.
         bridges = BooleanGridList.intersections(bridges, slice);
@@ -108,17 +108,17 @@ final class InFillPatterns {
         // Now shrink them so the edges are in a bit to allow the outlines to
         // be put round the outside.  The inner joins should now shrink back to be
         // adjacent to each other as they should be.
-        bridges = AllSTLsToBuild.offset(bridges, layerRules, false, -1);
-        insides = AllSTLsToBuild.offset(insides, layerRules, false, -1);
-        surfaces = AllSTLsToBuild.offset(surfaces, layerRules, false, -1);
+        bridges = ProducerStlList.offset(bridges, layerRules, false, -1);
+        insides = ProducerStlList.offset(insides, layerRules, false, -1);
+        surfaces = ProducerStlList.offset(surfaces, layerRules, false, -1);
 
         // Generate the infill patterns.  We do the bridges first, as each bridge subtracts its
         // lands from the other two sets of shapes.  We want that, so they don't get infilled twice.
         bridgeHatch(lands, layerRules);
         insides = slicer.neededThisLayer(insides, true, false);
-        hatchedPolygons.add(AllSTLsToBuild.hatch(insides, layerRules, false, null, false));
+        hatchedPolygons.add(ProducerStlList.hatch(insides, layerRules, false, null, false));
         surfaces = slicer.neededThisLayer(surfaces, false, false);
-        hatchedPolygons.add(AllSTLsToBuild.hatch(surfaces, layerRules, true, null, false));
+        hatchedPolygons.add(ProducerStlList.hatch(surfaces, layerRules, true, null, false));
 
         return hatchedPolygons;
     }

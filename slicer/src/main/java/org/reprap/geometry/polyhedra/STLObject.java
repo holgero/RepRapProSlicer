@@ -193,8 +193,8 @@ public class STLObject {
      * and subsequently is subjected to all the same transforms, so they retain
      * their relative positions. This is how multi-material objects are loaded.
      */
-    private STLFileContents loadSingleSTL(final File location, final Attributes att, final Vector3d offset, final STLObject lastPicked)
-            throws FileNotFoundException, IncorrectFormatException, ParsingErrorException {
+    private STLFileContents loadSingleSTL(final File location, final Attributes att, final Vector3d offset,
+            final STLObject lastPicked) throws FileNotFoundException, IncorrectFormatException, ParsingErrorException {
         final CSGReader csgr = new CSGReader(location);
         CSG3D csgResult = null;
         if (csgr.csgAvailable()) {
@@ -544,26 +544,26 @@ public class STLObject {
     }
 
     // Get my transform
-    Transform3D getTransform() {
+    public Transform3D getTransform() {
         final Transform3D result = new Transform3D();
         trans.getTransform(result);
         return result;
     }
 
     // Get one of the the actual objects
-    BranchGroup getSTL() {
+    public BranchGroup getSTL() {
         return stl;
     }
 
-    BranchGroup getSTL(final int i) {
+    public BranchGroup getSTL(final int i) {
         return contents.get(i).getStl();
     }
 
-    int getCount() {
+    public int getCount() {
         return contents.size();
     }
 
-    CSG3D getCSG(final int i) {
+    public CSG3D getCSG(final int i) {
         return contents.get(i).getCsg();
     }
 
@@ -728,7 +728,7 @@ public class STLObject {
     /**
      * Rescale the STL object (for inch -> mm conversion) and stretching heights
      */
-    void rScale(final double s, final boolean zOnly) {
+    public void rScale(final double s, final boolean zOnly) {
         if (mouse == null && !zOnly) {
             return;
         }
