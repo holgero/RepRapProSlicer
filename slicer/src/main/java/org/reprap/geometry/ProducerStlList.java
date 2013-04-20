@@ -41,6 +41,7 @@ import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Constants;
 import org.reprap.configuration.Preferences;
 import org.reprap.gcode.GCodeExtruder;
+import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.BooleanGrid;
 import org.reprap.geometry.polygons.BooleanGridList;
 import org.reprap.geometry.polygons.CSG2D;
@@ -702,7 +703,7 @@ class ProducerStlList {
     }
 
     /**
-     * This assumes that the RrPolygonList for which it is called is all the
+     * This assumes that the PolygonList for which it is called is all the
      * closed outline polygons, and that hatching is their infill hatch. It goes
      * through the outlines and the hatch modifying both so that that outlines
      * actually start and end half-way along a hatch line (that half of the
@@ -718,7 +719,8 @@ class ProducerStlList {
             final BooleanGridList slice) {
         for (int i = 0; i < list.size(); i++) {
             Polygon outline = list.polygon(i);
-            final GCodeExtruder ex = lc.getPrinter().getExtruder(outline.getAttributes().getMaterial());
+            final GCodePrinter printer = lc.getPrinter();
+            final GCodeExtruder ex = printer.getExtruder(outline.getAttributes().getMaterial());
             if (ex.getMiddleStart()) {
                 Line l = lc.getHatchDirection(ex, false).pLine();
                 if (i % 2 != 0 ^ lc.getMachineLayer() % 4 > 1) {
@@ -727,8 +729,7 @@ class ProducerStlList {
                 outline = outline.newStart(outline.maximalVertex(l));
 
                 final Point2D start = outline.point(0);
-                final PolygonIndexedPoint pp = hatching.ppSearch(start,
-                        lc.getPrinter().getExtruder(outline.getAttributes().getMaterial()).getPhysicalExtruderNumber());
+                final PolygonIndexedPoint pp = hatching.ppSearch(start, printer, ex.getPhysicalExtruderNumber());
                 boolean failed = true;
                 if (pp != null) {
                     pp.findLongEnough(10, 30);

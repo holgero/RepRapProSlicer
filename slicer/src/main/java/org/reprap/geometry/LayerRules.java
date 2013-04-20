@@ -8,7 +8,6 @@ import java.io.PrintStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.Main;
 import org.reprap.configuration.Preferences;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
@@ -337,10 +336,10 @@ public class LayerRules {
         }
         firstPoint[machineLayer] = pl[bottom].polygon(0).point(0);
         pl[bottom].polygon(0).getAttributes();
-        firstExtruder[machineLayer] = Main.getExtruder(pl[bottom].polygon(0).getAttributes().getMaterial()).getID();
+        firstExtruder[machineLayer] = printer.getExtruder(pl[bottom].polygon(0).getAttributes().getMaterial()).getID();
         lastPoint[machineLayer] = pl[top].polygon(pl[top].size() - 1).point(pl[top].polygon(pl[top].size() - 1).size() - 1);
         pl[top].polygon(pl[top].size() - 1).getAttributes();
-        lastExtruder[machineLayer] = Main.getExtruder(pl[top].polygon(pl[top].size() - 1).getAttributes().getMaterial())
+        lastExtruder[machineLayer] = printer.getExtruder(pl[top].polygon(pl[top].size() - 1).getAttributes().getMaterial())
                 .getID();
     }
 

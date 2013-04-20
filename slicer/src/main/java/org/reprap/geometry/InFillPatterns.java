@@ -77,7 +77,7 @@ public final class InFillPatterns {
 
         // Parts with nothing under them that have no support material
         // need to have bridges constructed to do the best for in-air 
-        bridges = nothingbelow.cullNoSupport();
+        bridges = nothingbelow.cullNoSupport(layerRules.getPrinter());
 
         // The remainder with nothing under them will be supported by support material
         // and so needs no special treatment.

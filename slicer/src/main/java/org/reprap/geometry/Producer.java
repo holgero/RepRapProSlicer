@@ -2,7 +2,6 @@ package org.reprap.geometry;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.Main;
 import org.reprap.configuration.Preferences;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
@@ -88,12 +87,12 @@ public class Producer {
     }
 
     private void produceAdditiveTopDown() throws Exception {
-        final GCodePrinter reprap = layerRules.getPrinter();
+        final GCodePrinter printer = layerRules.getPrinter();
         layerRules.setLayingSupport(false);
         int lastExtruder = -1;
         int totalPhysicalExtruders = 0;
-        for (int extruder = 0; extruder < reprap.getExtruders().length; extruder++) {
-            final int thisExtruder = reprap.getExtruders()[extruder].getPhysicalExtruderNumber();
+        for (int extruder = 0; extruder < printer.getExtruders().length; extruder++) {
+            final int thisExtruder = printer.getExtruders()[extruder].getPhysicalExtruderNumber();
             if (thisExtruder > lastExtruder) {
                 totalPhysicalExtruders++;
                 if (thisExtruder - lastExtruder != 1) {
@@ -111,13 +110,13 @@ public class Producer {
 
         while (layerRules.getModelLayer() > 0) {
             if (layerRules.getModelLayer() == 0) {
-                reprap.setSeparating(true);
+                printer.setSeparating(true);
             } else {
-                reprap.setSeparating(false);
+                printer.setSeparating(false);
             }
 
             LOGGER.debug("Commencing model layer " + layerRules.getModelLayer() + " at " + layerRules.getMachineZ());
-            reprap.startingLayer(layerRules);
+            printer.startingLayer(layerRules);
             slicerFrame.updateProgress();
 
             for (int physicalExtruder = 0; physicalExtruder < allPolygons.length; physicalExtruder++) {
@@ -128,7 +127,7 @@ public class Producer {
             for (int stl = 0; stl < stlList.size(); stl++) {
                 PolygonList fills = stlList.computeInfill(stl);
                 final PolygonList borders = stlList.computeOutlines(stl, fills);
-                fills = fills.cullShorts();
+                fills = fills.cullShorts(layerRules.getPrinter());
                 final PolygonList support = stlList.computeSupport(stl);
 
                 for (int physicalExtruder = 0; physicalExtruder < allPolygons.length; physicalExtruder++) {
@@ -138,27 +137,27 @@ public class Producer {
                 for (int pol = 0; pol < borders.size(); pol++) {
                     final Polygon p = borders.polygon(pol);
                     p.getAttributes();
-                    tempBorderPolygons[Main.getExtruder(p.getAttributes().getMaterial()).getPhysicalExtruderNumber()].add(p);
+                    tempBorderPolygons[printer.getExtruder(p.getAttributes().getMaterial()).getPhysicalExtruderNumber()].add(p);
                 }
                 for (int pol = 0; pol < fills.size(); pol++) {
                     final Polygon p = fills.polygon(pol);
                     p.getAttributes();
-                    tempFillPolygons[Main.getExtruder(p.getAttributes().getMaterial()).getPhysicalExtruderNumber()].add(p);
+                    tempFillPolygons[printer.getExtruder(p.getAttributes().getMaterial()).getPhysicalExtruderNumber()].add(p);
                 }
                 for (int pol = 0; pol < support.size(); pol++) {
                     final Polygon p = support.polygon(pol);
                     p.getAttributes();
-                    tempFillPolygons[Main.getExtruder(p.getAttributes().getMaterial()).getPhysicalExtruderNumber()].add(p);
+                    tempFillPolygons[printer.getExtruder(p.getAttributes().getMaterial()).getPhysicalExtruderNumber()].add(p);
                 }
 
                 for (int physicalExtruder = 0; physicalExtruder < allPolygons.length; physicalExtruder++) {
                     if (tempBorderPolygons[physicalExtruder].size() > 0) {
                         tempBorderPolygons[physicalExtruder].polygon(0).getAttributes();
-                        double linkUp = Main.getExtruder(
+                        double linkUp = printer.getExtruder(
                                 tempBorderPolygons[physicalExtruder].polygon(0).getAttributes().getMaterial())
                                 .getExtrusionSize();
                         linkUp = (4 * linkUp * linkUp);
-                        tempBorderPolygons[physicalExtruder].radicalReOrder(linkUp);
+                        tempBorderPolygons[physicalExtruder].radicalReOrder(linkUp, printer);
                         tempBorderPolygons[physicalExtruder] = tempBorderPolygons[physicalExtruder].nearEnds(startNearHere,
                                 false, -1);
                         if (tempBorderPolygons[physicalExtruder].size() > 0) {
@@ -170,10 +169,10 @@ public class Producer {
                     }
                     if (tempFillPolygons[physicalExtruder].size() > 0) {
                         tempFillPolygons[physicalExtruder].polygon(0).getAttributes();
-                        double linkUp = Main.getExtruder(
+                        double linkUp = printer.getExtruder(
                                 tempFillPolygons[physicalExtruder].polygon(0).getAttributes().getMaterial()).getExtrusionSize();
                         linkUp = (4 * linkUp * linkUp);
-                        tempFillPolygons[physicalExtruder].radicalReOrder(linkUp);
+                        tempFillPolygons[physicalExtruder].radicalReOrder(linkUp, printer);
                         tempFillPolygons[physicalExtruder] = tempFillPolygons[physicalExtruder].nearEnds(startNearHere, false,
                                 -1);
                         if (tempFillPolygons[physicalExtruder].size() > 0) {
@@ -190,7 +189,7 @@ public class Producer {
 
             final LayerProducer lp = new LayerProducer(allPolygons, layerRules, simulationPlot);
             lp.plot();
-            reprap.finishedLayer(layerRules);
+            printer.finishedLayer(layerRules);
             layerRules.step();
         }
         layFoundationTopDown(layerRules.getBox());

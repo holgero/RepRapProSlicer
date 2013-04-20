@@ -61,7 +61,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.Main;
+import org.reprap.gcode.GCodePrinter;
 
 /**
  * RrPolygonList: A collection of 2D polygons List of polygons class. This too
@@ -345,17 +345,17 @@ public class PolygonList {
      * extruder (otherwise it would be nonsense to join them). It is the calling
      * function's responsibility to make sure this is the case.
      */
-    public void radicalReOrder(final double linkUp) {
+    public void radicalReOrder(final double linkUp, final GCodePrinter printer) {
         if (size() < 2) {
             return;
         }
 
         polygon(0).getAttributes();
         // First check that we all have the same physical extruder
-        final int physicalExtruder = Main.getExtruder(polygon(0).getAttributes().getMaterial()).getPhysicalExtruderNumber();
+        final int physicalExtruder = printer.getExtruder(polygon(0).getAttributes().getMaterial()).getPhysicalExtruderNumber();
         for (int i = 1; i < size(); i++) {
             polygon(i).getAttributes();
-            if (Main.getExtruder(polygon(i).getAttributes().getMaterial()).getPhysicalExtruderNumber() != physicalExtruder) {
+            if (printer.getExtruder(polygon(i).getAttributes().getMaterial()).getPhysicalExtruderNumber() != physicalExtruder) {
                 throw new RuntimeException(
                         "RrPolygonList.radicalReOrder(): more than one physical extruder needed by the list!");
             }
@@ -521,7 +521,7 @@ public class PolygonList {
      * 
      * Only polygons with the same physical extruder are compared.
      */
-    public PolygonIndexedPoint ppSearch(final Point2D p, final int physicalExtruder) {
+    public PolygonIndexedPoint ppSearch(final Point2D p, final GCodePrinter printer, final int physicalExtruder) {
         if (size() <= 0) {
             return null;
         }
@@ -530,7 +530,7 @@ public class PolygonList {
         for (int i = 0; i < size(); i++) {
             final Polygon pgon = polygon(i);
             pgon.getAttributes();
-            if (physicalExtruder == Main.getExtruder(pgon.getAttributes().getMaterial()).getPhysicalExtruderNumber()) {
+            if (physicalExtruder == printer.getExtruder(pgon.getAttributes().getMaterial()).getPhysicalExtruderNumber()) {
                 final int n = pgon.nearestVertex(p);
                 final double distance = Point2D.dSquared(p, pgon.point(n));
                 if (distance < minDistance) {
@@ -548,13 +548,13 @@ public class PolygonList {
     /**
      * Remove polygons shorter than 3 times the infillwidth
      */
-    public PolygonList cullShorts() {
+    public PolygonList cullShorts(final GCodePrinter printer) {
         final PolygonList r = new PolygonList();
 
         for (int i = 0; i < size(); i++) {
             final Polygon p = polygon(i);
             p.getAttributes();
-            if (p.getLength() > Main.getExtruder(p.getAttributes().getMaterial()).getExtrusionInfillWidth() * 3) {
+            if (p.getLength() > printer.getExtruder(p.getAttributes().getMaterial()).getExtrusionInfillWidth() * 3) {
                 r.add(p);
             }
         }

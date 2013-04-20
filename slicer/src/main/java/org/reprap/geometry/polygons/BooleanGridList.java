@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.reprap.Main;
+import org.reprap.gcode.GCodePrinter;
 
 /**
  * Class to hold a list of BooleanGrids with associated attributes for each
@@ -102,12 +102,12 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
         for (int i = 0; i < size() - 1; i++) {
             if (!usedUp[i]) {
                 BooleanGrid union = get(i);
-                final int iExId = Main.getExtruder(union.attribute().getMaterial()).getID();
+                final String material = union.attribute().getMaterial();
                 for (int j = i + 1; j < size(); j++) {
                     if (!usedUp[j]) {
                         final BooleanGrid jg = get(j);
                         jg.attribute();
-                        if (iExId == Main.getExtruder(jg.attribute().getMaterial()).getID()) {
+                        if (material.equals(jg.attribute().getMaterial())) {
                             union = BooleanGrid.union(union, jg);
                             usedUp[j] = true;
                         }
@@ -126,7 +126,7 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
 
     /**
      * Return a list of unions between the entries in a and b. Only pairs with
-     * the same extruder are unioned. If an element of a has no corresponding
+     * the same material are unioned. If an element of a has no corresponding
      * element in b, or vice versa, then those elements are returned unmodified
      * in the result.
      */
@@ -159,8 +159,7 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
             boolean aMatched = false;
             for (int j = 0; j < b.size(); j++) {
                 final BooleanGrid grid = b.get(j);
-                if (Main.getExtruder(abg.attribute().getMaterial()).getID() == Main.getExtruder(grid.attribute().getMaterial())
-                        .getID()) {
+                if (abg.attribute().getMaterial().equals(grid.attribute().getMaterial())) {
                     result.add(BooleanGrid.union(abg, grid));
                     bMatched[j] = true;
                     aMatched = true;
@@ -183,7 +182,7 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
 
     /**
      * Return a list of intersections between the entries in a and b. Only pairs
-     * with the same extruder are intersected. If an element of a has no
+     * with the same material are intersected. If an element of a has no
      * corresponding element in b, or vice versa, then no entry is returned for
      * them.
      */
@@ -203,8 +202,7 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
             final BooleanGrid abg = a.get(i);
             for (int j = 0; j < b.size(); j++) {
                 final BooleanGrid grid = b.get(j);
-                if (Main.getExtruder(abg.attribute().getMaterial()).getID() == Main.getExtruder(grid.attribute().getMaterial())
-                        .getID()) {
+                if (abg.attribute().getMaterial().equals(grid.attribute().getMaterial())) {
                     result.add(BooleanGrid.intersection(abg, grid));
                     break;
                 }
@@ -217,12 +215,12 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
      * Return only those elements in the list that have no support material
      * specified
      */
-    public BooleanGridList cullNoSupport() {
+    public BooleanGridList cullNoSupport(final GCodePrinter printer) {
         final BooleanGridList result = new BooleanGridList();
 
         for (int i = 0; i < size(); i++) {
             final BooleanGrid grid = get(i);
-            if (Main.getExtruder(grid.attribute().getMaterial()).getSupportExtruderNumber() < 0) {
+            if (printer.getExtruder(grid.attribute().getMaterial()).getSupportExtruderNumber() < 0) {
                 result.add(grid);
             }
         }
@@ -232,15 +230,12 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
 
     /**
      * Return a list of differences between the entries in a and b. Only pairs
-     * with the same attribute are subtracted unless ignoreAttributes is true,
+     * with the same material are subtracted unless ignoreAttributes is true,
      * whereupon everything in b is subtracted from everything in a. If
      * attributes are considered and an element of a has no corresponding
      * element in b, then an entry equal to a is returned for that.
-     * 
-     * If onlyNullSupport is true then only entries in a with support equal to
-     * null are considered. Otherwise ordinary set difference is returned.
      */
-    public static BooleanGridList differences(final BooleanGridList a, final BooleanGridList b, final boolean ignoreAttributes) {
+    public static BooleanGridList differences(final BooleanGridList a, final BooleanGridList b, final boolean ignoreMaterial) {
         final BooleanGridList result = new BooleanGridList();
 
         if (a == null) {
@@ -264,17 +259,15 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
             boolean aMatched = false;
             for (int j = 0; j < b.size(); j++) {
                 final BooleanGrid grid = b.get(j);
-                if (ignoreAttributes
-                        || (Main.getExtruder(abg.attribute().getMaterial()).getID() == Main.getExtruder(
-                                grid.attribute().getMaterial()).getID())) {
+                if (ignoreMaterial || (abg.attribute().getMaterial().equals(grid.attribute().getMaterial()))) {
                     result.add(BooleanGrid.difference(abg, grid, abg.attribute()));
-                    if (!ignoreAttributes) {
+                    if (!ignoreMaterial) {
                         aMatched = true;
                         break;
                     }
                 }
             }
-            if (!aMatched && !ignoreAttributes) {
+            if (!aMatched && !ignoreMaterial) {
                 result.add(abg);
             }
 
