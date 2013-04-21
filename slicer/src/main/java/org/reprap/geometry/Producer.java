@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.configuration.Preferences;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.gcode.Purge;
 import org.reprap.geometry.polygons.Point2D;
@@ -24,6 +25,10 @@ public class Producer {
     private final ProductionProgressListener progressListener;
     private final GCodePrinter printer;
     private final int totalPhysicalExtruders;
+    /*
+     * Skip generating the shield if only one color is printed
+     */
+    private boolean omitShield;
 
     public Producer(final GCodePrinter printer, final AllSTLsToBuild allStls, final ProductionProgressListener listener,
             final boolean displayPaths) throws Exception {
@@ -39,6 +44,9 @@ public class Producer {
             simulationPlot = new SimulationPlotter("RepRap building simulation");
         } else {
             simulationPlot = null;
+        }
+        if (Preferences.getInstance().loadBool("Shield")) {
+            omitShield = true;
         }
     }
 
@@ -69,11 +77,15 @@ public class Producer {
         }
 
         Point2D startNearHere = new Point2D(100, 100); // TODO make this the middle of the printer bed
-        for (int stl = 1; stl < stlList.size(); stl++) {
-            startNearHere = collectPolygonsForObject(stl, startNearHere, allPolygons);
+        if (omitShield) {
+            for (int stl = 1; stl < stlList.size(); stl++) {
+                startNearHere = collectPolygonsForObject(stl, startNearHere, allPolygons);
+            }
         }
-
         if (usedPhysicalExtruders(allPolygons) > 1) {
+            omitShield = false;
+        }
+        if (!omitShield) {
             // TODO for now we redo the calculation to get a similar result as in the previous implementation, this should be avoided
             for (int physicalExtruder = 0; physicalExtruder < allPolygons.length; physicalExtruder++) {
                 allPolygons[physicalExtruder] = new PolygonList();
@@ -87,7 +99,7 @@ public class Producer {
         layerRules.setFirstAndLast(allPolygons);
         final LayerProducer lp = new LayerProducer(allPolygons, layerRules, simulationPlot);
         lp.plot();
-        printer.finishedLayer(layerRules.getReversing());
+        printer.finishedLayer(false);
     }
 
     private int usedPhysicalExtruders(final PolygonList[] allPolygons) {
