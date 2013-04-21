@@ -18,7 +18,6 @@ import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 import org.reprap.configuration.PreferenceChangeListener;
 import org.reprap.configuration.Preferences;
-import org.reprap.geometry.LayerRules;
 
 public class GCodeWriter implements PreferenceChangeListener {
     private static final Logger LOGGER = LogManager.getLogger(GCodeWriter.class);
@@ -60,7 +59,7 @@ public class GCodeWriter implements PreferenceChangeListener {
     /**
      * Writes a G-code command to the file.
      */
-    private void queue(String cmd) throws IOException {
+    private void queue(String cmd) {
         cmd = cmd.trim();
         cmd = cmd.replaceAll("  ", " ");
 
@@ -74,7 +73,7 @@ public class GCodeWriter implements PreferenceChangeListener {
      * Writes a G-code command to the file. If debugging is on, the comment is
      * also added.
      */
-    public void writeCommand(final String command, final String comment) throws IOException {
+    public void writeCommand(final String command, final String comment) {
         if (debugGcode) {
             queue(command + " " + COMMENT_CHAR + " " + comment);
         } else {
@@ -85,7 +84,7 @@ public class GCodeWriter implements PreferenceChangeListener {
     /**
      * Writes a comment line to the file.
      */
-    public void writeComment(final String comment) throws IOException {
+    public void writeComment(final String comment) {
         queue(COMMENT_CHAR + comment);
     }
 
@@ -151,24 +150,24 @@ public class GCodeWriter implements PreferenceChangeListener {
         return null;
     }
 
-    public void startingLayer(final LayerRules lc) {
-        lc.setLayerFileName(layerFileNames + "reprap" + lc.getMachineLayer() + TMP_STRING + GCODE_EXTENSION);
-        if (!lc.getReversing()) {
-            final File fl = new File(lc.getLayerFileName());
-            fl.deleteOnExit();
-            try {
-                final FileOutputStream fileStream = new FileOutputStream(fl);
-                fileOutStream = new PrintStream(fileStream);
-            } catch (final FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-        }
+    private File getTemporaryFile(final int layerNumber) {
+        return new File(layerFileNames + "reprap" + layerNumber + TMP_STRING + GCODE_EXTENSION);
     }
 
-    public void finishedLayer(final LayerRules lc) {
-        if (!lc.getReversing()) {
-            fileOutStream.close();
+    File openTemporaryOutFile(final int layerNumber) {
+        final File tempFile = getTemporaryFile(layerNumber);
+        try {
+            final FileOutputStream fileStream = new FileOutputStream(tempFile);
+            fileOutStream = new PrintStream(fileStream);
+        } catch (final FileNotFoundException e) {
+            throw new RuntimeException(e);
         }
+        tempFile.deleteOnExit();
+        return tempFile;
+    }
+
+    void closeOutFile() {
+        fileOutStream.close();
     }
 
     public String getOutputFilename() {

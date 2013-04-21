@@ -1,7 +1,5 @@
 package org.reprap.gcode;
 
-import java.io.IOException;
-
 import javax.media.j3d.Appearance;
 import javax.media.j3d.Material;
 import javax.vecmath.Color3f;
@@ -189,14 +187,14 @@ public class GCodeExtruder {
     /**
      * Zero the extruded length
      */
-    public void zeroExtrudedLength(final boolean really) throws IOException {
+    public void zeroExtrudedLength(final boolean really) {
         extruderState.zero();
         if (really) {
             gcode.writeCommand("G92 E0", "zero the extruded length");
         }
     }
 
-    public void setExtrusion(final double speed, final boolean reverse) throws IOException {
+    public void setExtrusion(final double speed, final boolean reverse) {
         if (getExtruderSpeed() < 0) {
             return;
         }
@@ -228,7 +226,7 @@ public class GCodeExtruder {
     }
 
     //TODO: make these real G codes.
-    public void setCooler(final boolean coolerOn, final boolean really) throws IOException {
+    public void setCooler(final boolean coolerOn, final boolean really) {
         if (really) {
             if (coolerOn) {
                 gcode.writeCommand("M106", "cooler on");
@@ -238,7 +236,7 @@ public class GCodeExtruder {
         }
     }
 
-    public void setValve(final boolean valveOpen) throws IOException {
+    public void setValve(final boolean valveOpen) {
         if (valvePulseTime <= 0) {
             return;
         }
@@ -327,7 +325,7 @@ public class GCodeExtruder {
         }
     }
 
-    public void setMotor(final boolean motorOn) throws IOException {
+    public void setMotor(final boolean motorOn) {
         if (getExtruderSpeed() < 0) {
             return;
         }
@@ -625,26 +623,7 @@ public class GCodeExtruder {
         if (!extruderState.isExtruding() || valvePulseTime > 0) {
             return 0;
         }
-        if (printer.getLayerRules().getModelLayer() == 0) {
-            return filamentDistance(distance); // Ignore extrude ratio on the bottom layer
-        } else {
-            return filamentDistance(extrudeRatio * distance);
-        }
-    }
-
-    /**
-     * Get the extrude ratio
-     */
-    public double getExtrudeRatio() {
-        return extrudeRatio;
-    }
-
-    /**
-     * Set the extrude ratio. Only to be used if you know what you are doing.
-     * It's a good idea to set it back when you've finished...
-     */
-    public void setExtrudeRatio(final double er) {
-        extrudeRatio = er;
+        return filamentDistance(extrudeRatio * distance);
     }
 
     /**

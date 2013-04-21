@@ -42,6 +42,7 @@ import org.reprap.configuration.Constants;
 import org.reprap.configuration.Preferences;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
+import org.reprap.gcode.Purge;
 import org.reprap.geometry.polygons.BooleanGrid;
 import org.reprap.geometry.polygons.BooleanGridList;
 import org.reprap.geometry.polygons.CSG2D;
@@ -63,7 +64,7 @@ import org.reprap.geometry.polyhedra.STLObject;
 class ProducerStlList {
     private static final Logger LOGGER = LogManager.getLogger(Producer.class);
 
-    static BoundingBox calculateBoundingBox(final AllSTLsToBuild allStls, final Point2D purge) {
+    static BoundingBox calculateBoundingBox(final AllSTLsToBuild allStls, final Purge purge) {
         final List<STLObject> stlList = new ArrayList<>();
         copyAllStls(allStls, stlList);
         setUpShield(purge, stlList, Preferences.getInstance());
@@ -79,7 +80,7 @@ class ProducerStlList {
     private final LayerRules layerRules;
     private final SliceCache cache;
 
-    ProducerStlList(final AllSTLsToBuild allStls, final Point2D purge, final LayerRules layerRules) {
+    ProducerStlList(final AllSTLsToBuild allStls, final Purge purge, final LayerRules layerRules) {
         copyAllStls(allStls, stlsToBuild);
         setUpShield(purge, stlsToBuild, preferences);
         setRectangles(stlsToBuild, rectangles);
@@ -416,7 +417,7 @@ class ProducerStlList {
         return new InFillPatterns().computeHatchedPolygons(stl, layerRules, this);
     }
 
-    private static void setUpShield(final Point2D purge, final List<STLObject> stls, final Preferences preferences) {
+    private static void setUpShield(final Purge purge, final List<STLObject> stls, final Preferences preferences) {
         if (!preferences.loadBool("Shield")) {
             return;
         }
@@ -428,15 +429,16 @@ class ProducerStlList {
 
         final Vector3d shieldSize = shield.extent();
 
-        double xOff = purge.x();
-        double yOff = purge.y();
+        final Point2D purgePoint = purge.getPurgeMiddle();
+        double xOff = purgePoint.x();
+        double yOff = purgePoint.y();
 
         final double zScale = modelZMax / shieldSize.z;
         final double zOff = 0.5 * (modelZMax - shieldSize.z);
 
         shield.rScale(zScale, true);
 
-        if (!LayerRules.purgeXOriented(purge)) {
+        if (!purge.isPurgeXOriented()) {
             shield.translate(new Vector3d(-0.5 * shieldSize.x, -0.5 * shieldSize.y, 0));
             final Transform3D t3d1 = shield.getTransform();
             final Transform3D t3d2 = new Transform3D();

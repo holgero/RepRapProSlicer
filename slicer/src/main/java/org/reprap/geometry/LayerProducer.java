@@ -18,7 +18,7 @@ import org.reprap.geometry.polyhedra.Attributes;
 class LayerProducer {
     private static final Logger LOGGER = LogManager.getLogger(LayerProducer.class);
     private SimulationPlotter simulationPlot = null;
-    private LayerRules layerConditions = null;
+    private final LayerRules layerRules;
     private final PolygonList allPolygons[];
     private double currentFeedrate;
     private final Preferences preferences = Preferences.getInstance();
@@ -27,14 +27,14 @@ class LayerProducer {
      * Set up a normal layer
      */
     LayerProducer(final PolygonList ap[], final LayerRules lc, final SimulationPlotter simPlot) throws IOException {
-        layerConditions = lc;
+        layerRules = lc;
         simulationPlot = simPlot;
 
         allPolygons = ap;
 
         if (simulationPlot != null) {
             if (!simulationPlot.isInitialised()) {
-                final Rectangle rec = lc.getBox();
+                final Rectangle rec = new Rectangle(lc.getBox());
                 if (preferences.loadBool("Shield")) {
                     rec.expand(Point2D.add(rec.sw(), new Point2D(-7, -7))); // TODO: Yuk - this should be a parameter
                 }
@@ -46,14 +46,14 @@ class LayerProducer {
     }
 
     private Point2D posNow() {
-        return new Point2D(layerConditions.getPrinter().getX(), layerConditions.getPrinter().getY());
+        return new Point2D(layerRules.getPrinter().getX(), layerRules.getPrinter().getY());
     }
 
     /**
      * speed up for short lines
      */
-    private boolean shortLine(final Point2D p, final boolean stopExtruder, final boolean closeValve) throws Exception {
-        final GCodePrinter printer = layerConditions.getPrinter();
+    private boolean shortLine(final Point2D p, final boolean stopExtruder, final boolean closeValve) {
+        final GCodePrinter printer = layerRules.getPrinter();
         final double shortLen = printer.getExtruder().getShortLength();
         if (shortLen < 0) {
             return false;
@@ -67,8 +67,8 @@ class LayerProducer {
         // TODO: FIX THIS
         //		printer.setSpeed(LinePrinter.speedFix(printer.getExtruder().getXYSpeed(), 
         //				printer.getExtruder().getShortSpeed()));
-        printer.printTo(p.x(), p.y(), layerConditions.getMachineZ(), printer.getExtruder().getShortLineFeedrate(),
-                stopExtruder, closeValve);
+        printer.printTo(p.x(), p.y(), layerRules.getMachineZ(), printer.getExtruder().getShortLineFeedrate(), stopExtruder,
+                closeValve);
         return true;
     }
 
@@ -84,14 +84,13 @@ class LayerProducer {
      *            segment.
      * @throws Exception
      */
-    private void plot(final Point2D first, final Point2D second, final boolean stopExtruder, final boolean closeValve)
-            throws Exception {
+    private void plot(final Point2D first, final Point2D second, final boolean stopExtruder, final boolean closeValve) {
         if (shortLine(first, stopExtruder, closeValve)) {
             return;
         }
 
-        final GCodePrinter printer = layerConditions.getPrinter();
-        final double z = layerConditions.getMachineZ();
+        final GCodePrinter printer = layerRules.getPrinter();
+        final double z = layerRules.getMachineZ();
 
         final double speedUpLength = printer.getExtruder().getAngleSpeedUpLength();
         if (speedUpLength > 0) {
@@ -119,13 +118,13 @@ class LayerProducer {
     }
 
     private void singleMove(final Point2D p) {
-        final GCodePrinter pt = layerConditions.getPrinter();
+        final GCodePrinter pt = layerRules.getPrinter();
         pt.singleMove(p.x(), p.y(), pt.getZ(), pt.getFastXYFeedrate(), true);
     }
 
-    private void move(final Point2D first, final boolean startUp, final boolean endUp, final boolean fast) throws Exception {
-        final GCodePrinter printer = layerConditions.getPrinter();
-        final double z = layerConditions.getMachineZ();
+    private void move(final Point2D first, final boolean startUp, final boolean endUp, final boolean fast) {
+        final GCodePrinter printer = layerRules.getPrinter();
+        final double z = layerRules.getMachineZ();
         if (fast) {
             printer.moveTo(first.x(), first.y(), z, printer.getExtruder().getFastXYFeedrate(), startUp, endUp);
             return;
@@ -157,8 +156,10 @@ class LayerProducer {
 
     /**
      * Plot a polygon
+     * 
+     * @throws IOException
      */
-    private void plot(final Polygon polygon, final boolean firstOneInLayer) throws Exception {
+    private void plot(final Polygon polygon, final boolean firstOneInLayer) throws IOException {
         if (polygon.size() <= 1) {
             return;
         }
@@ -178,7 +179,7 @@ class LayerProducer {
             return;
         }
 
-        final GCodePrinter printer = layerConditions.getPrinter();
+        final GCodePrinter printer = layerRules.getPrinter();
         final double currentZ = printer.getZ();
 
         if (firstOneInLayer) {
@@ -210,7 +211,7 @@ class LayerProducer {
     }
 
     private void plotExtrusionPath(final ExtrusionPath extrusionPath, final boolean firstOneInLayer,
-            final GCodeExtruder extruder) throws IOException, Exception {
+            final GCodeExtruder extruder) throws IOException {
         final double extrudeBackLength = extruder.getExtrusionOverRun();
         final double valveBackLength = extruder.getValveOverRun();
         if (extrudeBackLength > 0 && valveBackLength > 0) {
@@ -221,7 +222,7 @@ class LayerProducer {
         extrusionPath.backStepExtrude(extrudeBackLength);
         extrusionPath.backStepValve(valveBackLength);
 
-        final GCodePrinter printer = layerConditions.getPrinter();
+        final GCodePrinter printer = layerRules.getPrinter();
         final double currentZ = printer.getZ();
         final double liftZ = extruder.getLift();
         if (liftZ > 0) {
@@ -252,29 +253,20 @@ class LayerProducer {
 
         // Print any lead-in.
         printer.printStartDelay(firstOneInLayer);
-
         boolean extrudeOff = false;
-        boolean valveOff = false;
-        boolean oldexoff;
-
-        final double oldFeedFactor = extruder.getExtrudeRatio();
-
         for (int i = 1; i < extrusionPath.size(); i++) {
             final Point2D next = extrusionPath.point((i + 1) % extrusionPath.size());
             if (acc) {
                 currentFeedrate = extrusionPath.speed(i);
             }
-            oldexoff = extrudeOff;
+            final boolean oldexoff = extrudeOff;
             extrudeOff = (i > extrusionPath.extrudeEnd() && extrudeBackLength > 0) || i == extrusionPath.size() - 1;
-            valveOff = (i > extrusionPath.valveEnd() && valveBackLength > 0) || i == extrusionPath.size() - 1;
+            final boolean valveOff = (i > extrusionPath.valveEnd() && valveBackLength > 0) || i == extrusionPath.size() - 1;
             plot(extrusionPath.point(i), next, extrudeOff, valveOff);
             if (oldexoff ^ extrudeOff) {
                 printer.printEndReverse();
             }
         }
-
-        // Restore sanity
-        extruder.setExtrudeRatio(oldFeedFactor);
         if (extrusionPath.isClosed()) {
             move(extrusionPath.point(0), false, false, true);
         }
@@ -287,7 +279,7 @@ class LayerProducer {
      * Master plot function - draw everything. Supress border and/or hatch by
      * setting borderPolygons and/or hatchedPolygons null
      */
-    void plot() throws Exception {
+    void plot() throws IOException {
         boolean firstOneInLayer = true;
 
         for (final PolygonList pl : allPolygons) {

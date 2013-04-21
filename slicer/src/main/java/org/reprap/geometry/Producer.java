@@ -2,17 +2,12 @@ package org.reprap.geometry;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.configuration.Preferences;
-import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
-import org.reprap.geometry.polygons.BooleanGrid;
-import org.reprap.geometry.polygons.CSG2D;
+import org.reprap.gcode.Purge;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
-import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
-import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.geometry.polyhedra.BoundingBox;
 
 public class Producer {
@@ -24,17 +19,16 @@ public class Producer {
      * The list of objects to be built
      */
     private final ProducerStlList stlList;
-    private final Preferences preferences = Preferences.getInstance();
     private final ProductionProgressListener progressListener;
 
-    public Producer(final GCodePrinter pr, final AllSTLsToBuild allStls, final ProductionProgressListener listener,
+    public Producer(final GCodePrinter printer, final AllSTLsToBuild allStls, final ProductionProgressListener listener,
             final boolean displayPaths) throws Exception {
         progressListener = listener;
-        final Point2D purge = new Point2D(preferences.loadDouble("DumpX(mm)"), preferences.loadDouble("DumpY(mm)"));
+        final Purge purge = new Purge(printer);
+        printer.setPurge(purge);
         final BoundingBox buildVolume = ProducerStlList.calculateBoundingBox(allStls, purge);
-        layerRules = new LayerRules(pr, buildVolume, purge);
+        layerRules = new LayerRules(printer, buildVolume);
         stlList = new ProducerStlList(allStls, purge, layerRules);
-        pr.setLayerRules(layerRules);
 
         if (displayPaths) {
             simulationPlot = new SimulationPlotter("RepRap building simulation");
@@ -52,40 +46,6 @@ public class Producer {
     }
 
     public void produce() throws Exception {
-        produceAdditiveTopDown();
-    }
-
-    private void fillFoundationRectangle(final GCodePrinter reprap, final Rectangle gp) throws Exception {
-        final PolygonList shield = new PolygonList();
-        final GCodeExtruder e = reprap.getExtruder();
-        final Attributes fa = new Attributes(e.getMaterial(), null, e.getAppearance());
-        final CSG2D rect = CSG2D.RrCSGFromBox(gp);
-        final BooleanGrid bg = new BooleanGrid(rect, gp.scale(1.1), fa);
-        final PolygonList h[] = { shield,
-                bg.hatch(layerRules.getHatchDirection(e, false), layerRules.getHatchWidth(e), bg.attribute()) };
-        final LayerProducer lp = new LayerProducer(h, layerRules, simulationPlot);
-        lp.plot();
-        reprap.getExtruder().stopExtruding();
-    }
-
-    private void layFoundationTopDown(final Rectangle gp) throws Exception {
-        if (layerRules.getFoundationLayers() <= 0) {
-            return;
-        }
-
-        layerRules.setLayingSupport(true);
-        layerRules.getPrinter().setSeparating(false);
-        final GCodePrinter reprap = layerRules.getPrinter();
-        while (layerRules.getMachineLayer() >= 0) {
-            LOGGER.debug("Commencing foundation layer at " + layerRules.getMachineZ());
-            reprap.startingLayer(layerRules);
-            fillFoundationRectangle(reprap, gp);
-            reprap.finishedLayer(layerRules);
-            layerRules.stepMachine();
-        }
-    }
-
-    private void produceAdditiveTopDown() throws Exception {
         final GCodePrinter printer = layerRules.getPrinter();
         layerRules.setLayingSupport(false);
         int lastExtruder = -1;
@@ -115,7 +75,8 @@ public class Producer {
             }
 
             LOGGER.debug("Commencing model layer " + layerRules.getModelLayer() + " at " + layerRules.getMachineZ());
-            printer.startingLayer(layerRules);
+            layerRules.setLayerFileName(printer.startingLayer(layerRules.getZStep(), layerRules.getMachineZ(),
+                    layerRules.getMachineLayer(), layerRules.getMachineLayerMax(), false));
             progressListener.productionProgress(layerRules.getMachineLayer(), layerRules.getMachineLayerMax());
 
             for (int physicalExtruder = 0; physicalExtruder < allPolygons.length; physicalExtruder++) {
@@ -183,15 +144,13 @@ public class Producer {
                     }
                 }
             }
-
             layerRules.setFirstAndLast(allPolygons);
-
             final LayerProducer lp = new LayerProducer(allPolygons, layerRules, simulationPlot);
             lp.plot();
-            printer.finishedLayer(layerRules);
+            printer.finishedLayer(layerRules.getReversing());
             layerRules.step();
         }
-        layFoundationTopDown(layerRules.getBox());
+        layerRules.layFoundationTopDown(simulationPlot);
         layerRules.reverseLayers();
     }
 }

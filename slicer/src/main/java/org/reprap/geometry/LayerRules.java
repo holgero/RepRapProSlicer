@@ -11,10 +11,13 @@ import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Preferences;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
+import org.reprap.geometry.polygons.BooleanGrid;
+import org.reprap.geometry.polygons.CSG2D;
 import org.reprap.geometry.polygons.HalfPlane;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
+import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.geometry.polyhedra.BoundingBox;
 
 /**
@@ -62,10 +65,6 @@ public class LayerRules {
      * Are we reversing the layer orders?
      */
     private boolean reversing = false;
-    /**
-     * Flag to remember if we have reversed the layer order in the output file
-     */
-    private boolean alreadyReversed = false;
     /**
      * The machine
      */
@@ -126,11 +125,6 @@ public class LayerRules {
     private double thickestZStep;
 
     /**
-     * If we take a short step, remember it and add it on next time
-     */
-    private double addToStep = 0;
-
-    /**
      * This is true until it is first read, when it becomes false
      */
     private boolean notStartedYet = true;
@@ -145,27 +139,14 @@ public class LayerRules {
     private int maxSurfaceLayers = 2;
 
     /**
-     * The point at which to purge extruders
-     */
-    private final Point2D purge;
-
-    /**
-     * The length of the purge trail in mm
-     */
-    private final double purgeL = 25;
-
-    /**
      * How many physical extruders?
      */
     private int maxAddress = -1;
 
     private final Preferences preferences = Preferences.getInstance();
-    private final boolean purgeXOriented;
 
-    LayerRules(final GCodePrinter printer, final BoundingBox box, final Point2D purge) {
+    LayerRules(final GCodePrinter printer, final BoundingBox box) {
         this.printer = printer;
-        this.purge = purge;
-        purgeXOriented = purgeXOriented(purge);
 
         // Run through the extruders checking their layer heights and the
         // Actual physical extruder used.
@@ -211,7 +192,6 @@ public class LayerRules {
         machineZ = machineZMax;
         modelLayer = modelLayerMax;
         machineLayer = machineLayerMax;
-        addToStep = 0;
 
         // Set up the records of the layers for later reversing (top->down ==>> bottom->up)
         firstPoint = new Point2D[machineLayerMax + 1];
@@ -232,34 +212,8 @@ public class LayerRules {
         bBox = new Rectangle(new Point2D(gp.x().low() - 6, gp.y().low() - 6), new Point2D(gp.x().high() + 6, gp.y().high() + 6));
     }
 
-    static boolean purgeXOriented(final Point2D purge) {
-        final Preferences preferences = Preferences.getInstance();
-        final double maximumXvalue = preferences.loadDouble("WorkingX(mm)");
-        final double maximumYvalue = preferences.loadDouble("WorkingY(mm)");
-
-        return Math.abs(maximumYvalue / 2 - purge.y()) > Math.abs(maximumXvalue / 2 - purge.x());
-    }
-
-    public Point2D getPurgeEnd(final boolean low, final int pass) {
-        double a = purgeL * 0.5;
-        if (low) {
-            a = -a;
-        }
-        final double b = 4 * printer.getExtruder().getExtrusionSize()
-                - (printer.getExtruder().getPhysicalExtruderNumber() * 3 + pass) * printer.getExtruder().getExtrusionSize();
-        if (purgeXOriented) {
-            return Point2D.add(purge, new Point2D(a, b));
-        } else {
-            return Point2D.add(purge, new Point2D(b, a));
-        }
-    }
-
-    public Point2D getPurgeMiddle() {
-        return purge;
-    }
-
-    public Rectangle getBox() {
-        return new Rectangle(bBox); // Something horrible happens to return by reference here; hence copy...
+    Rectangle getBox() {
+        return bBox;
     }
 
     public GCodePrinter getPrinter() {
@@ -357,16 +311,8 @@ public class LayerRules {
         return rtl;
     }
 
-    private String getLayerFileName(final int layer) {
-        return layerFileNames[layer];
-    }
-
-    public String getLayerFileName() {
-        return layerFileNames[machineLayer];
-    }
-
-    public void setLayerFileName(final String s) {
-        layerFileNames[machineLayer] = s;
+    public void setLayerFileName(final String name) {
+        layerFileNames[machineLayer] = name;
     }
 
     private Point2D getFirstPoint(final int layer) {
@@ -391,10 +337,6 @@ public class LayerRules {
 
     int getFoundationLayers() {
         return machineLayerMax - modelLayerMax;
-    }
-
-    public double getMachineZMAx() {
-        return machineZMax;
     }
 
     public double getZStep() {
@@ -473,13 +415,7 @@ public class LayerRules {
      */
     void stepMachine() {
         machineLayer--;
-        machineZ = zStep * machineLayer + addToStep;
-    }
-
-    public void moveZAtStartOfLayer(final boolean really) {
-        final double z = getMachineZ();
-        printer.setZ(z - (zStep + addToStep));
-        printer.singleMove(printer.getX(), printer.getY(), z, printer.getFastFeedrateZ(), really);
+        machineZ = zStep * machineLayer;
     }
 
     /**
@@ -487,8 +423,7 @@ public class LayerRules {
      */
     void step() {
         modelLayer--;
-        modelZ = modelLayer * zStep + addToStep;
-        addToStep = 0;
+        modelZ = modelLayer * zStep;
         stepMachine();
     }
 
@@ -507,44 +442,64 @@ public class LayerRules {
     }
 
     void reverseLayers() throws IOException {
-        // Stop this being called twice...
-        if (alreadyReversed) {
-            LOGGER.debug("LayerRules.reverseLayers(): called twice.");
-            return;
-        }
-        alreadyReversed = true;
         reversing = true;
 
-        final String fileName = getPrinter().getOutputFilename();
-
+        final String fileName = printer.getOutputFilename();
         final FileOutputStream fileStream = new FileOutputStream(fileName);
         try {
             final PrintStream fileOutStream = new PrintStream(fileStream);
-            getPrinter().forceOutputFile(fileOutStream);
-            getPrinter().startRun(this); // Sets current X, Y, Z to 0 and optionally plots an outline
+            printer.forceOutputFile(fileOutStream);
+            printer.startRun(bBox, machineZ, machineZMax); // Sets current X, Y, Z to 0 and optionally plots an outline
             final int top = realTopLayer();
-
             for (machineLayer = 1; machineLayer <= top; machineLayer++) {
                 machineZ = layerZ[machineLayer];
-                getPrinter().startingLayer(this);
-
-                getPrinter().singleMove(getFirstPoint(machineLayer).x(), getFirstPoint(machineLayer).y(), machineZ,
-                        getPrinter().getFastXYFeedrate(), true);
-                copyFile(fileOutStream, getLayerFileName(machineLayer));
+                printer.startingLayer(zStep, machineZ, machineLayer, machineLayerMax, true);
+                printer.singleMove(getFirstPoint(machineLayer).x(), getFirstPoint(machineLayer).y(), machineZ,
+                        printer.getFastXYFeedrate(), true);
+                copyFile(fileOutStream, layerFileNames[machineLayer]);
 
                 if (preferences.loadBool("RepRapAccelerations")) {
-                    getPrinter().singleMove(getLastPoint(machineLayer).x(), getLastPoint(machineLayer).y(), machineZ,
-                            getPrinter().getSlowXYFeedrate(), false);
+                    printer.singleMove(getLastPoint(machineLayer).x(), getLastPoint(machineLayer).y(), machineZ,
+                            printer.getSlowXYFeedrate(), false);
                 } else {
-                    getPrinter().singleMove(getLastPoint(machineLayer).x(), getLastPoint(machineLayer).y(), machineZ,
-                            getPrinter().getFastXYFeedrate(), false);
+                    printer.singleMove(getLastPoint(machineLayer).x(), getLastPoint(machineLayer).y(), machineZ,
+                            printer.getFastXYFeedrate(), false);
                 }
-                getPrinter().finishedLayer(this);
+                printer.finishedLayer(true);
             }
-            getPrinter().terminate(this);
+            printer.terminate(lastPoint[realTopLayer()], layerZ[realTopLayer()]);
         } finally {
             fileStream.close();
         }
         reversing = false;
     }
+
+    void layFoundationTopDown(final SimulationPlotter simulationPlot) throws IOException {
+        if (getFoundationLayers() <= 0) {
+            return;
+        }
+
+        setLayingSupport(true);
+        printer.setSeparating(false);
+        while (machineLayer >= 0) {
+            LOGGER.debug("Commencing foundation layer at " + getMachineZ());
+            setLayerFileName(printer.startingLayer(zStep, machineZ, machineLayer, machineLayerMax, false));
+            fillFoundationRectangle(simulationPlot);
+            printer.finishedLayer(false);
+            stepMachine();
+        }
+    }
+
+    private void fillFoundationRectangle(final SimulationPlotter simulationPlot) throws IOException {
+        final PolygonList shield = new PolygonList();
+        final GCodeExtruder e = printer.getExtruder();
+        final Attributes fa = new Attributes(e.getMaterial(), null, e.getAppearance());
+        final CSG2D rect = CSG2D.RrCSGFromBox(bBox);
+        final BooleanGrid bg = new BooleanGrid(rect, bBox.scale(1.1), fa);
+        final PolygonList h[] = { shield, bg.hatch(getHatchDirection(e, false), getHatchWidth(e), bg.attribute()) };
+        final LayerProducer lp = new LayerProducer(h, this, simulationPlot);
+        lp.plot();
+        printer.getExtruder().stopExtruding();
+    }
+
 }
