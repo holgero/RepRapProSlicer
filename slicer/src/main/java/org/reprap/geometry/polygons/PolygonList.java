@@ -574,7 +574,7 @@ public class PolygonList {
         p = polygon(i).point(polygon(i).size() / 2);
         final boolean b = (exp.value(p) <= 0);
         if (a != b) {
-            LOGGER.error("RrPolygonList:inside() - i is both inside and outside j!");
+            LOGGER.error("i is both inside and outside j!");
             // casting vote...
             p = polygon(i).point(polygon(i).size() / 3);
             return exp.value(p) <= 0;

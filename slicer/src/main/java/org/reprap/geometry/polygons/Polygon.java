@@ -417,7 +417,7 @@ public class Polygon {
                 }
             }
         }
-        LOGGER.debug("RrPolygon.findAngleStart(): polygon is all one straight line!");
+        LOGGER.debug("polygon is all one straight line!");
         return -1;
     }
 

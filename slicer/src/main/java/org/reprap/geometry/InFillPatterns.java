@@ -166,14 +166,14 @@ public final class InFillPatterns {
                 landPattern = BooleanGrid.difference(landPattern, land1);
 
                 if (cen1 == null) {
-                    LOGGER.error("AllSTLsToBuild.bridges(): First land found with no centroid!");
+                    LOGGER.error("First land found with no centroid!");
                     continue;
                 }
 
                 // Find the bridge that goes with the land
                 final int bridgesIndex = findBridge(bridges, cen1);
                 if (bridgesIndex < 0) {
-                    LOGGER.debug("AllSTLsToBuild.bridges(): Land found with no corresponding bridge.");
+                    LOGGER.debug("Land found with no corresponding bridge.");
                     continue;
                 }
                 final BooleanGrid bridgeStart = bridges.get(bridgesIndex);
@@ -193,7 +193,7 @@ public final class InFillPatterns {
                 final Attributes attribute = bridge.attribute();
                 final GCodeExtruder extruder = layerConditions.getPrinter().getExtruder(attribute.getMaterial());
                 if (cen2 == null) {
-                    LOGGER.debug("AllSTLsToBuild.bridges(): Second land found with no centroid.");
+                    LOGGER.debug("Second land found with no centroid.");
                     // No second land implies a ring of support - just infill it.
                     hatchedPolygons.add(bridge.hatch(layerConditions.getHatchDirection(extruder, false),
                             extruder.getExtrusionInfillWidth(), attribute));

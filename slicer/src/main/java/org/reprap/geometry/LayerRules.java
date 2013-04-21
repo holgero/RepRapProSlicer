@@ -300,11 +300,11 @@ public class LayerRules {
     public int realTopLayer() {
         int rtl = machineLayerMax;
         while (firstPoint[rtl] == null && rtl > 0) {
-            final String s = "LayerRules.realTopLayer(): layer " + rtl + " from " + machineLayerMax + " is empty!";
+            final String message = "layer " + rtl + " from " + machineLayerMax + " is empty!";
             if (machineLayerMax - rtl > 1) {
-                LOGGER.error(s);
+                LOGGER.error(message);
             } else {
-                LOGGER.debug(s);
+                LOGGER.debug(message);
             }
             rtl--;
         }
