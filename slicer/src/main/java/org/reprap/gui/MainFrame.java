@@ -58,7 +58,6 @@ public class MainFrame extends JFrame {
     private final JFileChooser chooser = new JFileChooser();
     private final SlicerFrame slicerFrame;
     private final GCodePrinter printer;
-    private Producer producer = null;
 
     public MainFrame() throws HeadlessException, IOException {
         super("RepRap build bed    |     mouse:  left - rotate   middle - zoom   right - translate     |    grid: 20 mm");
@@ -300,13 +299,13 @@ public class MainFrame extends JFrame {
                 Thread.currentThread().setName("Producer");
                 try {
                     builder.mouseToWorld();
-                    producer = new Producer(printer, builder.getSTLs(), listener, slicerFrame.displayPaths());
+                    final Producer producer = new Producer(printer, builder.getSTLs(), listener, slicerFrame.displayPaths());
                     printer.setLayerPause(layerPause);
                     producer.produce();
-                    producer = null;
                     producing(false);
                     JOptionPane.showMessageDialog(MainFrame.this, "Slicing complete");
                     slicerFrame.slicingFinished();
+                    producer.dispose();
                 } catch (final Exception ex) {
                     JOptionPane.showMessageDialog(MainFrame.this, "Production exception: " + ex);
                     ex.printStackTrace();

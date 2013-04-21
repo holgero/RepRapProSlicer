@@ -37,14 +37,6 @@ public class Producer {
         }
     }
 
-    public int getLayers() {
-        return layerRules.getMachineLayerMax();
-    }
-
-    public int getLayer() {
-        return layerRules.getMachineLayer();
-    }
-
     public void produce() throws Exception {
         final GCodePrinter printer = layerRules.getPrinter();
         layerRules.setLayingSupport(false);
@@ -152,5 +144,11 @@ public class Producer {
         }
         layerRules.layFoundationTopDown(simulationPlot);
         layerRules.reverseLayers();
+    }
+
+    public void dispose() {
+        if (simulationPlot != null) {
+            simulationPlot.dispose();
+        }
     }
 }

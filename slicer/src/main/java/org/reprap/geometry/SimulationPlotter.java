@@ -362,4 +362,10 @@ public class SimulationPlotter extends JComponent {
     public synchronized void setPauseSlicer(final boolean pauseSlicer) {
         this.pauseSlicer = pauseSlicer;
     }
+
+    public void dispose() {
+        if (jframe != null) {
+            jframe.dispose();
+        }
+    }
 }
