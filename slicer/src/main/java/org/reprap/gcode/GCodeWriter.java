@@ -138,8 +138,8 @@ public class GCodeWriter implements PreferenceChangeListener {
             }
             layerFileNames = System.getProperty("java.io.tmpdir") + File.separator + shortName;
             final File rfod = new File(layerFileNames);
-            if (!rfod.mkdir()) {
-                throw new RuntimeException(layerFileNames);
+            if (!rfod.isDirectory() && !rfod.mkdir()) {
+                throw new RuntimeException("Failed to create " + layerFileNames);
             }
             rfod.deleteOnExit();
             layerFileNames += File.separator;
