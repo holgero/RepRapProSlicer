@@ -454,8 +454,7 @@ public class PrintTabFrame extends JInternalFrame {
         final File stlFile = mainFrame.onOpen("STL triangulation file", new String[] { "stl" }, "");
         loadedFile = stlFile;
 
-        fileNameBox.setText(loadedFile.getName());
-        gcodeLoaded = false;
+        setFilenameBox();
     }
 
     private void loadRFO() {
@@ -472,7 +471,15 @@ public class PrintTabFrame extends JInternalFrame {
         final File rfoFile = mainFrame.onOpen("RFO multiple-object file", new String[] { "rfo" }, "");
         loadedFile = rfoFile;
 
-        fileNameBox.setText(loadedFile.getName());
+        setFilenameBox();
+    }
+
+    private void setFilenameBox() {
+        if (loadedFile != null) {
+            fileNameBox.setText(loadedFile.getName());
+        } else {
+            fileNameBox.setText("");
+        }
         gcodeLoaded = false;
     }
 
