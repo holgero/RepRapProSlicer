@@ -155,6 +155,7 @@ public class BooleanGridWalker {
                 delete(Neighbour.E.from(here));
                 here = last;
                 last = null;
+                LOGGER.debug("changed grid (m=" + m + ") and backtracked to " + here.toString() + "\n" + printNearby(here, 4));
                 continue;
             case 7:
                 addToResult(result, Neighbour.S.from(here));
@@ -172,6 +173,7 @@ public class BooleanGridWalker {
                 delete(Neighbour.SE.from(here));
                 here = last;
                 last = null;
+                LOGGER.debug("changed grid (m=" + m + ") and backtracked to " + here.toString() + "\n" + printNearby(here, 4));
                 continue;
             case 10:
                 addToResult(result, Neighbour.E.from(here));
@@ -290,8 +292,8 @@ public class BooleanGridWalker {
      */
     private String printNearby(final Integer2DPoint point, final int delta) {
         final StringBuilder output = new StringBuilder();
-        for (int y = point.y + delta; y >= point.y - delta; y--) {
-            for (int x = point.x - delta; x <= point.x + delta; x++) {
+        for (int y = Math.min(point.y + delta, size.y - 1); y >= Math.max(0, point.y - delta); y--) {
+            for (int x = Math.max(0, point.x - delta); x <= Math.min(point.x + delta, size.x - 1); x++) {
                 output.append(" ");
                 final Integer2DPoint printPoint = new Integer2DPoint(x, y);
                 if (printPoint.coincidesWith(point)) {

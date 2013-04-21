@@ -1256,7 +1256,6 @@ public class BooleanGrid {
         if (result.isEmpty()) {
             return nothingThere;
         }
-        //if(dist < 0)
         result.deWhisker();
         return result;
     }

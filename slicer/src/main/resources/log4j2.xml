@@ -6,9 +6,9 @@
 		</Console>
 	</appenders>
 	<loggers>
-		<!-- set the level to "info" to suppress debug messages from the BooleanGridWalker -->
+		<!-- set the level to "info" or higher to suppress debug messages from the BooleanGridWalker -->
 		<logger name="org.reprap.geometry.polygons.BooleanGridWalker"
-			level="debug" additivity="false">
+			level="info" additivity="false">
 			<appender-ref ref="Console" />
 		</logger>
 		<root level="debug">
