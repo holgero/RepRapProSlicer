@@ -112,6 +112,8 @@ public class SimulationPlotter extends JComponent {
 
     private boolean initialised = false;
 
+    private boolean pauseSlicer;
+
     /**
      * Constructor for nothing - add stuff later
      */
@@ -299,7 +301,11 @@ public class SimulationPlotter extends JComponent {
                 }
             }
         }
-        jframe.setTitle(title + ", layer: " + layerNumber);
+        String titleText = title + ", layer: " + layerNumber;
+        if (isPauseSlicer()) {
+            titleText += " (paused)";
+        }
+        jframe.setTitle(titleText);
     }
 
     private final class TogglePlotBox extends KeyAdapter {
@@ -309,6 +315,9 @@ public class SimulationPlotter extends JComponent {
             case 'b':
             case 'B':
                 plot_box = !plot_box;
+                break;
+            case ' ':
+                setPauseSlicer(!isPauseSlicer());
                 break;
             }
             jframe.repaint();
@@ -344,5 +353,13 @@ public class SimulationPlotter extends JComponent {
     @Override
     public void paint(final Graphics g) {
         plot((Graphics2D) g);
+    }
+
+    public synchronized boolean isPauseSlicer() {
+        return pauseSlicer;
+    }
+
+    public synchronized void setPauseSlicer(final boolean pauseSlicer) {
+        this.pauseSlicer = pauseSlicer;
     }
 }

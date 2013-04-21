@@ -40,6 +40,13 @@ class LayerProducer {
                 }
                 simulationPlot.init(rec, "" + lc.getModelLayer() + " (z=" + lc.getModelZ() + ")");
             } else {
+                try {
+                    while (simulationPlot.isPauseSlicer()) {
+                        Thread.sleep(1000);
+                    }
+                } catch (final InterruptedException e) {
+                    Thread.interrupted();
+                }
                 simulationPlot.cleanPolygons("" + lc.getModelLayer() + " (z=" + lc.getModelZ() + ")");
             }
         }
