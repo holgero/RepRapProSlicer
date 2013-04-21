@@ -56,30 +56,6 @@ public class BooleanGrid {
             new Integer2DPoint(-1, 0) //7 <
     };
 
-    // Marching squares directions.  2x2 grid bits:
-    //
-    //    0  1
-    //
-    //    2  3
-
-    private final int[] march = { -1, // 0
-            5, // 1
-            3, // 2
-            3, // 3
-            7, // 4
-            5, // 5
-            7, // 6
-            3, // 7
-            1, // 8
-            5, // 9
-            1, // 10
-            1, // 11
-            7, // 12
-            5, // 13
-            7, // 14
-            -1 // 15
-    };
-
     /**
      * Lookup table behaves like scalar product for two neighbours i and j; get
      * it by neighbourProduct[Math.abs(j - i)]
@@ -255,7 +231,7 @@ public class BooleanGrid {
     /**
      * Set pixel p to value v
      */
-    private void set(final Integer2DPoint p, final boolean v) {
+    void set(final Integer2DPoint p, final boolean v) {
         if (!inside(p)) {
             LOGGER.error("BoolenGrid.set(): attempt to set pixel beyond boundary!");
             return;
@@ -361,7 +337,7 @@ public class BooleanGrid {
     /**
      * The value at a point.
      */
-    private boolean get(final Integer2DPoint p) {
+    boolean get(final Integer2DPoint p) {
         if (!inside(p)) {
             return false;
         }
@@ -614,12 +590,12 @@ public class BooleanGrid {
                         set(start, true);
                         set(start.add(neighbour[1]), true);
                         set(start.add(neighbour[2]), true);
-                        set(start.add(neighbour[2]), true);
+                        set(start.add(neighbour[3]), true);
                     } else {
                         set(start, false);
                         set(start.add(neighbour[1]), false);
                         set(start.add(neighbour[2]), false);
-                        set(start.add(neighbour[2]), false);
+                        set(start.add(neighbour[3]), false);
                     }
                 }
             }
@@ -723,39 +699,6 @@ public class BooleanGrid {
     }
 
     /**
-     * Useful debugging function
-     */
-    private String printNearby(final Integer2DPoint p, final int b) {
-        String op = new String();
-        for (int y = p.y + b; y >= p.y - b; y--) {
-            for (int x = p.x - b; x <= p.x + b; x++) {
-                final Integer2DPoint q = new Integer2DPoint(x, y);
-                if (q.coincidesWith(p)) {
-                    if (get(p)) {
-                        op += " +";
-                    } else {
-                        op += " o";
-                    }
-                } else if (get(q)) {
-                    if (visited != null) {
-                        if (vGet(q)) {
-                            op += " v";
-                        } else {
-                            op += " 1";
-                        }
-                    } else {
-                        op += " 1";
-                    }
-                } else {
-                    op += " .";
-                }
-            }
-            op += "\n";
-        }
-        return op;
-    }
-
-    /**
      * Recursive flood-fill of solid pixels from p to return a BooleanGrid of
      * just the shape connected to that pixel.
      * 
@@ -830,7 +773,7 @@ public class BooleanGrid {
      * all the pixels that make up the outlines.
      */
     private Integer2DPolygonList iAllPerimitersRaw() {
-        return marchAll();
+        return new BooleanGridWalker(this).marchAll();
     }
 
     /**
@@ -863,240 +806,7 @@ public class BooleanGrid {
             }
         }
         b++;
-        return (double) result / (double) (b * b);
-    }
-
-    /**
-     * Run marching squares round the polygon starting with the 2x2 march
-     * pattern at start
-     */
-    private Integer2DPolygon marchRound(final Integer2DPoint start) {
-        final Integer2DPolygon result = new Integer2DPolygon(true);
-
-        Integer2DPoint here = new Integer2DPoint(start);
-        Integer2DPoint pix;
-        int m;
-        boolean step = true;
-
-        do {
-            m = marchPattern(here);
-            switch (m) {
-            case 1:
-                if (!vGet(here)) {
-                    result.add(here);
-                    vSet(here, true);
-                }
-                break;
-            case 2:
-                pix = here.add(neighbour[3]);
-                if (!vGet(pix)) {
-                    result.add(pix);
-                    vSet(pix, true);
-                }
-                break;
-            case 3:
-                if (!vGet(here)) {
-                    result.add(here);
-                    vSet(here, true);
-                }
-                pix = here.add(neighbour[3]);
-                if (!vGet(pix)) {
-                    result.add(pix);
-                    vSet(pix, true);
-                }
-                break;
-            case 4:
-                pix = here.add(neighbour[1]);
-                if (!vGet(pix)) {
-                    result.add(pix);
-                    vSet(pix, true);
-                }
-                break;
-            case 5:
-                if (!vGet(here)) {
-                    result.add(here);
-                    vSet(here, true);
-                }
-                pix = here.add(neighbour[1]);
-                if (!vGet(pix)) {
-                    result.add(pix);
-                    vSet(pix, true);
-                }
-                break;
-            case 6:
-                LOGGER.error("BooleanGrid.marchRound() - dud 2x2 grid: " + m + " at " + here.toString() + "\n"
-                        + printNearby(here, 4) + "\n\n");
-                step = false;
-                pix = here.add(neighbour[3]);
-                set(pix, false);
-                vSet(pix, false);
-                pix = here.add(neighbour[1]);
-                set(pix, false);
-                vSet(pix, false);
-                here = result.point(result.size() - 1);
-                if (!get(here)) {
-                    if (result.size() > 1) {
-                        result.remove(result.size() - 1);
-                        here = result.point(result.size() - 1);
-                        if (!get(here)) {
-                            LOGGER.error("BooleanGrid.marchRound() - backtracked to an unfilled point!" + printNearby(here, 4)
-                                    + "\n\n");
-                            result.remove(result.size() - 1);
-                            here = result.point(result.size() - 1);
-                        }
-                    } else {
-                        here = start;
-                    }
-                }
-                break;
-
-            case 7:
-                pix = here.add(neighbour[1]);
-                if (!vGet(pix)) {
-                    result.add(pix);
-                    vSet(pix, true);
-                }
-                pix = here.add(neighbour[3]);
-                if (!vGet(pix)) {
-                    result.add(pix);
-                    vSet(pix, true);
-                }
-                break;
-            case 8:
-                pix = here.add(neighbour[2]);
-                if (!vGet(pix)) {
-                    result.add(pix);
-                    vSet(pix, true);
-                }
-                break;
-            case 9:
-                LOGGER.error("BooleanGrid.marchRound() - dud 2x2 grid: " + m + " at " + here.toString() + "\n"
-                        + printNearby(here, 4) + "\n\n");
-                step = false;
-                set(here, false);
-                vSet(here, false);
-                pix = here.add(neighbour[2]);
-                set(pix, false);
-                vSet(pix, false);
-                if (result.size() == 0) {
-                    break;
-                }
-                here = result.point(result.size() - 1);
-                if (!get(here)) {
-                    if (result.size() > 1) {
-                        result.remove(result.size() - 1);
-                        here = result.point(result.size() - 1);
-                        if (!get(here)) {
-                            LOGGER.error("BooleanGrid.marchRound() - backtracked to an unfilled point!" + printNearby(here, 4)
-                                    + "\n\n");
-                            result.remove(result.size() - 1);
-                            here = result.point(result.size() - 1);
-                        }
-                    } else {
-                        here = start;
-                    }
-                }
-                break;
-            case 10:
-                pix = here.add(neighbour[3]);
-                if (!vGet(pix)) {
-                    result.add(pix);
-                    vSet(pix, true);
-                }
-                pix = here.add(neighbour[2]);
-                if (!vGet(pix)) {
-                    result.add(pix);
-                    vSet(pix, true);
-                }
-                break;
-            case 11:
-                if (!vGet(here)) {
-                    result.add(here);
-                    vSet(here, true);
-                }
-                pix = here.add(neighbour[2]);
-                if (!vGet(pix)) {
-                    result.add(pix);
-                    vSet(pix, true);
-                }
-                break;
-            case 12:
-                pix = here.add(neighbour[2]);
-                if (!vGet(pix)) {
-                    result.add(pix);
-                    vSet(pix, true);
-                }
-                pix = here.add(neighbour[1]);
-                if (!vGet(pix)) {
-                    result.add(pix);
-                    vSet(pix, true);
-                }
-                break;
-            case 13:
-                pix = here.add(neighbour[2]);
-                if (!vGet(pix)) {
-                    result.add(pix);
-                    vSet(pix, true);
-                }
-                if (!vGet(here)) {
-                    result.add(here);
-                    vSet(here, true);
-                }
-                break;
-            case 14:
-                pix = here.add(neighbour[3]);
-                if (!vGet(pix)) {
-                    result.add(pix);
-                    vSet(pix, true);
-                }
-                pix = here.add(neighbour[1]);
-                if (!vGet(pix)) {
-                    result.add(pix);
-                    vSet(pix, true);
-                }
-                break;
-
-            default:
-                LOGGER.error("BooleanGrid.marchRound() - dud 2x2 grid: " + m + " at " + here.toString() + "\n"
-                        + printNearby(here, 4) + "\n\n");
-                return result;
-            }
-            if (step) {
-                here = here.add(neighbour[march[m]]);
-            }
-            step = true;
-        } while (!here.coincidesWith(start));
-
-        return result;
-    }
-
-    /**
-     * Run marching squares round all polygons in the pattern, returning a list
-     * of them all
-     */
-    private Integer2DPolygonList marchAll() {
-        final Integer2DPolygonList result = new Integer2DPolygonList();
-        if (isEmpty()) {
-            return result;
-        }
-
-        for (int x = 0; x < rec.size.x - 1; x++) {
-            for (int y = 0; y < rec.size.y - 1; y++) {
-                final Integer2DPoint start = new Integer2DPoint(x, y);
-                final int m = marchPattern(start);
-                if (m != 0 && m != 15) {
-                    if (!(vGet(start) || vGet(start.add(neighbour[1])) || vGet(start.add(neighbour[2])) || vGet(start
-                            .add(neighbour[3])))) {
-                        final Integer2DPolygon p = marchRound(start);
-                        if (p.size() > 2) {
-                            result.add(p);
-                        }
-                    }
-                }
-            }
-        }
-        resetVisited();
-        return result;
+        return (double) result / (double) ((2 * b + 1) * (2 * b + 1));
     }
 
     /**
@@ -1549,6 +1259,10 @@ public class BooleanGrid {
         //if(dist < 0)
         result.deWhisker();
         return result;
+    }
+
+    Integer2DRectangle getRec() {
+        return rec;
     }
 
     /**
