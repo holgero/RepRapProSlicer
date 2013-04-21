@@ -6,9 +6,13 @@
 		</Console>
 	</appenders>
 	<loggers>
+		<!-- set the level to "info" to suppress debug messages from the BooleanGridWalker -->
+		<logger name="org.reprap.geometry.polygons.BooleanGridWalker"
+			level="debug" additivity="false">
+			<appender-ref ref="Console" />
+		</logger>
 		<root level="debug">
-			<filters>
-				<!-- comment the following line to allow logging of gcode output -->
+			<filters> <!-- comment the following line to allow logging of gcode output -->
 				<MarkerFilter marker="GCODE" onMatch="DENY" onMismatch="ACCEPT" />
 			</filters>
 			<appender-ref ref="Console" />
