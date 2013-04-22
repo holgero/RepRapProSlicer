@@ -211,7 +211,7 @@ class LayerProducer {
         final GCodeExtruder extruder = printer.getExtruder(attributes.getMaterial());
         final double outlineFeedrate = extruder.getOutlineFeedrate();
         final double infillFeedrate = extruder.getInfillFeedrate();
-        final ExtrusionPath extrusionPath = toExtrusionPath(polygon, printer.getFastXYFeedrate(), extruder.getSlowXYFeedrate(),
+        final ExtrusionPath extrusionPath = toExtrusionPath(polygon, extruder.getSlowXYFeedrate(),
                 polygon.isClosed() ? outlineFeedrate : infillFeedrate, extruder.getMaxAcceleration());
 
         plotExtrusionPath(extrusionPath, firstOneInLayer, extruder);
@@ -301,11 +301,9 @@ class LayerProducer {
     /**
      * Set the speeds at each vertex so that the polygon can be plotted as fast
      * as possible
-     * 
-     * @return
      */
-    public static ExtrusionPath toExtrusionPath(final Polygon polygon, final double airSpeed, final double minSpeed,
-            final double maxSpeed, final double acceleration) {
+    private static ExtrusionPath toExtrusionPath(final Polygon polygon, final double minSpeed, final double maxSpeed,
+            final double acceleration) {
         final boolean reprapAccelerations;
         reprapAccelerations = Preferences.getInstance().loadBool("RepRapAccelerations");
 
