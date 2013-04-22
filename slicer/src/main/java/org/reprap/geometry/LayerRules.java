@@ -497,6 +497,7 @@ public class LayerRules {
         final CSG2D rect = CSG2D.RrCSGFromBox(bBox);
         final BooleanGrid bg = new BooleanGrid(rect, bBox.scale(1.1), fa);
         final PolygonList h[] = { shield, bg.hatch(getHatchDirection(e, false), getHatchWidth(e), bg.attribute()) };
+        setFirstAndLast(h);
         final LayerProducer lp = new LayerProducer(h, this, simulationPlot);
         lp.plot();
         printer.getExtruder().stopExtruding();
