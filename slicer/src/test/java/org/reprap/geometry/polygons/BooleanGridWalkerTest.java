@@ -1,6 +1,8 @@
 package org.reprap.geometry.polygons;
 
 import static org.junit.Assert.assertEquals;
+import static org.reprap.geometry.polygons.BooleanGridTest.emptyGrid;
+import static org.reprap.geometry.polygons.BooleanGridTest.makeRectangleGrid;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -130,7 +132,7 @@ public class BooleanGridWalkerTest {
 
     @Test
     public void testMarchSingleSlantedLine() {
-        final BooleanGrid grid = new BooleanGrid(CSG2D.nothing(), new Rectangle(new Point2D(0, 0), new Point2D(.01, .01)), null);
+        final BooleanGrid grid = emptyGrid();
         for (int c = 4; c < 15; c++) {
             grid.set(new Integer2DPoint(c, 30 - c), true);
             grid.set(new Integer2DPoint(c + 1, 30 - c), true);
@@ -148,7 +150,7 @@ public class BooleanGridWalkerTest {
 
     @Test
     public void testMarchSingleHorizontalLine() {
-        final BooleanGrid grid = new BooleanGrid(CSG2D.nothing(), new Rectangle(new Point2D(0, 0), new Point2D(.01, .01)), null);
+        final BooleanGrid grid = emptyGrid();
         for (int x = 10; x < 25; x++) {
             grid.set(new Integer2DPoint(x, 20), true);
         }
@@ -165,7 +167,7 @@ public class BooleanGridWalkerTest {
 
     @Test
     public void testMarchSingleVerticalLine() {
-        final BooleanGrid grid = new BooleanGrid(CSG2D.nothing(), new Rectangle(new Point2D(0, 0), new Point2D(.01, .01)), null);
+        final BooleanGrid grid = emptyGrid();
         for (int y = 10; y < 25; y++) {
             grid.set(new Integer2DPoint(20, y), true);
         }
@@ -182,7 +184,7 @@ public class BooleanGridWalkerTest {
 
     @Test
     public void testMarchEmptyGrid() {
-        final BooleanGrid grid = new BooleanGrid(CSG2D.nothing(), new Rectangle(new Point2D(0, 0), new Point2D(.01, .01)), null);
+        final BooleanGrid grid = emptyGrid();
         if (VISUALIZE) {
             System.out.println(printGrid(grid));
         }
@@ -194,13 +196,8 @@ public class BooleanGridWalkerTest {
         assertEquals(0, simpleMarch.size());
     }
 
-    private BooleanGrid makeRectangleGrid(final double minX, final double minY, final double maxX, final double maxY) {
-        return new BooleanGrid(CSG2D.RrCSGFromBox(new Rectangle(new Point2D(minX, minY), new Point2D(maxX, maxY))),
-                new Rectangle(new Point2D(0, 0), new Point2D(.01, .01)), null);
-    }
-
     private String printPolygonList(final Integer2DPolygonList simpleMarch) {
-        final BooleanGrid grid = new BooleanGrid(CSG2D.nothing(), new Rectangle(new Point2D(0, 0), new Point2D(.01, .01)), null);
+        final BooleanGrid grid = emptyGrid();
 
         for (int i = 0; i < simpleMarch.size(); i++) {
             final Integer2DPolygon polygon = simpleMarch.polygon(i);
