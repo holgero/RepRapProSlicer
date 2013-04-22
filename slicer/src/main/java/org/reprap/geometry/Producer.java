@@ -72,21 +72,20 @@ public class Producer {
         progressListener.productionProgress(layerRules.getMachineLayer(), layerRules.getMachineLayerMax());
 
         final PolygonList allPolygons[] = new PolygonList[totalPhysicalExtruders];
-        for (int physicalExtruder = 0; physicalExtruder < allPolygons.length; physicalExtruder++) {
-            allPolygons[physicalExtruder] = new PolygonList();
-        }
 
-        Point2D startNearHere = new Point2D(100, 100); // TODO make this the middle of the printer bed
+        Point2D startNearHere = Point2D.mul(layerRules.getPrinter().getBedNorthEast(), 0.5);
         if (omitShield) {
+            for (int physicalExtruder = 0; physicalExtruder < allPolygons.length; physicalExtruder++) {
+                allPolygons[physicalExtruder] = new PolygonList();
+            }
             for (int stl = 1; stl < stlList.size(); stl++) {
                 startNearHere = collectPolygonsForObject(stl, startNearHere, allPolygons);
             }
-        }
-        if (usedPhysicalExtruders(allPolygons) > 1) {
-            omitShield = false;
+            if (usedPhysicalExtruders(allPolygons) > 1) {
+                omitShield = false;
+            }
         }
         if (!omitShield) {
-            // TODO for now we redo the calculation to get a similar result as in the previous implementation, this should be avoided
             for (int physicalExtruder = 0; physicalExtruder < allPolygons.length; physicalExtruder++) {
                 allPolygons[physicalExtruder] = new PolygonList();
             }
@@ -142,7 +141,7 @@ public class Producer {
                         tempBorderPolygons[physicalExtruder].polygon(0).getAttributes().getMaterial()).getExtrusionSize();
                 linkUp = (4 * linkUp * linkUp);
                 tempBorderPolygons[physicalExtruder].radicalReOrder(linkUp, printer);
-                tempBorderPolygons[physicalExtruder] = tempBorderPolygons[physicalExtruder].nearEnds(startNearHere, false, -1);
+                tempBorderPolygons[physicalExtruder] = tempBorderPolygons[physicalExtruder].nearEnds(startNearHere);
                 if (tempBorderPolygons[physicalExtruder].size() > 0) {
                     final Polygon last = tempBorderPolygons[physicalExtruder].polygon(tempBorderPolygons[physicalExtruder]
                             .size() - 1);
@@ -157,7 +156,7 @@ public class Producer {
                         .getExtrusionSize();
                 linkUp = (4 * linkUp * linkUp);
                 tempFillPolygons[physicalExtruder].radicalReOrder(linkUp, printer);
-                tempFillPolygons[physicalExtruder] = tempFillPolygons[physicalExtruder].nearEnds(startNearHere, false, -1);
+                tempFillPolygons[physicalExtruder] = tempFillPolygons[physicalExtruder].nearEnds(startNearHere);
                 if (tempFillPolygons[physicalExtruder].size() > 0) {
                     final Polygon last = tempFillPolygons[physicalExtruder]
                             .polygon(tempFillPolygons[physicalExtruder].size() - 1);

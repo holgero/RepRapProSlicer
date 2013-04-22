@@ -484,8 +484,7 @@ public class GCodePrinter implements PreferenceChangeListener {
     private void plotOutlines(Rectangle rectangle, final double machineZ) {
         boolean zRight = false;
 
-        for (int e = extruders.length - 1; e >= 0; e--) // Count down so we end with the one most likely to start the rest
-        {
+        for (int e = extruders.length - 1; e >= 0; e--) { // Count down so we end with the one most likely to start the rest
             final int pe = extruders[e].getPhysicalExtruderNumber();
             if (physicalExtruderUsed[pe]) {
                 if (!zRight) {
@@ -730,7 +729,6 @@ public class GCodePrinter implements PreferenceChangeListener {
         final GCodeExtruder oldExtruder = getExtruder();
         final int newPhysicalExtruder = extruders[materialIndex].getPhysicalExtruderNumber();
         final boolean shield = preferences.loadBool("Shield");
-        Point2D purgePoint;
 
         if (newPhysicalExtruder != oldPhysicalExtruder || forceSelection) {
             if (really) {
@@ -751,7 +749,7 @@ public class GCodePrinter implements PreferenceChangeListener {
                 getExtruder().stopExtruding(); // Make sure we are off
 
                 if (shield) {
-                    purgePoint = purge.getPurgeEnd(true, 0);
+                    final Point2D purgePoint = purge.getPurgeEnd(true, 0);
                     singleMove(purgePoint.x(), purgePoint.y(), currentZ, getFastXYFeedrate(), true);
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();
@@ -765,7 +763,7 @@ public class GCodePrinter implements PreferenceChangeListener {
                     printStartDelay(true);
                     getExtruder().setExtrusion(getExtruder().getExtruderSpeed(), false);
 
-                    purgePoint = purge.getPurgeEnd(false, 0);
+                    Point2D purgePoint = purge.getPurgeEnd(false, 0);
                     singleMove(purgePoint.x(), purgePoint.y(), currentZ, getExtruder().getFastXYFeedrate(), true);
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();
@@ -891,8 +889,9 @@ public class GCodePrinter implements PreferenceChangeListener {
     }
 
     /**
-     * Extrude backwards for the given time in milliseconds, so that polymer is
-     * stopped flowing at the end of a track. Return the amount reversed.
+     * Extrude backwards for the configured time in milliseconds, so that
+     * polymer is stopped flowing at the end of a track. Return the amount
+     * reversed.
      */
     public double printEndReverse() {
         final double delay = getExtruder().getExtrusionReverseDelay();

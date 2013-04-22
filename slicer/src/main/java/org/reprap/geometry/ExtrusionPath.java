@@ -37,11 +37,11 @@ class ExtrusionPath {
      * The index of the last point to draw to, if there are more that should
      * just be moved over
      */
-    private int extrudeEnd;
+    private int extrudeEnd = -1;
     /**
      * The index of the last point at which the valve (if any) is open.
      */
-    private int valveEnd;
+    private int valveEnd = -1;
 
     ExtrusionPath(final Polygon path) {
         this.path = path;

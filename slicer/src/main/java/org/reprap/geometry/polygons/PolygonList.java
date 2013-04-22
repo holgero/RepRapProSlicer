@@ -214,7 +214,7 @@ public class PolygonList {
      * to any point on any other than sqrt(linkUp), the two polygons are merged
      * at their closest points. This is suppressed by setting linkUp negative.
      */
-    public PolygonList nearEnds(final Point2D startNearHere, final boolean reOrder, final double linkUp) {
+    public PolygonList nearEnds(final Point2D startNearHere) {
         final PolygonList result = new PolygonList();
         if (size() <= 0) {
             return result;
@@ -233,33 +233,19 @@ public class PolygonList {
             double d = Double.POSITIVE_INFINITY;
             boolean neg = false;
             int near = -1;
-            int nearV = -1;
             for (int i = 0; i < size(); i++) {
-                if (result.polygon(i).isClosed() && reOrder) {
-                    final int nv = polygon(i).nearestVertex(startNearHere);
-                    final double d2 = Point2D.dSquared(startNearHere, polygon(i).point(nv));
+                double d2 = Point2D.dSquared(startNearHere, result.polygon(i).point(0));
+                if (d2 < d) {
+                    near = i;
+                    d = d2;
+                    neg = false;
+                }
+                if (!result.polygon(i).isClosed()) {
+                    d2 = Point2D.dSquared(startNearHere, result.polygon(i).point(result.polygon(i).size() - 1));
                     if (d2 < d) {
                         near = i;
-                        nearV = nv;
                         d = d2;
-                        neg = false;
-                    }
-                } else {
-                    double d2 = Point2D.dSquared(startNearHere, result.polygon(i).point(0));
-                    if (d2 < d) {
-                        near = i;
-                        nearV = -1;
-                        d = d2;
-                        neg = false;
-                    }
-                    if (!result.polygon(i).isClosed()) {
-                        d2 = Point2D.dSquared(startNearHere, result.polygon(i).point(result.polygon(i).size() - 1));
-                        if (d2 < d) {
-                            near = i;
-                            nearV = -1;
-                            d = d2;
-                            neg = true;
-                        }
+                        neg = true;
                     }
                 }
             }
@@ -269,23 +255,8 @@ public class PolygonList {
             }
 
             result.swap(0, near);
-            if (reOrder && nearV >= 0) {
-                set(0, polygon(0).newStart(nearV));
-            }
             if (neg) {
                 result.negate(0);
-            }
-        }
-
-        if (reOrder && linkUp >= 0) {
-            for (int i = 0; i < result.size() - 1; i++) {
-                for (int j = i + 1; j < result.size(); j++) {
-                    if (result.polygon(j).isClosed()) {
-                        if (result.polygon(i).nearestVertexReorderMerge(result.polygon(j), linkUp)) {
-                            result.remove(j);
-                        }
-                    }
-                }
             }
         }
 
@@ -350,7 +321,6 @@ public class PolygonList {
             return;
         }
 
-        polygon(0).getAttributes();
         // First check that we all have the same physical extruder
         final int physicalExtruder = printer.getExtruder(polygon(0).getAttributes().getMaterial()).getPhysicalExtruderNumber();
         for (int i = 1; i < size(); i++) {

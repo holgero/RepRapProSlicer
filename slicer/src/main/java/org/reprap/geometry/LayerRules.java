@@ -60,11 +60,6 @@ public class LayerRules {
      * The names of all the files for all the layers
      */
     private final String[] layerFileNames;
-
-    /**
-     * Are we reversing the layer orders?
-     */
-    private boolean reversing = false;
     /**
      * The machine
      */
@@ -222,10 +217,6 @@ public class LayerRules {
 
     double getModelZ() {
         return modelZ;
-    }
-
-    public boolean getReversing() {
-        return reversing;
     }
 
     public double getModelZ(final int layer) {
@@ -442,8 +433,6 @@ public class LayerRules {
     }
 
     void reverseLayers() throws IOException {
-        reversing = true;
-
         final String fileName = printer.getOutputFilename();
         final FileOutputStream fileStream = new FileOutputStream(fileName);
         try {
@@ -471,7 +460,6 @@ public class LayerRules {
         } finally {
             fileStream.close();
         }
-        reversing = false;
     }
 
     void layFoundationTopDown(final SimulationPlotter simulationPlot) throws IOException {

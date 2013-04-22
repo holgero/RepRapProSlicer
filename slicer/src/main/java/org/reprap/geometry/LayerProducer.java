@@ -256,26 +256,27 @@ class LayerProducer {
             }
         }
 
-        plot(extrusionPath.point(0), extrusionPath.point(1), false, false);
-
         // Print any lead-in.
         printer.printStartDelay(firstOneInLayer);
         boolean extrudeOff = false;
-        for (int i = 1; i < extrusionPath.size(); i++) {
+        int pathLength = extrusionPath.size();
+        if (extrusionPath.isClosed()) {
+            // plot to each point(0..n) and then to point(0).
+            pathLength++;
+        }
+        for (int i = 0; i < pathLength; i++) {
+            final Point2D point = extrusionPath.point(i % extrusionPath.size());
             final Point2D next = extrusionPath.point((i + 1) % extrusionPath.size());
             if (acc) {
-                currentFeedrate = extrusionPath.speed(i);
+                currentFeedrate = extrusionPath.speed(i % extrusionPath.size());
             }
             final boolean oldexoff = extrudeOff;
-            extrudeOff = (i > extrusionPath.extrudeEnd() && extrudeBackLength > 0) || i == extrusionPath.size() - 1;
-            final boolean valveOff = (i > extrusionPath.valveEnd() && valveBackLength > 0) || i == extrusionPath.size() - 1;
-            plot(extrusionPath.point(i), next, extrudeOff, valveOff);
+            extrudeOff = (i > extrusionPath.extrudeEnd() && extrudeBackLength > 0) || i == pathLength - 1;
+            final boolean valveOff = (i > extrusionPath.valveEnd() && valveBackLength > 0) || i == pathLength - 1;
+            plot(point, next, extrudeOff, valveOff);
             if (oldexoff ^ extrudeOff) {
                 printer.printEndReverse();
             }
-        }
-        if (extrusionPath.isClosed()) {
-            move(extrusionPath.point(0), false, false, true);
         }
         // If getMinLiftedZ() is negative, never lift the head
         final boolean lift = extruder.getMinLiftedZ() >= 0 || liftZ > 0;
@@ -311,10 +312,8 @@ class LayerProducer {
         final ExtrusionPath result = new ExtrusionPath(polygon);
 
         if (!reprapAccelerations) {
-            // If not doing RepRap style accelerations, just move in air to the
-            // first point and then go round as fast as possible.
-            result.setSpeed(0, airSpeed);
-            for (int i = 1; i < result.size(); i++) {
+            // If not doing RepRap style accelerations, just go round as fast as possible.
+            for (int i = 0; i < result.size(); i++) {
                 result.setSpeed(i, maxSpeed);
             }
         } else {
