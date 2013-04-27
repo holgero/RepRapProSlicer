@@ -106,10 +106,6 @@ public class LayerRules {
     private final int machineLayerMax;
 
     /**
-     * Putting down foundations?
-     */
-    private boolean layingSupport = true;
-    /**
      * The smallest step height of all the extruders
      */
     private double zStep;
@@ -342,14 +338,6 @@ public class LayerRules {
         return false;
     }
 
-    void setLayingSupport(final boolean lf) {
-        layingSupport = lf;
-    }
-
-    public boolean getLayingSupport() {
-        return layingSupport;
-    }
-
     /**
      * The hatch pattern is:
      * 
@@ -466,8 +454,6 @@ public class LayerRules {
         if (getFoundationLayers() <= 0) {
             return;
         }
-
-        setLayingSupport(true);
         printer.setSeparating(false);
         while (machineLayer >= 0) {
             LOGGER.debug("Commencing foundation layer at " + getMachineZ());

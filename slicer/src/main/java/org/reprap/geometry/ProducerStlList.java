@@ -470,15 +470,8 @@ class ProducerStlList {
             return new PolygonList();
         }
 
-        PolygonList borderPolygons;
-
-        // Are we building the raft under things?  If so, there is no border.
-        if (layerRules.getLayingSupport()) {
-            borderPolygons = null;
-        } else {
-            final BooleanGridList offBorder = offsetOutline(slice, layerRules, -1);
-            borderPolygons = offBorder.borders();
-        }
+        final BooleanGridList offBorder = offsetOutline(slice, layerRules, -1);
+        final PolygonList borderPolygons = offBorder.borders();
 
         // If we've got polygons to plot, maybe amend them so they start in the middle 
         // of a hatch (this gives cleaner boundaries).  
@@ -865,17 +858,10 @@ class ProducerStlList {
     static PolygonList hatch(final BooleanGridList list, final LayerRules layerConditions, final boolean surface,
             final HalfPlane overrideDirection, final boolean support) {
         final PolygonList result = new PolygonList();
-        final boolean foundation = layerConditions.getLayingSupport();
-        final GCodeExtruder[] es = layerConditions.getPrinter().getExtruders();
         for (int i = 0; i < list.size(); i++) {
-            GCodeExtruder e;
             final BooleanGrid grid = list.get(i);
             Attributes att = grid.attribute();
-            if (foundation) {
-                e = es[0]; // Extruder 0 is used for foundations
-            } else {
-                e = layerConditions.getPrinter().getExtruder(att.getMaterial());
-            }
+            final GCodeExtruder e = layerConditions.getPrinter().getExtruder(att.getMaterial());
             GCodeExtruder ei;
             if (!surface) {
                 ei = e.getInfillExtruder();

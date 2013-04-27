@@ -51,7 +51,6 @@ public class Producer {
     }
 
     public void produce() throws IOException {
-        layerRules.setLayingSupport(false);
         while (layerRules.getModelLayer() > 0) {
             produceLayer();
             layerRules.step();
