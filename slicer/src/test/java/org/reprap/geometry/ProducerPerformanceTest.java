@@ -3,7 +3,7 @@ package org.reprap.geometry;
 import java.io.File;
 import java.io.IOException;
 
-import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.BooleanGridWalkerTest;
@@ -12,16 +12,10 @@ import org.reprap.graphicio.RFO;
 
 public class ProducerPerformanceTest {
 
-    private AllSTLsToBuild stls;
-
-    @Before
-    public void setUp() throws Exception {
-        stls = RFO.load(getClass().getClassLoader().getResource("euro_chip.rfo").getPath());
-    }
-
     @Test
-    //    @Ignore("this takes too long for normal execution")
+    @Ignore("needs javax.media.j3d")
     public void testSlicingPerformance() throws IOException {
+        final AllSTLsToBuild stls = RFO.load(getClass().getClassLoader().getResource("euro_chip.rfo").getPath());
         final Producer producer = new Producer(new GCodePrinter(), stls, new ProductionProgressListener() {
             @Override
             public void productionProgress(final int layer, final int totalLayers) {
@@ -35,13 +29,13 @@ public class ProducerPerformanceTest {
     }
 
     @Test
-    //    @Ignore("this takes too long for normal execution")
     public void testGridWalkerPerformance() throws Exception {
+        final int iterations = 100;
         final long start = System.currentTimeMillis();
-        for (int i = 0; i < 100000; i++) {
+        for (int i = 0; i < iterations; i++) {
             new BooleanGridWalkerTest().testMarchBigC();
         }
         final long end = System.currentTimeMillis();
-        System.out.println("Walking took " + (end - start) + " ms.");
+        System.out.println("Walking " + iterations + " iterations took " + (end - start) + " ms.");
     }
 }
