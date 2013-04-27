@@ -29,6 +29,7 @@ public class Producer {
      * Skip generating the shield if only one color is printed
      */
     private boolean omitShield;
+    private final int brimLines;
 
     public Producer(final GCodePrinter printer, final AllSTLsToBuild allStls, final ProductionProgressListener listener,
             final boolean displayPaths) {
@@ -45,9 +46,11 @@ public class Producer {
         } else {
             simulationPlot = null;
         }
-        if (Preferences.getInstance().loadBool("Shield")) {
+        final Preferences preferences = Preferences.getInstance();
+        if (preferences.loadBool("Shield")) {
             omitShield = true;
         }
+        brimLines = preferences.loadInt("BrimLines");
     }
 
     public void produce() throws IOException {
@@ -93,7 +96,6 @@ public class Producer {
                 startNearHere = collectPolygonsForObject(stl, startNearHere, allPolygons);
             }
         }
-
         layerRules.setFirstAndLast(allPolygons);
         final LayerProducer lp = new LayerProducer(allPolygons, layerRules, simulationPlot);
         lp.plot();
@@ -117,6 +119,10 @@ public class Producer {
             tempBorderPolygons[physicalExtruder] = new PolygonList();
             tempFillPolygons[physicalExtruder] = new PolygonList();
         }
+        if (layerRules.getModelLayer() == 1 && brimLines > 0) {
+            final PolygonList brim = stlList.computeBrim(stl, brimLines);
+            tempBorderPolygons[0].add(brim);
+        }
         PolygonList fills = stlList.computeInfill(stl);
         final PolygonList borders = stlList.computeOutlines(stl, fills);
         for (int pol = 0; pol < borders.size(); pol++) {
@@ -133,7 +139,6 @@ public class Producer {
             final Polygon p = support.polygon(pol);
             tempFillPolygons[getPhysicalExtruder(p)].add(p);
         }
-
         for (int physicalExtruder = 0; physicalExtruder < totalPhysicalExtruders; physicalExtruder++) {
             if (tempBorderPolygons[physicalExtruder].size() > 0) {
                 double linkUp = printer.getExtruder(

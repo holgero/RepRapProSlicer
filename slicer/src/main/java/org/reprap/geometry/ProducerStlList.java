@@ -482,6 +482,26 @@ class ProducerStlList {
         return borderPolygons;
     }
 
+    PolygonList computeBrim(final int stl, final int brimLines) {
+        final GCodeExtruder extruder = layerRules.getPrinter().getExtruders()[0];
+        final double extrusionSize = extruder.getExtrusionSize();
+
+        BooleanGridList slice = neededThisLayer(slice(stl, 0), false, false);
+        final PolygonList result = new PolygonList();
+        result.add(slice.borders());
+        for (int line = 1; line < brimLines; line++) {
+            final BooleanGridList nextSlice = new BooleanGridList();
+            for (int i = 0; i < slice.size(); i++) {
+                final BooleanGrid grid = slice.get(i);
+                nextSlice.add(grid.createOffsetGrid(extrusionSize));
+            }
+            slice = nextSlice;
+            result.add(slice.borders());
+        }
+
+        return result;
+    }
+
     /**
      * Generate a set of pixel-map representations, one for each extruder, for
      * STLObject stl at height z.
