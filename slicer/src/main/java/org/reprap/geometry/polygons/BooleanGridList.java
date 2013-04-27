@@ -1,6 +1,7 @@
 package org.reprap.geometry.polygons;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -57,14 +58,10 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
     }
 
     /**
-     * Reverse the order of the list
+     * Reverse the order of this list
      */
-    public BooleanGridList reverse() {
-        final BooleanGridList result = new BooleanGridList();
-        for (int i = size() - 1; i >= 0; i--) {
-            result.add(get(i));
-        }
-        return result;
+    public void reverse() {
+        Collections.reverse(shapes);
     }
 
     /**
@@ -187,12 +184,12 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
      * them.
      */
     public static BooleanGridList intersections(final BooleanGridList a, final BooleanGridList b) {
+        if (a == b) {
+            return a;
+        }
         final BooleanGridList result = new BooleanGridList();
         if (a == null || b == null) {
             return result;
-        }
-        if (a == b) {
-            return a;
         }
         if (a.size() <= 0 || b.size() <= 0) {
             return result;
@@ -204,7 +201,6 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
                 final BooleanGrid grid = b.get(j);
                 if (abg.attribute().getMaterial().equals(grid.attribute().getMaterial())) {
                     result.add(BooleanGrid.intersection(abg, grid));
-                    break;
                 }
             }
         }

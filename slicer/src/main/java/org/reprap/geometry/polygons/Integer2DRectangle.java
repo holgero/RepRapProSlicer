@@ -82,7 +82,7 @@ final class Integer2DRectangle {
     /**
      * Grow (dist +ve) or shrink (dist -ve).
      */
-    Integer2DRectangle offset(final int dist) {
+    Integer2DRectangle createOffsetRectangle(final int dist) {
         final Integer2DRectangle result = new Integer2DRectangle(this);
         result.swCorner.x = result.swCorner.x - dist;
         result.swCorner.y = result.swCorner.y - dist;

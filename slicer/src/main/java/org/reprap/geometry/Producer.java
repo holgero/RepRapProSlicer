@@ -31,7 +31,7 @@ public class Producer {
     private boolean omitShield;
 
     public Producer(final GCodePrinter printer, final AllSTLsToBuild allStls, final ProductionProgressListener listener,
-            final boolean displayPaths) throws Exception {
+            final boolean displayPaths) {
         this.printer = printer;
         progressListener = listener;
         final Purge purge = new Purge(printer);
@@ -50,7 +50,7 @@ public class Producer {
         }
     }
 
-    public void produce() throws Exception {
+    public void produce() throws IOException {
         layerRules.setLayingSupport(false);
         while (layerRules.getModelLayer() > 0) {
             produceLayer();

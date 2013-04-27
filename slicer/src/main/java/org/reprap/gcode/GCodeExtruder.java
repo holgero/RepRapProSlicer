@@ -164,7 +164,6 @@ public class GCodeExtruder {
     private String inFillMaterial;
     private double extrudeRatio = 1;
     private boolean middleStart;
-    private boolean singleLine = false;
     private boolean insideOut = false;
     private final GCodePrinter printer;
     private int physicalExtruderId;
@@ -306,7 +305,6 @@ public class GCodeExtruder {
         materialColour = new Appearance();
         materialColour.setMaterial(new Material(col, Constants.BLACK, col, Constants.BLACK, 101f));
         surfaceLayers = preferences.loadInt(prefName + "SurfaceLayers(0..N)");
-        singleLine = preferences.loadBool(prefName + "SingleLine");
         feedDiameter = preferences.loadDouble(prefName + "FeedDiameter(mm)");
         insideOut = preferences.loadBool(prefName + "InsideOut");
         fastXYFeedrate = Math.min(printer.getFastXYFeedrate(), fastXYFeedrate);
@@ -674,14 +672,6 @@ public class GCodeExtruder {
      */
     public int getSurfaceLayers() {
         return surfaceLayers;
-    }
-
-    /**
-     * Are the extruder's models ones that (may) include single-width vectors to
-     * be plotted?
-     */
-    public boolean getSingleLine() {
-        return singleLine;
     }
 
     /**

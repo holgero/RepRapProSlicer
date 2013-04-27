@@ -38,7 +38,7 @@ public class BooleanGridWalkerTest {
 
     @Test
     public void testMarchRectangleWithOneHole() {
-        final BooleanGrid rectangleWithHole = BooleanGrid.difference(testGrid, testGrid.offset(-0.1));
+        final BooleanGrid rectangleWithHole = BooleanGrid.difference(testGrid, testGrid.createOffsetGrid(-0.1));
         final Integer2DPolygonList simpleMarch = new BooleanGridWalker(rectangleWithHole).marchAll();
         if (VISUALIZE) {
             System.out.println(printGrid(rectangleWithHole));

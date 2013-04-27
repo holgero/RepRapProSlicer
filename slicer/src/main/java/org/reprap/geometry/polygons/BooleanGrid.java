@@ -1174,54 +1174,58 @@ public class BooleanGrid {
     }
 
     /**
-     * This assumes that shrunk is this bitmap offset by dist from a previous
-     * calculation. It grows shrunk by -dist, then subtracts that from itself.
-     * The result is a bitmap of all the thin lines in this pattern that were
-     * discarded by the original offset (plus some noise at places square convex
-     * corners that have grown back rounded).
+     * Offset the pattern by a given real-world distance. If the distance is
+     * negative the pattern is shrunk; if it is positive it is grown;
      */
-    public BooleanGrid lines(final BooleanGrid shrunk, final double dist) {
-        if (dist >= 0) {
-            LOGGER.error("BooleanGrid.lines() called with non-negative offset: " + dist);
-            return new BooleanGrid();
+    public BooleanGrid createOffsetGrid(final double dist) {
+        final int r = iScale(dist);
+
+        final BooleanGrid result = new BooleanGrid(this);
+        if (r == 0) {
+            return result;
         }
-        return difference(this, shrunk.offset(-dist));
+        result.offset(dist);
+        if (result.isEmpty()) {
+            return nothingThere;
+        }
+        return result;
     }
 
     /**
      * Offset the pattern by a given real-world distance. If the distance is
      * negative the pattern is shrunk; if it is positive it is grown;
      */
-    public BooleanGrid offset(final double dist) {
+    public void offset(final double dist) {
         final int r = iScale(dist);
-
-        final BooleanGrid result = new BooleanGrid(this, rec.offset(r));
         if (r == 0) {
-            return result;
+            return;
         }
 
-        final Integer2DPolygonList polygons = iAllPerimiters().translate(rec.swCorner.sub(result.rec.swCorner));
-        if (polygons.size() <= 0) {
-            final Integer2DRectangle newRec = new Integer2DRectangle(result.rec);
-            newRec.size.x = 1;
-            newRec.size.y = 1;
-            return new BooleanGrid(CSG2D.nothing(), newRec.realRectangle(), att);
+        if (r > 0) { // just got bigger, need more room
+            final Integer2DRectangle oldRectangle = rec;
+            rec = oldRectangle.createOffsetRectangle(r);
+            final BitSet oldBits = bits;
+            bits = new BitSet(rec.size.x * rec.size.y);
+            final int offxOut = oldRectangle.swCorner.x - rec.swCorner.x;
+            final int offyOut = oldRectangle.swCorner.y - rec.swCorner.y;
+            for (int x = 0; x < oldRectangle.size.x; x++) {
+                for (int y = 0; y < oldRectangle.size.y; y++) {
+                    bits.set(pixI(x + offxOut, y + offyOut), oldBits.get(x * oldRectangle.size.y + y));
+                }
+            }
         }
 
+        final Integer2DPolygonList polygons = iAllPerimiters();
         for (int p = 0; p < polygons.size(); p++) {
             final Integer2DPolygon ip = polygons.polygon(p);
             for (int e = 0; e < ip.size(); e++) {
                 final Integer2DPoint p0 = ip.point(e);
                 final Integer2DPoint p1 = ip.point((e + 1) % ip.size());
-                result.rectangle(p0, p1, Math.abs(r), r > 0);
-                result.disc(p1, Math.abs(r), r > 0);
+                rectangle(p0, p1, Math.abs(r), r > 0);
+                disc(p1, Math.abs(r), r > 0);
             }
         }
-        if (result.isEmpty()) {
-            return nothingThere;
-        }
-        result.deWhisker();
-        return result;
+        deWhisker();
     }
 
     Integer2DRectangle getRec() {

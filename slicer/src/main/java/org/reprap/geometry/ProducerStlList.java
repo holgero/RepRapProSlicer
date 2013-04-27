@@ -341,7 +341,7 @@ class ProducerStlList {
         // this layer's boundaries.
         BooleanGridList allThis = new BooleanGridList();
         allThis.add(unionOfThisLayer);
-        allThis = offset(allThis, layerRules, true, 2); // 2mm gap is a bit of a hack...
+        allThis = offsetOutline(allThis, layerRules, 2); // 2mm gap is a bit of a hack...
         if (allThis.size() > 0) {
             unionOfThisLayer = allThis.get(0);
         } else {
@@ -476,7 +476,7 @@ class ProducerStlList {
         if (layerRules.getLayingSupport()) {
             borderPolygons = null;
         } else {
-            final BooleanGridList offBorder = offset(slice, layerRules, true, -1);
+            final BooleanGridList offBorder = offsetOutline(slice, layerRules, -1);
             borderPolygons = offBorder.borders();
         }
 
@@ -899,74 +899,60 @@ class ProducerStlList {
         return result;
     }
 
-    /**
-     * Offset all the shapes in the list for this layer
-     */
-    static BooleanGridList offset(final BooleanGridList gridList, final LayerRules lc, final boolean outline,
-            final double multiplier) {
-        final boolean foundation = lc.getLayingSupport();
-        if (outline && foundation) {
-            LOGGER.error("Offsetting a foundation outline!");
-        }
-
-        BooleanGridList result = new BooleanGridList();
+    private static BooleanGridList offsetOutline(final BooleanGridList gridList, final LayerRules lc, final double multiplier) {
+        final BooleanGridList result = new BooleanGridList();
         for (int i = 0; i < gridList.size(); i++) {
             final BooleanGrid grid = gridList.get(i);
             final Attributes att = grid.attribute();
             if (att == null) {
-                LOGGER.error("BooleanGridList.offset(): null attribute!");
-            } else {
-                final GCodeExtruder[] es = lc.getPrinter().getExtruders();
-                GCodeExtruder e;
-                int shells;
-                if (foundation) {
-                    e = es[0]; // By convention extruder 0 builds the foundation
-                    shells = 1;
+                throw new RuntimeException("grid attribute is null");
+            }
+            final GCodeExtruder e = lc.getPrinter().getExtruder(att.getMaterial());
+            final int shells = e.getShells();
+            final double extrusionSize = e.getExtrusionSize();
+            final boolean insideOut = e.getInsideOut();
+            for (int shell = 0; shell < shells; shell++) {
+                final double d = multiplier * (shell + 0.5) * extrusionSize;
+                final BooleanGrid thisOne = grid.createOffsetGrid(d);
+                if (thisOne.isEmpty()) {
+                    break;
                 } else {
-                    e = lc.getPrinter().getExtruder(att.getMaterial());
-                    shells = e.getShells();
-                }
-                if (outline) {
-                    int shell = 0;
-                    boolean carryOn = true;
-                    while (carryOn && shell < shells) {
-                        final double d = multiplier * (shell + 0.5) * e.getExtrusionSize();
-                        final BooleanGrid thisOne = grid.offset(d);
-                        if (thisOne.isEmpty()) {
-                            carryOn = false;
-                        } else {
-                            if (shell == 0 && e.getSingleLine()) {
-                                final BooleanGrid lines = grid.lines(thisOne, d);
-                                lines.setThin(true);
-                                result.add(lines);
-                            }
-                            result.add(thisOne);
-                        }
-                        shell++;
-                    }
-                    if (e.getInsideOut()) {
-                        result = result.reverse(); // Plot from the inside out?
-                    }
-                } else {
-                    // Must be a hatch.  Only do it if the gap is +ve or we're building the foundation
-                    double offSize;
-                    final int ei = e.getInfillExtruderNumber();
-                    GCodeExtruder ife = e;
-                    if (ei >= 0) {
-                        ife = es[ei];
-                    }
-                    if (foundation) {
-                        offSize = 3;
-                    } else if (multiplier < 0) {
-                        offSize = multiplier * (shells + 0.5) * e.getExtrusionSize() + ife.getInfillOverlap();
-                    } else {
-                        offSize = multiplier * (shells + 0.5) * e.getExtrusionSize();
-                    }
-                    if (e.getExtrusionInfillWidth() > 0 || foundation) {
-                        result.add(grid.offset(offSize));
-                    }
+                    result.add(thisOne);
                 }
             }
+            if (insideOut) {
+                result.reverse(); // Plot from the inside out?
+            }
+        }
+        return result;
+    }
+
+    static BooleanGridList offset(final BooleanGridList gridList, final LayerRules lc, final double multiplier) {
+        final BooleanGridList result = new BooleanGridList();
+        for (int i = 0; i < gridList.size(); i++) {
+            final BooleanGrid grid = gridList.get(i);
+            final Attributes att = grid.attribute();
+            if (att == null) {
+                throw new RuntimeException("grid attribute is null");
+            }
+            final GCodeExtruder[] es = lc.getPrinter().getExtruders();
+            final GCodeExtruder e = lc.getPrinter().getExtruder(att.getMaterial());
+            final int shells = e.getShells();
+            final double extrusionSize = e.getExtrusionSize();
+            final int ei = e.getInfillExtruderNumber();
+            GCodeExtruder ife = e;
+            if (ei >= 0) {
+                ife = es[ei];
+            }
+            final double infillOverlap = ife.getInfillOverlap();
+            // Must be a hatch.  Only do it if the gap is +ve or we're building the foundation
+            final double offSize;
+            if (multiplier < 0) {
+                offSize = multiplier * (shells + 0.5) * extrusionSize + infillOverlap;
+            } else {
+                offSize = multiplier * (shells + 0.5) * extrusionSize;
+            }
+            result.add(grid.createOffsetGrid(offSize));
         }
         return result;
     }

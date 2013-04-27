@@ -45,7 +45,7 @@ public final class InFillPatterns {
 
         // Get the bottom out of the way - no fancy calculations needed.
         if (layer <= surfaceLayers) {
-            slice = ProducerStlList.offset(slice, layerRules, false, -1);
+            slice = ProducerStlList.offset(slice, layerRules, -1);
             slice = slicer.neededThisLayer(slice, false, false);
             return ProducerStlList.hatch(slice, layerRules, true, null, false);
         }
@@ -88,7 +88,7 @@ public final class InFillPatterns {
         // Make the bridges fatter, then crop them to the slice.
         // This will make them interpenetrate at their ends/sides to give
         // bridge landing areas.
-        bridges = ProducerStlList.offset(bridges, layerRules, false, 2);
+        bridges = ProducerStlList.offset(bridges, layerRules, 2);
         bridges = BooleanGridList.intersections(bridges, slice);
 
         // Find the landing areas as a separate set of shapes that go with the bridges.
@@ -96,9 +96,9 @@ public final class InFillPatterns {
 
         // Shapes will be outlined, and so need to be shrunk to allow for that.  But they
         // must not also shrink from each other internally.  So initially expand them so they overlap
-        bridges = ProducerStlList.offset(bridges, layerRules, false, 1);
-        insides = ProducerStlList.offset(insides, layerRules, false, 1);
-        surfaces = ProducerStlList.offset(surfaces, layerRules, false, 1);
+        bridges = ProducerStlList.offset(bridges, layerRules, 1);
+        insides = ProducerStlList.offset(insides, layerRules, 1);
+        surfaces = ProducerStlList.offset(surfaces, layerRules, 1);
 
         // Now intersect them with the slice so the outer edges are back where they should be.
         bridges = BooleanGridList.intersections(bridges, slice);
@@ -108,9 +108,9 @@ public final class InFillPatterns {
         // Now shrink them so the edges are in a bit to allow the outlines to
         // be put round the outside.  The inner joins should now shrink back to be
         // adjacent to each other as they should be.
-        bridges = ProducerStlList.offset(bridges, layerRules, false, -1);
-        insides = ProducerStlList.offset(insides, layerRules, false, -1);
-        surfaces = ProducerStlList.offset(surfaces, layerRules, false, -1);
+        bridges = ProducerStlList.offset(bridges, layerRules, -1);
+        insides = ProducerStlList.offset(insides, layerRules, -1);
+        surfaces = ProducerStlList.offset(surfaces, layerRules, -1);
 
         // Generate the infill patterns.  We do the bridges first, as each bridge subtracts its
         // lands from the other two sets of shapes.  We want that, so they don't get infilled twice.
@@ -185,8 +185,7 @@ public final class InFillPatterns {
                 }
 
                 // Find the other land (the first has been wiped)
-                BooleanGrid land2 = null;
-                land2 = BooleanGrid.intersection(bridge, landPattern);
+                final BooleanGrid land2 = BooleanGrid.intersection(bridge, landPattern);
 
                 // Find the middle of this land
                 final Point2D cen2 = land2.findCentroid();
