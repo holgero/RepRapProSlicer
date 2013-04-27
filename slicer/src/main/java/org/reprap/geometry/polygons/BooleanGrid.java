@@ -182,16 +182,6 @@ public class BooleanGrid {
     }
 
     /**
-     * The pixel corresponding to an index into the bit array
-     * 
-     * @param i
-     * @return
-     */
-    private Integer2DPoint pixel(final int i) {
-        return new Integer2DPoint(i / rec.size.y, i % rec.size.y);
-    }
-
-    /**
      * Return the attributes
      */
     public Attributes attribute() {
@@ -213,16 +203,20 @@ public class BooleanGrid {
      * Is a point inside the image?
      */
     private boolean inside(final Integer2DPoint p) {
-        if (p.x < 0) {
+        return inside(p.x, p.y);
+    }
+
+    private boolean inside(final int x, final int y) {
+        if (x < 0) {
             return false;
         }
-        if (p.y < 0) {
+        if (y < 0) {
             return false;
         }
-        if (p.x >= rec.size.x) {
+        if (x >= rec.size.x) {
             return false;
         }
-        if (p.y >= rec.size.y) {
+        if (y >= rec.size.y) {
             return false;
         }
         return true;
@@ -345,6 +339,16 @@ public class BooleanGrid {
     }
 
     /**
+     * The value at a point (in internal integer coordinates).
+     */
+    boolean get(final int x, final int y) {
+        if (!inside(x, y)) {
+            return false;
+        }
+        return bits.get(pixI(x, y));
+    }
+
+    /**
      * Get the value at the point corresponding to somewhere in the real world
      * That is, membership test.
      */
@@ -385,9 +389,8 @@ public class BooleanGrid {
     private Integer2DPoint findSeed_i() {
         for (int x = 0; x < rec.size.x; x++) {
             for (int y = 0; y < rec.size.y; y++) {
-                final Integer2DPoint p = new Integer2DPoint(x, y);
-                if (get(p)) {
-                    return p;
+                if (get(x, y)) {
+                    return new Integer2DPoint(x, y);
                 }
             }
         }
@@ -414,9 +417,8 @@ public class BooleanGrid {
         int points = 0;
         for (int x = 0; x < rec.size.x; x++) {
             for (int y = 0; y < rec.size.y; y++) {
-                final Integer2DPoint p = new Integer2DPoint(x, y);
-                if (get(p)) {
-                    sum = sum.add(p);
+                if (get(x, y)) {
+                    sum = sum.add(new Integer2DPoint(x, y));
                     points++;
                 }
             }
@@ -575,29 +577,8 @@ public class BooleanGrid {
      */
     private void deWhisker() {
         for (int i = bits.nextSetBit(0); i >= 0; i = bits.nextSetBit(i + 1)) {
-            final Integer2DPoint here = pixel(i);
-            if (neighbourCount(here) < 3) {
-                set(here, false);
-            }
-        }
-
-        for (int x = 0; x < rec.size.x - 1; x++) {
-            for (int y = 0; y < rec.size.y - 1; y++) {
-                final Integer2DPoint start = new Integer2DPoint(x, y);
-                final int m = marchPattern(start);
-                if (m == 6 || m == 9) {
-                    if (poll(start, 3) > 0.5) {
-                        set(start, true);
-                        set(start.add(neighbour[1]), true);
-                        set(start.add(neighbour[2]), true);
-                        set(start.add(neighbour[3]), true);
-                    } else {
-                        set(start, false);
-                        set(start.add(neighbour[1]), false);
-                        set(start.add(neighbour[2]), false);
-                        set(start.add(neighbour[3]), false);
-                    }
-                }
+            if (neighbourCount(i) < 3) {
+                bits.set(i, false);
             }
         }
     }
@@ -627,6 +608,25 @@ public class BooleanGrid {
             LOGGER.error("BooleanGrid.neighbourIndex(): not a neighbour point!" + n.toString());
         }
         return 0;
+    }
+
+    private int neighbourCount(final int i) {
+        int result = 0;
+        for (int x = -1; x < 2; x++) {
+            for (int y = -1; y < 2; y++) {
+                final int j = pixI(x, y);
+                try {
+                    if (i + j >= 0 && i + j < bits.size()) {
+                        if (bits.get(i + j)) {
+                            result++;
+                        }
+                    }
+                } catch (final Exception e) {
+                    throw new RuntimeException(e.getClass().getName() + " at x,y = " + x + "," + y, e);
+                }
+            }
+        }
+        return result;
     }
 
     /**
@@ -748,27 +748,6 @@ public class BooleanGrid {
     }
 
     /**
-     * Calculate the 4-bit marching squares value for a point
-     */
-    private int marchPattern(final Integer2DPoint ip) {
-        int result = 0;
-
-        if (get(ip)) {
-            result |= 1;
-        }
-        if (get(ip.add(neighbour[3]))) {
-            result |= 2;
-        }
-        if (get(ip.add(neighbour[1]))) {
-            result |= 4;
-        }
-        if (get(ip.add(neighbour[2]))) {
-            result |= 8;
-        }
-        return result;
-    }
-
-    /**
      * Return all the outlines of all the solid areas as polygons consisting of
      * all the pixels that make up the outlines.
      */
@@ -792,21 +771,6 @@ public class BooleanGrid {
         PolygonList r = iAllPerimiters().realPolygons(a, rec);
         r = r.simplify(realResolution);
         return r;
-    }
-
-    private double poll(final Integer2DPoint p, int b) {
-        int result = 0;
-        Integer2DPoint q;
-        for (int y = p.y + b; y >= p.y - b; y--) {
-            for (int x = p.x - b; x <= p.x + b; x++) {
-                q = new Integer2DPoint(x, y);
-                if (get(q)) {
-                    result++;
-                }
-            }
-        }
-        b++;
-        return (double) result / (double) ((2 * b + 1) * (2 * b + 1));
     }
 
     /**
@@ -1320,17 +1284,15 @@ public class BooleanGrid {
      * Compute the intersection of two bit patterns
      */
     private static BooleanGrid intersection(final BooleanGrid d, final BooleanGrid e, final Attributes a) {
-        BooleanGrid result;
-
         if (d == nothingThere || e == nothingThere) {
             return nothingThere;
         }
 
+        BooleanGrid result;
         if (d.rec.coincidesWith(e.rec)) {
             result = new BooleanGrid(d);
             result.bits.and(e.bits);
         } else {
-
             final Integer2DRectangle u = d.rec.intersection(e.rec);
             if (u.isEmpty()) {
                 return nothingThere;

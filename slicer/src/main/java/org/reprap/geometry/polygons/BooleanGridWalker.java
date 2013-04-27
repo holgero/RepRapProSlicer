@@ -48,7 +48,15 @@ public class BooleanGridWalker {
         }
 
         Integer2DPoint from(final Integer2DPoint from) {
-            return new Integer2DPoint(from.x + dx, from.y + dy);
+            return new Integer2DPoint(fromX(from.x), fromY(from.y));
+        }
+
+        int fromX(final int x) {
+            return x + dx;
+        }
+
+        int fromY(final int y) {
+            return y + dy;
         }
     }
 
@@ -97,9 +105,9 @@ public class BooleanGridWalker {
 
         for (int x = 0; x < size.x - 1; x++) {
             for (int y = 0; y < size.y - 1; y++) {
-                final Integer2DPoint start = new Integer2DPoint(x, y);
-                final int m = marchPattern(start);
+                final int m = marchPattern(x, y);
                 if (m != 0 && m != 15) {
+                    final Integer2DPoint start = new Integer2DPoint(x, y);
                     if (isValidStartpointForMarch(start)) {
                         final Integer2DPolygon p = marchRound(start);
                         if (p.size() > 2) {
@@ -127,7 +135,7 @@ public class BooleanGridWalker {
         Integer2DPoint last = null;
 
         do {
-            final int m = marchPattern(here);
+            final int m = marchPattern(here.x, here.y);
             switch (m) {
             case 1:
                 addToResult(result, here);
@@ -222,19 +230,19 @@ public class BooleanGridWalker {
     /**
      * Calculate the 4-bit marching squares value for a point
      */
-    private int marchPattern(final Integer2DPoint ip) {
+    private int marchPattern(final int x, final int y) {
         int result = 0;
 
-        if (grid.get(ip)) {
+        if (grid.get(x, y)) {
             result |= 1;
         }
-        if (grid.get(Neighbour.E.from(ip))) {
+        if (grid.get(Neighbour.E.fromX(x), Neighbour.E.fromY(y))) {
             result |= 2;
         }
-        if (grid.get(Neighbour.S.from(ip))) {
+        if (grid.get(Neighbour.S.fromX(x), Neighbour.S.fromY(y))) {
             result |= 4;
         }
-        if (grid.get(Neighbour.SE.from(ip))) {
+        if (grid.get(Neighbour.SE.fromX(x), Neighbour.SE.fromY(y))) {
             result |= 8;
         }
         return result;
