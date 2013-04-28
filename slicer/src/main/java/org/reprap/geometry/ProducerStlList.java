@@ -384,7 +384,7 @@ class ProducerStlList {
             grid.forceAttribute(new Attributes(e.getMaterial(), null, e.getAppearance()));
         }
 
-        return hatch(support, layerRules, false, null, true);
+        return hatch(support, layerRules, false, true);
     }
 
     /**
@@ -873,12 +873,11 @@ class ProducerStlList {
     /**
      * Work out all the open polygons forming a set of infill hatches. If
      * surface is true, these polygons are on the outside (top or bottom). If
-     * it's false they are in the interior. If overrideDirection is not null,
-     * that is used as the hatch direction. Otherwise the hatch is provided by
+     * it's false they are in the interior.The hatch is provided by
      * layerConditions.
      */
     static PolygonList hatch(final BooleanGridList list, final LayerRules layerConditions, final boolean surface,
-            final HalfPlane overrideDirection, final boolean support) {
+            final boolean support) {
         final PolygonList result = new PolygonList();
         for (int i = 0; i < list.size(); i++) {
             final BooleanGrid grid = list.get(i);
@@ -894,14 +893,8 @@ class ProducerStlList {
                 ei = e;
             }
             if (ei != null) {
-                HalfPlane hatchLine;
-                if (overrideDirection != null) {
-                    hatchLine = overrideDirection;
-                } else {
-                    hatchLine = layerConditions.getHatchDirection(ei, support);
-                }
+                final HalfPlane hatchLine = layerConditions.getHatchDirection(ei, support);
                 result.add(grid.hatch(hatchLine, layerConditions.getHatchWidth(ei), att));
-
             }
         }
         return result;

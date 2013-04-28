@@ -47,7 +47,7 @@ public final class InFillPatterns {
         if (layer <= surfaceLayers) {
             slice = ProducerStlList.offset(slice, layerRules, -1);
             slice = slicer.neededThisLayer(slice, false, false);
-            return ProducerStlList.hatch(slice, layerRules, true, null, false);
+            return ProducerStlList.hatch(slice, layerRules, true, false);
         }
 
         // If we are solid but the slices above or below us weren't, we need some fine infill as
@@ -116,9 +116,9 @@ public final class InFillPatterns {
         // lands from the other two sets of shapes.  We want that, so they don't get infilled twice.
         bridgeHatch(lands, layerRules);
         insides = slicer.neededThisLayer(insides, true, false);
-        hatchedPolygons.add(ProducerStlList.hatch(insides, layerRules, false, null, false));
+        hatchedPolygons.add(ProducerStlList.hatch(insides, layerRules, false, false));
         surfaces = slicer.neededThisLayer(surfaces, false, false);
-        hatchedPolygons.add(ProducerStlList.hatch(surfaces, layerRules, true, null, false));
+        hatchedPolygons.add(ProducerStlList.hatch(surfaces, layerRules, true, false));
 
         return hatchedPolygons;
     }
