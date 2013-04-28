@@ -342,6 +342,8 @@ class ProducerStlList {
         BooleanGridList allThis = new BooleanGridList();
         allThis.add(unionOfThisLayer);
         allThis = offsetOutline(allThis, layerRules, 2); // 2mm gap is a bit of a hack...
+        // TODO: ??? this is not 2 mm, but a multiplicator of 2 ???
+
         if (allThis.size() > 0) {
             unionOfThisLayer = allThis.get(0);
         } else {
