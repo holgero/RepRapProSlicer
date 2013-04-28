@@ -37,7 +37,7 @@ final class SliceCache {
     private final int[] layerNumber;
     private int ringPointer;
     private final int noLayer = Integer.MIN_VALUE;
-    private int ringSize = 10;
+    private final int ringSize;
 
     SliceCache(final LayerRules lr, final List<STLObject> stls) {
         if (lr == null) {
