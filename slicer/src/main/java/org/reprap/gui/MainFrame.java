@@ -59,7 +59,7 @@ public class MainFrame extends JFrame {
     private final SlicerFrame slicerFrame;
     private final GCodePrinter printer;
 
-    public MainFrame() throws HeadlessException, IOException {
+    public MainFrame(final String[] args) throws HeadlessException, IOException {
         super("RepRap build bed    |     mouse:  left - rotate   middle - zoom   right - translate     |    grid: 20 mm");
         JFrame.setDefaultLookAndFeelDecorated(false);
         JPopupMenu.setDefaultLightWeightPopupEnabled(false);
@@ -94,6 +94,21 @@ public class MainFrame extends JFrame {
         requestFocus();
 
         slicerFrame = new SlicerFrame(this);
+        if (args.length == 1) {
+            autoRun(args[0]);
+        }
+    }
+
+    private void autoRun(final String fileName) {
+        final File rfoFile = new File(fileName);
+        builder.addRFOFile(rfoFile);
+        final String rfoFileName = rfoFile.getAbsolutePath();
+        slice(rfoFileName.substring(0, rfoFileName.length() - ".rfo".length()), new ProductionProgressListener() {
+            @Override
+            public void productionProgress(final int layer, final int totalLayers) {
+                System.out.println(layer + "/" + totalLayers);
+            }
+        }, true);
     }
 
     private JMenu createMenu() {
@@ -221,7 +236,6 @@ public class MainFrame extends JFrame {
     }
 
     File onOpen(final String description, final String[] extensions, final String defaultRoot) {
-        File result;
         final FileFilter filter = new FileNameExtensionFilter(description, extensions);
 
         chooser.setFileFilter(filter);
@@ -232,7 +246,7 @@ public class MainFrame extends JFrame {
 
         final int returnVal = chooser.showOpenDialog(null);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            result = chooser.getSelectedFile();
+            final File result = chooser.getSelectedFile();
             if (extensions[0].toUpperCase().contentEquals("RFO")) {
                 builder.addRFOFile(result);
             }
@@ -288,10 +302,32 @@ public class MainFrame extends JFrame {
         return "";
     }
 
-    boolean slice(final String gcodeFileName, final ProductionProgressListener listener) {
-        if (printer.setGCodeFileForOutput(gcodeFileName) == null) {
-            return false;
+    private File gcodeFileDialog(final File defaultFile) {
+        chooser.setSelectedFile(defaultFile);
+        final FileFilter filter = new FileNameExtensionFilter("G Code file to write to", new String[] { "gcode" });
+        chooser.setFileFilter(filter);
+        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+        final int result = chooser.showSaveDialog(null);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            return chooser.getSelectedFile();
+        } else {
+            return null;
         }
+    }
+
+    boolean slice(final String gcodeFileName, final ProductionProgressListener listener, final boolean autoExit) {
+        final File defaultFile = new File(gcodeFileName + ".gcode");
+        final File gcodeFile;
+        if (autoExit) {
+            gcodeFile = defaultFile;
+        } else {
+            gcodeFile = gcodeFileDialog(defaultFile);
+            if (gcodeFile == null) {
+                return false;
+            }
+        }
+        printer.setGCodeFileForOutput(gcodeFile);
         producing(true);
         final Thread t = new Thread() {
             @Override
@@ -302,6 +338,9 @@ public class MainFrame extends JFrame {
                     final Producer producer = new Producer(printer, builder.getSTLs(), listener, slicerFrame.displayPaths());
                     printer.setLayerPause(layerPause);
                     producer.produce();
+                    if (autoExit) {
+                        System.exit(0);
+                    }
                     producing(false);
                     JOptionPane.showMessageDialog(MainFrame.this, "Slicing complete");
                     slicerFrame.slicingFinished();

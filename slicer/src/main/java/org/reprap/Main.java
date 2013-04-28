@@ -16,7 +16,7 @@ public class Main {
             @Override
             public void run() {
                 try {
-                    new MainFrame();
+                    new MainFrame(args);
                 } catch (final IOException e) {
                     throw new RuntimeException(e);
                 }

@@ -712,8 +712,8 @@ public class GCodePrinter implements PreferenceChangeListener {
         delay((long) milliseconds, fastExtrude, really);
     }
 
-    public String setGCodeFileForOutput(final String fileRoot) {
-        return gcode.setGCodeFileForOutput(fileRoot);
+    public void setGCodeFileForOutput(final File gcodeFile) {
+        gcode.setGCodeFileForOutput(gcodeFile);
     }
 
     /**

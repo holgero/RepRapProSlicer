@@ -8,10 +8,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 
-import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileNameExtensionFilter;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
@@ -104,50 +100,34 @@ public class GCodeWriter implements PreferenceChangeListener {
         fr.close();
     }
 
-    public String setGCodeFileForOutput(final String fileRoot) {
-        final File defaultFile = new File(fileRoot + ".gcode");
-        final JFileChooser chooser = new JFileChooser();
-        chooser.setSelectedFile(defaultFile);
-        FileFilter filter;
-        filter = new FileNameExtensionFilter("G Code file to write to", new String[] { "gcode" });
-        chooser.setFileFilter(filter);
-        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-
-        opFileName = null;
-        final int result = chooser.showSaveDialog(null);
-        if (result == JFileChooser.APPROVE_OPTION) {
-            opFileName = chooser.getSelectedFile().getAbsolutePath();
-            if (opFileName.endsWith(GCODE_EXTENSION)) {
-                opFileName = opFileName.substring(0, opFileName.length() - 6);
-            }
-
-            final String fn = opFileName + FIRST_ENDING + TMP_STRING + GCODE_EXTENSION;
-            LOGGER.debug("opening: " + fn);
-            final File fl = new File(fn);
-            fl.deleteOnExit();
-            final FileOutputStream fileStream;
-            try {
-                fileStream = new FileOutputStream(fl);
-            } catch (final FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-            fileOutStream = new PrintStream(fileStream);
-            String shortName = chooser.getSelectedFile().getName();
-            if (!shortName.endsWith(GCODE_EXTENSION)) {
-                shortName += GCODE_EXTENSION;
-            }
-            layerFileNames = System.getProperty("java.io.tmpdir") + File.separator + shortName;
-            final File rfod = new File(layerFileNames);
-            if (!rfod.isDirectory() && !rfod.mkdir()) {
-                throw new RuntimeException("Failed to create " + layerFileNames);
-            }
-            rfod.deleteOnExit();
-            layerFileNames += File.separator;
-            return shortName;
-        } else {
-            fileOutStream = null;
+    public void setGCodeFileForOutput(final File gcodeFile) {
+        opFileName = gcodeFile.getAbsolutePath();
+        if (opFileName.endsWith(GCODE_EXTENSION)) {
+            opFileName = opFileName.substring(0, opFileName.length() - 6);
         }
-        return null;
+
+        final String fn = opFileName + FIRST_ENDING + TMP_STRING + GCODE_EXTENSION;
+        LOGGER.debug("opening: " + fn);
+        final File fl = new File(fn);
+        fl.deleteOnExit();
+        final FileOutputStream fileStream;
+        try {
+            fileStream = new FileOutputStream(fl);
+        } catch (final FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        fileOutStream = new PrintStream(fileStream);
+        String shortName = gcodeFile.getName();
+        if (!shortName.endsWith(GCODE_EXTENSION)) {
+            shortName += GCODE_EXTENSION;
+        }
+        layerFileNames = System.getProperty("java.io.tmpdir") + File.separator + shortName;
+        final File rfod = new File(layerFileNames);
+        if (!rfod.isDirectory() && !rfod.mkdir()) {
+            throw new RuntimeException("Failed to create " + layerFileNames);
+        }
+        rfod.deleteOnExit();
+        layerFileNames += File.separator;
     }
 
     private File getTemporaryFile(final int layerNumber) {

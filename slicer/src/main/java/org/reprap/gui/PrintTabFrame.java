@@ -390,7 +390,7 @@ public class PrintTabFrame extends JInternalFrame {
             return;
         }
         if (mainFrame.slice(stripExtension(loadedFile), new ProgressBarUpdater(currentLayerOutOfN, progressBar,
-                expectedBuildTime, expectedBuildTime, System.currentTimeMillis()))) {
+                expectedBuildTime, expectedBuildTime, System.currentTimeMillis()), false)) {
             printLive();
         }
     }
