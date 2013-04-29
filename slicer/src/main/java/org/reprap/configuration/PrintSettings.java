@@ -21,6 +21,7 @@ package org.reprap.configuration;
 public class PrintSettings {
     private double layerHeight;
     private int verticalShells;
+    private int horizontalShells;
 
     public double getLayerHeight() {
         return layerHeight;
@@ -36,5 +37,13 @@ public class PrintSettings {
 
     public void setVerticalShells(final int verticalShells) {
         this.verticalShells = verticalShells;
+    }
+
+    public int getHorizontalShells() {
+        return horizontalShells;
+    }
+
+    public void setHorizontalShells(int horizontalShells) {
+        this.horizontalShells = horizontalShells;
     }
 }

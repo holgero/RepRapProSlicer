@@ -2,6 +2,7 @@ package org.reprap.geometry;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.configuration.Preferences;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.geometry.polygons.BooleanGrid;
 import org.reprap.geometry.polygons.BooleanGridList;
@@ -28,13 +29,7 @@ public final class InFillPatterns {
         final int layer = layerRules.getModelLayer();
         BooleanGridList slice = slicer.slice(stl, layer);
 
-        int surfaceLayers = 1;
-        for (int i = 0; i < slice.size(); i++) {
-            final GCodeExtruder extruder = layerRules.getPrinter().getExtruder(slice.get(i).attribute().getMaterial());
-            if (extruder.getSurfaceLayers() > surfaceLayers) {
-                surfaceLayers = extruder.getSurfaceLayers();
-            }
-        }
+        final int surfaceLayers = Preferences.getInstance().getPrintSettings().getHorizontalShells();
 
         // Get the bottom out of the way - no fancy calculations needed.
         if (layer <= surfaceLayers) {

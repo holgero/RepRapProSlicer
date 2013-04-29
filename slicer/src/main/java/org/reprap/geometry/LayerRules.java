@@ -47,11 +47,6 @@ public class LayerRules {
     private final int[] lastExtruder;
 
     /**
-     * Record extruder usage in each layer for planning
-     */
-    private final boolean[][] extruderUsedThisLayer;
-
-    /**
      * The heights of the layers
      */
     private final double[] layerZ;
@@ -64,26 +59,6 @@ public class LayerRules {
      * The machine
      */
     private final GCodePrinter printer;
-
-    /**
-     * How far up the model we are in mm
-     */
-    private double modelZ;
-
-    /**
-     * How far we are up from machine Z=0
-     */
-    private double machineZ;
-
-    /**
-     * The count of layers up the model
-     */
-    private int modelLayer;
-
-    /**
-     * The number of layers the machine has done
-     */
-    private int machineLayer;
 
     /**
      * The top of the model in model coordinates
@@ -111,47 +86,41 @@ public class LayerRules {
     private final double zStep;
 
     /**
-     * This is true until it is first read, when it becomes false
-     */
-    private boolean notStartedYet = true;
-    /**
      * The XY rectangle that bounds the build
      */
     private final Rectangle bBox;
 
     /**
-     * The maximum number of surface layers requested by any extruder
+     * The number of surface layers
      */
-    private int maxSurfaceLayers = 2;
-
-    /**
-     * How many physical extruders?
-     */
-    private int maxAddress = -1;
+    private final int maxSurfaceLayers;
 
     private final Preferences preferences = Preferences.getInstance();
 
+    /**
+     * How far up the model we are in mm
+     */
+    private double modelZ;
+
+    /**
+     * How far we are up from machine Z=0
+     */
+    private double machineZ;
+
+    /**
+     * The count of layers up the model
+     */
+    private int modelLayer;
+
+    /**
+     * The number of layers the machine has done
+     */
+    private int machineLayer;
+
     LayerRules(final GCodePrinter printer, final BoundingBox box) {
         this.printer = printer;
-
-        // Run through the extruders checking their layer heights and the
-        // Actual physical extruder used.
-        final GCodeExtruder[] es = printer.getExtruders();
         zStep = preferences.getPrintSettings().getLayerHeight();
-        int fineLayers = es[0].getLowerFineLayers();
-        if (es.length > 1) {
-            for (int i = 1; i < es.length; i++) {
-                if (es[i].getLowerFineLayers() > fineLayers) {
-                    fineLayers = es[i].getLowerFineLayers();
-                }
-                if (es[i].getSurfaceLayers() > maxSurfaceLayers) {
-                    maxSurfaceLayers = es[i].getSurfaceLayers();
-                }
-                if (es[i].getPhysicalExtruderNumber() > maxAddress) {
-                    maxAddress = es[i].getPhysicalExtruderNumber();
-                }
-            }
-        }
+        maxSurfaceLayers = preferences.getPrintSettings().getHorizontalShells();
 
         modelZMax = box.getZint().high();
         final int foundationLayers = Math.max(0, printer.getFoundationLayers());
@@ -170,12 +139,8 @@ public class LayerRules {
         lastExtruder = new int[machineLayerMax + 1];
         layerZ = new double[machineLayerMax + 1];
         layerFileNames = new String[machineLayerMax + 1];
-        extruderUsedThisLayer = new boolean[machineLayerMax + 1][maxAddress];
         for (int i = 0; i < machineLayerMax + 1; i++) {
             layerFileNames[i] = null;
-            for (int j = 0; j < maxAddress; j++) {
-                extruderUsedThisLayer[i][j] = false;
-            }
         }
 
         final Rectangle gp = box.getXYbox();
@@ -290,14 +255,6 @@ public class LayerRules {
 
     public double getZStep() {
         return zStep;
-    }
-
-    public boolean notStartedYet() {
-        if (notStartedYet) {
-            notStartedYet = false;
-            return true;
-        }
-        return false;
     }
 
     /**

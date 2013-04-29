@@ -44,9 +44,9 @@ public class Preferences {
     private static final int GRID_SIZE = 100;
     private static final double GRID_RESOLUTION = 1.0 / GRID_SIZE;
     private static final double MACHINE_RESOLUTION = 0.05; // RepRap step size in mm
-    private static final Pattern[] OBSOLETE_PROPERTIES_PATTERNS = new Pattern[] {
-            Pattern.compile("Extruder\\d_ExtrusionHeight\\(mm\\)"),
-            Pattern.compile("Extruder\\d_NumberOfShells\\(0\\.\\.N\\)"), };
+    private static final List<Pattern> OBSOLETE_PROPERTIES_PATTERNS = compilePatterns("Extruder\\d_ExtrusionHeight\\(mm\\)",
+            "Extruder\\d_NumberOfShells\\(0\\.\\.N\\)", "Extruder\\d_SurfaceLayers\\(0\\.\\.N\\)");
+
     private static String propsFile = "reprap.properties";
 
     static {
@@ -56,6 +56,14 @@ public class Preferences {
         }
     }
     private static final Preferences globalPrefs = new Preferences();
+
+    private static List<Pattern> compilePatterns(final String... patternStrings) {
+        final List<Pattern> result = new ArrayList<>();
+        for (final String patternText : patternStrings) {
+            result.add(Pattern.compile(patternText));
+        }
+        return result;
+    }
 
     private static void copySystemConfigurations(final File usersDir) {
         try {
@@ -144,6 +152,7 @@ public class Preferences {
         loadConfiguration(propsFile);
         printSettings.setLayerHeight(loadDouble("Extruder0_ExtrusionHeight(mm)"));
         printSettings.setVerticalShells(loadInt("Extruder0_NumberOfShells(0..N)"));
+        printSettings.setHorizontalShells(loadInt("Extruder0_SurfaceLayers(0..N)"));
         removeUnusedProperties();
     }
 

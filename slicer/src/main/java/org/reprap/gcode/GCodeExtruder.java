@@ -141,11 +141,6 @@ public class GCodeExtruder {
      * The smallest allowable free-movement height above the base
      */
     private double minLiftedZ = 1;
-    /**
-     * This decides how many layers to fine-infill for areas that are upward- or
-     * downward-facing surfaces of the object.
-     */
-    private int surfaceLayers = 2;
     private double extrusionFoundationWidth;
     private double arcCompensationFactor;
     private double arcShortSides;
@@ -293,7 +288,6 @@ public class GCodeExtruder {
                         + "ColourB(0..1)"));
         materialColour = new Appearance();
         materialColour.setMaterial(new Material(col, Constants.BLACK, col, Constants.BLACK, 101f));
-        surfaceLayers = preferences.loadInt(prefName + "SurfaceLayers(0..N)");
         feedDiameter = preferences.loadDouble(prefName + "FeedDiameter(mm)");
         insideOut = preferences.loadBool(prefName + "InsideOut");
         fastXYFeedrate = Math.min(printer.getFastXYFeedrate(), fastXYFeedrate);
@@ -639,14 +633,6 @@ public class GCodeExtruder {
 
     public double getLift() {
         return lift;
-    }
-
-    /**
-     * This decides how many layers to fine-infill for areas that are upward- or
-     * downward-facing surfaces of the object.
-     */
-    public int getSurfaceLayers() {
-        return surfaceLayers;
     }
 
     /**
