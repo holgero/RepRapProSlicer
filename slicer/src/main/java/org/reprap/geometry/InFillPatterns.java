@@ -18,17 +18,10 @@ import org.reprap.geometry.polyhedra.Attributes;
  */
 public final class InFillPatterns {
     private static final Logger LOGGER = LogManager.getLogger(InFillPatterns.class);
-    private BooleanGridList bridges;
-    private BooleanGridList insides;
-    private BooleanGridList surfaces;
-    private final PolygonList hatchedPolygons;
-
-    public InFillPatterns() {
-        bridges = new BooleanGridList();
-        insides = new BooleanGridList();
-        surfaces = new BooleanGridList();
-        hatchedPolygons = new PolygonList();
-    }
+    private BooleanGridList bridges = new BooleanGridList();
+    private BooleanGridList insides = new BooleanGridList();
+    private BooleanGridList surfaces = new BooleanGridList();
+    private final PolygonList hatchedPolygons = new PolygonList();
 
     PolygonList computeHatchedPolygons(final int stl, final LayerRules layerRules, final ProducerStlList slicer) {
         // Where are we and what does the current slice look like?
