@@ -13,11 +13,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.regex.Pattern;
 
 import javax.vecmath.Color3f;
 
@@ -42,6 +44,7 @@ public class Preferences {
     private static final int GRID_SIZE = 100;
     private static final double GRID_RESOLUTION = 1.0 / GRID_SIZE;
     private static final double MACHINE_RESOLUTION = 0.05; // RepRap step size in mm
+    private static final Pattern EXTRUSION_HEIGHT_PATTERN = Pattern.compile("Extruder\\d_ExtrusionHeight\\(mm\\)");
     private static String propsFile = "reprap.properties";
 
     static {
@@ -133,9 +136,21 @@ public class Preferences {
 
     private final Properties mainPreferences = new Properties();
     private final Set<PreferenceChangeListener> listeners = new HashSet<>();
+    private final PrintSettings printSettings = new PrintSettings();
 
     private Preferences() {
         loadConfiguration(propsFile);
+        getPrintSettings().setLayerHeight(loadDouble("Extruder0_ExtrusionHeight(mm)"));
+        removeUnusedProperties();
+    }
+
+    private void removeUnusedProperties() {
+        for (final Iterator<?> iterator = mainPreferences.keySet().iterator(); iterator.hasNext();) {
+            final String key = (String) iterator.next();
+            if (EXTRUSION_HEIGHT_PATTERN.matcher(key).matches()) {
+                iterator.remove();
+            }
+        }
     }
 
     public double gridResultion() {
@@ -386,5 +401,9 @@ public class Preferences {
 
     public static Preferences getInstance() {
         return globalPrefs;
+    }
+
+    public PrintSettings getPrintSettings() {
+        return printSettings;
     }
 }

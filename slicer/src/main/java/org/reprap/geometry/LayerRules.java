@@ -108,12 +108,7 @@ public class LayerRules {
     /**
      * The smallest step height of all the extruders
      */
-    private double zStep;
-
-    /**
-     * The biggest step height of all the extruders
-     */
-    private double thickestZStep;
+    private final double zStep;
 
     /**
      * This is true until it is first read, when it becomes false
@@ -142,19 +137,12 @@ public class LayerRules {
         // Run through the extruders checking their layer heights and the
         // Actual physical extruder used.
         final GCodeExtruder[] es = printer.getExtruders();
-        zStep = es[0].getExtrusionHeight();
-        thickestZStep = zStep;
+        zStep = preferences.getPrintSettings().getLayerHeight();
         int fineLayers = es[0].getLowerFineLayers();
         if (es.length > 1) {
             for (int i = 1; i < es.length; i++) {
                 if (es[i].getLowerFineLayers() > fineLayers) {
                     fineLayers = es[i].getLowerFineLayers();
-                }
-                if (es[i].getExtrusionHeight() > thickestZStep) {
-                    thickestZStep = es[i].getExtrusionHeight();
-                }
-                if (es[i].getExtrusionHeight() < zStep) {
-                    zStep = es[i].getExtrusionHeight();
                 }
                 if (es[i].getSurfaceLayers() > maxSurfaceLayers) {
                     maxSurfaceLayers = es[i].getSurfaceLayers();
@@ -162,15 +150,6 @@ public class LayerRules {
                 if (es[i].getPhysicalExtruderNumber() > maxAddress) {
                     maxAddress = es[i].getPhysicalExtruderNumber();
                 }
-            }
-        }
-
-        final long thick = Math.round(thickestZStep * 1000.0);
-        for (int i = 0; i < es.length; i++) {
-            final long thin = Math.round(es[i].getExtrusionHeight() * 1000.0);
-            if (thick % thin != 0) {
-                throw new RuntimeException("the layer height for extruder " + i + "(" + es[i].getLowerFineLayers()
-                        + ") is not an integer divisor of the layer height for layer height " + thickestZStep);
             }
         }
 
@@ -227,25 +206,8 @@ public class LayerRules {
         return modelLayer;
     }
 
-    /**
-     * MIGHT an extruder be used in this layer. I.e. is this layer the correct
-     * multiple of the microlayering heights for this extruder possibly to be
-     * required.
-     */
-    public boolean extruderLiveThisLayer(final int e) {
-        final GCodeExtruder[] es = printer.getExtruders();
-        final double myHeight = es[e].getExtrusionHeight();
-        final double eFraction = machineZ / myHeight;
-        double delta = eFraction - Math.floor(eFraction);
-        if (delta > 0.5) {
-            delta = Math.ceil(eFraction) - eFraction;
-        }
-        delta = myHeight * delta;
-        return (delta < zStep * 0.5);
-    }
-
     public int sliceCacheSize() {
-        return (int) Math.ceil(2 * (maxSurfaceLayers * 2 + 1) * thickestZStep / zStep);
+        return (int) Math.ceil(2 * (maxSurfaceLayers * 2 + 1));
     }
 
     void setFirstAndLast(final PolygonList[] pl) {
@@ -347,7 +309,7 @@ public class LayerRules {
      * wanted).
      */
     public HalfPlane getHatchDirection(final GCodeExtruder e, final boolean support) {
-        final double myHeight = e.getExtrusionHeight();
+        final double myHeight = zStep;
         final double eFraction = machineZ / myHeight;
         final int mylayer = (int) Math.round(eFraction);
 

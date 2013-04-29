@@ -28,11 +28,6 @@ public class GCodeExtruder {
      */
     private double extrusionSize;
     /**
-     * The extrusion height in Z TODO: Should this be a machine-wide constant? -
-     * AB
-     */
-    private double extrusionHeight;
-    /**
      * The step between infill tracks
      */
     private double extrusionInfillWidth;
@@ -260,7 +255,6 @@ public class GCodeExtruder {
         final String prefName = "Extruder" + myExtruderID + "_";
         physicalExtruderId = preferences.loadInt(prefName + "Address");
         extrusionSize = preferences.loadDouble(prefName + "ExtrusionSize(mm)");
-        extrusionHeight = preferences.loadDouble(prefName + "ExtrusionHeight(mm)");
         extrusionInfillWidth = preferences.loadDouble(prefName + "ExtrusionInfillWidth(mm)");
         lowerFineLayers = 2;
         coolingPeriod = preferences.loadDouble(prefName + "CoolingPeriod(s)");
@@ -390,10 +384,6 @@ public class GCodeExtruder {
 
     public double getExtrusionSize() {
         return extrusionSize;
-    }
-
-    public double getExtrusionHeight() {
-        return extrusionHeight;
     }
 
     /**
@@ -593,7 +583,8 @@ public class GCodeExtruder {
             return distance;
         }
 
-        return distance * getExtrusionHeight() * getExtrusionSize() / (getFeedDiameter() * getFeedDiameter() * Math.PI / 4);
+        return distance * Preferences.getInstance().getPrintSettings().getLayerHeight() * getExtrusionSize()
+                / (getFeedDiameter() * getFeedDiameter() * Math.PI / 4);
     }
 
     /**

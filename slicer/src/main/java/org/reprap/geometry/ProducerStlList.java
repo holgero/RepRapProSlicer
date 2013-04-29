@@ -365,9 +365,7 @@ class ProducerStlList {
                 final BooleanGrid above = previousSupport.get(i);
                 final GCodeExtruder e = layerRules.getPrinter().getExtruder(a.getMaterial()).getSupportExtruder();
                 if (e != null) {
-                    if (layerRules.extruderLiveThisLayer(e.getID())) {
-                        support.add(BooleanGrid.difference(above, unionOfThisLayer, a));
-                    }
+                    support.add(BooleanGrid.difference(above, unionOfThisLayer, a));
                 }
             }
             support = support.unionDuplicates();
@@ -405,9 +403,7 @@ class ProducerStlList {
                 e = layerRules.getPrinter().getExtruder(attribute.getMaterial());
             }
             if (e != null) {
-                if (layerRules.extruderLiveThisLayer(e.getID())) {
-                    neededSlice.add(allLayer.get(i));
-                }
+                neededSlice.add(allLayer.get(i));
             }
         }
         return neededSlice;

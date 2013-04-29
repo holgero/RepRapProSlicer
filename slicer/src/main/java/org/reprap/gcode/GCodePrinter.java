@@ -485,7 +485,7 @@ public class GCodePrinter implements PreferenceChangeListener {
             final int pe = extruders[e].getPhysicalExtruderNumber();
             if (physicalExtruderUsed[pe]) {
                 if (!zRight) {
-                    singleMove(currentX, currentY, getExtruder().getExtrusionHeight(), getFastFeedrateZ(), true);
+                    singleMove(currentX, currentY, preferences.getPrintSettings().getLayerHeight(), getFastFeedrateZ(), true);
                     currentZ = machineZ;
                 }
                 zRight = true;
@@ -608,7 +608,7 @@ public class GCodePrinter implements PreferenceChangeListener {
                 extrudeLength = getExtruder().getDistanceFromTime(millis);
 
                 if (getExtruder().getFeedDiameter() > 0) {
-                    fr = fr * getExtruder().getExtrusionHeight() * getExtruder().getExtrusionSize()
+                    fr = fr * preferences.getPrintSettings().getLayerHeight() * getExtruder().getExtrusionSize()
                             / (getExtruder().getFeedDiameter() * getExtruder().getFeedDiameter() * Math.PI / 4);
                 }
 
