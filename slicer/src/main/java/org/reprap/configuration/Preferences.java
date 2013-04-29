@@ -44,7 +44,9 @@ public class Preferences {
     private static final int GRID_SIZE = 100;
     private static final double GRID_RESOLUTION = 1.0 / GRID_SIZE;
     private static final double MACHINE_RESOLUTION = 0.05; // RepRap step size in mm
-    private static final Pattern EXTRUSION_HEIGHT_PATTERN = Pattern.compile("Extruder\\d_ExtrusionHeight\\(mm\\)");
+    private static final Pattern[] OBSOLETE_PROPERTIES_PATTERNS = new Pattern[] {
+            Pattern.compile("Extruder\\d_ExtrusionHeight\\(mm\\)"),
+            Pattern.compile("Extruder\\d_NumberOfShells\\(0\\.\\.N\\)"), };
     private static String propsFile = "reprap.properties";
 
     static {
@@ -140,15 +142,19 @@ public class Preferences {
 
     private Preferences() {
         loadConfiguration(propsFile);
-        getPrintSettings().setLayerHeight(loadDouble("Extruder0_ExtrusionHeight(mm)"));
+        printSettings.setLayerHeight(loadDouble("Extruder0_ExtrusionHeight(mm)"));
+        printSettings.setVerticalShells(loadInt("Extruder0_NumberOfShells(0..N)"));
         removeUnusedProperties();
     }
 
     private void removeUnusedProperties() {
         for (final Iterator<?> iterator = mainPreferences.keySet().iterator(); iterator.hasNext();) {
             final String key = (String) iterator.next();
-            if (EXTRUSION_HEIGHT_PATTERN.matcher(key).matches()) {
-                iterator.remove();
+            for (final Pattern pattern : OBSOLETE_PROPERTIES_PATTERNS) {
+                if (pattern.matcher(key).matches()) {
+                    iterator.remove();
+                    break;
+                }
             }
         }
     }

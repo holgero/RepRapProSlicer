@@ -906,10 +906,9 @@ class ProducerStlList {
                 throw new RuntimeException("grid attribute is null");
             }
             final GCodeExtruder e = lc.getPrinter().getExtruder(att.getMaterial());
-            final int shells = e.getShells();
             final double extrusionSize = e.getExtrusionSize();
             final boolean insideOut = e.getInsideOut();
-            for (int shell = 0; shell < shells; shell++) {
+            for (int shell = 0; shell < Preferences.getInstance().getPrintSettings().getVerticalShells(); shell++) {
                 final double d = multiplier * (shell + 0.5) * extrusionSize;
                 final BooleanGrid thisOne = grid.createOffsetGrid(d);
                 if (thisOne.isEmpty()) {
@@ -935,7 +934,6 @@ class ProducerStlList {
             }
             final GCodeExtruder[] es = lc.getPrinter().getExtruders();
             final GCodeExtruder e = lc.getPrinter().getExtruder(att.getMaterial());
-            final int shells = e.getShells();
             final double extrusionSize = e.getExtrusionSize();
             final int ei = e.getInfillExtruderNumber();
             GCodeExtruder ife = e;
@@ -943,6 +941,7 @@ class ProducerStlList {
                 ife = es[ei];
             }
             final double infillOverlap = ife.getInfillOverlap();
+            final int shells = Preferences.getInstance().getPrintSettings().getVerticalShells();
             // Must be a hatch.  Only do it if the gap is +ve or we're building the foundation
             final double offSize;
             if (multiplier < 0) {

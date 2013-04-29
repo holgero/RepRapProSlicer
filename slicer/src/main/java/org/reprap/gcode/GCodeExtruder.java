@@ -142,10 +142,6 @@ public class GCodeExtruder {
      */
     private double minLiftedZ = 1;
     /**
-     * The number of outlines to plot
-     */
-    private int shells = 1;
-    /**
      * This decides how many layers to fine-infill for areas that are upward- or
      * downward-facing surfaces of the object.
      */
@@ -285,7 +281,6 @@ public class GCodeExtruder {
         valveOverRun = preferences.loadDouble(prefName + "ValveOverRun(mm)");
         minLiftedZ = -1;
         valvePulseTime = 0.5 * preferences.loadDouble(prefName + "ValvePulseTime(ms)");
-        shells = preferences.loadInt(prefName + "NumberOfShells(0..N)");
         extrusionFoundationWidth = preferences.loadDouble(prefName + "ExtrusionFoundationWidth(mm)");
         arcCompensationFactor = preferences.loadDouble(prefName + "ArcCompensationFactor(0..)");
         arcShortSides = preferences.loadDouble(prefName + "ArcShortSides(0..)");
@@ -500,13 +495,6 @@ public class GCodeExtruder {
      */
     public double getMinLiftedZ() {
         return minLiftedZ;
-    }
-
-    /**
-     * The number of times to go round the outline (0 to supress)
-     */
-    public int getShells() {
-        return shells;
     }
 
     /**
