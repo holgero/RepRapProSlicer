@@ -48,10 +48,10 @@ import org.apache.logging.log4j.Logger;
 public class Preferences extends JFrame {
     private static final Logger LOGGER = LogManager.getLogger(Preferences.class);
     private static final long serialVersionUID = 1L;
-    private int extruderCount;
-    private JLabel[] globals; // Array of JLabels for the general key names
-    private PreferencesValue[] globalValues; // Array of JTextFields for the general variables
-    private PreferenceCategory[] globalCats; // What are they?
+    private final int extruderCount;
+    private final JLabel[] globals; // Array of JLabels for the general key names
+    private final PreferencesValue[] globalValues; // Array of JTextFields for the general variables
+    private final PreferenceCategory[] globalCats; // What are they?
     private final JLabel[][] extruders; // Array of Arrays of JLabels for the extruders' key names
     private final PreferencesValue[][] extruderValues; // Array of Arrays of JTextFields for the extruders' variables
     private final PreferenceCategory[][] extruderCats; // What are they?
@@ -115,33 +115,29 @@ public class Preferences extends JFrame {
      * them.
      */
     public Preferences() {
-        try {
-            // Start with everything that isn't an extruder value.
-            final String[] g = org.reprap.configuration.Preferences.notStartsWith("Extruder");
-            Arrays.sort(g);
-            globals = makeLabels(g);
-            globalValues = makeValues(globals);
-            globalCats = categorise(globalValues);
-            // Next we need to know how many extruders we've got.
-            extruderCount = Integer.parseInt(loadString("NumberOfExtruders"));
+        // Start with everything that isn't an extruder value.
+        final String[] g = org.reprap.configuration.Preferences.notStartsWith("Extruder");
+        Arrays.sort(g);
+        globals = makeLabels(g);
+        globalValues = makeValues(globals);
+        globalCats = categorise(globalValues);
+        // Next we need to know how many extruders we've got.
+        extruderCount = Integer.parseInt(loadString("NumberOfExtruders"));
 
-            // Now build a set of arrays for each extruder in turn.
-            extruders = new JLabel[extruderCount][];
-            extruderValues = new PreferencesValue[extruderCount][];
-            extruderCats = new PreferenceCategory[extruderCount][];
-            for (int i = 0; i < extruderCount; i++) {
-                final String[] a = org.reprap.configuration.Preferences.startsWith("Extruder" + i);
-                Arrays.sort(a);
-                extruders[i] = makeLabels(a);
-                extruderValues[i] = makeValues(extruders[i]);
-                extruderCats[i] = categorise(extruderValues[i]);
-            }
-
-            // Paint the lot on the screen...
-            initGUI();
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
+        // Now build a set of arrays for each extruder in turn.
+        extruders = new JLabel[extruderCount][];
+        extruderValues = new PreferencesValue[extruderCount][];
+        extruderCats = new PreferenceCategory[extruderCount][];
+        for (int i = 0; i < extruderCount; i++) {
+            final String[] a = org.reprap.configuration.Preferences.startsWith("Extruder" + i);
+            Arrays.sort(a);
+            extruders[i] = makeLabels(a);
+            extruderValues[i] = makeValues(extruders[i]);
+            extruderCats[i] = categorise(extruderValues[i]);
         }
+
+        // Paint the lot on the screen...
+        initGUI();
     }
 
     private JButton OKButton() {

@@ -272,7 +272,7 @@ public class Preferences {
         listeners.add(listener);
     }
 
-    private void notifyPreferenceChangeListeners() throws IOException {
+    private void notifyPreferenceChangeListeners() {
         for (final PreferenceChangeListener listener : listeners) {
             listener.refreshPreferences(this);
         }
@@ -345,7 +345,7 @@ public class Preferences {
         return (float) loadDouble(prefix + "Colour" + component + "(0..1)");
     }
 
-    public static String[] startsWith(final String prefix) throws IOException {
+    public static String[] startsWith(final String prefix) {
         final Enumeration<?> allOfThem = globalPrefs.mainPreferences.propertyNames();
         final List<String> r = new ArrayList<String>();
 
@@ -364,7 +364,7 @@ public class Preferences {
         return result;
     }
 
-    public static String[] notStartsWith(final String prefix) throws IOException {
+    public static String[] notStartsWith(final String prefix) {
         final Enumeration<?> allOfThem = globalPrefs.mainPreferences.propertyNames();
         final List<String> r = new ArrayList<String>();
 
