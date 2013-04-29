@@ -9,6 +9,7 @@ package org.reprap.gcode;
  */
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
@@ -369,73 +370,69 @@ public class GCodePrinter implements PreferenceChangeListener {
             return;
         }
 
-        try {
-            if (xyMove && getExtruder().getMaxAcceleration() <= 0) {
-                moveTo(x, y, z, feedrate, false, false);
-                return;
+        if (xyMove && getExtruder().getMaxAcceleration() <= 0) {
+            moveTo(x, y, z, feedrate, false, false);
+            return;
+        }
+
+        if (xyMove) {
+            final double s = Math.sqrt(dx * dx + dy * dy);
+
+            final VelocityProfile vp = new VelocityProfile(s, getExtruder().getSlowXYFeedrate(), feedrate, getExtruder()
+                    .getSlowXYFeedrate(), getExtruder().getMaxAcceleration());
+            switch (vp.flat()) {
+            case 0:
+                qFeedrate(feedrate);
+                moveTo(x, y, z0, feedrate, false, false);
+                break;
+
+            case 1:
+                qFeedrate(getExtruder().getSlowXYFeedrate());
+                moveTo(x0 + dx * vp.s1() / s, y0 + dy * vp.s1() / s, z0, vp.v(), false, false);
+                moveTo(x, y, z0, getExtruder().getSlowXYFeedrate(), false, false);
+                break;
+
+            case 2:
+                qFeedrate(getExtruder().getSlowXYFeedrate());
+                moveTo(x0 + dx * vp.s1() / s, y0 + dy * vp.s1() / s, z0, feedrate, false, false);
+                moveTo(x0 + dx * vp.s2() / s, y0 + dy * vp.s2() / s, z0, feedrate, false, false);
+                moveTo(x, y, z0, getExtruder().getSlowXYFeedrate(), false, false);
+                break;
+
+            default:
+                LOGGER.error("GCodeRepRap.singleMove(): dud VelocityProfile XY flat value.");
             }
+        }
 
-            if (xyMove) {
-                final double s = Math.sqrt(dx * dx + dy * dy);
-
-                final VelocityProfile vp = new VelocityProfile(s, getExtruder().getSlowXYFeedrate(), feedrate, getExtruder()
-                        .getSlowXYFeedrate(), getExtruder().getMaxAcceleration());
-                switch (vp.flat()) {
-                case 0:
-                    qFeedrate(feedrate);
-                    moveTo(x, y, z0, feedrate, false, false);
-                    break;
-
-                case 1:
-                    qFeedrate(getExtruder().getSlowXYFeedrate());
-                    moveTo(x0 + dx * vp.s1() / s, y0 + dy * vp.s1() / s, z0, vp.v(), false, false);
-                    moveTo(x, y, z0, getExtruder().getSlowXYFeedrate(), false, false);
-                    break;
-
-                case 2:
-                    qFeedrate(getExtruder().getSlowXYFeedrate());
-                    moveTo(x0 + dx * vp.s1() / s, y0 + dy * vp.s1() / s, z0, feedrate, false, false);
-                    moveTo(x0 + dx * vp.s2() / s, y0 + dy * vp.s2() / s, z0, feedrate, false, false);
-                    moveTo(x, y, z0, getExtruder().getSlowXYFeedrate(), false, false);
-                    break;
-
-                default:
-                    LOGGER.error("GCodeRepRap.singleMove(): dud VelocityProfile XY flat value.");
-                }
+        if (zMove) {
+            final VelocityProfile vp = new VelocityProfile(Math.abs(dz), getSlowZFeedrate(), feedrate, getSlowZFeedrate(),
+                    getMaxZAcceleration());
+            double s = 1;
+            if (dz < 0) {
+                s = -1;
             }
+            switch (vp.flat()) {
+            case 0:
+                qFeedrate(feedrate);
+                moveTo(x0, y0, z, feedrate, false, false);
+                break;
 
-            if (zMove) {
-                final VelocityProfile vp = new VelocityProfile(Math.abs(dz), getSlowZFeedrate(), feedrate, getSlowZFeedrate(),
-                        getMaxZAcceleration());
-                double s = 1;
-                if (dz < 0) {
-                    s = -1;
-                }
-                switch (vp.flat()) {
-                case 0:
-                    qFeedrate(feedrate);
-                    moveTo(x0, y0, z, feedrate, false, false);
-                    break;
+            case 1:
+                qFeedrate(getSlowZFeedrate());
+                moveTo(x0, y0, z0 + s * vp.s1(), vp.v(), false, false);
+                moveTo(x0, y0, z, getSlowZFeedrate(), false, false);
+                break;
 
-                case 1:
-                    qFeedrate(getSlowZFeedrate());
-                    moveTo(x0, y0, z0 + s * vp.s1(), vp.v(), false, false);
-                    moveTo(x0, y0, z, getSlowZFeedrate(), false, false);
-                    break;
+            case 2:
+                qFeedrate(getSlowZFeedrate());
+                moveTo(x0, y0, z0 + s * vp.s1(), feedrate, false, false);
+                moveTo(x0, y0, z0 + s * vp.s2(), feedrate, false, false);
+                moveTo(x0, y0, z, getSlowZFeedrate(), false, false);
+                break;
 
-                case 2:
-                    qFeedrate(getSlowZFeedrate());
-                    moveTo(x0, y0, z0 + s * vp.s1(), feedrate, false, false);
-                    moveTo(x0, y0, z0 + s * vp.s2(), feedrate, false, false);
-                    moveTo(x0, y0, z, getSlowZFeedrate(), false, false);
-                    break;
-
-                default:
-                    LOGGER.error("GCodeRepRap.singleMove(): dud VelocityProfile Z flat value.");
-                }
+            default:
+                LOGGER.error("GCodeRepRap.singleMove(): dud VelocityProfile Z flat value.");
             }
-        } catch (final Exception e) {
-            LOGGER.error(e.toString());
         }
     }
 
@@ -712,7 +709,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         delay((long) milliseconds, fastExtrude, really);
     }
 
-    public void setGCodeFileForOutput(final File gcodeFile) {
+    public void setGCodeFileForOutput(final File gcodeFile) throws FileNotFoundException {
         gcode.setGCodeFileForOutput(gcodeFile);
     }
 

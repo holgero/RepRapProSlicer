@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Preferences;
@@ -267,14 +268,14 @@ public class BooleanGrid {
         h[3] = new HalfPlane(rp1, Point2D.add(rp1, h[0].normal()));
         double xMin = Double.MAX_VALUE;
         double xMax = Double.MIN_VALUE;
-        Point2D p = null;
         for (int i = 0; i < 4; i++) {
             try {
-                p = h[i].crossPoint(h[(i + 1) % 4]);
-            } catch (final Exception e) {
+                final Point2D p = h[i].crossPoint(h[(i + 1) % 4]);
+                xMin = Math.min(xMin, p.x());
+                xMax = Math.max(xMax, p.x());
+            } catch (final ParallelException e) {
+                LOGGER.catching(Level.DEBUG, e);
             }
-            xMin = Math.min(xMin, p.x());
-            xMax = Math.max(xMax, p.x());
         }
         int iXMin = (int) Math.round(xMin);
         iXMin = Math.max(iXMin, 0);
@@ -615,14 +616,10 @@ public class BooleanGrid {
         for (int x = -1; x < 2; x++) {
             for (int y = -1; y < 2; y++) {
                 final int j = pixI(x, y);
-                try {
-                    if (i + j >= 0 && i + j < bits.size()) {
-                        if (bits.get(i + j)) {
-                            result++;
-                        }
+                if (i + j >= 0 && i + j < bits.size()) {
+                    if (bits.get(i + j)) {
+                        result++;
                     }
-                } catch (final Exception e) {
-                    throw new RuntimeException(e.getClass().getName() + " at x,y = " + x + "," + y, e);
                 }
             }
         }
@@ -1161,11 +1158,8 @@ public class BooleanGrid {
             }
         } while (segment >= 0);
 
-        try {
-            if (Preferences.getInstance().loadBool("PathOptimise")) {
-                joinUpSnakes(snakes, hatches, gap);
-            }
-        } catch (final Exception e) {
+        if (Preferences.getInstance().loadBool("PathOptimise")) {
+            joinUpSnakes(snakes, hatches, gap);
         }
 
         resetVisited();

@@ -27,6 +27,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import javax.swing.Box;
@@ -99,7 +100,7 @@ public class MainFrame extends JFrame {
         }
     }
 
-    private void autoRun(final String fileName) {
+    private void autoRun(final String fileName) throws FileNotFoundException {
         final File rfoFile = new File(fileName);
         builder.addRFOFile(rfoFile);
         final String rfoFileName = rfoFile.getAbsolutePath();
@@ -316,7 +317,8 @@ public class MainFrame extends JFrame {
         }
     }
 
-    boolean slice(final String gcodeFileName, final ProductionProgressListener listener, final boolean autoExit) {
+    boolean slice(final String gcodeFileName, final ProductionProgressListener listener, final boolean autoExit)
+            throws FileNotFoundException {
         final File defaultFile = new File(gcodeFileName + ".gcode");
         final File gcodeFile;
         if (autoExit) {
@@ -333,22 +335,21 @@ public class MainFrame extends JFrame {
             @Override
             public void run() {
                 Thread.currentThread().setName("Producer");
+                builder.mouseToWorld();
+                final Producer producer = new Producer(printer, builder.getSTLs(), listener, slicerFrame.displayPaths());
+                printer.setLayerPause(layerPause);
                 try {
-                    builder.mouseToWorld();
-                    final Producer producer = new Producer(printer, builder.getSTLs(), listener, slicerFrame.displayPaths());
-                    printer.setLayerPause(layerPause);
                     producer.produce();
                     if (autoExit) {
                         System.exit(0);
                     }
-                    producing(false);
                     JOptionPane.showMessageDialog(MainFrame.this, "Slicing complete");
-                    slicerFrame.slicingFinished();
-                    producer.dispose();
-                } catch (final Exception ex) {
-                    JOptionPane.showMessageDialog(MainFrame.this, "Production exception: " + ex);
-                    ex.printStackTrace();
+                } catch (final IOException e) {
+                    JOptionPane.showMessageDialog(MainFrame.this, "Production exception: " + e);
                 }
+                producing(false);
+                slicerFrame.slicingFinished();
+                producer.dispose();
             }
         };
         t.start();

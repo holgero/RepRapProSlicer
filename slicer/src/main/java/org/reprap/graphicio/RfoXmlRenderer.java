@@ -12,15 +12,13 @@ final class RfoXmlRenderer {
 
     /**
      * Create an XML file called LegendFile starting with XML entry start.
+     * 
+     * @throws FileNotFoundException
      */
-    RfoXmlRenderer(final File legendFile, final String start) {
-        try {
-            final FileOutputStream fileStream = new FileOutputStream(legendFile);
-            XMLStream = new PrintStream(fileStream);
-            push(start);
-        } catch (final FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+    RfoXmlRenderer(final File legendFile, final String start) throws FileNotFoundException {
+        final FileOutputStream fileStream = new FileOutputStream(legendFile);
+        XMLStream = new PrintStream(fileStream);
+        push(start);
     }
 
     /**

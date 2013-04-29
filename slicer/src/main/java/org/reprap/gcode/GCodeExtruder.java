@@ -314,11 +314,7 @@ public class GCodeExtruder {
 
     public void stopExtruding() {
         if (extruderState.isExtruding()) {
-            try {
-                setExtrusion(0, false);
-            } catch (final Exception e) {
-                //hmm.
-            }
+            setExtrusion(0, false);
             extruderState.setExtruding(false);
         }
     }

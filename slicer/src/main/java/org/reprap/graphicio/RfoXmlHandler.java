@@ -2,6 +2,8 @@ package org.reprap.graphicio;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.media.j3d.Transform3D;
 
@@ -14,11 +16,6 @@ import org.xml.sax.helpers.XMLReaderFactory;
 
 final class RfoXmlHandler extends DefaultHandler {
     /**
-     * The rfo that we are reading in
-     */
-    private final RFO rfo;
-
-    /**
      * The STL being read
      */
     private STLObject stl;
@@ -30,57 +27,49 @@ final class RfoXmlHandler extends DefaultHandler {
     /**
      * The current XML item
      */
-    private String element;
+    private String element = "";
 
     /**
      * File location for reading (eg for an input STL file).
      */
-    private String location;
+    private String location = "";
 
     /**
      * What type of file (Only STLs supported at the moment).
      */
-    private String filetype;
+    private String filetype = "";
 
     /**
      * The name of the material (i.e. extruder) that this item is made from.
      */
-    private String material;
+    private String material = "";
 
     /**
      * Transfom matrix to get an item in the right place.
      */
-    private final double[] mElements;
+    private final double[] mElements = new double[16];
+
     private Transform3D transform;
 
     private int rowNumber = 0;
 
-    /**
-     * Open up legendFile and use it to build RFO rfo.
-     * 
-     * @param legendFile
-     * @param r
-     */
-    RfoXmlHandler(final String legendFile, final RFO r) {
-        super();
-        rfo = r;
-        element = "";
-        location = "";
-        filetype = "";
-        material = "";
-        mElements = new double[16];
-        setMToIdentity();
+    private final List<STLObject> stls = new ArrayList<>();
 
-        try {
-            final XMLReader xr = XMLReaderFactory.createXMLReader();
-            xr.setContentHandler(this);
-            xr.setErrorHandler(this);
-            xr.parse(new InputSource(legendFile));
-        } catch (final SAXException e) {
-            throw new RuntimeException(e);
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
-        }
+    private final File rfoDir;
+
+    RfoXmlHandler(final File rfoDir) {
+        this.rfoDir = rfoDir;
+        setMToIdentity();
+        stls.clear();
+    }
+
+    List<STLObject> parse(final String legendFile) throws SAXException, IOException {
+        final XMLReader xr = XMLReaderFactory.createXMLReader();
+        xr.setContentHandler(this);
+        xr.setErrorHandler(this);
+        xr.parse(new InputSource(legendFile));
+
+        return stls;
     }
 
     /**
@@ -146,11 +135,11 @@ final class RfoXmlHandler extends DefaultHandler {
 
         } else if (element.equalsIgnoreCase("object")) {
             stl.setTransform(transform);
-            rfo.getAstl().add(stl);
+            stls.add(stl);
         } else if (element.equalsIgnoreCase("files")) {
 
         } else if (element.equalsIgnoreCase("file")) {
-            final org.reprap.geometry.polyhedra.Attributes att = stl.addSTL(new File(rfo.getRfoDir(), location), null, null, firstSTL);
+            final org.reprap.geometry.polyhedra.Attributes att = stl.addSTL(new File(rfoDir, location), null, null, firstSTL);
             if (firstSTL == null) {
                 firstSTL = stl;
             }

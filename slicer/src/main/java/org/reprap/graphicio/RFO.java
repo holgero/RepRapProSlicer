@@ -2,6 +2,7 @@ package org.reprap.graphicio;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,6 +22,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.geometry.polyhedra.STLObject;
+import org.xml.sax.SAXException;
 
 /**
  * A .rfo file is a compressed archive containing multiple objects that are all
@@ -141,8 +143,10 @@ public class RFO {
 
     /**
      * Create the legend file
+     * 
+     * @throws FileNotFoundException
      */
-    private void createLegend(final File rfoDir) {
+    private void createLegend(final File rfoDir) throws FileNotFoundException {
         if (rfoDir == null) {
             throw new IllegalArgumentException("rfoDir must not be null");
         }
@@ -261,9 +265,17 @@ public class RFO {
     /**
      * This reads the legend file and does what it says.
      */
-    private void interpretLegend() {
-        @SuppressWarnings("unused")
-        final RfoXmlHandler xi = new RfoXmlHandler(new File(tempDir, "rfo") + "/" + legendName, this);
+    private void interpretLegend() throws IOException {
+        final RfoXmlHandler xi = new RfoXmlHandler(getRfoDir());
+        final String legendFilename = new File(tempDir, "rfo") + "/" + legendName;
+        try {
+            final List<STLObject> stls = xi.parse(legendFilename);
+            for (final STLObject stl : stls) {
+                astl.add(stl);
+            }
+        } catch (final SAXException e) {
+            throw new RuntimeException("Failed to parse " + legendFilename, e);
+        }
     }
 
     /**
@@ -289,10 +301,6 @@ public class RFO {
             }
         });
         return rfo.astl;
-    }
-
-    AllSTLsToBuild getAstl() {
-        return astl;
     }
 
     File getRfoDir() {

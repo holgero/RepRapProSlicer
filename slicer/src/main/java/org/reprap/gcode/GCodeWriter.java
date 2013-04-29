@@ -100,7 +100,7 @@ public class GCodeWriter implements PreferenceChangeListener {
         fr.close();
     }
 
-    public void setGCodeFileForOutput(final File gcodeFile) {
+    public void setGCodeFileForOutput(final File gcodeFile) throws FileNotFoundException {
         opFileName = gcodeFile.getAbsolutePath();
         if (opFileName.endsWith(GCODE_EXTENSION)) {
             opFileName = opFileName.substring(0, opFileName.length() - 6);
@@ -110,12 +110,7 @@ public class GCodeWriter implements PreferenceChangeListener {
         LOGGER.debug("opening: " + fn);
         final File fl = new File(fn);
         fl.deleteOnExit();
-        final FileOutputStream fileStream;
-        try {
-            fileStream = new FileOutputStream(fl);
-        } catch (final FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+        final FileOutputStream fileStream = new FileOutputStream(fl);
         fileOutStream = new PrintStream(fileStream);
         String shortName = gcodeFile.getName();
         if (!shortName.endsWith(GCODE_EXTENSION)) {

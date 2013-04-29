@@ -15,7 +15,6 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
@@ -61,66 +60,53 @@ public class Preferences extends JFrame {
     /**
      * Get the value corresponding to name from the preferences file
      */
-    private String loadString(final String name) throws IOException {
+    private String loadString(final String name) {
         return preferences.loadString(name);
     }
 
     /**
      * Save the value corresponding to name to the preferences file
      */
-    private void saveString(final String name, final String value) throws IOException {
+    private void saveString(final String name, final String value) {
         preferences.setString(name, value);
     }
 
     private void updatePreferencesValues() {
-        try {
-
-            for (int i = 0; i < globals.length; i++) {
-                globalValues[i].setText(loadString(globals[i].getText()));
+        for (int i = 0; i < globals.length; i++) {
+            globalValues[i].setText(loadString(globals[i].getText()));
+        }
+        for (int j = 0; j < extruderCount; j++) {
+            final JLabel[] enames = extruders[j];
+            for (int i = 0; i < enames.length; i++) {
+                extruderValues[j][i].setText(loadString(enames[i].getText()));
             }
-
-            for (int j = 0; j < extruderCount; j++) {
-
-                final JLabel[] enames = extruders[j];
-                for (int i = 0; i < enames.length; i++) {
-                    extruderValues[j][i].setText(loadString(enames[i].getText()));
-                }
-            }
-
-        } catch (final Exception ex) {
-            JOptionPane.showMessageDialog(null, "Updating preferences: " + ex);
-            ex.printStackTrace();
         }
     }
 
     /**
      * Save the lot to the preferences file
      */
-    private void savePreferences() {
-        try {
-            for (int i = 0; i < globals.length; i++) {
-                final String s = globalValues[i].getText();
-                if (category(s) != globalCats[i]) {
-                    throw new RuntimeException("Preferences window: Dud format for " + globals[i].getText() + ": " + s);
-                }
-                saveString(globals[i].getText(), s);
+    private void savePreferences() throws IOException {
+        for (int i = 0; i < globals.length; i++) {
+            final String s = globalValues[i].getText();
+            if (category(s) != globalCats[i]) {
+                throw new RuntimeException("Preferences window: Dud format for " + globals[i].getText() + ": " + s);
             }
-            for (int j = 0; j < extruderCount; j++) {
-                final JLabel[] enames = extruders[j];
-                final PreferencesValue[] evals = extruderValues[j];
-                final PreferenceCategory[] cats = extruderCats[j];
-                for (int i = 0; i < enames.length; i++) {
-                    final String s = evals[i].getText();
-                    if (category(s) != cats[i]) {
-                        throw new RuntimeException("Preferences window: Dud format for " + enames[i].getText() + ": " + s);
-                    }
-                    saveString(enames[i].getText(), s);
-                }
-            }
-            preferences.save();
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
+            saveString(globals[i].getText(), s);
         }
+        for (int j = 0; j < extruderCount; j++) {
+            final JLabel[] enames = extruders[j];
+            final PreferencesValue[] evals = extruderValues[j];
+            final PreferenceCategory[] cats = extruderCats[j];
+            for (int i = 0; i < enames.length; i++) {
+                final String s = evals[i].getText();
+                if (category(s) != cats[i]) {
+                    throw new RuntimeException("Preferences window: Dud format for " + enames[i].getText() + ": " + s);
+                }
+                saveString(enames[i].getText(), s);
+            }
+        }
+        preferences.save();
     }
 
     /**
@@ -199,162 +185,157 @@ public class Preferences extends JFrame {
      */
     private void initGUI() {
         setSize(400, 500);
-        try {
-            final JPanel panel = new JPanel();
-            final String[] configfiles = { "reprap.properties" };
-            final JComboBox<String> configfileList = new JComboBox<String>(configfiles);
-            configfileList.setEditable(true);
+        final JPanel panel = new JPanel();
+        final String[] configfiles = { "reprap.properties" };
+        final JComboBox<String> configfileList = new JComboBox<String>(configfiles);
+        configfileList.setEditable(true);
 
-            String configName = org.reprap.configuration.Preferences.getDefaultPropsFile();
-            configName = configName.substring(0, configName.indexOf(".properties"));
-            configfileList.setSelectedItem(configName);
-            configfileList.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(final ActionEvent e) {
-                    if ("comboBoxChanged".equals(e.getActionCommand())) {
-                        final String configToLoad = (String) configfileList.getSelectedItem() + ".properties";
-                        final File configFile = new File(org.reprap.configuration.Preferences.getReprapRootDir(), configToLoad);
-                        if (configFile.exists()) {
-                            LOGGER.debug("loading config " + configToLoad);
-                            preferences.loadConfiguration(configToLoad);
-                            updatePreferencesValues();
-                        }
-                    }
-                }
-            });
-
-            panel.add(new JLabel("preferences file:"));
-            final Button prefCreateButton = new Button("create");
-            prefCreateButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(final ActionEvent e) {
+        String configName = org.reprap.configuration.Preferences.getDefaultPropsFile();
+        configName = configName.substring(0, configName.indexOf(".properties"));
+        configfileList.setSelectedItem(configName);
+        configfileList.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                if ("comboBoxChanged".equals(e.getActionCommand())) {
                     final String configToLoad = (String) configfileList.getSelectedItem() + ".properties";
-                    final File configFileObj = new File(org.reprap.configuration.Preferences.getReprapRootDir(), configToLoad);
-                    if (!configFileObj.exists()) {
-                        configfileList.addItem((String) configfileList.getSelectedItem());
+                    final File configFile = new File(org.reprap.configuration.Preferences.getReprapRootDir(), configToLoad);
+                    if (configFile.exists()) {
+                        LOGGER.debug("loading config " + configToLoad);
                         preferences.loadConfiguration(configToLoad);
                         updatePreferencesValues();
                     }
                 }
-            });
+            }
+        });
 
-            final Button prefDeleteButton = new Button("delete");
-            prefDeleteButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(final ActionEvent e) {
-                    String configToDelete = (String) configfileList.getSelectedItem() + ".properties";
-                    if (!configToDelete.equals("reprap.properties")) {
-                        final File configFile = new File(org.reprap.configuration.Preferences.getReprapRootDir(), configToDelete);
-                        if (configFile.exists()) {
-                            configFile.delete();
-                            configfileList.removeItem(configfileList.getSelectedItem());
-                            updatePreferencesValues();
-                        } else {
-                            configToDelete = org.reprap.configuration.Preferences.getDefaultPropsFile();
-                            configToDelete = configToDelete.substring(0, configToDelete.indexOf(".properties"));
-                            configfileList.setSelectedItem(configToDelete);
-                        }
+        panel.add(new JLabel("preferences file:"));
+        final Button prefCreateButton = new Button("create");
+        prefCreateButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                final String configToLoad = (String) configfileList.getSelectedItem() + ".properties";
+                final File configFileObj = new File(org.reprap.configuration.Preferences.getReprapRootDir(), configToLoad);
+                if (!configFileObj.exists()) {
+                    configfileList.addItem((String) configfileList.getSelectedItem());
+                    preferences.loadConfiguration(configToLoad);
+                    updatePreferencesValues();
+                }
+            }
+        });
+
+        final Button prefDeleteButton = new Button("delete");
+        prefDeleteButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                String configToDelete = (String) configfileList.getSelectedItem() + ".properties";
+                if (!configToDelete.equals("reprap.properties")) {
+                    final File configFile = new File(org.reprap.configuration.Preferences.getReprapRootDir(), configToDelete);
+                    if (configFile.exists()) {
+                        configFile.delete();
+                        configfileList.removeItem(configfileList.getSelectedItem());
+                        updatePreferencesValues();
+                    } else {
+                        configToDelete = org.reprap.configuration.Preferences.getDefaultPropsFile();
+                        configToDelete = configToDelete.substring(0, configToDelete.indexOf(".properties"));
+                        configfileList.setSelectedItem(configToDelete);
                     }
                 }
-            });
-
-            panel.add(configfileList);
-            panel.add(prefCreateButton);
-            panel.add(prefDeleteButton);
-
-            // We'll have a tab for the globals, then one for each extruder
-            final Box prefDiffBox = new Box(1);
-            final JTabbedPane jTabbedPane1 = new JTabbedPane();
-            prefDiffBox.add(panel);
-            prefDiffBox.add(jTabbedPane1);
-            add(prefDiffBox);
-
-            // Do the global panel
-            final JPanel jPanelGeneral = new JPanel();
-            final JScrollPane jScrollPaneGeneral = new JScrollPane(jPanelGeneral);
-
-            boolean odd = globals.length % 2 != 0;
-            int rows;
-            if (odd) {
-                rows = globals.length / 2 + 2;
-            } else {
-                rows = globals.length / 2 + 1;
             }
-            jPanelGeneral.setLayout(new GridLayout(rows, 4, 5, 5));
+        });
 
-            jTabbedPane1.addTab("Globals", null, jScrollPaneGeneral, null);
+        panel.add(configfileList);
+        panel.add(prefCreateButton);
+        panel.add(prefDeleteButton);
 
-            // Do it in two chunks, so they're vertically ordered, not horizontally
-            int half = globals.length / 2;
-            int next;
-            int i;
-            for (i = 0; i < half; i++) {
-                jPanelGeneral.add(globals[i]);
-                addValueToPanel(globalValues[i], jPanelGeneral);
+        // We'll have a tab for the globals, then one for each extruder
+        final Box prefDiffBox = new Box(1);
+        final JTabbedPane jTabbedPane1 = new JTabbedPane();
+        prefDiffBox.add(panel);
+        prefDiffBox.add(jTabbedPane1);
+        add(prefDiffBox);
 
-                next = i + half;
-                if (next < globals.length) {
-                    jPanelGeneral.add(globals[next]);
-                    addValueToPanel(globalValues[next], jPanelGeneral);
-                }
+        // Do the global panel
+        final JPanel jPanelGeneral = new JPanel();
+        final JScrollPane jScrollPaneGeneral = new JScrollPane(jPanelGeneral);
+
+        boolean odd = globals.length % 2 != 0;
+        int rows;
+        if (odd) {
+            rows = globals.length / 2 + 2;
+        } else {
+            rows = globals.length / 2 + 1;
+        }
+        jPanelGeneral.setLayout(new GridLayout(rows, 4, 5, 5));
+
+        jTabbedPane1.addTab("Globals", null, jScrollPaneGeneral, null);
+
+        // Do it in two chunks, so they're vertically ordered, not horizontally
+        int half = globals.length / 2;
+        int next;
+        int i;
+        for (i = 0; i < half; i++) {
+            jPanelGeneral.add(globals[i]);
+            addValueToPanel(globalValues[i], jPanelGeneral);
+
+            next = i + half;
+            if (next < globals.length) {
+                jPanelGeneral.add(globals[next]);
+                addValueToPanel(globalValues[next], jPanelGeneral);
             }
-
-            if (odd) {
-                jPanelGeneral.add(globals[globals.length - 1]);
-                jPanelGeneral.add(globalValues[globals.length - 1].getObject());
-                jPanelGeneral.add(new JLabel());
-                jPanelGeneral.add(new JLabel());
-            }
-            jPanelGeneral.add(OKButton());
-            jPanelGeneral.add(new JLabel());
-            jPanelGeneral.add(new JLabel());
-            jPanelGeneral.add(CancelButton());
-            jPanelGeneral.setSize(600, 700);
-
-            // Do all the extruder panels
-            for (int j = 0; j < extruderCount; j++) {
-                final JLabel[] keys = extruders[j];
-                final PreferencesValue[] values = extruderValues[j];
-
-                final JPanel jPanelExtruder = new JPanel();
-                final JScrollPane jScrollPaneExtruder = new JScrollPane(jPanelExtruder);
-
-                odd = keys.length % 2 != 0;
-                if (odd) {
-                    rows = keys.length / 2 + 2;
-                } else {
-                    rows = keys.length / 2 + 1;
-                }
-                jPanelExtruder.setLayout(new GridLayout(rows, 4, 5, 5));
-                jTabbedPane1.addTab(loadString("Extruder" + j + "_MaterialType(name)"), null, jScrollPaneExtruder, null);
-                // Do it in two chunks, so they're vertically ordered, not horizontally
-                half = keys.length / 2;
-                for (i = 0; i < keys.length / 2; i++) {
-                    jPanelExtruder.add(keys[i]);
-                    addValueToPanel(values[i], jPanelExtruder);
-                    next = i + half;
-                    if (next < keys.length) {
-                        jPanelExtruder.add(keys[next]);
-                        addValueToPanel(values[next], jPanelExtruder);
-                    }
-                }
-
-                if (odd) {
-                    jPanelExtruder.add(keys[keys.length - 1]);
-                    jPanelExtruder.add(values[keys.length - 1].getObject());
-                    jPanelExtruder.add(new JLabel());
-                    jPanelExtruder.add(new JLabel());
-                }
-                jPanelExtruder.add(OKButton());
-                jPanelExtruder.add(new JLabel());
-                jPanelExtruder.add(new JLabel());
-                jPanelExtruder.add(CancelButton());
-                jPanelExtruder.setSize(600, 700);
-            }
-        } catch (final Exception e) {
-            e.printStackTrace();
         }
 
+        if (odd) {
+            jPanelGeneral.add(globals[globals.length - 1]);
+            jPanelGeneral.add(globalValues[globals.length - 1].getObject());
+            jPanelGeneral.add(new JLabel());
+            jPanelGeneral.add(new JLabel());
+        }
+        jPanelGeneral.add(OKButton());
+        jPanelGeneral.add(new JLabel());
+        jPanelGeneral.add(new JLabel());
+        jPanelGeneral.add(CancelButton());
+        jPanelGeneral.setSize(600, 700);
+
+        // Do all the extruder panels
+        for (int j = 0; j < extruderCount; j++) {
+            final JLabel[] keys = extruders[j];
+            final PreferencesValue[] values = extruderValues[j];
+
+            final JPanel jPanelExtruder = new JPanel();
+            final JScrollPane jScrollPaneExtruder = new JScrollPane(jPanelExtruder);
+
+            odd = keys.length % 2 != 0;
+            if (odd) {
+                rows = keys.length / 2 + 2;
+            } else {
+                rows = keys.length / 2 + 1;
+            }
+            jPanelExtruder.setLayout(new GridLayout(rows, 4, 5, 5));
+            jTabbedPane1.addTab(loadString("Extruder" + j + "_MaterialType(name)"), null, jScrollPaneExtruder, null);
+            // Do it in two chunks, so they're vertically ordered, not horizontally
+            half = keys.length / 2;
+            for (i = 0; i < keys.length / 2; i++) {
+                jPanelExtruder.add(keys[i]);
+                addValueToPanel(values[i], jPanelExtruder);
+                next = i + half;
+                if (next < keys.length) {
+                    jPanelExtruder.add(keys[next]);
+                    addValueToPanel(values[next], jPanelExtruder);
+                }
+            }
+
+            if (odd) {
+                jPanelExtruder.add(keys[keys.length - 1]);
+                jPanelExtruder.add(values[keys.length - 1].getObject());
+                jPanelExtruder.add(new JLabel());
+                jPanelExtruder.add(new JLabel());
+            }
+            jPanelExtruder.add(OKButton());
+            jPanelExtruder.add(new JLabel());
+            jPanelExtruder.add(new JLabel());
+            jPanelExtruder.add(CancelButton());
+            jPanelExtruder.setSize(600, 700);
+        }
         // Wrap it all up
         setTitle("RepRap Preferences");
         pack();
@@ -364,7 +345,11 @@ public class Preferences extends JFrame {
      * What to do when OK is clicked
      */
     private void jButtonOKMouseClicked() {
-        savePreferences();
+        try {
+            savePreferences();
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
         dispose();
     }
 
@@ -398,17 +383,10 @@ public class Preferences extends JFrame {
      */
     private PreferencesValue[] makeValues(final JLabel[] a) {
         final PreferencesValue[] result = new PreferencesValue[a.length];
-        String value;
         for (int i = 0; i < a.length; i++) {
-            try {
-                value = loadString(a[i].getText());
-
-                result[i] = new PreferencesValue(new JTextField());
-                result[i].setText(value);
-
-            } catch (final Exception ex) {
-                ex.printStackTrace();
-            }
+            final String value = loadString(a[i].getText());
+            result[i] = new PreferencesValue(new JTextField());
+            result[i].setText(value);
         }
         return result;
     }

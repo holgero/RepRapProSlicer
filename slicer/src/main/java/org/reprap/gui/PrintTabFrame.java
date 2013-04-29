@@ -492,8 +492,10 @@ public class PrintTabFrame extends JInternalFrame {
         try {
             final URI url = new URI("http://reprap.org/wiki/RepRapPro_Slicer");
             Desktop.getDesktop().browse(url);
-        } catch (final Exception e) {
-            e.printStackTrace();
+        } catch (final URISyntaxException e) {
+            throw new RuntimeException(e);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

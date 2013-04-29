@@ -2,7 +2,6 @@ package org.reprap.graphicio;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -133,8 +132,6 @@ public class CSGReader {
                 line = line.replaceAll("^\\s+", ""); // kill more leading white space
                 model += line;
             }
-        } catch (final FileNotFoundException e) {
-            return false;
         } catch (final IOException e) {
             return false;
         }

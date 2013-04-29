@@ -49,6 +49,7 @@ import org.reprap.geometry.polygons.CSG2D;
 import org.reprap.geometry.polygons.Circle;
 import org.reprap.geometry.polygons.HalfPlane;
 import org.reprap.geometry.polygons.Line;
+import org.reprap.geometry.polygons.ParallelException;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonIndexedPoint;
@@ -855,7 +856,7 @@ class ProducerStlList {
                     Point2D offsetPoint = Point2D.sub(current, c.centre());
                     offsetPoint = Point2D.add(current, Point2D.mul(offsetPoint.norm(), offset));
                     result.add(offsetPoint);
-                } catch (final Exception ex) {
+                } catch (final ParallelException ex) {
                     result.add(current);
                 }
             } else {

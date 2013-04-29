@@ -78,14 +78,11 @@ public class StlFile implements Loader {
      * 
      * @param parser
      *            The file parser. An instance of StlFileParser.
+     * @throws IOException
      */
-    private void readEOL(final StlFileParser parser) {
+    private void readEOL(final StlFileParser parser) throws IOException {
         do {
-            try {
-                parser.nextToken();
-            } catch (final IOException e) {
-                System.err.println("IO Error on line " + parser.lineno() + ": " + e.getMessage());
-            }
+            parser.nextToken();
         } while (parser.ttype != StreamTokenizer.TT_EOL);
     }
 
@@ -96,8 +93,9 @@ public class StlFile implements Loader {
      * 
      * @param parser
      *            The file parser. An instance of StlFileParser.
+     * @throws IOException
      */
-    private void readSolid(final StlFileParser parser) {
+    private void readSolid(final StlFileParser parser) throws IOException {
         if (parser.sval == null) {
             setAscii(false);
             return;
@@ -107,19 +105,10 @@ public class StlFile implements Loader {
             // Can give us problems if the comment of the binary file begins by "solid"
             setAscii(false);
         } else {
-            try {
-                parser.nextToken();
-            } catch (final IOException e) {
-                System.err.println("IO Error on line " + parser.lineno() + ": " + e.getMessage());
-            }
-            if (parser.sval.equals("binary")) // Deal with annoying CAD systems that start files with "solid binary"
-            {
+            parser.nextToken();
+            if (parser.sval.equals("binary")) {// Deal with annoying CAD systems that start files with "solid binary"
                 setAscii(false);
-                try {
-                    parser.nextToken();
-                } catch (final IOException e) {
-                    throw new RuntimeException("IO Error on line " + parser.lineno() + ": " + e.getMessage());
-                }
+                parser.nextToken();
             } else {
                 if (parser.ttype != StreamTokenizer.TT_WORD) {
                     // Is the object name always provided???
@@ -137,8 +126,9 @@ public class StlFile implements Loader {
      * 
      * @param parser
      *            The file parser. An instance of StlFileParser.
+     * @throws IOException
      */
-    private void readNormal(final StlFileParser parser) {
+    private void readNormal(final StlFileParser parser) throws IOException {
         final Vector3f v = new Vector3f();
 
         if (!(parser.ttype == StreamTokenizer.TT_WORD && parser.sval.equals("normal"))) {
@@ -170,8 +160,9 @@ public class StlFile implements Loader {
      * 
      * @param parser
      *            The file parser. An instance of StlFileParser.
+     * @throws IOException
      */
-    private void readVertex(final StlFileParser parser) {
+    private void readVertex(final StlFileParser parser) throws IOException {
         final Point3f p = new Point3f();
 
         if (!(parser.ttype == StreamTokenizer.TT_WORD && parser.sval.equals("vertex"))) {
@@ -203,16 +194,13 @@ public class StlFile implements Loader {
      * 
      * @param parser
      *            The file parser. An instance of StlFileParser.
+     * @throws IOException
      */
-    private void readLoop(final StlFileParser parser) {
+    private void readLoop(final StlFileParser parser) throws IOException {
         if (!(parser.ttype == StreamTokenizer.TT_WORD && parser.sval.equals("outer"))) {
             System.err.println("Format Error:expecting 'outer' on line " + parser.lineno());
         } else {
-            try {
-                parser.nextToken();
-            } catch (final IOException e) {
-                System.err.println("IO error on line " + parser.lineno() + ": " + e.getMessage());
-            }
+            parser.nextToken();
             if (!(parser.ttype == StreamTokenizer.TT_WORD && parser.sval.equals("loop"))) {
                 System.err.println("Format Error:expecting 'loop' on line " + parser.lineno());
             } else {
@@ -226,8 +214,9 @@ public class StlFile implements Loader {
      * 
      * @param parser
      *            The file parser. An instance of StlFileParser.
+     * @throws IOException
      */
-    private void readEndLoop(final StlFileParser parser) {
+    private void readEndLoop(final StlFileParser parser) throws IOException {
         if (!(parser.ttype == StreamTokenizer.TT_WORD && parser.sval.equals("endloop"))) {
             System.err.println("Format Error:expecting 'endloop' on line " + parser.lineno());
         } else {
@@ -240,8 +229,9 @@ public class StlFile implements Loader {
      * 
      * @param parser
      *            The file parser. An instance of StlFileParser.
+     * @throws IOException
      */
-    private void readEndFacet(final StlFileParser parser) {
+    private void readEndFacet(final StlFileParser parser) throws IOException {
         if (!(parser.ttype == StreamTokenizer.TT_WORD && parser.sval.equals("endfacet"))) {
             System.err.println("Format Error:expecting 'endfacet' on line " + parser.lineno());
         } else {
@@ -254,35 +244,32 @@ public class StlFile implements Loader {
      * 
      * @param parser
      *            The file parser. An instance of StlFileParser.
+     * @throws IOException
      */
-    private void readFacet(final StlFileParser parser) {
+    private void readFacet(final StlFileParser parser) throws IOException {
         if (!(parser.ttype == StreamTokenizer.TT_WORD && parser.sval.equals("facet"))) {
             System.err.println("Format Error:expecting 'facet' on line " + parser.lineno());
         } else {
-            try {
-                parser.nextToken();
-                readNormal(parser);
+            parser.nextToken();
+            readNormal(parser);
 
-                parser.nextToken();
-                readLoop(parser);
+            parser.nextToken();
+            readLoop(parser);
 
-                parser.nextToken();
-                readVertex(parser);
+            parser.nextToken();
+            readVertex(parser);
 
-                parser.nextToken();
-                readVertex(parser);
+            parser.nextToken();
+            readVertex(parser);
 
-                parser.nextToken();
-                readVertex(parser);
+            parser.nextToken();
+            readVertex(parser);
 
-                parser.nextToken();
-                readEndLoop(parser);
+            parser.nextToken();
+            readEndLoop(parser);
 
-                parser.nextToken();
-                readEndFacet(parser);
-            } catch (final IOException e) {
-                System.err.println("IO Error on line " + parser.lineno() + ": " + e.getMessage());
-            }
+            parser.nextToken();
+            readEndFacet(parser);
         }
     }
 
@@ -380,16 +367,12 @@ public class StlFile implements Loader {
 
                 for (int i = 0; i < Number_faces; i++) {
                     stripCounts[i] = 3;
-                    try {
-                        readFacetB(dataBuffer, i);
-                        // After each facet there are 2 bytes without information
-                        // In the last iteration we dont have to skip those bytes..
-                        if (i != Number_faces - 1) {
-                            dataBuffer.get();
-                            dataBuffer.get();
-                        }
-                    } catch (final IOException e) {
-                        throw new IncorrectFormatException("Format Error: iteration number " + i);
+                    readFacetB(dataBuffer, i);
+                    // After each facet there are 2 bytes without information
+                    // In the last iteration we dont have to skip those bytes..
+                    if (i != Number_faces - 1) {
+                        dataBuffer.get();
+                        dataBuffer.get();
                     }
                 }
             }
@@ -398,40 +381,26 @@ public class StlFile implements Loader {
 
     /**
      * Method that reads ASCII files Uses StlFileParser for correct reading and
-     * format checking The begining of that method is common to binary and ASCII
-     * files We try to detect what king of file it is
-     * 
-     * TODO: 1.- Find a best way to decide what kind of file it is 2.- Is that
-     * return (first catch) the best thing to do?
+     * format checking The beginning of that method is common to binary and
+     * ASCII files We try to detect what king of file it is
      * 
      * @param parser
      *            The file parser. An instance of StlFileParser.
+     * @throws IOException
      */
-    private void readFile(final StlFileParser parser) {
-        try {
-            parser.nextToken();
-        } catch (final IOException e) {
-            throw new RuntimeException("IO Error on line " + parser.lineno() + ": " + e.getMessage());
-        }
+    private void readFile(final StlFileParser parser) throws IOException {
+        parser.nextToken();
 
         // Here we try to detect what kind of file it is (see readSolid)
         readSolid(parser);
 
         if (getAscii()) {
-            try {
-                parser.nextToken();
-            } catch (final IOException e) {
-                System.err.println("IO Error on line " + parser.lineno() + ": " + e.getMessage());
-            }
+            parser.nextToken();
 
             // Read all the facets of the object
             while (parser.ttype != StreamTokenizer.TT_EOF && !parser.sval.equals("endsolid")) {
                 readFacet(parser);
-                try {
-                    parser.nextToken();
-                } catch (final IOException e) {
-                    System.err.println("IO Error on line " + parser.lineno() + ": " + e.getMessage());
-                }
+                parser.nextToken();
             }
 
             // Why are we out of the while?: EOF or endsolid
@@ -439,11 +408,7 @@ public class StlFile implements Loader {
                 System.err.println("Format Error:expecting 'endsolid', line " + parser.lineno());
             }
         } else { // Binary file
-            try {
-                readBinaryFile(getFileName());
-            } catch (final IOException e) {
-                System.err.println("Format Error: reading the binary file");
-            }
+            readBinaryFile(getFileName());
         }
     }
 
@@ -495,7 +460,7 @@ public class StlFile implements Loader {
         try {
             reader = new BufferedReader(new InputStreamReader(url.openStream()));
         } catch (final IOException e) {
-            throw new FileNotFoundException();
+            throw new RuntimeException(e);
         }
         fromUrl = true;
         return load(reader);
@@ -526,7 +491,11 @@ public class StlFile implements Loader {
         coordList = new ArrayList<Point3f>();
         normList = new ArrayList<Vector3f>();
         setAscii(true);
-        readFile(st);
+        try {
+            readFile(st);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
         return makeScene();
     }
 
@@ -594,7 +563,7 @@ public class StlFile implements Loader {
         try {
             baseUrl = new URL(sb.toString());
         } catch (final MalformedURLException e) {
-            System.err.println("Error setting base URL: " + e.getMessage());
+            throw new RuntimeException("Cannot set base URL to: " + sb, e);
         }
     }
 
