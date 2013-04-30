@@ -22,6 +22,7 @@ public class PrintSettings {
     private double layerHeight;
     private int verticalShells;
     private int horizontalShells;
+    private double fillDensity;
 
     public double getLayerHeight() {
         return layerHeight;
@@ -43,7 +44,15 @@ public class PrintSettings {
         return horizontalShells;
     }
 
-    public void setHorizontalShells(int horizontalShells) {
+    public void setHorizontalShells(final int horizontalShells) {
         this.horizontalShells = horizontalShells;
+    }
+
+    public double getFillDensity() {
+        return fillDensity;
+    }
+
+    public void setFillDensity(final double fillDensity) {
+        this.fillDensity = fillDensity;
     }
 }

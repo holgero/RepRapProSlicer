@@ -524,7 +524,7 @@ public class PolygonList {
         for (int i = 0; i < size(); i++) {
             final Polygon p = polygon(i);
             p.getAttributes();
-            if (p.getLength() > printer.getExtruder(p.getAttributes().getMaterial()).getExtrusionInfillWidth() * 3) {
+            if (p.getLength() > printer.getExtruder(p.getAttributes().getMaterial()).getExtrusionSize() * 3) {
                 r.add(p);
             }
         }

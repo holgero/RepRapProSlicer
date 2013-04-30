@@ -390,18 +390,11 @@ class ProducerStlList {
      * Select from a slice (allLayer) just those parts of it that will be
      * plotted this layer
      */
-    BooleanGridList neededThisLayer(final BooleanGridList allLayer, final boolean infill, final boolean support) {
+    BooleanGridList neededThisLayer(final BooleanGridList allLayer) {
         final BooleanGridList neededSlice = new BooleanGridList();
         for (int i = 0; i < allLayer.size(); i++) {
-            GCodeExtruder e;
             final Attributes attribute = allLayer.get(i).attribute();
-            if (infill) {
-                e = layerRules.getPrinter().getExtruder(attribute.getMaterial()).getInfillExtruder();
-            } else if (support) {
-                e = layerRules.getPrinter().getExtruder(attribute.getMaterial()).getSupportExtruder();
-            } else {
-                e = layerRules.getPrinter().getExtruder(attribute.getMaterial());
-            }
+            final GCodeExtruder e = layerRules.getPrinter().getExtruder(attribute.getMaterial());
             if (e != null) {
                 neededSlice.add(allLayer.get(i));
             }
@@ -463,7 +456,7 @@ class ProducerStlList {
         BooleanGridList slice = slice(stl, layerRules.getModelLayer());
 
         // Pick out the ones we need to do at this height
-        slice = neededThisLayer(slice, false, false);
+        slice = neededThisLayer(slice);
 
         if (slice.size() <= 0) {
             return new PolygonList();
@@ -485,7 +478,7 @@ class ProducerStlList {
         final GCodeExtruder extruder = layerRules.getPrinter().getExtruders()[0];
         final double extrusionSize = extruder.getExtrusionSize();
 
-        BooleanGridList slice = neededThisLayer(slice(stl, 0), false, false);
+        BooleanGridList slice = neededThisLayer(slice(stl, 0));
         final PolygonList result = new PolygonList();
         result.add(slice.borders());
         for (int line = 1; line < brimLines; line++) {
@@ -736,7 +729,7 @@ class ProducerStlList {
             final GCodePrinter printer = lc.getPrinter();
             final GCodeExtruder ex = printer.getExtruder(outline.getAttributes().getMaterial());
             if (ex.getMiddleStart()) {
-                Line l = lc.getHatchDirection(ex, false).pLine();
+                Line l = lc.getHatchDirection(ex, false, ex.getExtrusionSize()).pLine();
                 if (i % 2 != 0 ^ lc.getMachineLayer() % 4 > 1) {
                     l = l.neg();
                 }
@@ -878,21 +871,16 @@ class ProducerStlList {
         final PolygonList result = new PolygonList();
         for (int i = 0; i < list.size(); i++) {
             final BooleanGrid grid = list.get(i);
-            Attributes att = grid.attribute();
+            final Attributes att = grid.attribute();
             final GCodeExtruder e = layerConditions.getPrinter().getExtruder(att.getMaterial());
-            GCodeExtruder ei;
+            final double infillWidth;
             if (!surface) {
-                ei = e.getInfillExtruder();
-                if (ei != null) {
-                    att = new Attributes(ei.getMaterial(), null, ei.getAppearance());
-                }
+                infillWidth = e.getExtrusionSize() / Preferences.getInstance().getPrintSettings().getFillDensity();
             } else {
-                ei = e;
+                infillWidth = e.getExtrusionSize();
             }
-            if (ei != null) {
-                final HalfPlane hatchLine = layerConditions.getHatchDirection(ei, support);
-                result.add(grid.hatch(hatchLine, layerConditions.getHatchWidth(ei), att));
-            }
+            final HalfPlane hatchLine = layerConditions.getHatchDirection(e, support, infillWidth);
+            result.add(grid.hatch(hatchLine, infillWidth, att));
         }
         return result;
     }
@@ -932,15 +920,9 @@ class ProducerStlList {
             if (att == null) {
                 throw new RuntimeException("grid attribute is null");
             }
-            final GCodeExtruder[] es = lc.getPrinter().getExtruders();
             final GCodeExtruder e = lc.getPrinter().getExtruder(att.getMaterial());
             final double extrusionSize = e.getExtrusionSize();
-            final int ei = e.getInfillExtruderNumber();
-            GCodeExtruder ife = e;
-            if (ei >= 0) {
-                ife = es[ei];
-            }
-            final double infillOverlap = ife.getInfillOverlap();
+            final double infillOverlap = e.getInfillOverlap();
             final int shells = Preferences.getInstance().getPrintSettings().getVerticalShells();
             // Must be a hatch.  Only do it if the gap is +ve or we're building the foundation
             final double offSize;

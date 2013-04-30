@@ -265,7 +265,7 @@ public class LayerRules {
      * Model: Alternate even then odd (which can be set to the same angle if
      * wanted).
      */
-    public HalfPlane getHatchDirection(final GCodeExtruder e, final boolean support) {
+    public HalfPlane getHatchDirection(final GCodeExtruder e, final boolean support, final double alternatingOffset) {
         final double myHeight = zStep;
         final double eFraction = machineZ / myHeight;
         final int mylayer = (int) Math.round(eFraction);
@@ -285,27 +285,10 @@ public class LayerRules {
         HalfPlane result = new HalfPlane(new Point2D(0.0, 0.0), new Point2D(Math.sin(angle), Math.cos(angle)));
 
         if (((mylayer / 2) % 2 == 0) && !support) {
-            result = result.offset(0.5 * getHatchWidth(e));
+            result = result.offset(0.5 * alternatingOffset);
         }
 
         return result;
-    }
-
-    /**
-     * The gap in the layer zig-zag is:
-     * 
-     * Foundation: The foundation width for all but... ...the penultimate
-     * foundation layer, which is half that and.. ...the last foundation layer,
-     * which is the model fill width
-     * 
-     * Model: The model fill width
-     */
-    public double getHatchWidth(final GCodeExtruder e) {
-        if (getMachineLayer() < getFoundationLayers()) {
-            return e.getExtrusionFoundationWidth();
-        }
-
-        return e.getExtrusionInfillWidth();
     }
 
     /**
@@ -389,7 +372,8 @@ public class LayerRules {
         final Attributes fa = new Attributes(e.getMaterial(), null, e.getAppearance());
         final CSG2D rect = CSG2D.RrCSGFromBox(bBox);
         final BooleanGrid bg = new BooleanGrid(rect, bBox.scale(1.1), fa);
-        final PolygonList h[] = { shield, bg.hatch(getHatchDirection(e, false), getHatchWidth(e), bg.attribute()) };
+        final PolygonList h[] = { shield,
+                bg.hatch(getHatchDirection(e, false, e.getExtrusionSize()), e.getExtrusionSize(), bg.attribute()) };
         setFirstAndLast(h);
         final LayerProducer lp = new LayerProducer(h, this, simulationPlot);
         lp.plot();

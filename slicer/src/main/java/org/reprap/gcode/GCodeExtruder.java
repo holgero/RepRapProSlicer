@@ -28,10 +28,6 @@ public class GCodeExtruder {
      */
     private double extrusionSize;
     /**
-     * The step between infill tracks
-     */
-    private double extrusionInfillWidth;
-    /**
      * below this infill finely
      */
     private int lowerFineLayers;
@@ -147,17 +143,13 @@ public class GCodeExtruder {
     private double evenHatchDirection;
     private double oddHatchDirection;
     private String supportMaterial;
-    private String inFillMaterial;
     private double extrudeRatio = 1;
     private boolean middleStart;
     private boolean insideOut = false;
     private final GCodePrinter printer;
     private int physicalExtruderId;
     private double extrusionSpeed;
-
     private int supportExtruderNumber;
-
-    private int infillExtruderNumber;
 
     public GCodeExtruder(final GCodeWriter writer, final int extruderId, final GCodePrinter p) {
         gcode = writer;
@@ -246,7 +238,6 @@ public class GCodeExtruder {
         final String prefName = "Extruder" + myExtruderID + "_";
         physicalExtruderId = preferences.loadInt(prefName + "Address");
         extrusionSize = preferences.loadDouble(prefName + "ExtrusionSize(mm)");
-        extrusionInfillWidth = preferences.loadDouble(prefName + "ExtrusionInfillWidth(mm)");
         lowerFineLayers = 2;
         coolingPeriod = preferences.loadDouble(prefName + "CoolingPeriod(s)");
         fastXYFeedrate = preferences.loadDouble(prefName + "FastXYFeedrate(mm/minute)");
@@ -262,8 +253,6 @@ public class GCodeExtruder {
         material = preferences.loadString(prefName + "MaterialType(name)");
         supportMaterial = preferences.loadString(prefName + "SupportMaterialType(name)");
         supportExtruderNumber = preferences.getNumberFromMaterial(supportMaterial);
-        inFillMaterial = preferences.loadString(prefName + "InFillMaterialType(name)");
-        infillExtruderNumber = preferences.getNumberFromMaterial(inFillMaterial);
         shortLength = -1;
         shortSpeed = 1;
         infillOverlap = preferences.loadDouble(prefName + "InfillOverlap(mm)");
@@ -373,14 +362,6 @@ public class GCodeExtruder {
 
     public double getExtrusionSize() {
         return extrusionSize;
-    }
-
-    /**
-     * At the top and bottom return the fine width; in between return the braod
-     * one. If the braod one is negative, just do fine.
-     */
-    public double getExtrusionInfillWidth() {
-        return extrusionInfillWidth;
     }
 
     public int getLowerFineLayers() {
@@ -504,14 +485,6 @@ public class GCodeExtruder {
 
     public GCodeExtruder getSupportExtruder() {
         return printer.getExtruder(supportMaterial);
-    }
-
-    public int getInfillExtruderNumber() {
-        return infillExtruderNumber;
-    }
-
-    public GCodeExtruder getInfillExtruder() {
-        return printer.getExtruder(inFillMaterial);
     }
 
     public double getExtrusionFoundationWidth() {
