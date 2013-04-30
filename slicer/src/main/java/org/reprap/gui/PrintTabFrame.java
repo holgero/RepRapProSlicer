@@ -50,17 +50,6 @@ public class PrintTabFrame extends JInternalFrame {
     }
 
     private void initComponents() {
-        final JButton variablesButton = new JButton();
-        variablesButton.setActionCommand("preferences");
-        variablesButton.setBackground(new java.awt.Color(255, 102, 255));
-        variablesButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(final java.awt.event.ActionEvent evt) {
-                preferences();
-            }
-        });
-        variablesButton.setText("Variables");
-
         final JButton helpButton = new JButton();
         helpButton.setActionCommand("Help");
         helpButton.setBackground(new java.awt.Color(255, 102, 255));
@@ -207,13 +196,13 @@ public class PrintTabFrame extends JInternalFrame {
 
         displayPathsCheck = new JCheckBox();
         displayPathsCheck.setText("Show paths when slicing");
-        createLayout(variablesButton, helpButton, exitButton, getWebPage, expectedBuildTimeLabel, filesLabel,
-                expectedFinishTimeLabel, changeMachineLabel, progressLabel);
+        createLayout(helpButton, exitButton, getWebPage, expectedBuildTimeLabel, filesLabel, expectedFinishTimeLabel,
+                changeMachineLabel, progressLabel);
     }
 
-    private void createLayout(final JButton variablesButton, final JButton helpButton, final JButton exitButton,
-            final JButton getWebPage, final JLabel expectedBuildTimeLabel, final JLabel filesLabel,
-            final JLabel expectedFinishTimeLabel, final JLabel changeMachineLabel, final JLabel progressLabel) {
+    private void createLayout(final JButton helpButton, final JButton exitButton, final JButton getWebPage,
+            final JLabel expectedBuildTimeLabel, final JLabel filesLabel, final JLabel expectedFinishTimeLabel,
+            final JLabel changeMachineLabel, final JLabel progressLabel) {
         final org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
 
@@ -249,13 +238,6 @@ public class PrintTabFrame extends JInternalFrame {
                                                         .createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                                                         .add(layout
                                                                 .createSequentialGroup()
-                                                                .add(variablesButton,
-                                                                        org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 130,
-                                                                        org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED,
-                                                                        org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-                                                                        Short.MAX_VALUE)
-                                                                .add(20, 20, 20)
                                                                 .add(helpButton,
                                                                         org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
                                                                         org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
@@ -339,8 +321,6 @@ public class PrintTabFrame extends JInternalFrame {
                                                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                                         .add(exitButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 39,
                                                                 org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                                                .add(variablesButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 45,
-                                                        org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                                 .add(helpButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 45,
                                                         org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -481,11 +461,6 @@ public class PrintTabFrame extends JInternalFrame {
             fileNameBox.setText("");
         }
         gcodeLoaded = false;
-    }
-
-    private void preferences() {
-        final org.reprap.gui.Preferences prefs = new org.reprap.gui.Preferences();
-        prefs.setVisible(true);
     }
 
     private void help() {

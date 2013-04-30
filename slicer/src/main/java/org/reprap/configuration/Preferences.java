@@ -375,45 +375,6 @@ public class Preferences {
         return (float) loadDouble(prefix + "Colour" + component + "(0..1)");
     }
 
-    public static String[] startsWith(final String prefix) {
-        final Enumeration<?> allOfThem = globalPrefs.mainPreferences.propertyNames();
-        final List<String> r = new ArrayList<String>();
-
-        while (allOfThem.hasMoreElements()) {
-            final String next = (String) allOfThem.nextElement();
-            if (next.startsWith(prefix)) {
-                r.add(next);
-            }
-        }
-        final String[] result = new String[r.size()];
-
-        for (int i = 0; i < r.size(); i++) {
-            result[i] = r.get(i);
-        }
-
-        return result;
-    }
-
-    public static String[] notStartsWith(final String prefix) {
-        final Enumeration<?> allOfThem = globalPrefs.mainPreferences.propertyNames();
-        final List<String> r = new ArrayList<String>();
-
-        while (allOfThem.hasMoreElements()) {
-            final String next = (String) allOfThem.nextElement();
-            if (!next.startsWith(prefix)) {
-                r.add(next);
-            }
-        }
-
-        final String[] result = new String[r.size()];
-
-        for (int i = 0; i < r.size(); i++) {
-            result[i] = r.get(i);
-        }
-
-        return result;
-    }
-
     public static Preferences getInstance() {
         return globalPrefs;
     }
