@@ -156,12 +156,10 @@ public class GCodePrinter implements PreferenceChangeListener {
                 extrudeLength = -extrudeLength;
             }
             extruders[currentExtruder].getExtruderState().add(extrudeLength);
-            if (extruders[currentExtruder].get5D()) {
-                if (relativeExtrusion) {
-                    se = " E" + round(extrudeLength, 3);
-                } else {
-                    se = " E" + round(extruders[currentExtruder].getExtruderState().length(), 3);
-                }
+            if (relativeExtrusion) {
+                se = " E" + round(extrudeLength, 3);
+            } else {
+                se = " E" + round(extruders[currentExtruder].getExtruderState().length(), 3);
             }
         }
 
@@ -227,12 +225,10 @@ public class GCodePrinter implements PreferenceChangeListener {
                 extrudeLength = -extrudeLength;
             }
             extruders[currentExtruder].getExtruderState().add(extrudeLength);
-            if (extruders[currentExtruder].get5D()) {
-                if (relativeExtrusion) {
-                    s += " E" + round(extrudeLength, 3);
-                } else {
-                    s += " E" + round(extruders[currentExtruder].getExtruderState().length(), 3);
-                }
+            if (relativeExtrusion) {
+                s += " E" + round(extrudeLength, 3);
+            } else {
+                s += " E" + round(extruders[currentExtruder].getExtruderState().length(), 3);
             }
         }
         if (currentFeedrate != feedrate) {
@@ -516,29 +512,27 @@ public class GCodePrinter implements PreferenceChangeListener {
         double extrudeLength = getExtruder().getDistanceFromTime(millis);
 
         if (extrudeLength > 0) {
-            if (extruders[currentExtruder].get5D()) {
-                double fr;
-                if (fastExtrude) {
-                    fr = getExtruder().getFastEFeedrate();
-                } else {
-                    fr = getExtruder().getFastXYFeedrate();
-                }
+            double fr;
+            if (fastExtrude) {
+                fr = getExtruder().getFastEFeedrate();
+            } else {
+                fr = getExtruder().getFastXYFeedrate();
+            }
 
-                currentFeedrate = fr;
-                // Fix the value for possible feedrate change
-                extrudeLength = getExtruder().getDistanceFromTime(millis);
+            currentFeedrate = fr;
+            // Fix the value for possible feedrate change
+            extrudeLength = getExtruder().getDistanceFromTime(millis);
 
-                if (getExtruder().getFeedDiameter() > 0) {
-                    fr = fr * preferences.getPrintSettings().getLayerHeight() * getExtruder().getExtrusionSize()
-                            / (getExtruder().getFeedDiameter() * getExtruder().getFeedDiameter() * Math.PI / 4);
-                }
+            if (getExtruder().getFeedDiameter() > 0) {
+                fr = fr * preferences.getPrintSettings().getLayerHeight() * getExtruder().getExtrusionSize()
+                        / (getExtruder().getFeedDiameter() * getExtruder().getFeedDiameter() * Math.PI / 4);
+            }
 
-                fr = round(fr, 1);
+            fr = round(fr, 1);
 
-                if (really) {
-                    currentFeedrate = 0; // force it to output feedrate
-                    qFeedrate(fr);
-                }
+            if (really) {
+                currentFeedrate = 0; // force it to output feedrate
+                qFeedrate(fr);
             }
 
             if (extruders[currentExtruder].getReversing()) {
@@ -547,30 +541,28 @@ public class GCodePrinter implements PreferenceChangeListener {
 
             extruders[currentExtruder].getExtruderState().add(extrudeLength);
 
-            if (extruders[currentExtruder].get5D()) {
-                final double fr = getExtruder().getFastXYFeedrate();
-                if (really) {
-                    final String command;
+            final double feedrate = getExtruder().getFastXYFeedrate();
+            if (really) {
+                final String command;
 
-                    if (relativeExtrusion) {
-                        command = "G1 E" + round(extrudeLength, 3);
-                    } else {
-                        command = "G1 E" + round(extruders[currentExtruder].getExtruderState().length(), 3);
-                    }
-
-                    final String comment;
-                    if (extruders[currentExtruder].getReversing()) {
-                        comment = "extruder retraction";
-                    } else {
-                        comment = "extruder dwell";
-                    }
-                    gcode.writeCommand(command, comment);
-                    qFeedrate(fr);
+                if (relativeExtrusion) {
+                    command = "G1 E" + round(extrudeLength, 3);
                 } else {
-                    currentFeedrate = fr;
+                    command = "G1 E" + round(extruders[currentExtruder].getExtruderState().length(), 3);
                 }
-                return;
+
+                final String comment;
+                if (extruders[currentExtruder].getReversing()) {
+                    comment = "extruder retraction";
+                } else {
+                    comment = "extruder dwell";
+                }
+                gcode.writeCommand(command, comment);
+                qFeedrate(feedrate);
+            } else {
+                currentFeedrate = feedrate;
             }
+            return;
         }
 
         gcode.writeCommand("G4 P" + millis, "delay");

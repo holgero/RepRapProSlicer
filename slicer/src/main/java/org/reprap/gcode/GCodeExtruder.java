@@ -19,11 +19,6 @@ public class GCodeExtruder {
      */
     private ExtruderState extruderState;
     /**
-     * Flag to decide if the machine implements 4D extruding (i.e. it processes
-     * extrude lengths along with X, Y, and Z lengths in a 4D Bressenham DDA)
-     */
-    private boolean fiveD;
-    /**
      * The extrusion width in XY
      */
     private double extrusionSize;
@@ -157,29 +152,11 @@ public class GCodeExtruder {
         if (getExtruderSpeed() < 0) {
             return;
         }
-        if (speed < Constants.TINY_VALUE) {
-            if (!fiveD) {
-                gcode.writeCommand("M103", "extruder off");
-            }
-        } else {
-            if (!fiveD) {
-                if (speed != extruderState.speed()) {
-                    gcode.writeCommand("M108 S" + speed, "extruder speed in RPM");
-                }
-
-                if (extruderState.reverse()) {
-                    gcode.writeCommand("M102", "extruder on, reverse");
-                } else {
-                    gcode.writeCommand("M101", "extruder on, forward");
-                }
-            }
-        }
         if (speed > 0) {
             extruderState.setExtruding(true);
         } else {
             extruderState.setExtruding(false);
         }
-
         extruderState.setSpeed(speed);
         extruderState.setReverse(reverse);
     }
@@ -204,8 +181,6 @@ public class GCodeExtruder {
     }
 
     private void loadPreferences(final Preferences preferences) {
-        fiveD = preferences.loadBool("FiveD");
-
         final String prefName = "Extruder" + myExtruderID + "_";
         physicalExtruderId = preferences.loadInt(prefName + "Address");
         extrusionSize = preferences.loadDouble(prefName + "ExtrusionSize(mm)");
@@ -480,13 +455,6 @@ public class GCodeExtruder {
             return 0;
         }
         return filamentDistance(extrudeRatio * distance);
-    }
-
-    /**
-     * Find out if we're working in 5D
-     */
-    public boolean get5D() {
-        return fiveD;
     }
 
     /**

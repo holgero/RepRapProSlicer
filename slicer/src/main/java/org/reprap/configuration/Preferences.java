@@ -44,7 +44,7 @@ public class Preferences {
     private static final int GRID_SIZE = 100;
     private static final double GRID_RESOLUTION = 1.0 / GRID_SIZE;
     private static final double MACHINE_RESOLUTION = 0.05; // RepRap step size in mm
-    private static final List<Pattern> OBSOLETE_PROPERTIES_PATTERNS = compilePatterns("RepRapAccelerations",
+    private static final List<Pattern> OBSOLETE_PROPERTIES_PATTERNS = compilePatterns("RepRapAccelerations", "FiveD",
             "Extruder\\d_ExtrusionHeight\\(mm\\)", "Extruder\\d_NumberOfShells\\(0\\.\\.N\\)",
             "Extruder\\d_SurfaceLayers\\(0\\.\\.N\\)", "Extruder\\d_ExtrusionInfillWidth\\(mm\\)",
             "Extruder\\d_InFillMaterialType\\(name\\)", "Extruder\\d_EvenHatchDirection\\(degrees\\)",
