@@ -50,7 +50,7 @@ public class Producer {
         if (preferences.loadBool("Shield")) {
             omitShield = true;
         }
-        brimLines = preferences.loadInt("BrimLines");
+        brimLines = preferences.getPrintSettings().getBrimLines();
     }
 
     public void produce() throws IOException {

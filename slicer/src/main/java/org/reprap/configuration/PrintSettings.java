@@ -33,6 +33,8 @@ public class PrintSettings {
     // skirt
     // TODO make this a real skirt around the print, give it a width, a height and a distance from the print
     private boolean skirt; // boolean false
+    // brim
+    private int brimLines; // # 8
 
     public double getLayerHeight() {
         return layerHeight;
@@ -96,5 +98,13 @@ public class PrintSettings {
 
     public void setSkirt(final boolean skirt) {
         this.skirt = skirt;
+    }
+
+    public int getBrimLines() {
+        return brimLines;
+    }
+
+    public void setBrimLines(final int brimLines) {
+        this.brimLines = brimLines;
     }
 }
