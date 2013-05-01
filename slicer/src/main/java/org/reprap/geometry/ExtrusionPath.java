@@ -38,10 +38,6 @@ class ExtrusionPath {
      * just be moved over
      */
     private int extrudeEnd = -1;
-    /**
-     * The index of the last point at which the valve (if any) is open.
-     */
-    private int valveEnd = -1;
 
     ExtrusionPath(final Polygon path) {
         this.path = path;
@@ -100,55 +96,6 @@ class ExtrusionPath {
         }
     }
 
-    void backStepValve(final double valveBackLength) {
-        if (valveBackLength <= 0) {
-            return;
-        }
-        Point2D p, q;
-        int start, last;
-
-        if (valveEnd >= 0) {
-            start = valveEnd;
-        } else {
-            start = path.size() - 1;
-        }
-
-        if (!path.isClosed() && valveEnd < 0) {
-            start--;
-        }
-
-        if (start >= path.size() - 1) {
-            last = 0;
-        } else {
-            last = start + 1;
-        }
-
-        valveEnd = 0;
-        double sum = 0;
-        for (int i = start; i >= 0; i--) {
-            sum += Point2D.d(path.point(i), path.point(last));
-            if (sum > valveBackLength) {
-                sum = sum - valveBackLength;
-                q = Point2D.sub(path.point(last), path.point(i));
-                p = Point2D.add(path.point(i), Point2D.mul(sum / q.mod(), q));
-                double s = 0;
-                s = speeds.get(last) - speeds.get(i);
-                s = speeds.get(i) + s * sum / q.mod();
-                final int j = i + 1;
-                if (j < path.size()) {
-                    path.add(j, p);
-                    speeds.add(j, new Double(s));
-                } else {
-                    path.add(p);
-                    speeds.add(new Double(s));
-                }
-                valveEnd = j;
-                break;
-            }
-            last = i;
-        }
-    }
-
     Point2D point(final int i) {
         return path.point(i);
     }
@@ -163,10 +110,6 @@ class ExtrusionPath {
 
     int extrudeEnd() {
         return positiveIndexOrLast(extrudeEnd);
-    }
-
-    int valveEnd() {
-        return positiveIndexOrLast(valveEnd);
     }
 
     private int positiveIndexOrLast(final int index) {
@@ -230,9 +173,6 @@ class ExtrusionPath {
 
         if (i <= extrudeEnd) {
             extrudeEnd++;
-        }
-        if (i <= valveEnd) {
-            valveEnd++;
         }
     }
 

@@ -436,15 +436,11 @@ public class GCodePrinter implements PreferenceChangeListener {
         }
     }
 
-    public void printTo(final double x, final double y, final double z, final double feedrate, final boolean stopExtruder,
-            final boolean closeValve) {
+    public void printTo(final double x, final double y, final double z, final double feedrate, final boolean stopExtruder) {
         moveTo(x, y, z, feedrate, false, false);
 
         if (stopExtruder) {
             getExtruder().stopExtruding();
-        }
-        if (closeValve) {
-            getExtruder().setValve(false);
         }
     }
 
@@ -501,7 +497,6 @@ public class GCodePrinter implements PreferenceChangeListener {
                 currentY = rectangle.y().low();
                 printEndReverse();
                 getExtruder().stopExtruding();
-                getExtruder().setValve(false);
                 rectangle = rectangle.offset(2 * getExtruder().getExtrusionSize());
                 physicalExtruderUsed[pe] = false; // Stop us doing it again
             }
@@ -787,7 +782,6 @@ public class GCodePrinter implements PreferenceChangeListener {
 
                     printEndReverse();
                     getExtruder().stopExtruding();
-                    getExtruder().setValve(false);
                 }
             }
             forceSelection = false;
@@ -861,28 +855,16 @@ public class GCodePrinter implements PreferenceChangeListener {
             getExtruder().getExtruderState().setRetraction(0);
         }
 
-        // Extrude motor and valve delays (ms)
-        double eDelay, vDelay;
-
+        // Extrude motor delays (ms)
+        double eDelay;
         if (firstOneInLayer) {
             eDelay = getExtruder().getExtrusionDelayForLayer();
-            vDelay = getExtruder().getValveDelayForLayer();
         } else {
             eDelay = getExtruder().getExtrusionDelayForPolygon();
-            vDelay = getExtruder().getValveDelayForPolygon();
         }
 
-        if (eDelay >= vDelay) {
-            getExtruder().setMotor(true);
-            machineWait(eDelay - vDelay, false, true);
-            getExtruder().setValve(true);
-            machineWait(vDelay, false, true);
-        } else {
-            getExtruder().setValve(true);
-            machineWait(vDelay - eDelay, false, true);
-            getExtruder().setMotor(true);
-            machineWait(eDelay, false, true);
-        }
+        getExtruder().setMotor(true);
+        machineWait(eDelay, false, true);
     }
 
     /**

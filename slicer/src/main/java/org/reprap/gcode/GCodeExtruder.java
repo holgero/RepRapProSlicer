@@ -98,10 +98,6 @@ public class GCodeExtruder {
      */
     private Appearance materialColour;
     /**
-     * The number of ms to pulse the valve to open or close it -ve to supress
-     */
-    private double valvePulseTime;
-    /**
      * The number of milliseconds to wait before starting a border track
      */
     private double extrusionDelayForLayer = 0;
@@ -118,21 +114,9 @@ public class GCodeExtruder {
      */
     private double extrusionReverseDelay = -1;
     /**
-     * The number of milliseconds to wait before starting a border track
-     */
-    private double valveDelayForLayer = 0;
-    /**
-     * The number of milliseconds to wait before starting a hatch track
-     */
-    private double valveDelayForPolygon = 0;
-    /**
      * The number of mm to stop extruding before the end of a track
      */
     private double extrusionOverRun;
-    /**
-     * The number of mm to stop extruding before the end of a track
-     */
-    private double valveOverRun;
     /**
      * The smallest allowable free-movement height above the base
      */
@@ -211,17 +195,6 @@ public class GCodeExtruder {
         }
     }
 
-    public void setValve(final boolean valveOpen) {
-        if (valvePulseTime <= 0) {
-            return;
-        }
-        if (valveOpen) {
-            gcode.writeCommand("M126 P" + valvePulseTime, "valve open");
-        } else {
-            gcode.writeCommand("M127 P" + valvePulseTime, "valve closed");
-        }
-    }
-
     /**
      * Allow others to set our extrude length so that all logical extruders
      * talking to one physical extruder can use the same length instance.
@@ -257,12 +230,8 @@ public class GCodeExtruder {
         extrusionDelayForLayer = preferences.loadDouble(prefName + "ExtrusionDelayForLayer(ms)");
         extrusionDelayForPolygon = preferences.loadDouble(prefName + "ExtrusionDelayForPolygon(ms)");
         extrusionOverRun = preferences.loadDouble(prefName + "ExtrusionOverRun(mm)");
-        valveDelayForLayer = preferences.loadDouble(prefName + "ValveDelayForLayer(ms)");
-        valveDelayForPolygon = preferences.loadDouble(prefName + "ValveDelayForPolygon(ms)");
         extrusionReverseDelay = preferences.loadDouble(prefName + "Reverse(ms)");
-        valveOverRun = preferences.loadDouble(prefName + "ValveOverRun(mm)");
         minLiftedZ = -1;
-        valvePulseTime = 0.5 * preferences.loadDouble(prefName + "ValvePulseTime(ms)");
         extrusionFoundationWidth = preferences.loadDouble(prefName + "ExtrusionFoundationWidth(mm)");
         arcCompensationFactor = preferences.loadDouble(prefName + "ArcCompensationFactor(0..)");
         arcShortSides = preferences.loadDouble(prefName + "ArcShortSides(0..)");
@@ -424,41 +393,8 @@ public class GCodeExtruder {
         return extrusionReverseDelay;
     }
 
-    /**
-     * Gets the number of milliseconds to wait before opening the valve for the
-     * first track of a layer
-     */
-    public double getValveDelayForLayer() {
-        if (valvePulseTime < 0) {
-            return 0;
-        }
-        return valveDelayForLayer;
-    }
-
-    /**
-     * Gets the number of milliseconds to wait before opening the valve for any
-     * other track
-     */
-    public double getValveDelayForPolygon() {
-        if (valvePulseTime < 0) {
-            return 0;
-        }
-        return valveDelayForPolygon;
-    }
-
     public double getExtrusionOverRun() {
         return extrusionOverRun;
-    }
-
-    /**
-     * @return the valve overrun in millimeters (i.e. how many mm before the end
-     *         of a track to turn off the extrude motor)
-     */
-    public double getValveOverRun() {
-        if (valvePulseTime < 0) {
-            return 0;
-        }
-        return valveOverRun;
     }
 
     /**
@@ -528,7 +464,7 @@ public class GCodeExtruder {
      * 0.
      */
     public double getDistanceFromTime(final double time) {
-        if (!extruderState.isExtruding() || valvePulseTime > 0) {
+        if (!extruderState.isExtruding()) {
             return 0;
         }
 
@@ -540,7 +476,7 @@ public class GCodeExtruder {
      * is in mm per minute. Valve extruders cannot know, so return 0.
      */
     public double getDistance(final double distance) {
-        if (!extruderState.isExtruding() || valvePulseTime > 0) {
+        if (!extruderState.isExtruding()) {
             return 0;
         }
         return filamentDistance(extrudeRatio * distance);

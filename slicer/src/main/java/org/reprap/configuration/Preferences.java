@@ -47,7 +47,9 @@ public class Preferences {
     private static final List<Pattern> OBSOLETE_PROPERTIES_PATTERNS = compilePatterns("Extruder\\d_ExtrusionHeight\\(mm\\)",
             "Extruder\\d_NumberOfShells\\(0\\.\\.N\\)", "Extruder\\d_SurfaceLayers\\(0\\.\\.N\\)",
             "Extruder\\d_ExtrusionInfillWidth\\(mm\\)", "Extruder\\d_InFillMaterialType\\(name\\)",
-            "Extruder\\d_EvenHatchDirection\\(degrees\\)", "Extruder\\d_OddHatchDirection\\(degrees\\)");
+            "Extruder\\d_EvenHatchDirection\\(degrees\\)", "Extruder\\d_OddHatchDirection\\(degrees\\)",
+            "Extruder\\d_ValveDelayForLayer\\(ms\\)", "Extruder\\d_ValveDelayForPolygon\\(ms\\)",
+            "Extruder\\d_ValveOverRun\\(mm\\)", "Extruder\\d_ValvePulseTime\\(ms\\)");
 
     private static String propsFile = "reprap.properties";
 
@@ -317,8 +319,8 @@ public class Preferences {
 
     public String loadString(final String name) {
         if (!mainPreferences.containsKey(name)) {
-            LOGGER.error("RepRap preference: " + name + " not found in your preference file: " + getActiveMachineDir()
-                    + propsFile);
+            throw new RuntimeException("RepRap preference: " + name + " not found in your preference file: "
+                    + getActiveMachineDir() + propsFile);
         }
         return mainPreferences.getProperty(name);
     }

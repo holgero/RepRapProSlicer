@@ -59,7 +59,7 @@ class LayerProducer {
     /**
      * speed up for short lines
      */
-    private boolean shortLine(final Point2D p, final boolean stopExtruder, final boolean closeValve) {
+    private boolean shortLine(final Point2D p, final boolean stopExtruder) {
         final GCodePrinter printer = layerRules.getPrinter();
         final double shortLen = printer.getExtruder().getShortLength();
         if (shortLen < 0) {
@@ -74,8 +74,7 @@ class LayerProducer {
         // TODO: FIX THIS
         //		printer.setSpeed(LinePrinter.speedFix(printer.getExtruder().getXYSpeed(), 
         //				printer.getExtruder().getShortSpeed()));
-        printer.printTo(p.x(), p.y(), layerRules.getMachineZ(), printer.getExtruder().getShortLineFeedrate(), stopExtruder,
-                closeValve);
+        printer.printTo(p.x(), p.y(), layerRules.getMachineZ(), printer.getExtruder().getShortLineFeedrate(), stopExtruder);
         return true;
     }
 
@@ -89,10 +88,9 @@ class LayerProducer {
      * @param turnOff
      *            True if the extruder should be turned off at the end of this
      *            segment.
-     * @throws Exception
      */
-    private void plot(final Point2D first, final Point2D second, final boolean stopExtruder, final boolean closeValve) {
-        if (shortLine(first, stopExtruder, closeValve)) {
+    private void plot(final Point2D first, final Point2D second, final boolean stopExtruder) {
+        if (shortLine(first, stopExtruder)) {
             return;
         }
 
@@ -106,21 +104,20 @@ class LayerProducer {
                 return;
             }
 
-            printer.printTo(ss.getP1().x(), ss.getP1().y(), z, currentFeedrate, false, false);
+            printer.printTo(ss.getP1().x(), ss.getP1().y(), z, currentFeedrate, false);
 
             if (ss.isPlotMiddle()) {
                 //TODO: FIX THIS.
                 //				int straightSpeed = LinePrinter.speedFix(currentSpeed, (1 - 
                 //						printer.getExtruder().getAngleSpeedFactor()));
                 //printer.setFeedrate(printer.getExtruder().getAngleFeedrate());
-                printer.printTo(ss.getP2().x(), ss.getP2().y(), z, printer.getExtruder().getAngleFeedrate(), false, false);
+                printer.printTo(ss.getP2().x(), ss.getP2().y(), z, printer.getExtruder().getAngleFeedrate(), false);
             }
 
-            printer.printTo(ss.getP3().x(), ss.getP3().y(), z, printer.getExtruder().getAngleFeedrate(), stopExtruder,
-                    closeValve);
+            printer.printTo(ss.getP3().x(), ss.getP3().y(), z, printer.getExtruder().getAngleFeedrate(), stopExtruder);
             // Leave speed set for the start of the next line.
         } else {
-            printer.printTo(first.x(), first.y(), z, currentFeedrate, stopExtruder, closeValve);
+            printer.printTo(first.x(), first.y(), z, currentFeedrate, stopExtruder);
         }
     }
 
@@ -220,14 +217,7 @@ class LayerProducer {
     private void plotExtrusionPath(final ExtrusionPath extrusionPath, final boolean firstOneInLayer,
             final GCodeExtruder extruder) throws IOException {
         final double extrudeBackLength = extruder.getExtrusionOverRun();
-        final double valveBackLength = extruder.getValveOverRun();
-        if (extrudeBackLength > 0 && valveBackLength > 0) {
-            throw new IllegalStateException(
-                    "LayerProducer.plot(): extruder has both valve backoff and extrude backoff specified.");
-        }
-
         extrusionPath.backStepExtrude(extrudeBackLength);
-        extrusionPath.backStepValve(valveBackLength);
 
         final GCodePrinter printer = layerRules.getPrinter();
         final double currentZ = printer.getZ();
@@ -272,8 +262,7 @@ class LayerProducer {
             }
             final boolean oldexoff = extrudeOff;
             extrudeOff = (i > extrusionPath.extrudeEnd() && extrudeBackLength > 0) || i == pathLength - 1;
-            final boolean valveOff = (i > extrusionPath.valveEnd() && valveBackLength > 0) || i == pathLength - 1;
-            plot(point, next, extrudeOff, valveOff);
+            plot(point, next, extrudeOff);
             if (oldexoff ^ extrudeOff) {
                 printer.printEndReverse();
             }
