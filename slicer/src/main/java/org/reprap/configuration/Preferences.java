@@ -50,7 +50,8 @@ public class Preferences {
             "Extruder\\d_InFillMaterialType\\(name\\)", "Extruder\\d_EvenHatchDirection\\(degrees\\)",
             "Extruder\\d_OddHatchDirection\\(degrees\\)", "Extruder\\d_ValveDelayForLayer\\(ms\\)",
             "Extruder\\d_ValveDelayForPolygon\\(ms\\)", "Extruder\\d_ValveOverRun\\(mm\\)",
-            "Extruder\\d_ValvePulseTime\\(ms\\)", "SlowZFeedrate\\(mm/minute\\)");
+            "Extruder\\d_ValvePulseTime\\(ms\\)", "Extruder\\d_CoolingPeriod\\(s\\)", "SlowZFeedrate\\(mm/minute\\)",
+            "InterLayerCooling");
 
     private static String propsFile = "reprap.properties";
 

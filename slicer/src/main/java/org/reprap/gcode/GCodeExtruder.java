@@ -27,10 +27,6 @@ public class GCodeExtruder {
      */
     private int lowerFineLayers;
     /**
-     * The number of seconds to cool between layers
-     */
-    private double coolingPeriod;
-    /**
      * The fastest speed of movement in XY when depositing
      */
     private double fastXYFeedrate;
@@ -161,17 +157,6 @@ public class GCodeExtruder {
         extruderState.setReverse(reverse);
     }
 
-    //TODO: make these real G codes.
-    public void setCooler(final boolean coolerOn, final boolean really) {
-        if (really) {
-            if (coolerOn) {
-                gcode.writeCommand("M106", "cooler on");
-            } else {
-                gcode.writeCommand("M107", "cooler off");
-            }
-        }
-    }
-
     /**
      * Allow others to set our extrude length so that all logical extruders
      * talking to one physical extruder can use the same length instance.
@@ -185,7 +170,6 @@ public class GCodeExtruder {
         physicalExtruderId = preferences.loadInt(prefName + "Address");
         extrusionSize = preferences.loadDouble(prefName + "ExtrusionSize(mm)");
         lowerFineLayers = 2;
-        coolingPeriod = preferences.loadDouble(prefName + "CoolingPeriod(s)");
         fastXYFeedrate = preferences.loadDouble(prefName + "FastXYFeedrate(mm/minute)");
         fastEFeedrate = preferences.loadDouble(prefName + "FastEFeedrate(mm/minute)");
         slowXYFeedrate = preferences.loadDouble(prefName + "SlowXYFeedrate(mm/minute)");
@@ -306,10 +290,6 @@ public class GCodeExtruder {
 
     public int getLowerFineLayers() {
         return lowerFineLayers;
-    }
-
-    public double getCoolingPeriod() {
-        return coolingPeriod;
     }
 
     public Appearance getAppearance() {

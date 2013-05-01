@@ -34,7 +34,6 @@ public class GCodePrinter implements PreferenceChangeListener {
      * Force an extruder to be selected on startup
      */
     private boolean forceSelection = true;
-    private boolean XYEAtZero = false;
     /**
      * Have we actually used this extruder?
      */
@@ -85,7 +84,6 @@ public class GCodePrinter implements PreferenceChangeListener {
      */
     private GCodeExtruder extruders[];
     private int currentExtruder;
-    private long startedCooling = -1L;
     private int foundationLayers = 0;
     /**
      * The maximum X and Y point we can move to
@@ -307,7 +305,6 @@ public class GCodePrinter implements PreferenceChangeListener {
         currentX = x;
         currentY = y;
         currentZ = z;
-        XYEAtZero = false;
     }
 
     private void checkCoordinates(final double x, final double y, final double z) {
@@ -437,38 +434,10 @@ public class GCodePrinter implements PreferenceChangeListener {
             result = null;
         }
 
-        // Don't home the first layer
-        // The startup procedure has already done that
-        if (machineLayer > 0 && preferences.loadBool("InterLayerCooling")) {
-            double liftZ = -1;
-            for (final GCodeExtruder extruder2 : extruders) {
-                if (extruder2.getLift() > liftZ) {
-                    liftZ = extruder2.getLift();
-                }
-            }
-            if (liftZ > 0) {
-                singleMove(getX(), getY(), currentZ + liftZ, getFastFeedrateZ(), reversing);
-            }
-            homeToZeroXYE(reversing);
-            if (liftZ > 0) {
-                singleMove(getX(), getY(), currentZ, getFastFeedrateZ(), reversing);
-            }
-        } else {
-            getExtruder().zeroExtrudedLength(reversing);
-        }
+        getExtruder().zeroExtrudedLength(reversing);
 
         if (layerPauseCheckbox != null && layerPauseCheckbox.isSelected()) {
             layerPause();
-        }
-
-        final double coolDuration = getExtruder().getCoolingPeriod() * 1000L;
-        if (reversing && startedCooling >= 0) {
-            final long fanHasBeenOnDuration = System.currentTimeMillis() - startedCooling;
-            machineWait((long) coolDuration - fanHasBeenOnDuration, false, reversing);
-        }
-        if (coolDuration > 0) {
-            // Fan off
-            getExtruder().setCooler(false, reversing);
         }
 
         setZ(machineZ - zStep);
@@ -478,16 +447,6 @@ public class GCodePrinter implements PreferenceChangeListener {
     }
 
     public void finishedLayer(final boolean reversing) {
-        final double coolTime = getExtruder().getCoolingPeriod();
-        startedCooling = -1;
-
-        if (coolTime > 0) {
-            getExtruder().setCooler(true, reversing);
-            LOGGER.debug("Start of cooling period");
-            // Go home. Seek (0,0) then callibrate X first
-            homeToZeroXYE(reversing);
-            startedCooling = System.currentTimeMillis();
-        }
         if (!reversing) {
             gcode.closeOutFile();
         }
@@ -556,36 +515,6 @@ public class GCodePrinter implements PreferenceChangeListener {
         }
 
         gcode.writeCommand("G4 P" + millis, "delay");
-    }
-
-    private void homeToZeroX() {
-        gcode.writeCommand("G28 X0", "set x 0");
-        currentX = 0.0;
-    }
-
-    private void homeToZeroY() {
-        gcode.writeCommand("G28 Y0", "set y 0");
-        currentY = 0.0;
-    }
-
-    private void homeToZeroXYE(final boolean really) {
-        if (XYEAtZero) {
-            return;
-        }
-        if (really) {
-            homeToZeroX();
-            homeToZeroY();
-        } else {
-            currentX = 0;
-            currentY = 0;
-        }
-        final int extruderNow = currentExtruder;
-        for (int i = 0; i < extruders.length; i++) {
-            selectExtruder(i, really, false);
-            extruders[i].zeroExtrudedLength(really);
-        }
-        selectExtruder(extruderNow, really, false);
-        XYEAtZero = true;
     }
 
     private static double round(final double c, final double d) {
