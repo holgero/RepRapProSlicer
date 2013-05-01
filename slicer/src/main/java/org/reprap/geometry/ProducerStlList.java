@@ -889,25 +889,34 @@ class ProducerStlList {
         final BooleanGridList result = new BooleanGridList();
         for (int i = 0; i < gridList.size(); i++) {
             final BooleanGrid grid = gridList.get(i);
-            final Attributes att = grid.attribute();
-            if (att == null) {
-                throw new RuntimeException("grid attribute is null");
+            final BooleanGridList offset = offsetOutline(grid, lc, multiplier);
+            for (int j = 0; j < offset.size(); j++) {
+                result.add(offset.get(j));
             }
-            final GCodeExtruder e = lc.getPrinter().getExtruder(att.getMaterial());
+        }
+        return result;
+    }
+
+    private static BooleanGridList offsetOutline(final BooleanGrid grid, final LayerRules lc, final double multiplier) {
+        final Attributes att = grid.attribute();
+        if (att == null) {
+            throw new RuntimeException("grid attribute is null");
+        }
+        final GCodeExtruder e = lc.getPrinter().getExtruder(att.getMaterial());
+        final BooleanGridList result = new BooleanGridList();
+        final int shells = Preferences.getInstance().getPrintSettings().getVerticalShells();
+        for (int shell = 0; shell < shells; shell++) {
             final double extrusionSize = e.getExtrusionSize();
-            final boolean insideOut = e.getInsideOut();
-            for (int shell = 0; shell < Preferences.getInstance().getPrintSettings().getVerticalShells(); shell++) {
-                final double d = multiplier * (shell + 0.5) * extrusionSize;
-                final BooleanGrid thisOne = grid.createOffsetGrid(d);
-                if (thisOne.isEmpty()) {
-                    break;
-                } else {
-                    result.add(thisOne);
-                }
+            final double offset = multiplier * (shell + 0.5) * extrusionSize;
+            final BooleanGrid thisOne = grid.createOffsetGrid(offset);
+            if (thisOne.isEmpty()) {
+                break;
+            } else {
+                result.add(thisOne);
             }
-            if (insideOut) {
-                result.reverse(); // Plot from the inside out?
-            }
+        }
+        if (e.getInsideOut()) {
+            result.reverse();
         }
         return result;
     }
