@@ -30,11 +30,6 @@ public class GCodeExtruder {
      */
     private double fastEFeedrate;
     /**
-     * The speed from which that machine can do a standing start with this
-     * extruder
-     */
-    private double slowXYFeedrate;
-    /**
      * The fastest the machine can accelerate with this extruder
      */
     private double maxAcceleration;
@@ -138,7 +133,6 @@ public class GCodeExtruder {
         lowerFineLayers = 2;
         fastXYFeedrate = preferences.loadDouble(prefName + "FastXYFeedrate(mm/minute)");
         fastEFeedrate = preferences.loadDouble(prefName + "FastEFeedrate(mm/minute)");
-        slowXYFeedrate = preferences.loadDouble(prefName + "SlowXYFeedrate(mm/minute)");
         maxAcceleration = preferences.loadDouble(prefName + "MaxAcceleration(mm/minute/minute)");
         middleStart = preferences.loadBool(prefName + "MiddleStart");
         asLength = -1;
@@ -167,7 +161,6 @@ public class GCodeExtruder {
         feedDiameter = preferences.loadDouble(prefName + "FeedDiameter(mm)");
         insideOut = preferences.loadBool(prefName + "InsideOut");
         fastXYFeedrate = Math.min(printer.getFastXYFeedrate(), fastXYFeedrate);
-        slowXYFeedrate = Math.min(printer.getSlowXYFeedrate(), slowXYFeedrate);
         maxAcceleration = Math.min(printer.getMaxXYAcceleration(), maxAcceleration);
     }
 
@@ -200,13 +193,6 @@ public class GCodeExtruder {
 
     public double getFastEFeedrate() {
         return fastEFeedrate;
-    }
-
-    /**
-     * @return slow XY movement feedrate in mm/minute
-     */
-    public double getSlowXYFeedrate() {
-        return slowXYFeedrate;
     }
 
     /**

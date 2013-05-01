@@ -68,10 +68,6 @@ public class GCodePrinter implements PreferenceChangeListener {
      */
     private double maxXYAcceleration;
     /**
-     * The speed from which the machine can do a standing start
-     */
-    private double slowXYFeedrate;
-    /**
      * The fastest the machine can accelerate in Z
      */
     private double maxZAcceleration;
@@ -721,13 +717,6 @@ public class GCodePrinter implements PreferenceChangeListener {
     }
 
     /**
-     * @return slow XY movement feedrate in mm/minute
-     */
-    public double getSlowXYFeedrate() {
-        return slowXYFeedrate;
-    }
-
-    /**
      * @return the fastest the machine can accelerate
      */
     public double getMaxXYAcceleration() {
@@ -763,8 +752,6 @@ public class GCodePrinter implements PreferenceChangeListener {
         maxFeedrateZ = prefs.loadDouble("MaximumFeedrateZ(mm/minute)");
 
         maxXYAcceleration = prefs.loadDouble("MaxXYAcceleration(mm/mininute/minute)");
-        slowXYFeedrate = prefs.loadDouble("SlowXYFeedrate(mm/minute)");
-
         maxZAcceleration = prefs.loadDouble("MaxZAcceleration(mm/mininute/minute)");
 
         //set our standard feedrates.
