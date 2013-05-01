@@ -80,7 +80,6 @@ public class GCodePrinter implements PreferenceChangeListener {
      */
     private GCodeExtruder extruders[];
     private int currentExtruder;
-    private int foundationLayers = 0;
     /**
      * The maximum X and Y point we can move to
      */
@@ -698,10 +697,6 @@ public class GCodePrinter implements PreferenceChangeListener {
         layerPauseCheckbox = layerPause;
     }
 
-    public int getFoundationLayers() {
-        return foundationLayers;
-    }
-
     /**
      * Get the feedrate currently being used
      */
@@ -758,7 +753,6 @@ public class GCodePrinter implements PreferenceChangeListener {
         fastXYFeedrate = Math.min(maxFeedrateX, maxFeedrateY);
         setFastFeedrateZ(maxFeedrateZ);
 
-        foundationLayers = prefs.loadInt("FoundationLayers");
         loadExtruders();
     }
 

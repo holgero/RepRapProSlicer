@@ -38,8 +38,9 @@ public class PrintSettings {
     // shield
     // TODO print no shield if the print is not multimaterial (what happens currently?)
     private boolean shield; // boolean true
-    // support
-    private boolean support;
+    // support material
+    private boolean support; // boolean false
+    private int raftLayers; // # 0
 
     public double getLayerHeight() {
         return layerHeight;
@@ -127,5 +128,13 @@ public class PrintSettings {
 
     void setSupport(final boolean support) {
         this.support = support;
+    }
+
+    public int getRaftLayers() {
+        return raftLayers;
+    }
+
+    public void setRaftLayers(final int raftLayers) {
+        this.raftLayers = raftLayers;
     }
 }

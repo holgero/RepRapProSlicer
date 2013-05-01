@@ -9,6 +9,7 @@ import java.io.PrintStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Preferences;
+import org.reprap.configuration.PrintSettings;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.BooleanGrid;
@@ -119,11 +120,12 @@ public class LayerRules {
 
     LayerRules(final GCodePrinter printer, final BoundingBox box) {
         this.printer = printer;
-        zStep = preferences.getPrintSettings().getLayerHeight();
-        maxSurfaceLayers = preferences.getPrintSettings().getHorizontalShells();
+        final PrintSettings printSettings = preferences.getPrintSettings();
+        zStep = printSettings.getLayerHeight();
+        maxSurfaceLayers = printSettings.getHorizontalShells();
 
         modelZMax = box.getZint().high();
-        final int foundationLayers = Math.max(0, printer.getFoundationLayers());
+        final int foundationLayers = Math.max(0, printSettings.getRaftLayers());
         modelLayerMax = (int) (modelZMax / zStep) + 1;
         machineLayerMax = modelLayerMax + foundationLayers;
         machineZMax = modelZMax + foundationLayers * zStep;
