@@ -352,7 +352,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         final String myDateString = sdf.format(myDate);
         gcode.writeComment(" Created: " + myDateString);
         gcode.writeComment("#!RECTANGLE: " + rectangle + ", height: " + machineMaxZ);
-        final boolean debugGcode = preferences.loadBool("Debug");
+        final boolean debugGcode = preferences.getPrintSettings().isVerboseGCode();
         if (debugGcode) {
             gcode.writeComment(" Prologue:");
         }
@@ -438,7 +438,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         currentY = round(lastPoint.y(), 2);
         currentZ = round(lastZ, 1);
 
-        final boolean debugGcode = preferences.loadBool("Debug");
+        final boolean debugGcode = preferences.getPrintSettings().isVerboseGCode();
         if (debugGcode) {
             gcode.writeComment(" Epilogue:");
         }

@@ -151,6 +151,6 @@ public class GCodeWriter implements PreferenceChangeListener {
 
     @Override
     public void refreshPreferences(final Preferences preferences) {
-        debugGcode = preferences.loadBool("Debug");
+        debugGcode = preferences.getPrintSettings().isVerboseGCode();
     }
 }

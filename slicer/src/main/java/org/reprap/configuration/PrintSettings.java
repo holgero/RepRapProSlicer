@@ -41,6 +41,8 @@ public class PrintSettings {
     // support material
     private boolean support; // boolean false
     private int raftLayers; // # 0
+    // output options
+    private boolean verboseGCode; // boolean false
 
     public double getLayerHeight() {
         return layerHeight;
@@ -136,5 +138,13 @@ public class PrintSettings {
 
     public void setRaftLayers(final int raftLayers) {
         this.raftLayers = raftLayers;
+    }
+
+    public boolean isVerboseGCode() {
+        return verboseGCode;
+    }
+
+    public void setVerboseGCode(final boolean verboseGCode) {
+        this.verboseGCode = verboseGCode;
     }
 }

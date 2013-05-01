@@ -58,7 +58,7 @@ public class Preferences {
             "Extruder\\d_ExtrusionDelayForLayer\\(ms\\)", "Extruder\\d_ExtrusionDelayForPolygon\\(ms\\)",
             "Extruder\\d_ExtrusionSpeed\\(mm/minute\\)", "Extruder\\d_SlowXYFeedrate\\(mm/minute\\)",
             "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling", "StartRectangle",
-            "BrimLines", "Shield", "Support", "FoundationLayers");
+            "BrimLines", "Shield", "Support", "FoundationLayers", "Debug");
 
     private static String propsFile = "reprap.properties";
 
@@ -178,6 +178,7 @@ public class Preferences {
         printSettings.setShield(loadBool("Shield"));
         printSettings.setSupport(loadBool("Support"));
         printSettings.setRaftLayers(loadInt("FoundationLayers"));
+        printSettings.setVerboseGCode(loadBool("Debug"));
         fixupExtruderDelayProperties();
         removeUnusedProperties();
     }
