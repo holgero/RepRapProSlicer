@@ -179,12 +179,12 @@ public final class InFillPatterns {
                 final Point2D cen2 = land2.findCentroid();
                 final Attributes attribute = bridge.attribute();
                 final GCodeExtruder extruder = layerConditions.getPrinter().getExtruder(attribute.getMaterial());
+                final double extrusionWidth = extruder.getExtrusionSize();
                 if (cen2 == null) {
                     LOGGER.debug("Second land found with no centroid.");
                     // No second land implies a ring of support - just infill it.
-                    hatchedPolygons.add(bridge.hatch(
-                            layerConditions.getHatchDirection(extruder, false, extruder.getExtrusionSize()),
-                            extruder.getExtrusionSize(), attribute));
+                    hatchedPolygons.add(bridge.hatch(layerConditions.getHatchDirection(false, extrusionWidth), extrusionWidth,
+                            attribute));
 
                     // Remove this bridge (in fact, just its lands) from the other infill patterns.
                     final BooleanGridList b = new BooleanGridList();
@@ -222,8 +222,8 @@ public final class InFillPatterns {
                     }
 
                     // Build the bridge
-                    hatchedPolygons.add(bridge.hatch(new HalfPlane(new Point2D(0, 0), bridgeDirection),
-                            extruder.getExtrusionSize(), attribute));
+                    hatchedPolygons.add(bridge.hatch(new HalfPlane(new Point2D(0, 0), bridgeDirection), extrusionWidth,
+                            attribute));
 
                     // Remove this bridge (in fact, just its lands) from the other infill patterns. 
                     final BooleanGridList b = new BooleanGridList();

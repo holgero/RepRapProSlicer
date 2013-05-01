@@ -19,10 +19,11 @@
 package org.reprap.configuration;
 
 public class PrintSettings {
-    private double layerHeight;
-    private int verticalShells;
-    private int horizontalShells;
-    private double fillDensity;
+    private double layerHeight; // mm 0.24
+    private int verticalShells; // # 2
+    private int horizontalShells; // # 3
+    private double fillDensity; // fraction 0.21
+    private FillPattern pattern; // rectilinear
 
     public double getLayerHeight() {
         return layerHeight;
@@ -54,5 +55,13 @@ public class PrintSettings {
 
     public void setFillDensity(final double fillDensity) {
         this.fillDensity = fillDensity;
+    }
+
+    public FillPattern getFillPattern() {
+        return pattern;
+    }
+
+    public void setFillPattern(final FillPattern pattern) {
+        this.pattern = pattern;
     }
 }

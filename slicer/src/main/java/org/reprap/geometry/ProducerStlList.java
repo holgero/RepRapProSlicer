@@ -729,7 +729,7 @@ class ProducerStlList {
             final GCodePrinter printer = lc.getPrinter();
             final GCodeExtruder ex = printer.getExtruder(outline.getAttributes().getMaterial());
             if (ex.getMiddleStart()) {
-                Line l = lc.getHatchDirection(ex, false, ex.getExtrusionSize()).pLine();
+                Line l = lc.getHatchDirection(false, ex.getExtrusionSize()).pLine();
                 if (i % 2 != 0 ^ lc.getMachineLayer() % 4 > 1) {
                     l = l.neg();
                 }
@@ -879,7 +879,7 @@ class ProducerStlList {
             } else {
                 infillWidth = e.getExtrusionSize();
             }
-            final HalfPlane hatchLine = layerConditions.getHatchDirection(e, support, infillWidth);
+            final HalfPlane hatchLine = layerConditions.getHatchDirection(support, infillWidth);
             result.add(grid.hatch(hatchLine, infillWidth, att));
         }
         return result;

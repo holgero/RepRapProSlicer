@@ -140,8 +140,6 @@ public class GCodeExtruder {
     private double extrusionFoundationWidth;
     private double arcCompensationFactor;
     private double arcShortSides;
-    private double evenHatchDirection;
-    private double oddHatchDirection;
     private String supportMaterial;
     private double extrudeRatio = 1;
     private boolean middleStart;
@@ -270,8 +268,6 @@ public class GCodeExtruder {
         arcShortSides = preferences.loadDouble(prefName + "ArcShortSides(0..)");
         extrudeRatio = preferences.loadDouble(prefName + "ExtrudeRatio(0..)");
         lift = preferences.loadDouble(prefName + "Lift(mm)");
-        evenHatchDirection = preferences.loadDouble(prefName + "EvenHatchDirection(degrees)");
-        oddHatchDirection = preferences.loadDouble(prefName + "OddHatchDirection(degrees)");
         final Color3f col = new Color3f((float) preferences.loadDouble(prefName + "ColourR(0..1)"),
                 (float) preferences.loadDouble(prefName + "ColourG(0..1)"), (float) preferences.loadDouble(prefName
                         + "ColourB(0..1)"));
@@ -503,22 +499,6 @@ public class GCodeExtruder {
      */
     public double getArcShortSides() {
         return arcShortSides;
-    }
-
-    /**
-     * The direction to hatch even-numbered layers in degrees anticlockwise from
-     * the X axis
-     */
-    public double getEvenHatchDirection() {
-        return evenHatchDirection;
-    }
-
-    /**
-     * The direction to hatch odd-numbered layers in degrees anticlockwise from
-     * the X axis
-     */
-    public double getOddHatchDirection() {
-        return oddHatchDirection;
     }
 
     /**

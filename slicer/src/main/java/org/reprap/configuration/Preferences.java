@@ -46,7 +46,8 @@ public class Preferences {
     private static final double MACHINE_RESOLUTION = 0.05; // RepRap step size in mm
     private static final List<Pattern> OBSOLETE_PROPERTIES_PATTERNS = compilePatterns("Extruder\\d_ExtrusionHeight\\(mm\\)",
             "Extruder\\d_NumberOfShells\\(0\\.\\.N\\)", "Extruder\\d_SurfaceLayers\\(0\\.\\.N\\)",
-            "Extruder\\d_ExtrusionInfillWidth\\(mm\\)", "Extruder\\d_InFillMaterialType\\(name\\)");
+            "Extruder\\d_ExtrusionInfillWidth\\(mm\\)", "Extruder\\d_InFillMaterialType\\(name\\)",
+            "Extruder\\d_EvenHatchDirection\\(degrees\\)", "Extruder\\d_OddHatchDirection\\(degrees\\)");
 
     private static String propsFile = "reprap.properties";
 
@@ -158,6 +159,7 @@ public class Preferences {
         final double fillDensity = loadDouble("Extruder3_ExtrusionSize(mm)") / loadDouble("Extruder3_ExtrusionInfillWidth(mm)");
         LOGGER.info("fill density is: " + fillDensity);
         printSettings.setFillDensity(fillDensity);
+        printSettings.setFillPattern(new RectilinearFillPattern(loadDouble("Extruder0_EvenHatchDirection(degrees)")));
         removeUnusedProperties();
     }
 

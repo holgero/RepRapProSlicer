@@ -257,31 +257,14 @@ public class LayerRules {
         return zStep;
     }
 
-    /**
-     * The hatch pattern is:
-     * 
-     * Foundation: X and Y rectangle
-     * 
-     * Model: Alternate even then odd (which can be set to the same angle if
-     * wanted).
-     */
-    public HalfPlane getHatchDirection(final GCodeExtruder e, final boolean support, final double alternatingOffset) {
-        final double myHeight = zStep;
-        final double eFraction = machineZ / myHeight;
-        final int mylayer = (int) Math.round(eFraction);
-
-        double angle;
-
+    public HalfPlane getHatchDirection(final boolean support, final double alternatingOffset) {
+        final int mylayer;
         if (getMachineLayer() < getFoundationLayers()) {
-            angle = e.getOddHatchDirection();
+            mylayer = 1;
         } else {
-            if (mylayer % 2 == 0) {
-                angle = e.getEvenHatchDirection();
-            } else {
-                angle = e.getOddHatchDirection();
-            }
+            mylayer = machineLayer;
         }
-        angle = angle * Math.PI / 180;
+        final double angle = toRadian(preferences.getPrintSettings().getFillPattern().angle(mylayer));
         HalfPlane result = new HalfPlane(new Point2D(0.0, 0.0), new Point2D(Math.sin(angle), Math.cos(angle)));
 
         if (((mylayer / 2) % 2 == 0) && !support) {
@@ -289,6 +272,10 @@ public class LayerRules {
         }
 
         return result;
+    }
+
+    private double toRadian(final double angle) {
+        return angle * Math.PI / 180;
     }
 
     /**
@@ -373,7 +360,7 @@ public class LayerRules {
         final CSG2D rect = CSG2D.RrCSGFromBox(bBox);
         final BooleanGrid bg = new BooleanGrid(rect, bBox.scale(1.1), fa);
         final PolygonList h[] = { shield,
-                bg.hatch(getHatchDirection(e, false, e.getExtrusionSize()), e.getExtrusionSize(), bg.attribute()) };
+                bg.hatch(getHatchDirection(false, e.getExtrusionSize()), e.getExtrusionSize(), bg.attribute()) };
         setFirstAndLast(h);
         final LayerProducer lp = new LayerProducer(h, this, simulationPlot);
         lp.plot();
