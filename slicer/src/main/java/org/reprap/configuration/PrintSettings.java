@@ -30,6 +30,9 @@ public class PrintSettings {
     // speeds
     private double perimeterSpeed; // fraction 0.9
     private double infillSpeed; // fraction 1.0
+    // skirt
+    // TODO make this a real skirt around the print, give it a width, a height and a distance from the print
+    private boolean skirt; // boolean false
 
     public double getLayerHeight() {
         return layerHeight;
@@ -85,5 +88,13 @@ public class PrintSettings {
 
     public void setInfillSpeed(final double infillSpeed) {
         this.infillSpeed = infillSpeed;
+    }
+
+    public boolean isSkirt() {
+        return skirt;
+    }
+
+    public void setSkirt(final boolean skirt) {
+        this.skirt = skirt;
     }
 }

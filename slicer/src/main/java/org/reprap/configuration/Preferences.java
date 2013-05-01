@@ -57,7 +57,7 @@ public class Preferences {
             "Extruder\\d_InfillSpeed\\(0\\.\\.1\\)", "Extruder\\d_Reverse\\(ms\\)",
             "Extruder\\d_ExtrusionDelayForLayer\\(ms\\)", "Extruder\\d_ExtrusionDelayForPolygon\\(ms\\)",
             "Extruder\\d_ExtrusionSpeed\\(mm/minute\\)", "Extruder\\d_SlowXYFeedrate\\(mm/minute\\)",
-            "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling");
+            "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling", "StartRectangle");
 
     private static String propsFile = "reprap.properties";
 
@@ -172,6 +172,7 @@ public class Preferences {
         printSettings.setFillPattern(new RectilinearFillPattern(loadDouble("Extruder0_EvenHatchDirection(degrees)")));
         printSettings.setPerimeterSpeed(loadDouble("Extruder0_OutlineSpeed(0..1)"));
         printSettings.setInfillSpeed(loadDouble("Extruder0_InfillSpeed(0..1)"));
+        printSettings.setSkirt(loadBool("StartRectangle"));
         fixupExtruderDelayProperties();
         removeUnusedProperties();
     }

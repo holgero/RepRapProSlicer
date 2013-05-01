@@ -367,7 +367,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         currentFeedrate = -100; // Force it to set the feedrate at the start
         forceSelection = true; // Force it to set the extruder to use at the start
 
-        if (preferences.loadBool("StartRectangle")) {
+        if (preferences.getPrintSettings().isSkirt()) {
             // plot the outline
             plotOutlines(rectangle, machineZ);
         }
