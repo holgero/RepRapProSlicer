@@ -5,8 +5,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import org.reprap.gcode.GCodePrinter;
-
 /**
  * Class to hold a list of BooleanGrids with associated attributes for each
  * 
@@ -205,23 +203,6 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
             }
         }
         return result.unionDuplicates();
-    }
-
-    /**
-     * Return only those elements in the list that have no support material
-     * specified
-     */
-    public BooleanGridList cullNoSupport(final GCodePrinter printer) {
-        final BooleanGridList result = new BooleanGridList();
-
-        for (int i = 0; i < size(); i++) {
-            final BooleanGrid grid = get(i);
-            if (printer.getExtruder(grid.attribute().getMaterial()).getSupportExtruderNumber() < 0) {
-                result.add(grid);
-            }
-        }
-
-        return result;
     }
 
     /**

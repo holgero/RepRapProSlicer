@@ -337,16 +337,15 @@ class ProducerStlList {
 
         cache.setSupport(BooleanGridList.unions(previousSupport, slice(stl, layer)), layer, stl);
 
+        final GCodeExtruder supportExtruder = layerRules.getPrinter().getExtruders()[preferences.getPrintSettings()
+                .getSupportExtruder()];
+
         // Now we subtract the union of this layer from all the stuff requiring support in the layer above.
         BooleanGridList support = new BooleanGridList();
-
         if (previousSupport != null) {
             for (int i = 0; i < previousSupport.size(); i++) {
                 final BooleanGrid above = previousSupport.get(i);
-                final GCodeExtruder e = layerRules.getPrinter().getExtruder(attribute.getMaterial()).getSupportExtruder();
-                if (e != null) {
-                    support.add(BooleanGrid.difference(above, unionOfThisLayer, attribute));
-                }
+                support.add(BooleanGrid.difference(above, unionOfThisLayer, attribute));
             }
             support = support.unionDuplicates();
         }
@@ -355,12 +354,7 @@ class ProducerStlList {
         // for all the materials in it.  If the material isn't active in this layer, remove it from the list
         for (int i = 0; i < support.size(); i++) {
             final BooleanGrid grid = support.get(i);
-            final GCodeExtruder e = layerRules.getPrinter().getExtruder(grid.attribute().getMaterial()).getSupportExtruder();
-            if (e == null) {
-                LOGGER.error("computeSupport(): null support extruder specified!");
-                continue;
-            }
-            grid.forceAttribute(new Attributes(e.getMaterial(), null, e.getAppearance()));
+            grid.forceAttribute(new Attributes(supportExtruder.getMaterial(), null, supportExtruder.getAppearance()));
         }
 
         return hatch(support, layerRules, false, true);

@@ -57,8 +57,8 @@ public class Preferences {
             "Extruder\\d_InfillSpeed\\(0\\.\\.1\\)", "Extruder\\d_Reverse\\(ms\\)",
             "Extruder\\d_ExtrusionDelayForLayer\\(ms\\)", "Extruder\\d_ExtrusionDelayForPolygon\\(ms\\)",
             "Extruder\\d_ExtrusionSpeed\\(mm/minute\\)", "Extruder\\d_SlowXYFeedrate\\(mm/minute\\)",
-            "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling", "StartRectangle",
-            "BrimLines", "Shield", "Support", "FoundationLayers", "Debug");
+            "Extruder\\d_SupportMaterialType\\(name\\)", "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)",
+            "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "Support", "FoundationLayers", "Debug");
 
     private static String propsFile = "reprap.properties";
 
@@ -179,6 +179,8 @@ public class Preferences {
         printSettings.setSupport(loadBool("Support"));
         printSettings.setRaftLayers(loadInt("FoundationLayers"));
         printSettings.setVerboseGCode(loadBool("Debug"));
+        final int supportExtruderNo = getNumberFromMaterial(loadString("Extruder0_SupportMaterialType(name)"));
+        printSettings.setSupportExtruder(supportExtruderNo);
         fixupExtruderDelayProperties();
         removeUnusedProperties();
     }
@@ -391,7 +393,7 @@ public class Preferences {
         mainPreferences.setProperty(name, value);
     }
 
-    public int getNumberFromMaterial(final String material) {
+    private int getNumberFromMaterial(final String material) {
         if (material.equalsIgnoreCase("null")) {
             return -1;
         }

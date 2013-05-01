@@ -65,7 +65,7 @@ public final class InFillPatterns {
 
         // Parts with nothing under them that have no support material
         // need to have bridges constructed to do the best for in-air 
-        bridges = nothingbelow.cullNoSupport(layerRules.getPrinter());
+        bridges = cullNoSupport(nothingbelow);
 
         // The remainder with nothing under them will be supported by support material
         // and so needs no special treatment.
@@ -109,6 +109,23 @@ public final class InFillPatterns {
         hatchedPolygons.add(ProducerStlList.hatch(surfaces, layerRules, true, false));
 
         return hatchedPolygons;
+    }
+
+    /**
+     * Return only those elements in the list that have no support material
+     * specified
+     */
+    public static BooleanGridList cullNoSupport(final BooleanGridList list) {
+        final BooleanGridList result = new BooleanGridList();
+
+        if (!Preferences.getInstance().getPrintSettings().printSupport()) {
+            for (int i = 0; i < list.size(); i++) {
+                final BooleanGrid grid = list.get(i);
+                result.add(grid);
+            }
+        }
+
+        return result;
     }
 
     /**

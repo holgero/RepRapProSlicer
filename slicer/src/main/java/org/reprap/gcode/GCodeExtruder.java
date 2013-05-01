@@ -85,13 +85,11 @@ public class GCodeExtruder {
     private double extrusionFoundationWidth;
     private double arcCompensationFactor;
     private double arcShortSides;
-    private String supportMaterial;
     private double extrudeRatio = 1;
     private boolean middleStart;
     private boolean insideOut = false;
     private final GCodePrinter printer;
     private int physicalExtruderId;
-    private int supportExtruderNumber;
     private double retractionDistance;
     private double extraExtrusionForLayer;
     private double extraExtrusionForPolygon;
@@ -138,8 +136,6 @@ public class GCodeExtruder {
         asLength = -1;
         asFactor = 0.5;
         material = preferences.loadString(prefName + "MaterialType(name)");
-        supportMaterial = preferences.loadString(prefName + "SupportMaterialType(name)");
-        supportExtruderNumber = preferences.getNumberFromMaterial(supportMaterial);
         shortLength = -1;
         shortSpeed = 1;
         infillOverlap = preferences.loadDouble(prefName + "InfillOverlap(mm)");
@@ -260,14 +256,6 @@ public class GCodeExtruder {
      */
     public String getMaterial() {
         return material;
-    }
-
-    public int getSupportExtruderNumber() {
-        return supportExtruderNumber;
-    }
-
-    public GCodeExtruder getSupportExtruder() {
-        return printer.getExtruder(supportMaterial);
     }
 
     public double getExtrusionFoundationWidth() {

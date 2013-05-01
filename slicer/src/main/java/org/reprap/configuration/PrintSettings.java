@@ -43,12 +43,14 @@ public class PrintSettings {
     private int raftLayers; // # 0
     // output options
     private boolean verboseGCode; // boolean false
+    // multiple extruders
+    private int supportExtruder; // # 0
 
     public double getLayerHeight() {
         return layerHeight;
     }
 
-    public void setLayerHeight(final double layerHeight) {
+    void setLayerHeight(final double layerHeight) {
         this.layerHeight = layerHeight;
     }
 
@@ -56,7 +58,7 @@ public class PrintSettings {
         return verticalShells;
     }
 
-    public void setVerticalShells(final int verticalShells) {
+    void setVerticalShells(final int verticalShells) {
         this.verticalShells = verticalShells;
     }
 
@@ -64,7 +66,7 @@ public class PrintSettings {
         return horizontalShells;
     }
 
-    public void setHorizontalShells(final int horizontalShells) {
+    void setHorizontalShells(final int horizontalShells) {
         this.horizontalShells = horizontalShells;
     }
 
@@ -72,7 +74,7 @@ public class PrintSettings {
         return fillDensity;
     }
 
-    public void setFillDensity(final double fillDensity) {
+    void setFillDensity(final double fillDensity) {
         this.fillDensity = fillDensity;
     }
 
@@ -80,7 +82,7 @@ public class PrintSettings {
         return pattern;
     }
 
-    public void setFillPattern(final FillPattern pattern) {
+    void setFillPattern(final FillPattern pattern) {
         this.pattern = pattern;
     }
 
@@ -88,7 +90,7 @@ public class PrintSettings {
         return perimeterSpeed;
     }
 
-    public void setPerimeterSpeed(final double perimeterSpeed) {
+    void setPerimeterSpeed(final double perimeterSpeed) {
         this.perimeterSpeed = perimeterSpeed;
     }
 
@@ -96,7 +98,7 @@ public class PrintSettings {
         return infillSpeed;
     }
 
-    public void setInfillSpeed(final double infillSpeed) {
+    void setInfillSpeed(final double infillSpeed) {
         this.infillSpeed = infillSpeed;
     }
 
@@ -104,7 +106,7 @@ public class PrintSettings {
         return skirt;
     }
 
-    public void setSkirt(final boolean skirt) {
+    void setSkirt(final boolean skirt) {
         this.skirt = skirt;
     }
 
@@ -112,7 +114,7 @@ public class PrintSettings {
         return brimLines;
     }
 
-    public void setBrimLines(final int brimLines) {
+    void setBrimLines(final int brimLines) {
         this.brimLines = brimLines;
     }
 
@@ -120,7 +122,7 @@ public class PrintSettings {
         return shield;
     }
 
-    public void setShield(final boolean shield) {
+    void setShield(final boolean shield) {
         this.shield = shield;
     }
 
@@ -136,7 +138,7 @@ public class PrintSettings {
         return raftLayers;
     }
 
-    public void setRaftLayers(final int raftLayers) {
+    void setRaftLayers(final int raftLayers) {
         this.raftLayers = raftLayers;
     }
 
@@ -144,7 +146,15 @@ public class PrintSettings {
         return verboseGCode;
     }
 
-    public void setVerboseGCode(final boolean verboseGCode) {
+    void setVerboseGCode(final boolean verboseGCode) {
         this.verboseGCode = verboseGCode;
+    }
+
+    public int getSupportExtruder() {
+        return supportExtruder;
+    }
+
+    void setSupportExtruder(final int supportExtruder) {
+        this.supportExtruder = supportExtruder;
     }
 }
