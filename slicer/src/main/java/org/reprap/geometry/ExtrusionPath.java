@@ -23,7 +23,6 @@ package org.reprap.geometry;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.reprap.geometry.polygons.Interval;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 
@@ -39,10 +38,10 @@ class ExtrusionPath {
      */
     private int extrudeEnd = -1;
 
-    ExtrusionPath(final Polygon path) {
+    ExtrusionPath(final Polygon path, final double speed) {
         this.path = path;
         for (int i = 0; i < path.size(); i++) {
-            speeds.add(Double.valueOf(0.0));
+            speeds.add(Double.valueOf(speed));
         }
         validate();
     }
@@ -122,58 +121,6 @@ class ExtrusionPath {
 
     boolean isClosed() {
         return path.isClosed();
-    }
-
-    /**
-     * Set the extrusion speed for this path segment.
-     */
-    void setSpeed(final int i, final double speed) {
-        speeds.set(i, Double.valueOf(speed));
-    }
-
-    static Interval accRange(final double startVelocity, final double distance, final double acceleration) {
-        final double vMax = Math.sqrt(2 * acceleration * distance + startVelocity * startVelocity);
-        double vMin = -2 * acceleration * distance + startVelocity * startVelocity;
-        if (vMin <= 0) {
-            vMin = 0;
-        } else {
-            vMin = Math.sqrt(vMin);
-        }
-        return new Interval(vMin, vMax);
-    }
-
-    void backTrack(int i, double vCorner, final double acceleration, final boolean[] fixup) {
-        Point2D a, b, ab;
-        double backV, s;
-        int i1 = i - 1;
-        b = path.point(i);
-        while (i1 >= 0) {
-            a = path.point(i1);
-            ab = Point2D.sub(b, a);
-            s = ab.mod();
-            ab = Point2D.div(ab, s);
-            backV = Math.sqrt(vCorner * vCorner + 2 * acceleration * s);
-            setSpeed(i, vCorner);
-            if (backV > speed(i1)) {
-                fixup[i] = true;
-                break;
-            }
-            setSpeed(i1, backV);
-            vCorner = backV;
-            fixup[i] = false;
-            b = a;
-            i = i1;
-            i1--;
-        }
-    }
-
-    void add(final int i, final Point2D add, final double v) {
-        path.add(i, add);
-        speeds.add(i, v);
-
-        if (i <= extrudeEnd) {
-            extrudeEnd++;
-        }
     }
 
     void validate() {

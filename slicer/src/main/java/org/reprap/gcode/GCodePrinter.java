@@ -25,7 +25,6 @@ import org.reprap.configuration.PreferenceChangeListener;
 import org.reprap.configuration.Preferences;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Rectangle;
-import org.reprap.geometry.polygons.VelocityProfile;
 import org.reprap.geometry.polyhedra.Attributes;
 
 public class GCodePrinter implements PreferenceChangeListener {
@@ -78,10 +77,6 @@ public class GCodePrinter implements PreferenceChangeListener {
      */
     private double maxZAcceleration;
     /**
-     * The speed from which the machine can do a standing start in Z
-     */
-    private double slowZFeedrate;
-    /**
      * Feedrate for fast Z moves on the machine.
      */
     private double fastFeedrateZ;
@@ -96,7 +91,6 @@ public class GCodePrinter implements PreferenceChangeListener {
      * The maximum X and Y point we can move to
      */
     private Point2D bedNorthEast;
-    private boolean reprapAccelerations;
     private double maximumXvalue;
     private double maximumYvalue;
     private double maximumZvalue;
@@ -365,75 +359,7 @@ public class GCodePrinter implements PreferenceChangeListener {
             return;
         }
 
-        if (!reprapAccelerations) {
-            moveTo(x, y, z, feedrate, false, false);
-            return;
-        }
-
-        if (xyMove && getExtruder().getMaxAcceleration() <= 0) {
-            moveTo(x, y, z, feedrate, false, false);
-            return;
-        }
-
-        if (xyMove) {
-            final double s = Math.sqrt(dx * dx + dy * dy);
-
-            final VelocityProfile vp = new VelocityProfile(s, getExtruder().getSlowXYFeedrate(), feedrate, getExtruder()
-                    .getSlowXYFeedrate(), getExtruder().getMaxAcceleration());
-            switch (vp.flat()) {
-            case 0:
-                qFeedrate(feedrate);
-                moveTo(x, y, z0, feedrate, false, false);
-                break;
-
-            case 1:
-                qFeedrate(getExtruder().getSlowXYFeedrate());
-                moveTo(x0 + dx * vp.s1() / s, y0 + dy * vp.s1() / s, z0, vp.v(), false, false);
-                moveTo(x, y, z0, getExtruder().getSlowXYFeedrate(), false, false);
-                break;
-
-            case 2:
-                qFeedrate(getExtruder().getSlowXYFeedrate());
-                moveTo(x0 + dx * vp.s1() / s, y0 + dy * vp.s1() / s, z0, feedrate, false, false);
-                moveTo(x0 + dx * vp.s2() / s, y0 + dy * vp.s2() / s, z0, feedrate, false, false);
-                moveTo(x, y, z0, getExtruder().getSlowXYFeedrate(), false, false);
-                break;
-
-            default:
-                LOGGER.error("GCodeRepRap.singleMove(): dud VelocityProfile XY flat value.");
-            }
-        }
-
-        if (zMove) {
-            final VelocityProfile vp = new VelocityProfile(Math.abs(dz), getSlowZFeedrate(), feedrate, getSlowZFeedrate(),
-                    getMaxZAcceleration());
-            double s = 1;
-            if (dz < 0) {
-                s = -1;
-            }
-            switch (vp.flat()) {
-            case 0:
-                qFeedrate(feedrate);
-                moveTo(x0, y0, z, feedrate, false, false);
-                break;
-
-            case 1:
-                qFeedrate(getSlowZFeedrate());
-                moveTo(x0, y0, z0 + s * vp.s1(), vp.v(), false, false);
-                moveTo(x0, y0, z, getSlowZFeedrate(), false, false);
-                break;
-
-            case 2:
-                qFeedrate(getSlowZFeedrate());
-                moveTo(x0, y0, z0 + s * vp.s1(), feedrate, false, false);
-                moveTo(x0, y0, z0 + s * vp.s2(), feedrate, false, false);
-                moveTo(x0, y0, z, getSlowZFeedrate(), false, false);
-                break;
-
-            default:
-                LOGGER.error("GCodeRepRap.singleMove(): dud VelocityProfile Z flat value.");
-            }
-        }
+        moveTo(x, y, z, feedrate, false, false);
     }
 
     public void printTo(final double x, final double y, final double z, final double feedrate, final boolean stopExtruder) {
@@ -622,13 +548,7 @@ public class GCodePrinter implements PreferenceChangeListener {
             extruders[currentExtruder].getExtruderState().add(extrudeLength);
 
             if (extruders[currentExtruder].get5D()) {
-                final double fr;
-                if (reprapAccelerations) {
-                    fr = getExtruder().getSlowXYFeedrate();
-                } else {
-                    fr = getExtruder().getFastXYFeedrate();
-                }
-
+                final double fr = getExtruder().getFastXYFeedrate();
                 if (really) {
                     final String command;
 
@@ -960,10 +880,6 @@ public class GCodePrinter implements PreferenceChangeListener {
         return maxXYAcceleration;
     }
 
-    private double getSlowZFeedrate() {
-        return slowZFeedrate;
-    }
-
     private double getMaxZAcceleration() {
         return maxZAcceleration;
     }
@@ -981,7 +897,6 @@ public class GCodePrinter implements PreferenceChangeListener {
 
     @Override
     public void refreshPreferences(final Preferences prefs) {
-        reprapAccelerations = prefs.loadBool("RepRapAccelerations");
         maximumXvalue = prefs.loadDouble("WorkingX(mm)");
         maximumYvalue = prefs.loadDouble("WorkingY(mm)");
         maximumZvalue = prefs.loadDouble("WorkingZ(mm)");
@@ -997,7 +912,6 @@ public class GCodePrinter implements PreferenceChangeListener {
         slowXYFeedrate = prefs.loadDouble("SlowXYFeedrate(mm/minute)");
 
         maxZAcceleration = prefs.loadDouble("MaxZAcceleration(mm/mininute/minute)");
-        slowZFeedrate = prefs.loadDouble("SlowZFeedrate(mm/minute)");
 
         //set our standard feedrates.
         fastXYFeedrate = Math.min(maxFeedrateX, maxFeedrateY);

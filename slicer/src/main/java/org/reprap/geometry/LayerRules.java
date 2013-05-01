@@ -324,13 +324,8 @@ public class LayerRules {
                         printer.getFastXYFeedrate(), true);
                 copyFile(fileOutStream, layerFileNames[machineLayer]);
 
-                if (preferences.loadBool("RepRapAccelerations")) {
-                    printer.singleMove(getLastPoint(machineLayer).x(), getLastPoint(machineLayer).y(), machineZ,
-                            printer.getSlowXYFeedrate(), false);
-                } else {
-                    printer.singleMove(getLastPoint(machineLayer).x(), getLastPoint(machineLayer).y(), machineZ,
-                            printer.getFastXYFeedrate(), false);
-                }
+                printer.singleMove(getLastPoint(machineLayer).x(), getLastPoint(machineLayer).y(), machineZ,
+                        printer.getFastXYFeedrate(), false);
                 printer.finishedLayer(true);
             }
             printer.terminate(lastPoint[realTopLayer()], layerZ[realTopLayer()]);

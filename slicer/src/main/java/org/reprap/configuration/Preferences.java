@@ -44,12 +44,13 @@ public class Preferences {
     private static final int GRID_SIZE = 100;
     private static final double GRID_RESOLUTION = 1.0 / GRID_SIZE;
     private static final double MACHINE_RESOLUTION = 0.05; // RepRap step size in mm
-    private static final List<Pattern> OBSOLETE_PROPERTIES_PATTERNS = compilePatterns("Extruder\\d_ExtrusionHeight\\(mm\\)",
-            "Extruder\\d_NumberOfShells\\(0\\.\\.N\\)", "Extruder\\d_SurfaceLayers\\(0\\.\\.N\\)",
-            "Extruder\\d_ExtrusionInfillWidth\\(mm\\)", "Extruder\\d_InFillMaterialType\\(name\\)",
-            "Extruder\\d_EvenHatchDirection\\(degrees\\)", "Extruder\\d_OddHatchDirection\\(degrees\\)",
-            "Extruder\\d_ValveDelayForLayer\\(ms\\)", "Extruder\\d_ValveDelayForPolygon\\(ms\\)",
-            "Extruder\\d_ValveOverRun\\(mm\\)", "Extruder\\d_ValvePulseTime\\(ms\\)");
+    private static final List<Pattern> OBSOLETE_PROPERTIES_PATTERNS = compilePatterns("RepRapAccelerations",
+            "Extruder\\d_ExtrusionHeight\\(mm\\)", "Extruder\\d_NumberOfShells\\(0\\.\\.N\\)",
+            "Extruder\\d_SurfaceLayers\\(0\\.\\.N\\)", "Extruder\\d_ExtrusionInfillWidth\\(mm\\)",
+            "Extruder\\d_InFillMaterialType\\(name\\)", "Extruder\\d_EvenHatchDirection\\(degrees\\)",
+            "Extruder\\d_OddHatchDirection\\(degrees\\)", "Extruder\\d_ValveDelayForLayer\\(ms\\)",
+            "Extruder\\d_ValveDelayForPolygon\\(ms\\)", "Extruder\\d_ValveOverRun\\(mm\\)",
+            "Extruder\\d_ValvePulseTime\\(ms\\)", "SlowZFeedrate\\(mm/minute\\)");
 
     private static String propsFile = "reprap.properties";
 
