@@ -316,46 +316,26 @@ class ProducerStlList {
     PolygonList computeSupport(final int stl) {
         // We start by computing the union of everything in this layer because
         // that is everywhere that support _isn't_ needed.
-        // We give the union the attribute of the first thing found, though
-        // clearly it will - in general - represent many different substances.
-        // But it's only going to be subtracted from other shapes, so what it's made
-        // from doesn't matter.
         final int layer = layerRules.getModelLayer();
+        BooleanGrid unionOfThisLayer = union(slice(stl, layer));
 
-        final BooleanGridList thisLayer = slice(stl, layer);
-
-        BooleanGrid unionOfThisLayer;
-        Attributes a;
-
-        if (thisLayer.size() > 0) {
-            unionOfThisLayer = thisLayer.get(0);
-            a = unionOfThisLayer.attribute();
-        } else {
-            a = stlsToBuild.get(stl).attributes(0);
-            unionOfThisLayer = BooleanGrid.nullBooleanGrid();
-        }
-        for (int i = 1; i < thisLayer.size(); i++) {
-            unionOfThisLayer = BooleanGrid.union(unionOfThisLayer, thisLayer.get(i), a);
-        }
-
-        // Expand the union of this layer a bit, so that any support is a little clear of 
-        // this layer's boundaries.
-        BooleanGridList allThis = new BooleanGridList();
-        allThis.add(unionOfThisLayer);
-        allThis = offsetOutline(allThis, layerRules, 2); // 2mm gap is a bit of a hack...
-        // TODO: ??? this is not 2 mm, but a multiplicator of 2 ???
-
-        if (allThis.size() > 0) {
+        final Attributes attribute;
+        if (!unionOfThisLayer.isEmpty()) {
+            attribute = unionOfThisLayer.attribute();
+            // Expand the union of this layer a bit, so that any support is a little clear of 
+            // this layer's boundaries.
+            final BooleanGridList allThis = offsetOutline(unionOfThisLayer, layerRules, 2);
+            // the first grid in the resulting grid list is now offset by its extruders extrusionSize.
             unionOfThisLayer = allThis.get(0);
         } else {
-            unionOfThisLayer = BooleanGrid.nullBooleanGrid();
+            // default to the stl to build
+            attribute = stlsToBuild.get(stl).attributes(0);
         }
-
         // Get the layer above and union it with this layer.  That's what needs
         // support on the next layer down.
         final BooleanGridList previousSupport = cache.getSupport(layer + 1, stl);
 
-        cache.setSupport(BooleanGridList.unions(previousSupport, thisLayer), layer, stl);
+        cache.setSupport(BooleanGridList.unions(previousSupport, slice(stl, layer)), layer, stl);
 
         // Now we subtract the union of this layer from all the stuff requiring support in the layer above.
         BooleanGridList support = new BooleanGridList();
@@ -363,9 +343,9 @@ class ProducerStlList {
         if (previousSupport != null) {
             for (int i = 0; i < previousSupport.size(); i++) {
                 final BooleanGrid above = previousSupport.get(i);
-                final GCodeExtruder e = layerRules.getPrinter().getExtruder(a.getMaterial()).getSupportExtruder();
+                final GCodeExtruder e = layerRules.getPrinter().getExtruder(attribute.getMaterial()).getSupportExtruder();
                 if (e != null) {
-                    support.add(BooleanGrid.difference(above, unionOfThisLayer, a));
+                    support.add(BooleanGrid.difference(above, unionOfThisLayer, attribute));
                 }
             }
             support = support.unionDuplicates();
@@ -384,6 +364,22 @@ class ProducerStlList {
         }
 
         return hatch(support, layerRules, false, true);
+    }
+
+    private BooleanGrid union(final BooleanGridList slice) {
+        if (slice.size() == 0) {
+            return BooleanGrid.nullBooleanGrid();
+        }
+        BooleanGrid unionOfThisLayer = slice.get(0);
+        // We give the union the attribute of the first thing found, though
+        // clearly it will - in general - represent many different substances.
+        // But it's only going to be subtracted from other shapes, so what it's made
+        // from doesn't matter.
+        final Attributes attributes = unionOfThisLayer.attribute();
+        for (int i = 1; i < slice.size(); i++) {
+            unionOfThisLayer = BooleanGrid.union(unionOfThisLayer, slice.get(i), attributes);
+        }
+        return unionOfThisLayer;
     }
 
     /**
@@ -890,6 +886,9 @@ class ProducerStlList {
         for (int i = 0; i < gridList.size(); i++) {
             final BooleanGrid grid = gridList.get(i);
             final BooleanGridList offset = offsetOutline(grid, lc, multiplier);
+            if (lc.getPrinter().getExtruder(grid.attribute().getMaterial()).getInsideOut()) {
+                offset.reverse();
+            }
             for (int j = 0; j < offset.size(); j++) {
                 result.add(offset.get(j));
             }
@@ -914,9 +913,6 @@ class ProducerStlList {
             } else {
                 result.add(thisOne);
             }
-        }
-        if (e.getInsideOut()) {
-            result.reverse();
         }
         return result;
     }

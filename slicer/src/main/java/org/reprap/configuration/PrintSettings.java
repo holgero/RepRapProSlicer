@@ -38,6 +38,8 @@ public class PrintSettings {
     // shield
     // TODO print no shield if the print is not multimaterial (what happens currently?)
     private boolean shield; // boolean true
+    // support
+    private boolean support;
 
     public double getLayerHeight() {
         return layerHeight;
@@ -115,7 +117,15 @@ public class PrintSettings {
         return shield;
     }
 
-    public void setShield(boolean shield) {
+    public void setShield(final boolean shield) {
         this.shield = shield;
+    }
+
+    public boolean printSupport() {
+        return support;
+    }
+
+    void setSupport(final boolean support) {
+        this.support = support;
     }
 }

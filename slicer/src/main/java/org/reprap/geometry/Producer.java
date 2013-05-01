@@ -31,6 +31,7 @@ public class Producer {
      */
     private boolean omitShield;
     private final int brimLines;
+    private final boolean printSupport;
 
     public Producer(final GCodePrinter printer, final AllSTLsToBuild allStls, final ProductionProgressListener listener,
             final boolean displayPaths) {
@@ -50,6 +51,7 @@ public class Producer {
         final PrintSettings printSettings = Preferences.getInstance().getPrintSettings();
         omitShield = printSettings.printShield();
         brimLines = printSettings.getBrimLines();
+        printSupport = printSettings.printSupport();
     }
 
     public void produce() throws IOException {
@@ -128,10 +130,12 @@ public class Producer {
             final Polygon p = fills.polygon(pol);
             tempFillPolygons[getPhysicalExtruder(p)].add(p);
         }
-        final PolygonList support = stlList.computeSupport(stl);
-        for (int pol = 0; pol < support.size(); pol++) {
-            final Polygon p = support.polygon(pol);
-            tempFillPolygons[getPhysicalExtruder(p)].add(p);
+        if (printSupport) {
+            final PolygonList support = stlList.computeSupport(stl);
+            for (int pol = 0; pol < support.size(); pol++) {
+                final Polygon p = support.polygon(pol);
+                tempFillPolygons[getPhysicalExtruder(p)].add(p);
+            }
         }
         for (int physicalExtruder = 0; physicalExtruder < totalPhysicalExtruders; physicalExtruder++) {
             if (tempBorderPolygons[physicalExtruder].size() > 0) {
