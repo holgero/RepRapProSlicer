@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Preferences;
+import org.reprap.configuration.PrintSettings;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.gcode.Purge;
 import org.reprap.geometry.polygons.Point2D;
@@ -46,11 +47,9 @@ public class Producer {
         } else {
             simulationPlot = null;
         }
-        final Preferences preferences = Preferences.getInstance();
-        if (preferences.loadBool("Shield")) {
-            omitShield = true;
-        }
-        brimLines = preferences.getPrintSettings().getBrimLines();
+        final PrintSettings printSettings = Preferences.getInstance().getPrintSettings();
+        omitShield = printSettings.printShield();
+        brimLines = printSettings.getBrimLines();
     }
 
     public void produce() throws IOException {

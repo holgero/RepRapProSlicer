@@ -35,6 +35,9 @@ public class PrintSettings {
     private boolean skirt; // boolean false
     // brim
     private int brimLines; // # 8
+    // shield
+    // TODO print no shield if the print is not multimaterial (what happens currently?)
+    private boolean shield; // boolean true
 
     public double getLayerHeight() {
         return layerHeight;
@@ -92,7 +95,7 @@ public class PrintSettings {
         this.infillSpeed = infillSpeed;
     }
 
-    public boolean isSkirt() {
+    public boolean printSkirt() {
         return skirt;
     }
 
@@ -106,5 +109,13 @@ public class PrintSettings {
 
     public void setBrimLines(final int brimLines) {
         this.brimLines = brimLines;
+    }
+
+    public boolean printShield() {
+        return shield;
+    }
+
+    public void setShield(boolean shield) {
+        this.shield = shield;
     }
 }

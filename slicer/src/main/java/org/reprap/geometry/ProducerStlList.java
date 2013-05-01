@@ -410,7 +410,7 @@ class ProducerStlList {
     }
 
     private static void setUpShield(final Purge purge, final List<STLObject> stls, final Preferences preferences) {
-        if (!preferences.loadBool("Shield")) {
+        if (!preferences.getPrintSettings().printShield()) {
             return;
         }
         final BoundingBox boxWithoutShield = getBoundingBox(stls);

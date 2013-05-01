@@ -367,7 +367,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         currentFeedrate = -100; // Force it to set the feedrate at the start
         forceSelection = true; // Force it to set the extruder to use at the start
 
-        if (preferences.getPrintSettings().isSkirt()) {
+        if (preferences.getPrintSettings().printSkirt()) {
             // plot the outline
             plotOutlines(rectangle, machineZ);
         }
@@ -504,7 +504,7 @@ public class GCodePrinter implements PreferenceChangeListener {
     private void selectExtruder(final int materialIndex, final boolean really, final boolean update) {
         final GCodeExtruder oldExtruder = getExtruder();
         final int newPhysicalExtruder = extruders[materialIndex].getPhysicalExtruderNumber();
-        final boolean shield = preferences.loadBool("Shield");
+        final boolean shield = preferences.getPrintSettings().printShield();
 
         if (newPhysicalExtruder != oldExtruder.getPhysicalExtruderNumber() || forceSelection) {
             if (really) {
