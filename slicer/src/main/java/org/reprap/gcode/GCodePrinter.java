@@ -237,7 +237,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         currentZ = z;
     }
 
-    public void moveTo(double x, double y, double z, double feedrate, final boolean startUp, final boolean endUp) {
+    public void moveTo(double x, double y, double z, double feedrate, final boolean lift) {
         x = checkCoordinate("x", x, 0, maximumXvalue);
         y = checkCoordinate("y", y, 0, maximumYvalue);
         z = checkCoordinate("z", z, 0, maximumZvalue);
@@ -263,14 +263,11 @@ public class GCodePrinter implements PreferenceChangeListener {
                     + x + ", " + currentY + "->" + y + ", " + currentZ + "->" + z + ", " + ")");
         }
 
-        final double zFeedrate = round(getMaxFeedrateZ(), 1);
-
-        final double liftIncrement = extruders[currentExtruder].getLift(); //extruders[extruder].getExtrusionHeight()/2;
-        final double liftedZ = round(currentZ + liftIncrement, 4);
-
         //go up first?
-        if (startUp) {
-            qZMove(liftedZ, zFeedrate);
+        if (lift) {
+            final double liftIncrement = extruders[currentExtruder].getLift();
+            final double liftedZ = round(currentZ + liftIncrement, 4);
+            qZMove(liftedZ, round(getMaxFeedrateZ(), 1));
             qFeedrate(feedrate);
         }
 
@@ -288,16 +285,6 @@ public class GCodePrinter implements PreferenceChangeListener {
             if (zMove) {
                 qZMove(z, feedrate);
             }
-        }
-
-        if (endUp && !startUp) {
-            qZMove(liftedZ, zFeedrate);
-            qFeedrate(feedrate);
-        }
-
-        if (!endUp && startUp) {
-            qZMove(liftedZ - liftIncrement, zFeedrate);
-            qFeedrate(feedrate);
         }
 
         checkCoordinates(x, y, z);
@@ -352,11 +339,11 @@ public class GCodePrinter implements PreferenceChangeListener {
             return;
         }
 
-        moveTo(x, y, z, feedrate, false, false);
+        moveTo(x, y, z, feedrate, false);
     }
 
     public void printTo(final double x, final double y, final double z, final double feedrate, final boolean stopExtruder) {
-        moveTo(x, y, z, feedrate, false, false);
+        moveTo(x, y, z, feedrate, false);
 
         if (stopExtruder) {
             getExtruder().stopExtruding();
@@ -405,18 +392,17 @@ public class GCodePrinter implements PreferenceChangeListener {
                 }
                 zRight = true;
                 selectExtruder(e, true, false);
-                singleMove(rectangle.x().low(), rectangle.y().low(), currentZ, getExtruder().getFastXYFeedrate(), true);
-                printStartDelay(true);
-                getExtruder().setExtrusion(getExtruder().getExtruderSpeed(), false);
-                singleMove(rectangle.x().high(), rectangle.y().low(), currentZ, getExtruder().getFastXYFeedrate(), true);
-                singleMove(rectangle.x().high(), rectangle.y().high(), currentZ, getExtruder().getFastXYFeedrate(), true);
-                singleMove(rectangle.x().low(), rectangle.y().high(), currentZ, getExtruder().getFastXYFeedrate(), true);
-                singleMove(rectangle.x().low(), rectangle.y().low(), currentZ, getExtruder().getFastXYFeedrate(), true);
+                final GCodeExtruder extruder = getExtruder();
+                singleMove(rectangle.x().low(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate(), true);
+                startExtruder(true);
+                singleMove(rectangle.x().high(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate(), true);
+                singleMove(rectangle.x().high(), rectangle.y().high(), currentZ, extruder.getFastXYFeedrate(), true);
+                singleMove(rectangle.x().low(), rectangle.y().high(), currentZ, extruder.getFastXYFeedrate(), true);
+                singleMove(rectangle.x().low(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate(), true);
                 currentX = rectangle.x().low();
                 currentY = rectangle.y().low();
                 retract();
-                getExtruder().stopExtruding();
-                rectangle = rectangle.offset(2 * getExtruder().getExtrusionSize());
+                rectangle = rectangle.offset(2 * extruder.getExtrusionSize());
                 physicalExtruderUsed[pe] = false; // Stop us doing it again
             }
         }
@@ -467,72 +453,44 @@ public class GCodePrinter implements PreferenceChangeListener {
         }
     }
 
-    private void delay(final long millis, final boolean fastExtrude, final boolean really) {
-        final GCodeExtruder extruder = getExtruder();
-        double extrudeLength = extruder.getDistanceFromTime(millis);
-
-        if (extrudeLength > 0) {
-            double fr;
-            if (fastExtrude) {
-                fr = extruder.getFastEFeedrate();
-            } else {
-                fr = extruder.getFastXYFeedrate();
-            }
-            if (extruder.getFeedDiameter() > 0) {
-                fr = fr * preferences.getPrintSettings().getLayerHeight() * extruder.getExtrusionSize()
-                        / (extruder.getFeedDiameter() * extruder.getFeedDiameter() * Math.PI / 4);
-            }
-            fr = round(fr, 1);
-            if (really) {
-                currentFeedrate = 0; // force it to output feedrate
-                qFeedrate(fr);
-            }
-            if (extruder.getReversing()) {
-                extrudeLength = -extrudeLength;
-            }
-            extruder.getExtruderState().add(extrudeLength);
-
-            final double feedrate = extruder.getFastXYFeedrate();
-            if (really) {
-                final String command;
-                if (relativeExtrusion) {
-                    command = "G1 E" + round(extrudeLength, 3);
-                } else {
-                    command = "G1 E" + round(extruder.getExtruderState().length(), 3);
-                }
-                final String comment;
-                if (extruder.getReversing()) {
-                    comment = "extruder retraction";
-                } else {
-                    comment = "extruder dwell";
-                }
-                gcode.writeCommand(command, comment);
-                qFeedrate(feedrate);
-            } else {
-                currentFeedrate = feedrate;
-            }
-            return;
-        }
-
-        gcode.writeCommand("G4 P" + millis, "delay");
-    }
-
     private static double round(final double c, final double d) {
         final double power = Math.pow(10.0, d);
 
         return Math.round(c * power) / power;
     }
 
-    /**
-     * All machine dwells and delays are routed via this function, rather than
-     * calling Thread.sleep - this allows them to generate the right G codes
-     * (G4) etc.
-     */
-    private void machineWait(final double milliseconds, final boolean fastExtrude, final boolean really) {
-        if (milliseconds <= 0) {
-            return;
+    private void extrude(final double distance, final double feedRate) {
+        final GCodeExtruder extruder = getExtruder();
+        double extrudeLength = extruder.getDistance(distance);
+
+        final double scaledFeedRate;
+        if (extruder.getFeedDiameter() > 0) {
+            scaledFeedRate = feedRate * preferences.getPrintSettings().getLayerHeight() * extruder.getExtrusionSize()
+                    / (extruder.getFeedDiameter() * extruder.getFeedDiameter() * Math.PI / 4);
+        } else {
+            scaledFeedRate = feedRate;
         }
-        delay((long) milliseconds, fastExtrude, really);
+        currentFeedrate = 0; // force it to output feedrate
+        qFeedrate(round(scaledFeedRate, 1));
+        if (extruder.getReversing()) {
+            extrudeLength = -extrudeLength;
+        }
+        extruder.getExtruderState().add(extrudeLength);
+
+        final String command;
+        if (relativeExtrusion) {
+            command = "G1 E" + round(extrudeLength, 3);
+        } else {
+            command = "G1 E" + round(extruder.getExtruderState().length(), 3);
+        }
+        final String comment;
+        if (extruder.getReversing()) {
+            comment = "extruder retraction";
+        } else {
+            comment = "extruder dwell";
+        }
+        gcode.writeCommand(command, comment);
+        qFeedrate(extruder.getFastXYFeedrate());
     }
 
     public void setGCodeFileForOutput(final File gcodeFile) throws FileNotFoundException {
@@ -548,28 +506,26 @@ public class GCodePrinter implements PreferenceChangeListener {
     }
 
     private void selectExtruder(final int materialIndex, final boolean really, final boolean update) {
-        final int oldPhysicalExtruder = getExtruder().getPhysicalExtruderNumber();
         final GCodeExtruder oldExtruder = getExtruder();
         final int newPhysicalExtruder = extruders[materialIndex].getPhysicalExtruderNumber();
         final boolean shield = preferences.loadBool("Shield");
 
-        if (newPhysicalExtruder != oldPhysicalExtruder || forceSelection) {
+        if (newPhysicalExtruder != oldExtruder.getPhysicalExtruderNumber() || forceSelection) {
             if (really) {
                 oldExtruder.stopExtruding();
 
-                if (!false) {
-                    if (materialIndex < 0 || materialIndex >= extruders.length) {
-                        LOGGER.error("Selected material (" + materialIndex + ") is out of range.");
-                        currentExtruder = 0;
-                    } else {
-                        currentExtruder = materialIndex;
-                    }
+                if (materialIndex < 0 || materialIndex >= extruders.length) {
+                    LOGGER.error("Selected material (" + materialIndex + ") is out of range.");
+                    currentExtruder = 0;
+                } else {
+                    currentExtruder = materialIndex;
                 }
 
                 if (update) {
                     physicalExtruderUsed[newPhysicalExtruder] = true;
                 }
-                getExtruder().stopExtruding(); // Make sure we are off
+                final GCodeExtruder extruder = getExtruder();
+                extruder.stopExtruding(); // Make sure we are off
 
                 if (shield) {
                     final Point2D purgePoint = purge.getPurgeEnd(true, 0);
@@ -583,36 +539,35 @@ public class GCodePrinter implements PreferenceChangeListener {
 
                 if (shield) {
                     // Plot the purge pattern with the new extruder
-                    printStartDelay(true);
-                    getExtruder().setExtrusion(getExtruder().getExtruderSpeed(), false);
+                    startExtruder(true);
 
                     Point2D purgePoint = purge.getPurgeEnd(false, 0);
-                    singleMove(purgePoint.x(), purgePoint.y(), currentZ, getExtruder().getFastXYFeedrate(), true);
+                    singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();
 
                     purgePoint = purge.getPurgeEnd(false, 1);
-                    singleMove(purgePoint.x(), purgePoint.y(), currentZ, getExtruder().getFastXYFeedrate(), true);
+                    singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();
 
                     purgePoint = purge.getPurgeEnd(true, 1);
-                    singleMove(purgePoint.x(), purgePoint.y(), currentZ, getExtruder().getFastXYFeedrate(), true);
+                    singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();
 
                     purgePoint = purge.getPurgeEnd(true, 2);
-                    singleMove(purgePoint.x(), purgePoint.y(), currentZ, getExtruder().getFastXYFeedrate(), true);
+                    singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();
 
                     purgePoint = purge.getPurgeEnd(false, 2);
-                    singleMove(purgePoint.x(), purgePoint.y(), currentZ, getExtruder().getFastXYFeedrate(), true);
+                    singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();
 
                     retract();
-                    getExtruder().stopExtruding();
+                    extruder.stopExtruding();
                 }
             }
             forceSelection = false;
@@ -672,30 +627,28 @@ public class GCodePrinter implements PreferenceChangeListener {
         return extruders;
     }
 
-    /**
-     * Extrude for the given time in milliseconds, so that polymer is flowing
-     * before we try to move the extruder. But first take up the slack from any
-     * previous reverse.
-     */
-    public void printStartDelay(final boolean firstOneInLayer) {
-        final double rDelay = getExtruder().getExtruderState().retraction();
+    public void startExtruder(final boolean firstOneInLayer) {
+        final GCodeExtruder extruder = getExtruder();
+        final double retraction = extruder.getExtruderState().retraction();
 
-        if (rDelay > 0) {
-            getExtruder().setMotor(true);
-            machineWait(rDelay, true, true);
-            getExtruder().getExtruderState().setRetraction(0);
+        if (retraction > 0) {
+            extruder.startExtrusion(false);
+            extrude(retraction, extruder.getFastEFeedrate());
+            extruder.getExtruderState().setRetraction(0);
         }
 
         // Extrude motor delays (ms)
         double eDelay;
         if (firstOneInLayer) {
-            eDelay = getExtruder().getExtrusionDelayForLayer();
+            eDelay = extruder.getExtraExtrusionForLayer();
         } else {
-            eDelay = getExtruder().getExtrusionDelayForPolygon();
+            eDelay = extruder.getExtraExtrusionForPolygon();
         }
 
-        getExtruder().setMotor(true);
-        machineWait(eDelay, false, true);
+        extruder.startExtrusion(false);
+        if (eDelay > 0) {
+            extrude(eDelay, extruder.getFastXYFeedrate());
+        }
     }
 
     /**
@@ -703,16 +656,17 @@ public class GCodePrinter implements PreferenceChangeListener {
      * polymer is stopped flowing at the end of a track.
      */
     public void retract() {
-        final double delay = getExtruder().getExtrusionReverseDelay();
+        final GCodeExtruder extruder = getExtruder();
+        final double distance = extruder.getRetractionDistance();
 
-        if (delay <= 0) {
+        if (distance <= 0) {
             return;
         }
 
-        getExtruder().setExtrusion(getExtruder().getExtruderSpeed(), true);
-        machineWait(delay, true, true);
-        getExtruder().stopExtruding();
-        getExtruder().getExtruderState().setRetraction(getExtruder().getExtruderState().retraction() + delay);
+        extruder.startExtrusion(true);
+        extrude(distance, extruder.getFastEFeedrate());
+        extruder.stopExtruding();
+        extruder.getExtruderState().setRetraction(extruder.getExtruderState().retraction() + distance);
     }
 
     private void setFastFeedrateZ(final double feedrate) {
@@ -750,15 +704,6 @@ public class GCodePrinter implements PreferenceChangeListener {
 
     public int getFoundationLayers() {
         return foundationLayers;
-    }
-
-    /**
-     * Set all the extruders' separating mode
-     */
-    public void setSeparating(final boolean s) {
-        for (final GCodeExtruder extruder2 : extruders) {
-            extruder2.setSeparating(s);
-        }
     }
 
     /**

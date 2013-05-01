@@ -12,7 +12,6 @@ package org.reprap.gcode;
 public class ExtruderState {
     private double extrudedLength;
     private double retractionAmount;
-    private double motorSpeed;
     private boolean isReversed;
     private boolean isExtruding;
     private final int physicalExtruderNumber;
@@ -20,7 +19,6 @@ public class ExtruderState {
     ExtruderState(final int physEx) {
         extrudedLength = 1;
         retractionAmount = 0;
-        motorSpeed = 0;
         isReversed = false;
         isExtruding = false;
         physicalExtruderNumber = physEx;
@@ -32,10 +30,6 @@ public class ExtruderState {
 
     public double length() {
         return extrudedLength;
-    }
-
-    double speed() {
-        return motorSpeed;
     }
 
     boolean reverse() {
@@ -52,10 +46,6 @@ public class ExtruderState {
 
     void zero() {
         extrudedLength = 0;
-    }
-
-    void setSpeed(final double sp) {
-        motorSpeed = sp;
     }
 
     void setReverse(final boolean rev) {

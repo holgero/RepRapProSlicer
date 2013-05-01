@@ -64,11 +64,6 @@ public class Producer {
 
     private void produceLayer() throws IOException {
         LOGGER.debug("Commencing model layer " + layerRules.getModelLayer() + " at " + layerRules.getMachineZ());
-        if (layerRules.getModelLayer() == 0) {
-            printer.setSeparating(true);
-        } else {
-            printer.setSeparating(false);
-        }
         layerRules.setLayerFileName(printer.startingLayer(layerRules.getZStep(), layerRules.getMachineZ(),
                 layerRules.getMachineLayer(), layerRules.getMachineLayerMax(), false));
         progressListener.productionProgress(layerRules.getMachineLayer(), layerRules.getMachineLayerMax());

@@ -12,13 +12,16 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.vecmath.Color3f;
@@ -51,7 +54,9 @@ public class Preferences {
             "Extruder\\d_OddHatchDirection\\(degrees\\)", "Extruder\\d_ValveDelayForLayer\\(ms\\)",
             "Extruder\\d_ValveDelayForPolygon\\(ms\\)", "Extruder\\d_ValveOverRun\\(mm\\)",
             "Extruder\\d_ValvePulseTime\\(ms\\)", "Extruder\\d_CoolingPeriod\\(s\\)", "Extruder\\d_OutlineSpeed\\(0\\.\\.1\\)",
-            "Extruder\\d_InfillSpeed\\(0\\.\\.1\\)", "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling");
+            "Extruder\\d_InfillSpeed\\(0\\.\\.1\\)", "Extruder\\d_Reverse\\(ms\\)",
+            "Extruder\\d_ExtrusionDelayForLayer\\(ms\\)", "Extruder\\d_ExtrusionDelayForPolygon\\(ms\\)",
+            "Extruder\\d_ExtrusionSpeed\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling");
 
     private static String propsFile = "reprap.properties";
 
@@ -166,7 +171,36 @@ public class Preferences {
         printSettings.setFillPattern(new RectilinearFillPattern(loadDouble("Extruder0_EvenHatchDirection(degrees)")));
         printSettings.setPerimeterSpeed(loadDouble("Extruder0_OutlineSpeed(0..1)"));
         printSettings.setInfillSpeed(loadDouble("Extruder0_InfillSpeed(0..1)"));
+        fixupExtruderDelayProperties();
         removeUnusedProperties();
+    }
+
+    private void fixupExtruderDelayProperties() {
+        final Map<String, String> newValues = new HashMap<>();
+        calculateDistance(newValues, "Reverse\\(ms\\)", "RetractionDistance(mm)");
+        calculateDistance(newValues, "ExtrusionDelayForLayer\\(ms\\)", "ExtraExtrusionDistanceForLayer(mm)");
+        calculateDistance(newValues, "ExtrusionDelayForPolygon\\(ms\\)", "ExtraExtrusionDistanceForPolygon(mm)");
+        for (final String key : newValues.keySet()) {
+            mainPreferences.setProperty(key, newValues.get(key));
+        }
+    }
+
+    private void calculateDistance(final Map<String, String> newValues, final String delayName, final String distanceName) {
+        final Pattern pattern = Pattern.compile("Extruder(\\d)_" + delayName);
+        for (final Object name : mainPreferences.keySet()) {
+            final String key = (String) name;
+            final Matcher matcher = pattern.matcher(key);
+            if (matcher.matches()) {
+                final int extruderNo = Integer.parseInt(matcher.group(1));
+                newValues.put("Extruder" + extruderNo + "_" + distanceName,
+                        Double.toString(toDistance(loadDouble(key), extruderNo)));
+            }
+        }
+    }
+
+    private double toDistance(final double delay, final int extruder) {
+        final double extrusionSpeed = loadDouble("Extruder" + extruder + "_ExtrusionSpeed(mm/minute)");
+        return extrusionSpeed * delay / 60000;
     }
 
     private void removeUnusedProperties() {

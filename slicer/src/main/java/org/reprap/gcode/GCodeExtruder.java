@@ -9,11 +9,6 @@ import org.reprap.configuration.Preferences;
 
 public class GCodeExtruder {
     private final GCodeWriter gcode;
-
-    /**
-     * Flag to decide extrude speed
-     */
-    private boolean separating = false;
     /**
      * How far we have extruded plus other things like temperature
      */
@@ -67,11 +62,11 @@ public class GCodeExtruder {
      * Number of mm to overlap the hatching infill with the outline. 0 gives
      * none; -ve will leave a gap between the two
      */
-    private double infillOverlap = 0;
+    private double infillOverlap;
     /**
      * The diameter of the feedstock (if any)
      */
-    private double feedDiameter = -1;
+    private double feedDiameter;
     /**
      * Identifier of the extruder
      */
@@ -81,21 +76,9 @@ public class GCodeExtruder {
      */
     private Appearance materialColour;
     /**
-     * The number of milliseconds to wait before starting a border track
-     */
-    private double extrusionDelayForLayer = 0;
-    /**
      * How high to move above the surface for non-extruding movements
      */
-    private double lift = 0;
-    /**
-     * The number of milliseconds to wait before starting a hatch track
-     */
-    private double extrusionDelayForPolygon = 0;
-    /**
-     * The number of milliseconds to reverse at the end of a track
-     */
-    private double extrusionReverseDelay = -1;
+    private double lift;
     /**
      * The number of mm to stop extruding before the end of a track
      */
@@ -113,8 +96,10 @@ public class GCodeExtruder {
     private boolean insideOut = false;
     private final GCodePrinter printer;
     private int physicalExtruderId;
-    private double extrusionSpeed;
     private int supportExtruderNumber;
+    private double retractionDistance;
+    private double extraExtrusionForLayer;
+    private double extraExtrusionForPolygon;
 
     public GCodeExtruder(final GCodeWriter writer, final int extruderId, final GCodePrinter p) {
         gcode = writer;
@@ -122,8 +107,10 @@ public class GCodeExtruder {
         printer = p;
         loadPreferences(Preferences.getInstance());
         extruderState = new ExtruderState(physicalExtruderId);
-        final double delay = getExtrusionReverseDelay(); // when we are first called (top down calculation means at our top layer) the
-        extruderState.setRetraction(extruderState.retraction() + delay); // layer below will have reversed us at its end on the way up in the actual build.
+        // when we are first called (top down calculation means at our top
+        // layer) the layer below will have reversed us at its end on the way up
+        // in the actual build.
+        extruderState.setRetraction(getRetractionDistance() + extruderState.retraction());
     }
 
     /**
@@ -134,19 +121,6 @@ public class GCodeExtruder {
         if (really) {
             gcode.writeCommand("G92 E0", "zero the extruded length");
         }
-    }
-
-    public void setExtrusion(final double speed, final boolean reverse) {
-        if (getExtruderSpeed() < 0) {
-            return;
-        }
-        if (speed > 0) {
-            extruderState.setExtruding(true);
-        } else {
-            extruderState.setExtruding(false);
-        }
-        extruderState.setSpeed(speed);
-        extruderState.setReverse(reverse);
     }
 
     /**
@@ -166,7 +140,6 @@ public class GCodeExtruder {
         fastEFeedrate = preferences.loadDouble(prefName + "FastEFeedrate(mm/minute)");
         slowXYFeedrate = preferences.loadDouble(prefName + "SlowXYFeedrate(mm/minute)");
         maxAcceleration = preferences.loadDouble(prefName + "MaxAcceleration(mm/minute/minute)");
-        extrusionSpeed = preferences.loadDouble(prefName + "ExtrusionSpeed(mm/minute)");
         middleStart = preferences.loadBool(prefName + "MiddleStart");
         asLength = -1;
         asFactor = 0.5;
@@ -176,10 +149,10 @@ public class GCodeExtruder {
         shortLength = -1;
         shortSpeed = 1;
         infillOverlap = preferences.loadDouble(prefName + "InfillOverlap(mm)");
-        extrusionDelayForLayer = preferences.loadDouble(prefName + "ExtrusionDelayForLayer(ms)");
-        extrusionDelayForPolygon = preferences.loadDouble(prefName + "ExtrusionDelayForPolygon(ms)");
+        extraExtrusionForLayer = preferences.loadDouble(prefName + "ExtraExtrusionDistanceForLayer(mm)");
+        extraExtrusionForPolygon = preferences.loadDouble(prefName + "ExtraExtrusionDistanceForPolygon(mm)");
+        retractionDistance = preferences.loadDouble(prefName + "RetractionDistance(mm)");
         extrusionOverRun = preferences.loadDouble(prefName + "ExtrusionOverRun(mm)");
-        extrusionReverseDelay = preferences.loadDouble(prefName + "Reverse(ms)");
         minLiftedZ = -1;
         extrusionFoundationWidth = preferences.loadDouble(prefName + "ExtrusionFoundationWidth(mm)");
         arcCompensationFactor = preferences.loadDouble(prefName + "ArcCompensationFactor(0..)");
@@ -198,26 +171,16 @@ public class GCodeExtruder {
         maxAcceleration = Math.min(printer.getMaxXYAcceleration(), maxAcceleration);
     }
 
-    public void stopExtruding() {
-        if (extruderState.isExtruding()) {
-            setExtrusion(0, false);
-            extruderState.setExtruding(false);
-        }
+    public void startExtrusion(final boolean reverse) {
+        extruderState.setExtruding(true);
+        extruderState.setReverse(reverse);
     }
 
-    public void setMotor(final boolean motorOn) {
-        if (getExtruderSpeed() < 0) {
-            return;
+    public void stopExtruding() {
+        if (extruderState.isExtruding()) {
+            extruderState.setExtruding(false);
+            extruderState.setReverse(false);
         }
-
-        if (motorOn) {
-            setExtrusion(getExtruderSpeed(), false);
-            extruderState.setSpeed(getExtruderSpeed());
-        } else {
-            setExtrusion(0, false);
-            extruderState.setSpeed(0);
-        }
-        extruderState.setReverse(false);
     }
 
     /**
@@ -251,19 +214,6 @@ public class GCodeExtruder {
      */
     public double getMaxAcceleration() {
         return maxAcceleration;
-    }
-
-    public void setSeparating(final boolean s) {
-        separating = s;
-    }
-
-    public double getExtruderSpeed() {
-        if (separating) {
-            return 3000;
-        } else {
-            return extrusionSpeed;
-        }
-
     }
 
     public double getExtrusionSize() {
@@ -306,28 +256,6 @@ public class GCodeExtruder {
      */
     public double getInfillOverlap() {
         return infillOverlap;
-    }
-
-    /**
-     * Gets the number of milliseconds to wait before starting a border track
-     */
-    public double getExtrusionDelayForLayer() {
-        return extrusionDelayForLayer;
-    }
-
-    /**
-     * Gets the number of milliseconds to wait before starting a hatch track
-     */
-    public double getExtrusionDelayForPolygon() {
-        return extrusionDelayForPolygon;
-    }
-
-    /**
-     * Gets the number of milliseconds to reverse the extrude motor at the end
-     * of a track
-     */
-    public double getExtrusionReverseDelay() {
-        return extrusionReverseDelay;
     }
 
     public double getExtrusionOverRun() {
@@ -386,26 +314,13 @@ public class GCodeExtruder {
      * length we want to extrude from the nozzle, otherwise just return the
      * extruded length.
      */
-    private double filamentDistance(final double distance) {
+    public double filamentDistance(final double distance) {
         if (getFeedDiameter() < 0) {
-            return distance;
+            return extrudeRatio * distance;
         }
 
-        return distance * Preferences.getInstance().getPrintSettings().getLayerHeight() * getExtrusionSize()
+        return extrudeRatio * distance * Preferences.getInstance().getPrintSettings().getLayerHeight() * getExtrusionSize()
                 / (getFeedDiameter() * getFeedDiameter() * Math.PI / 4);
-    }
-
-    /**
-     * Get how much extrudate is deposited in a given time (in milliseconds)
-     * currentSpeed is in mm per minute. Valve extruders cannot know, so return
-     * 0.
-     */
-    public double getDistanceFromTime(final double time) {
-        if (!extruderState.isExtruding()) {
-            return 0;
-        }
-
-        return filamentDistance(extrudeRatio * extruderState.speed() * time / 60000.0);
     }
 
     /**
@@ -416,7 +331,7 @@ public class GCodeExtruder {
         if (!extruderState.isExtruding()) {
             return 0;
         }
-        return filamentDistance(extrudeRatio * distance);
+        return filamentDistance(distance);
     }
 
     /**
@@ -467,4 +382,17 @@ public class GCodeExtruder {
     public boolean getInsideOut() {
         return insideOut;
     }
+
+    public double getRetractionDistance() {
+        return retractionDistance;
+    }
+
+    public double getExtraExtrusionForLayer() {
+        return extraExtrusionForLayer;
+    }
+
+    public double getExtraExtrusionForPolygon() {
+        return extraExtrusionForPolygon;
+    }
+
 }

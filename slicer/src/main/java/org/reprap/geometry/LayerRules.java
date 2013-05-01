@@ -338,7 +338,6 @@ public class LayerRules {
         if (getFoundationLayers() <= 0) {
             return;
         }
-        printer.setSeparating(false);
         while (machineLayer >= 0) {
             LOGGER.debug("Commencing foundation layer at " + getMachineZ());
             setLayerFileName(printer.startingLayer(zStep, machineZ, machineLayer, machineLayerMax, false));
