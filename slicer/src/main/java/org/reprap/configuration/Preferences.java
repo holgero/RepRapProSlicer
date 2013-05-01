@@ -174,6 +174,9 @@ public class Preferences {
         printSettings.setPerimeterSpeed(loadDouble("Extruder0_OutlineSpeed(0..1)"));
         printSettings.setInfillSpeed(loadDouble("Extruder0_InfillSpeed(0..1)"));
         printSettings.setSkirt(loadBool("StartRectangle"));
+        if (mainPreferences.getProperty("BrimLines") == null) {
+            mainPreferences.setProperty("BrimLines", "0");
+        }
         printSettings.setBrimLines(loadInt("BrimLines"));
         printSettings.setShield(loadBool("Shield"));
         printSettings.setSupport(loadBool("Support"));
