@@ -19,11 +19,17 @@
 package org.reprap.configuration;
 
 public class PrintSettings {
+    // layers
     private double layerHeight; // mm 0.24
+    // perimeters
     private int verticalShells; // # 2
     private int horizontalShells; // # 3
+    // infill
     private double fillDensity; // fraction 0.21
     private FillPattern pattern; // rectilinear
+    // speeds
+    private double perimeterSpeed; // fraction 0.9
+    private double infillSpeed; // fraction 1.0
 
     public double getLayerHeight() {
         return layerHeight;
@@ -63,5 +69,21 @@ public class PrintSettings {
 
     public void setFillPattern(final FillPattern pattern) {
         this.pattern = pattern;
+    }
+
+    public double getPerimeterSpeed() {
+        return perimeterSpeed;
+    }
+
+    public void setPerimeterSpeed(final double perimeterSpeed) {
+        this.perimeterSpeed = perimeterSpeed;
+    }
+
+    public double getInfillSpeed() {
+        return infillSpeed;
+    }
+
+    public void setInfillSpeed(final double infillSpeed) {
+        this.infillSpeed = infillSpeed;
     }
 }

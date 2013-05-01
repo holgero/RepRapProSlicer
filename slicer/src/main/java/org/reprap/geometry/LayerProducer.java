@@ -173,10 +173,16 @@ class LayerProducer {
         }
 
         final GCodeExtruder extruder = printer.getExtruder(attributes.getMaterial());
-        final double outlineFeedrate = extruder.getOutlineFeedrate();
-        final double infillFeedrate = extruder.getInfillFeedrate();
-        final ExtrusionPath extrusionPath = new ExtrusionPath(polygon, polygon.isClosed() ? outlineFeedrate : infillFeedrate);
+        final ExtrusionPath extrusionPath = new ExtrusionPath(polygon, calculateFeedrate(polygon, extruder));
         plotExtrusionPath(extrusionPath, firstOneInLayer, extruder);
+    }
+
+    private double calculateFeedrate(final Polygon polygon, final GCodeExtruder extruder) {
+        if (polygon.isClosed()) {
+            return preferences.getPrintSettings().getPerimeterSpeed() * extruder.getFastXYFeedrate();
+        } else {
+            return preferences.getPrintSettings().getInfillSpeed() * extruder.getFastXYFeedrate();
+        }
     }
 
     private void plotExtrusionPath(final ExtrusionPath extrusionPath, final boolean firstOneInLayer,

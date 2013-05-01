@@ -50,8 +50,8 @@ public class Preferences {
             "Extruder\\d_InFillMaterialType\\(name\\)", "Extruder\\d_EvenHatchDirection\\(degrees\\)",
             "Extruder\\d_OddHatchDirection\\(degrees\\)", "Extruder\\d_ValveDelayForLayer\\(ms\\)",
             "Extruder\\d_ValveDelayForPolygon\\(ms\\)", "Extruder\\d_ValveOverRun\\(mm\\)",
-            "Extruder\\d_ValvePulseTime\\(ms\\)", "Extruder\\d_CoolingPeriod\\(s\\)", "SlowZFeedrate\\(mm/minute\\)",
-            "InterLayerCooling");
+            "Extruder\\d_ValvePulseTime\\(ms\\)", "Extruder\\d_CoolingPeriod\\(s\\)", "Extruder\\d_OutlineSpeed\\(0\\.\\.1\\)",
+            "Extruder\\d_InfillSpeed\\(0\\.\\.1\\)", "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling");
 
     private static String propsFile = "reprap.properties";
 
@@ -164,6 +164,8 @@ public class Preferences {
         LOGGER.info("fill density is: " + fillDensity);
         printSettings.setFillDensity(fillDensity);
         printSettings.setFillPattern(new RectilinearFillPattern(loadDouble("Extruder0_EvenHatchDirection(degrees)")));
+        printSettings.setPerimeterSpeed(loadDouble("Extruder0_OutlineSpeed(0..1)"));
+        printSettings.setInfillSpeed(loadDouble("Extruder0_InfillSpeed(0..1)"));
         removeUnusedProperties();
     }
 

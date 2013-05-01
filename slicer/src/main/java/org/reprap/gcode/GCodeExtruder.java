@@ -44,14 +44,6 @@ public class GCodeExtruder {
      */
     private double maxAcceleration;
     /**
-     * Infill speed [0,1]*maxSpeed
-     */
-    private double iSpeed;
-    /**
-     * Outline speed [0,1]*maxSpeed
-     */
-    private double oSpeed;
-    /**
      * Length (mm) to speed up round corners
      */
     private double asLength;
@@ -176,8 +168,6 @@ public class GCodeExtruder {
         maxAcceleration = preferences.loadDouble(prefName + "MaxAcceleration(mm/minute/minute)");
         extrusionSpeed = preferences.loadDouble(prefName + "ExtrusionSpeed(mm/minute)");
         middleStart = preferences.loadBool(prefName + "MiddleStart");
-        iSpeed = preferences.loadDouble(prefName + "InfillSpeed(0..1)");
-        oSpeed = preferences.loadDouble(prefName + "OutlineSpeed(0..1)");
         asLength = -1;
         asFactor = 0.5;
         material = preferences.loadString(prefName + "MaterialType(name)");
@@ -228,14 +218,6 @@ public class GCodeExtruder {
             extruderState.setSpeed(0);
         }
         extruderState.setReverse(false);
-    }
-
-    public double getInfillFeedrate() {
-        return iSpeed * getFastXYFeedrate();
-    }
-
-    public double getOutlineFeedrate() {
-        return oSpeed * getFastXYFeedrate();
     }
 
     /**
