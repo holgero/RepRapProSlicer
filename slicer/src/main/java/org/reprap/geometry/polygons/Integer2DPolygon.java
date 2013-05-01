@@ -9,30 +9,14 @@ import org.reprap.geometry.polyhedra.Attributes;
  * Integer-point polygon
  */
 final class Integer2DPolygon {
-    /**
-     * Auto-extending list of points
-     */
-    private List<Integer2DPoint> points = null;
-
+    private final List<Integer2DPoint> points = new ArrayList<Integer2DPoint>();
     /**
      * Does the polygon loop back on itself?
      */
     private final boolean closed;
 
     Integer2DPolygon(final boolean c) {
-        points = new ArrayList<Integer2DPoint>();
         closed = c;
-    }
-
-    /**
-     * Deep copy
-     */
-    private Integer2DPolygon(final Integer2DPolygon a) {
-        points = new ArrayList<Integer2DPoint>();
-        for (int i = 0; i < a.size(); i++) {
-            add(a.point(i));
-        }
-        closed = a.closed;
     }
 
     /**
@@ -73,9 +57,9 @@ final class Integer2DPolygon {
     }
 
     /**
-     * Find the index of the point in the polygon nearest to another point
-     * as long as it's less than tooFar2. Set that to Long.MAX_VALUE for a
-     * complete search.
+     * Find the index of the point in the polygon nearest to another point as
+     * long as it's less than tooFar2. Set that to Long.MAX_VALUE for a complete
+     * search.
      */
     int nearest(final Integer2DPoint a, final long tooFar2) {
         int i = 0;
@@ -116,8 +100,8 @@ final class Integer2DPolygon {
 
     /**
      * Find the farthest point from point v1 on the polygon such that the
-     * polygon between the two can be approximated by a DDA straight line
-     * from v1.
+     * polygon between the two can be approximated by a DDA straight line from
+     * v1.
      */
     private int findAngleStart(final int v1) {
         int top = size() - 1;
@@ -155,12 +139,13 @@ final class Integer2DPolygon {
     }
 
     /**
-     * Generate an equivalent polygon with fewer vertices by removing chains
-     * of points that lie in straight lines.
+     * Generate an equivalent polygon with fewer vertices by removing chains of
+     * points that lie in straight lines. Returns the polygon unchanged if it
+     * contains only two or fewer points.
      */
     Integer2DPolygon simplify() {
         if (size() <= 3) {
-            return new Integer2DPolygon(this);
+            return this;
         }
         final Integer2DPolygon r = new Integer2DPolygon(closed);
         int v = 0;
