@@ -211,7 +211,7 @@ class LayerProducer {
             extrudeOff = (i > extrusionPath.extrudeEnd() && extrudeBackLength > 0) || i == pathLength - 1;
             plot(point, next, feedrate, extrudeOff);
             if (oldexoff ^ extrudeOff) {
-                printer.printEndReverse();
+                printer.retract();
             }
         }
         // If getMinLiftedZ() is negative, never lift the head

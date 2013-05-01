@@ -417,7 +417,7 @@ public class GCodePrinter implements PreferenceChangeListener {
                 singleMove(rectangle.x().low(), rectangle.y().low(), currentZ, getExtruder().getFastXYFeedrate(), true);
                 currentX = rectangle.x().low();
                 currentY = rectangle.y().low();
-                printEndReverse();
+                retract();
                 getExtruder().stopExtruding();
                 rectangle = rectangle.offset(2 * getExtruder().getExtrusionSize());
                 physicalExtruderUsed[pe] = false; // Stop us doing it again
@@ -509,50 +509,40 @@ public class GCodePrinter implements PreferenceChangeListener {
     }
 
     private void delay(final long millis, final boolean fastExtrude, final boolean really) {
-        double extrudeLength = getExtruder().getDistanceFromTime(millis);
+        final GCodeExtruder extruder = getExtruder();
+        double extrudeLength = extruder.getDistanceFromTime(millis);
 
         if (extrudeLength > 0) {
             double fr;
             if (fastExtrude) {
-                fr = getExtruder().getFastEFeedrate();
+                fr = extruder.getFastEFeedrate();
             } else {
-                fr = getExtruder().getFastXYFeedrate();
+                fr = extruder.getFastXYFeedrate();
             }
-
-            currentFeedrate = fr;
-            // Fix the value for possible feedrate change
-            extrudeLength = getExtruder().getDistanceFromTime(millis);
-
-            if (getExtruder().getFeedDiameter() > 0) {
-                fr = fr * preferences.getPrintSettings().getLayerHeight() * getExtruder().getExtrusionSize()
-                        / (getExtruder().getFeedDiameter() * getExtruder().getFeedDiameter() * Math.PI / 4);
+            if (extruder.getFeedDiameter() > 0) {
+                fr = fr * preferences.getPrintSettings().getLayerHeight() * extruder.getExtrusionSize()
+                        / (extruder.getFeedDiameter() * extruder.getFeedDiameter() * Math.PI / 4);
             }
-
             fr = round(fr, 1);
-
             if (really) {
                 currentFeedrate = 0; // force it to output feedrate
                 qFeedrate(fr);
             }
-
-            if (extruders[currentExtruder].getReversing()) {
+            if (extruder.getReversing()) {
                 extrudeLength = -extrudeLength;
             }
+            extruder.getExtruderState().add(extrudeLength);
 
-            extruders[currentExtruder].getExtruderState().add(extrudeLength);
-
-            final double feedrate = getExtruder().getFastXYFeedrate();
+            final double feedrate = extruder.getFastXYFeedrate();
             if (really) {
                 final String command;
-
                 if (relativeExtrusion) {
                     command = "G1 E" + round(extrudeLength, 3);
                 } else {
-                    command = "G1 E" + round(extruders[currentExtruder].getExtruderState().length(), 3);
+                    command = "G1 E" + round(extruder.getExtruderState().length(), 3);
                 }
-
                 final String comment;
-                if (extruders[currentExtruder].getReversing()) {
+                if (extruder.getReversing()) {
                     comment = "extruder retraction";
                 } else {
                     comment = "extruder dwell";
@@ -692,7 +682,7 @@ public class GCodePrinter implements PreferenceChangeListener {
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();
 
-                    printEndReverse();
+                    retract();
                     getExtruder().stopExtruding();
                 }
             }
@@ -781,21 +771,19 @@ public class GCodePrinter implements PreferenceChangeListener {
 
     /**
      * Extrude backwards for the configured time in milliseconds, so that
-     * polymer is stopped flowing at the end of a track. Return the amount
-     * reversed.
+     * polymer is stopped flowing at the end of a track.
      */
-    public double printEndReverse() {
+    public void retract() {
         final double delay = getExtruder().getExtrusionReverseDelay();
 
         if (delay <= 0) {
-            return 0;
+            return;
         }
 
         getExtruder().setExtrusion(getExtruder().getExtruderSpeed(), true);
         machineWait(delay, true, true);
         getExtruder().stopExtruding();
         getExtruder().getExtruderState().setRetraction(getExtruder().getExtruderState().retraction() + delay);
-        return getExtruder().getExtruderState().retraction();
     }
 
     private void setFastFeedrateZ(final double feedrate) {
