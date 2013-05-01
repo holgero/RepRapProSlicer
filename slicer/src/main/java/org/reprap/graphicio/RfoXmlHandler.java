@@ -53,7 +53,7 @@ final class RfoXmlHandler extends DefaultHandler {
 
     private int rowNumber = 0;
 
-    private final List<STLObject> stls = new ArrayList<>();
+    private final List<STLObject> stls = new ArrayList<STLObject>();
 
     private final File rfoDir;
 

@@ -72,7 +72,7 @@ public class Preferences {
     private static final Preferences globalPrefs = new Preferences();
 
     private static List<Pattern> compilePatterns(final String... patternStrings) {
-        final List<Pattern> result = new ArrayList<>();
+        final List<Pattern> result = new ArrayList<Pattern>();
         for (final String patternText : patternStrings) {
             result.add(Pattern.compile(patternText));
         }
@@ -82,14 +82,11 @@ public class Preferences {
     private static void copySystemConfigurations(final File usersDir) {
         try {
             final URL systemConfigurationURL = getSystemConfiguration();
-            switch (systemConfigurationURL.getProtocol()) {
-            case "file":
+            if ("file".equals(systemConfigurationURL.getProtocol())) {
                 FileUtils.copyDirectory(toFile(systemConfigurationURL), usersDir);
-                break;
-            case "jar":
+            } else if ("jar".equals(systemConfigurationURL.getProtocol())) {
                 copyJarTree(systemConfigurationURL, usersDir);
-                break;
-            default:
+            } else {
                 throw new IllegalArgumentException("Cant copy resource stream from " + systemConfigurationURL);
             }
         } catch (final IOException e) {
@@ -159,7 +156,7 @@ public class Preferences {
     }
 
     private final Properties mainPreferences = new Properties();
-    private final Set<PreferenceChangeListener> listeners = new HashSet<>();
+    private final Set<PreferenceChangeListener> listeners = new HashSet<PreferenceChangeListener>();
     private final PrintSettings printSettings;
     private final PrinterSettings printerSettings;
 
@@ -234,7 +231,7 @@ public class Preferences {
 
     private void shiftDownExtruderNumber(final int from, final int to) {
         final String prefix = "Extruder" + from + "_";
-        final Map<String, String> newValues = new HashMap<>();
+        final Map<String, String> newValues = new HashMap<String, String>();
         for (final Object name : mainPreferences.keySet()) {
             final String key = (String) name;
             if (key.startsWith(prefix)) {
@@ -259,7 +256,7 @@ public class Preferences {
     }
 
     private void fixupExtruderDelayProperties() {
-        final Map<String, String> newValues = new HashMap<>();
+        final Map<String, String> newValues = new HashMap<String, String>();
         calculateDistance(newValues, "Reverse\\(ms\\)", "RetractionDistance(mm)");
         calculateDistance(newValues, "ExtrusionDelayForLayer\\(ms\\)", "ExtraExtrusionDistanceForLayer(mm)");
         calculateDistance(newValues, "ExtrusionDelayForPolygon\\(ms\\)", "ExtraExtrusionDistanceForPolygon(mm)");

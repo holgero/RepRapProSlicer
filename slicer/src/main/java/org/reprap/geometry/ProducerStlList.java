@@ -67,7 +67,7 @@ class ProducerStlList {
     private static final Logger LOGGER = LogManager.getLogger(Producer.class);
 
     static BoundingBox calculateBoundingBox(final AllSTLsToBuild allStls, final Purge purge) {
-        final List<STLObject> stlList = new ArrayList<>();
+        final List<STLObject> stlList = new ArrayList<STLObject>();
         copyAllStls(allStls, stlList);
         setUpShield(purge, stlList, Preferences.getInstance());
         return getBoundingBox(stlList);
