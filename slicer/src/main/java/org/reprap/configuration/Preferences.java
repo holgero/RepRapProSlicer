@@ -179,10 +179,10 @@ public class Preferences {
         }
         printSettings.setBrimLines(loadInt("BrimLines"));
         printSettings.setShield(loadBool("Shield"));
-        printSettings.setSupport(loadBool("Support"));
         if (mainPreferences.getProperty("Support") == null) {
             mainPreferences.setProperty("Support", "false");
         }
+        printSettings.setSupport(loadBool("Support"));
         printSettings.setRaftLayers(loadInt("FoundationLayers"));
         printSettings.setVerboseGCode(loadBool("Debug"));
         final int supportExtruderNo = getNumberFromMaterial(loadString("Extruder0_SupportMaterialType(name)"));
