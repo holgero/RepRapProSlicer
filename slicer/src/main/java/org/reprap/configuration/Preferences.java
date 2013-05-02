@@ -57,11 +57,13 @@ public class Preferences {
             "Extruder\\d_InfillSpeed\\(0\\.\\.1\\)", "Extruder\\d_Reverse\\(ms\\)",
             "Extruder\\d_ExtrusionDelayForLayer\\(ms\\)", "Extruder\\d_ExtrusionDelayForPolygon\\(ms\\)",
             "Extruder\\d_ExtrusionSpeed\\(mm/minute\\)", "Extruder\\d_SlowXYFeedrate\\(mm/minute\\)",
-            "Extruder\\d_SupportMaterialType\\(name\\)", "Extruder\\d_Address", "SlowXYFeedrate\\(mm/minute\\)",
+            "Extruder\\d_SupportMaterialType\\(name\\)", "Extruder\\d_Address",
+            "Extruder\\d_MaxAcceleration\\(mm/minute/minute\\)", "SlowXYFeedrate\\(mm/minute\\)",
             "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "DumpX\\(mm\\)",
             "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug", "WorkingX\\(mm\\)", "WorkingY\\(mm\\)",
             "WorkingZ\\(mm\\)", "ExtrusionRelative", "PathOptimise", "MaximumFeedrateX\\(mm/minute\\)",
-            "MaximumFeedrateY\\(mm/minute\\)", "MaximumFeedrateZ\\(mm/minute\\)");
+            "MaximumFeedrateY\\(mm/minute\\)", "MaximumFeedrateZ\\(mm/minute\\)", "MaxXYAcceleration\\(mm/mininute/minute\\)",
+            "MaxZAcceleration\\(mm/mininute/minute\\)");
 
     private static String propsFile = "reprap.properties";
 

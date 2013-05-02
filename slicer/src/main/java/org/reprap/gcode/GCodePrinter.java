@@ -53,14 +53,6 @@ public class GCodePrinter implements PreferenceChangeListener {
      */
     private double fastXYFeedrate;
     /**
-     * The fastest the machine can accelerate in X and Y
-     */
-    private double maxXYAcceleration;
-    /**
-     * The fastest the machine can accelerate in Z
-     */
-    private double maxZAcceleration;
-    /**
      * Feedrate for fast Z moves on the machine.
      */
     private double fastFeedrateZ;
@@ -129,10 +121,6 @@ public class GCodePrinter implements PreferenceChangeListener {
             feedrate = xyFeedrate;
         }
 
-        if (getExtruder().getMaxAcceleration() <= 0) {
-            qFeedrate(feedrate);
-        }
-
         if (dx == 0.0 && dy == 0.0) {
             if (currentFeedrate != feedrate) {
                 qFeedrate(feedrate);
@@ -170,10 +158,6 @@ public class GCodePrinter implements PreferenceChangeListener {
         if (fastFeedrateZ < feedrate) {
             LOGGER.debug("GCodeRepRap().qZMove: feedrate (" + feedrate + ") exceeds maximum (" + fastFeedrateZ + ").");
             feedrate = fastFeedrateZ;
-        }
-
-        if (getMaxZAcceleration() <= 0) {
-            qFeedrate(feedrate);
         }
 
         final double dz = z - currentZ;
@@ -659,17 +643,6 @@ public class GCodePrinter implements PreferenceChangeListener {
         return fastXYFeedrate;
     }
 
-    /**
-     * @return the fastest the machine can accelerate
-     */
-    public double getMaxXYAcceleration() {
-        return maxXYAcceleration;
-    }
-
-    private double getMaxZAcceleration() {
-        return maxZAcceleration;
-    }
-
     public void forceNextExtruder() {
         forceSelection = true;
     }
@@ -691,10 +664,6 @@ public class GCodePrinter implements PreferenceChangeListener {
         relativeExtrusion = printerSettings.useRelativeDistanceE();
         fastFeedrateZ = round(printerSettings.getMaximumFeedrateZ(), 1);
         fastXYFeedrate = Math.min(printerSettings.getMaximumFeedrateX(), printerSettings.getMaximumFeedrateY());
-
-        maxXYAcceleration = prefs.loadDouble("MaxXYAcceleration(mm/mininute/minute)");
-        maxZAcceleration = prefs.loadDouble("MaxZAcceleration(mm/mininute/minute)");
-
         loadExtruders();
     }
 

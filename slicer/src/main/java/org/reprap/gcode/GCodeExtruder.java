@@ -30,10 +30,6 @@ public class GCodeExtruder {
      */
     private double fastEFeedrate;
     /**
-     * The fastest the machine can accelerate with this extruder
-     */
-    private double maxAcceleration;
-    /**
      * Length (mm) to speed up round corners
      */
     private double asLength;
@@ -129,7 +125,6 @@ public class GCodeExtruder {
         lowerFineLayers = 2;
         fastXYFeedrate = preferences.loadDouble(prefName + "FastXYFeedrate(mm/minute)");
         fastEFeedrate = preferences.loadDouble(prefName + "FastEFeedrate(mm/minute)");
-        maxAcceleration = preferences.loadDouble(prefName + "MaxAcceleration(mm/minute/minute)");
         middleStart = preferences.loadBool(prefName + "MiddleStart");
         asLength = -1;
         asFactor = 0.5;
@@ -155,7 +150,6 @@ public class GCodeExtruder {
         feedDiameter = preferences.loadDouble(prefName + "FeedDiameter(mm)");
         insideOut = preferences.loadBool(prefName + "InsideOut");
         fastXYFeedrate = Math.min(printer.getFastXYFeedrate(), fastXYFeedrate);
-        maxAcceleration = Math.min(printer.getMaxXYAcceleration(), maxAcceleration);
     }
 
     public void startExtrusion(final boolean reverse) {
@@ -187,13 +181,6 @@ public class GCodeExtruder {
 
     public double getFastEFeedrate() {
         return fastEFeedrate;
-    }
-
-    /**
-     * @return the fastest the machine can accelerate
-     */
-    public double getMaxAcceleration() {
-        return maxAcceleration;
     }
 
     public double getExtrusionSize() {
