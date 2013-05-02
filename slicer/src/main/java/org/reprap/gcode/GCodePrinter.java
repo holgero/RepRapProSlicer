@@ -717,7 +717,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         final PrinterSettings printerSettings = prefs.getPrinterSettings();
         maximumXvalue = printerSettings.getBedSizeX();
         maximumYvalue = printerSettings.getBedSizeY();
-        maximumZvalue = prefs.loadDouble("WorkingZ(mm)");
+        maximumZvalue = printerSettings.getMaximumZ();
         bedNorthEast = new Point2D(maximumXvalue, maximumYvalue);
         relativeExtrusion = prefs.loadBool("ExtrusionRelative");
 

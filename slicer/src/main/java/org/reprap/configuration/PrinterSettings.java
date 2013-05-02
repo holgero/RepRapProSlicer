@@ -19,8 +19,10 @@
 package org.reprap.configuration;
 
 public class PrinterSettings {
+    // dimensions
     private double bedSizeX; // mm 200
     private double bedSizeY; // mm 200
+    private double maximumZ; // mm 100
 
     public double getBedSizeX() {
         return bedSizeX;
@@ -36,5 +38,13 @@ public class PrinterSettings {
 
     void setBedSizeY(final double bedSizeY) {
         this.bedSizeY = bedSizeY;
+    }
+
+    public double getMaximumZ() {
+        return maximumZ;
+    }
+
+    void setMaximumZ(final double maximumZ) {
+        this.maximumZ = maximumZ;
     }
 }

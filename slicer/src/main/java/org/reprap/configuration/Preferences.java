@@ -59,7 +59,7 @@ public class Preferences {
             "Extruder\\d_ExtrusionSpeed\\(mm/minute\\)", "Extruder\\d_SlowXYFeedrate\\(mm/minute\\)",
             "Extruder\\d_SupportMaterialType\\(name\\)", "Extruder\\d_Address", "SlowXYFeedrate\\(mm/minute\\)",
             "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "DumpX\\(mm\\)",
-            "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug", "WorkingX\\(mm\\)", "WorkingY\\(mm\\)");
+            "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug", "WorkingX\\(mm\\)", "WorkingY\\(mm\\)", "WorkingZ\\(mm\\)");
 
     private static String propsFile = "reprap.properties";
 
@@ -177,6 +177,7 @@ public class Preferences {
         final PrinterSettings result = new PrinterSettings();
         result.setBedSizeX(loadDouble("WorkingX(mm)"));
         result.setBedSizeY(loadDouble("WorkingY(mm)"));
+        result.setMaximumZ(loadDouble("WorkingZ(mm)"));
         return result;
     }
 

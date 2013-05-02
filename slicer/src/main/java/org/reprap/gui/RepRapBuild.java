@@ -654,7 +654,7 @@ public class RepRapBuild extends JPanel implements MouseListener, PreferenceChan
         final PrinterSettings printerSettings = preferences.getPrinterSettings();
         xwv = printerSettings.getBedSizeX();
         ywv = printerSettings.getBedSizeY();
-        zwv = preferences.loadDouble("WorkingZ(mm)");
+        zwv = printerSettings.getMaximumZ();
         wv_offset = new Vector3d(0, 0, 0);
         bgColour = new Color3f((float) 0.9, (float) 0.9, (float) 0.9);
         selectedColour = new Color3f((float) 0.6, (float) 0.2, (float) 0.2);
