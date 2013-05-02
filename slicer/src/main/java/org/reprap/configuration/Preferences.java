@@ -59,7 +59,7 @@ public class Preferences {
             "Extruder\\d_ExtrusionSpeed\\(mm/minute\\)", "Extruder\\d_SlowXYFeedrate\\(mm/minute\\)",
             "Extruder\\d_SupportMaterialType\\(name\\)", "Extruder\\d_Address", "SlowXYFeedrate\\(mm/minute\\)",
             "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "DumpX\\(mm\\)",
-            "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug");
+            "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug", "WorkingX\\(mm\\)", "WorkingY\\(mm\\)");
 
     private static String propsFile = "reprap.properties";
 
@@ -160,44 +160,60 @@ public class Preferences {
 
     private final Properties mainPreferences = new Properties();
     private final Set<PreferenceChangeListener> listeners = new HashSet<>();
-    private final PrintSettings printSettings = new PrintSettings();
+    private final PrintSettings printSettings;
+    private final PrinterSettings printerSettings;
 
     private Preferences() {
         loadConfiguration(propsFile);
-        printSettings.setLayerHeight(loadDouble("Extruder0_ExtrusionHeight(mm)"));
-        printSettings.setVerticalShells(loadInt("Extruder0_NumberOfShells(0..N)"));
-        printSettings.setHorizontalShells(loadInt("Extruder0_SurfaceLayers(0..N)"));
-        // extruder #3 is the first infill extruder in the default configuration file
-        final double fillDensity = loadDouble("Extruder3_ExtrusionSize(mm)") / loadDouble("Extruder3_ExtrusionInfillWidth(mm)");
-        LOGGER.info("fill density is: " + fillDensity);
-        printSettings.setFillDensity(fillDensity);
-        printSettings.setFillPattern(new RectilinearFillPattern(loadDouble("Extruder0_EvenHatchDirection(degrees)")));
-        printSettings.setPerimeterSpeed(loadDouble("Extruder0_OutlineSpeed(0..1)"));
-        printSettings.setInfillSpeed(loadDouble("Extruder0_InfillSpeed(0..1)"));
-        printSettings.setSkirt(loadBool("StartRectangle"));
-        if (mainPreferences.getProperty("BrimLines") == null) {
-            mainPreferences.setProperty("BrimLines", "0");
-        }
-        printSettings.setBrimLines(loadInt("BrimLines"));
-        printSettings.setShield(loadBool("Shield"));
-        printSettings.setDumpX(loadInt("DumpX(mm)"));
-        printSettings.setDumpY(loadInt("DumpY(mm)"));
-        if (mainPreferences.getProperty("Support") == null) {
-            mainPreferences.setProperty("Support", "false");
-        }
-        printSettings.setSupport(loadBool("Support"));
-        final int supportExtruderNo = getNumberFromMaterial(loadString("Extruder0_SupportMaterialType(name)"));
-        printSettings.setSupportPattern(new LinearFillPattern(loadDouble("Extruder" + supportExtruderNo
-                + "_EvenHatchDirection(degrees)")));
-        printSettings.setSupportSpacing(loadDouble("Extruder" + supportExtruderNo + "_ExtrusionBroadWidth(mm)"));
-        printSettings.setRaftLayers(loadInt("FoundationLayers"));
-        printSettings.setVerboseGCode(loadBool("Debug"));
-        // assumes physNo# corresponds to No in the resulting properties
-        printSettings.setSupportExtruder(loadInt("Extruder" + supportExtruderNo + "_Address"));
+        printSettings = createPrintSettings();
+        printerSettings = createPrinterSettings();
         fixupExtruderDelayProperties();
         final int maxExtrudersNumber = loadInt("NumberOfExtruders");
         removeUnusedExtruders();
         removeUnusedProperties(maxExtrudersNumber);
+    }
+
+    private PrinterSettings createPrinterSettings() {
+        final PrinterSettings result = new PrinterSettings();
+        result.setBedSizeX(loadDouble("WorkingX(mm)"));
+        result.setBedSizeY(loadDouble("WorkingY(mm)"));
+        return result;
+    }
+
+    private PrintSettings createPrintSettings() {
+        final PrintSettings result = new PrintSettings();
+        result.setLayerHeight(loadDouble("Extruder0_ExtrusionHeight(mm)"));
+        result.setVerticalShells(loadInt("Extruder0_NumberOfShells(0..N)"));
+        result.setHorizontalShells(loadInt("Extruder0_SurfaceLayers(0..N)"));
+        // extruder #3 is the first infill extruder in the default configuration file
+        final double fillDensity = loadDouble("Extruder3_ExtrusionSize(mm)") / loadDouble("Extruder3_ExtrusionInfillWidth(mm)");
+        LOGGER.info("fill density is: " + fillDensity);
+        result.setFillDensity(fillDensity);
+        result.setFillPattern(new RectilinearFillPattern(loadDouble("Extruder0_EvenHatchDirection(degrees)")));
+        result.setPerimeterSpeed(loadDouble("Extruder0_OutlineSpeed(0..1)"));
+        result.setInfillSpeed(loadDouble("Extruder0_InfillSpeed(0..1)"));
+        result.setSkirt(loadBool("StartRectangle"));
+        if (mainPreferences.getProperty("BrimLines") == null) {
+            mainPreferences.setProperty("BrimLines", "0");
+        }
+        result.setBrimLines(loadInt("BrimLines"));
+        result.setShield(loadBool("Shield"));
+        result.setDumpX(loadInt("DumpX(mm)"));
+        result.setDumpY(loadInt("DumpY(mm)"));
+        if (mainPreferences.getProperty("Support") == null) {
+            mainPreferences.setProperty("Support", "false");
+        }
+        result.setSupport(loadBool("Support"));
+        final int supportExtruderNo = getNumberFromMaterial(loadString("Extruder0_SupportMaterialType(name)"));
+        result.setSupportPattern(new LinearFillPattern(loadDouble("Extruder" + supportExtruderNo
+                + "_EvenHatchDirection(degrees)")));
+        result.setSupportSpacing(loadDouble("Extruder" + supportExtruderNo + "_ExtrusionBroadWidth(mm)"));
+        result.setRaftLayers(loadInt("FoundationLayers"));
+        result.setVerboseGCode(loadBool("Debug"));
+        // assumes physNo# corresponds to No in the resulting properties
+        result.setSupportExtruder(loadInt("Extruder" + supportExtruderNo + "_Address"));
+
+        return result;
     }
 
     private void removeUnusedExtruders() {
@@ -507,5 +523,9 @@ public class Preferences {
 
     public PrintSettings getPrintSettings() {
         return printSettings;
+    }
+
+    public PrinterSettings getPrinterSettings() {
+        return printerSettings;
     }
 }

@@ -122,6 +122,7 @@ import javax.vecmath.Vector3d;
 
 import org.reprap.configuration.PreferenceChangeListener;
 import org.reprap.configuration.Preferences;
+import org.reprap.configuration.PrinterSettings;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.geometry.polyhedra.Attributes;
@@ -650,8 +651,9 @@ public class RepRapBuild extends JPanel implements MouseListener, PreferenceChan
         BackFactor = 2.0;
         FrontFactor = 0.001;
         BoundFactor = 3.0;
-        xwv = preferences.loadDouble("WorkingX(mm)");
-        ywv = preferences.loadDouble("WorkingY(mm)");
+        final PrinterSettings printerSettings = preferences.getPrinterSettings();
+        xwv = printerSettings.getBedSizeX();
+        ywv = printerSettings.getBedSizeY();
         zwv = preferences.loadDouble("WorkingZ(mm)");
         wv_offset = new Vector3d(0, 0, 0);
         bgColour = new Color3f((float) 0.9, (float) 0.9, (float) 0.9);

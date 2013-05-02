@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Constants;
 import org.reprap.configuration.PreferenceChangeListener;
 import org.reprap.configuration.Preferences;
+import org.reprap.configuration.PrinterSettings;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.Attributes;
@@ -713,8 +714,9 @@ public class GCodePrinter implements PreferenceChangeListener {
 
     @Override
     public void refreshPreferences(final Preferences prefs) {
-        maximumXvalue = prefs.loadDouble("WorkingX(mm)");
-        maximumYvalue = prefs.loadDouble("WorkingY(mm)");
+        final PrinterSettings printerSettings = prefs.getPrinterSettings();
+        maximumXvalue = printerSettings.getBedSizeX();
+        maximumYvalue = printerSettings.getBedSizeY();
         maximumZvalue = prefs.loadDouble("WorkingZ(mm)");
         bedNorthEast = new Point2D(maximumXvalue, maximumYvalue);
         relativeExtrusion = prefs.loadBool("ExtrusionRelative");
