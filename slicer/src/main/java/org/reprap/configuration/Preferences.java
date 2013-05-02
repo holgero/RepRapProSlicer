@@ -58,8 +58,7 @@ public class Preferences {
             "Extruder\\d_ExtrusionDelayForLayer\\(ms\\)", "Extruder\\d_ExtrusionDelayForPolygon\\(ms\\)",
             "Extruder\\d_ExtrusionSpeed\\(mm/minute\\)", "Extruder\\d_SlowXYFeedrate\\(mm/minute\\)",
             "Extruder\\d_SupportMaterialType\\(name\\)", "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)",
-            "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "Support", "FoundationLayers", "Debug",
-            "Extruder[12357]_.*");
+            "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "Support", "FoundationLayers", "Debug");
 
     private static String propsFile = "reprap.properties";
 
@@ -193,11 +192,12 @@ public class Preferences {
         // assumes physNo# corresponds to No in the resulting properties
         printSettings.setSupportExtruder(loadInt("Extruder" + supportExtruderNo + "_Address"));
         fixupExtruderDelayProperties();
-        removeUnusedProperties();
-        renumberExtruders();
+        final int maxExtrudersNumber = loadInt("NumberOfExtruders");
+        removeUnusedExtruders();
+        removeUnusedProperties(maxExtrudersNumber);
     }
 
-    private void renumberExtruders() {
+    private void removeUnusedExtruders() {
         int maxextruder = -1;
         do {
             final int nextExtruder = nextExtruderNumber(maxextruder);
@@ -215,12 +215,11 @@ public class Preferences {
     private void shiftDownExtruderNumber(final int from, final int to) {
         final String prefix = "Extruder" + from + "_";
         final Map<String, String> newValues = new HashMap<>();
-        for (final Iterator<?> keyIterator = mainPreferences.keySet().iterator(); keyIterator.hasNext();) {
-            final String key = (String) keyIterator.next();
+        for (final Object name : mainPreferences.keySet()) {
+            final String key = (String) name;
             if (key.startsWith(prefix)) {
                 final String remainder = key.substring(prefix.length());
                 newValues.put("Extruder" + to + "_" + remainder, mainPreferences.getProperty(key));
-                keyIterator.remove();
             }
         }
         for (final String key : newValues.keySet()) {
@@ -228,13 +227,15 @@ public class Preferences {
         }
     }
 
-    private int nextExtruderNumber(final int maxextruder) {
-        for (int i = maxextruder + 1; i < loadInt("NumberOfExtruders"); i++) {
-            if (mainPreferences.containsKey("Extruder" + i + "_Address")) {
+    private int nextExtruderNumber(final int maxExtruder) {
+        final int nextNumber = maxExtruder + 1;
+        for (int i = nextNumber; i < loadInt("NumberOfExtruders"); i++) {
+            final String addressKey = "Extruder" + i + "_Address";
+            if (mainPreferences.containsKey(addressKey) && nextNumber == loadInt(addressKey)) {
                 return i;
             }
         }
-        return maxextruder;
+        return maxExtruder;
     }
 
     private void fixupExtruderDelayProperties() {
@@ -269,11 +270,21 @@ public class Preferences {
                 / (feedDiameter * feedDiameter * Math.PI / 4);
     }
 
-    private void removeUnusedProperties() {
+    private void removeUnusedProperties(final int maxExtruderNumber) {
         for (final Iterator<?> iterator = mainPreferences.keySet().iterator(); iterator.hasNext();) {
             final String key = (String) iterator.next();
             for (final Pattern pattern : OBSOLETE_PROPERTIES_PATTERNS) {
                 if (pattern.matcher(key).matches()) {
+                    iterator.remove();
+                    break;
+                }
+            }
+        }
+        for (final Iterator<?> iterator = mainPreferences.keySet().iterator(); iterator.hasNext();) {
+            final String key = (String) iterator.next();
+            for (int i = loadInt("NumberOfExtruders"); i < maxExtruderNumber; i++) {
+                final String prefix = "Extruder" + i + "_";
+                if (key.startsWith(prefix)) {
                     iterator.remove();
                     break;
                 }
