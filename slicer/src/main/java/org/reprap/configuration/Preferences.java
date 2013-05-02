@@ -63,7 +63,7 @@ public class Preferences {
             "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug", "WorkingX\\(mm\\)", "WorkingY\\(mm\\)",
             "WorkingZ\\(mm\\)", "ExtrusionRelative", "PathOptimise", "MaximumFeedrateX\\(mm/minute\\)",
             "MaximumFeedrateY\\(mm/minute\\)", "MaximumFeedrateZ\\(mm/minute\\)", "MaxXYAcceleration\\(mm/mininute/minute\\)",
-            "MaxZAcceleration\\(mm/mininute/minute\\)", "NumberOfExtruders");
+            "MaxZAcceleration\\(mm/mininute/minute\\)", "NumberOfExtruders", "BedTemperature\\(C\\)");
 
     private static String propsFile = "reprap.properties";
 
