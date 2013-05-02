@@ -29,6 +29,8 @@ public class PrinterSettings {
     private double maximumFeedrateZ; // mm/minute 200
     // G-Code
     private boolean relativeDistanceE; // boolean true
+    // Extruders
+    private ExtruderSettings[] extruderSettings;
 
     public double getBedSizeX() {
         return bedSizeX;
@@ -84,5 +86,13 @@ public class PrinterSettings {
 
     void setMaximumFeedrateZ(final double maximumFeedrateZ) {
         this.maximumFeedrateZ = maximumFeedrateZ;
+    }
+
+    public ExtruderSettings[] getExtruderSettings() {
+        return extruderSettings;
+    }
+
+    void setExtruderSettings(final ExtruderSettings[] extruderSettings) {
+        this.extruderSettings = extruderSettings;
     }
 }

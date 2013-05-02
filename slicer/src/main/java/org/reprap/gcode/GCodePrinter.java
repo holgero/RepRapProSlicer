@@ -78,7 +78,7 @@ public class GCodePrinter implements PreferenceChangeListener {
     }
 
     private void loadExtruders() {
-        final int extruderCount = preferences.loadInt("NumberOfExtruders");
+        final int extruderCount = preferences.getPrinterSettings().getExtruderSettings().length;
         if (extruderCount < 1) {
             throw new IllegalStateException("A Reprap printer must contain at least one extruder.");
         }

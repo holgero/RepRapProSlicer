@@ -43,7 +43,7 @@ public class Producer {
         layerRules = new LayerRules(printer, buildVolume);
         stlList = new ProducerStlList(allStls, purge, layerRules);
         final Preferences preferences = Preferences.getInstance();
-        totalExtruders = preferences.loadInt("NumberOfExtruders");
+        totalExtruders = preferences.getPrinterSettings().getExtruderSettings().length;
         if (displayPaths) {
             simulationPlot = new SimulationPlotter("RepRap building simulation");
         } else {
