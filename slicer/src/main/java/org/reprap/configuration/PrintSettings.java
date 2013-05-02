@@ -35,17 +35,18 @@ public class PrintSettings {
     private boolean skirt; // boolean false
     // brim
     private int brimLines; // # 8
-    // shield
+    // dump area and shield
     private boolean shield; // boolean true
+    private int dumpX; // mm 50
+    private int dumpY; // mm 100
     // support material
     private boolean support; // boolean false
+    private int supportExtruder; // # 0
     private FillPattern supportPattern; // linear
     private double supportSpacing; // mm 2.5
     private int raftLayers; // # 0
     // output options
     private boolean verboseGCode; // boolean false
-    // multiple extruders
-    private int supportExtruder; // # 0
 
     public double getLayerHeight() {
         return layerHeight;
@@ -125,6 +126,22 @@ public class PrintSettings {
 
     void setShield(final boolean shield) {
         this.shield = shield;
+    }
+
+    public int getDumpX() {
+        return dumpX;
+    }
+
+    void setDumpX(final int dumpX) {
+        this.dumpX = dumpX;
+    }
+
+    public int getDumpY() {
+        return dumpY;
+    }
+
+    void setDumpY(final int dumpY) {
+        this.dumpY = dumpY;
     }
 
     public boolean printSupport() {

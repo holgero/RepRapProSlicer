@@ -58,7 +58,8 @@ public class Preferences {
             "Extruder\\d_ExtrusionDelayForLayer\\(ms\\)", "Extruder\\d_ExtrusionDelayForPolygon\\(ms\\)",
             "Extruder\\d_ExtrusionSpeed\\(mm/minute\\)", "Extruder\\d_SlowXYFeedrate\\(mm/minute\\)",
             "Extruder\\d_SupportMaterialType\\(name\\)", "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)",
-            "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "Support", "FoundationLayers", "Debug");
+            "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "DumpX\\(mm\\)", "DumpY\\(mm\\)", "Support",
+            "FoundationLayers", "Debug");
 
     private static String propsFile = "reprap.properties";
 
@@ -179,6 +180,8 @@ public class Preferences {
         }
         printSettings.setBrimLines(loadInt("BrimLines"));
         printSettings.setShield(loadBool("Shield"));
+        printSettings.setDumpX(loadInt("DumpX(mm)"));
+        printSettings.setDumpY(loadInt("DumpY(mm)"));
         if (mainPreferences.getProperty("Support") == null) {
             mainPreferences.setProperty("Support", "false");
         }

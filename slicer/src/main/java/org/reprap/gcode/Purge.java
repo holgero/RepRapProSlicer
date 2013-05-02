@@ -20,6 +20,7 @@
 package org.reprap.gcode;
 
 import org.reprap.configuration.Preferences;
+import org.reprap.configuration.PrintSettings;
 import org.reprap.geometry.polygons.Point2D;
 
 public final class Purge {
@@ -37,7 +38,8 @@ public final class Purge {
     public Purge(final GCodePrinter printer) {
         this.printer = printer;
         final Preferences preferences = Preferences.getInstance();
-        purgePoint = new Point2D(preferences.loadDouble("DumpX(mm)"), preferences.loadDouble("DumpY(mm)"));
+        final PrintSettings printSettings = preferences.getPrintSettings();
+        purgePoint = new Point2D(printSettings.getDumpX(), printSettings.getDumpY());
         final double maximumXvalue = preferences.loadDouble("WorkingX(mm)");
         final double maximumYvalue = preferences.loadDouble("WorkingY(mm)");
         purgeXOriented = Math.abs(maximumYvalue / 2 - purgePoint.y()) > Math.abs(maximumXvalue / 2 - purgePoint.x());
