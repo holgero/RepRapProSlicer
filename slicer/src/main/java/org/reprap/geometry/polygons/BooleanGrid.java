@@ -1158,7 +1158,7 @@ public class BooleanGrid {
             }
         } while (segment >= 0);
 
-        if (Preferences.getInstance().loadBool("PathOptimise")) {
+        if (Preferences.getInstance().getPrintSettings().isPathOptimize()) {
             joinUpSnakes(snakes, hatches, gap);
         }
 

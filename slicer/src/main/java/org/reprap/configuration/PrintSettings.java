@@ -47,6 +47,7 @@ public class PrintSettings {
     private int raftLayers; // # 0
     // output options
     private boolean verboseGCode; // boolean false
+    private boolean pathOptimize; // boolean true
 
     public double getLayerHeight() {
         return layerHeight;
@@ -190,5 +191,13 @@ public class PrintSettings {
 
     void setSupportExtruder(final int supportExtruder) {
         this.supportExtruder = supportExtruder;
+    }
+
+    public boolean isPathOptimize() {
+        return pathOptimize;
+    }
+
+    void setPathOptimize(final boolean pathOptimize) {
+        this.pathOptimize = pathOptimize;
     }
 }

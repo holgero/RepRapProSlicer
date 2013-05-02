@@ -60,7 +60,7 @@ public class Preferences {
             "Extruder\\d_SupportMaterialType\\(name\\)", "Extruder\\d_Address", "SlowXYFeedrate\\(mm/minute\\)",
             "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "DumpX\\(mm\\)",
             "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug", "WorkingX\\(mm\\)", "WorkingY\\(mm\\)",
-            "WorkingZ\\(mm\\)", "ExtrusionRelative");
+            "WorkingZ\\(mm\\)", "ExtrusionRelative", "PathOptimise");
 
     private static String propsFile = "reprap.properties";
 
@@ -215,7 +215,7 @@ public class Preferences {
         result.setVerboseGCode(loadBool("Debug"));
         // assumes physNo# corresponds to No in the resulting properties
         result.setSupportExtruder(loadInt("Extruder" + supportExtruderNo + "_Address"));
-
+        result.setPathOptimize(loadBool("PathOptimise"));
         return result;
     }
 
