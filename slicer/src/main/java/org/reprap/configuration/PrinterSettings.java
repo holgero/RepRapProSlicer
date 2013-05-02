@@ -23,6 +23,8 @@ public class PrinterSettings {
     private double bedSizeX; // mm 200
     private double bedSizeY; // mm 200
     private double maximumZ; // mm 100
+    // G-Code
+    private boolean relativeDistanceE; // boolean true
 
     public double getBedSizeX() {
         return bedSizeX;
@@ -46,5 +48,13 @@ public class PrinterSettings {
 
     void setMaximumZ(final double maximumZ) {
         this.maximumZ = maximumZ;
+    }
+
+    public boolean useRelativeDistanceE() {
+        return relativeDistanceE;
+    }
+
+    void setRelativeDistanceE(final boolean relativeDistanceE) {
+        this.relativeDistanceE = relativeDistanceE;
     }
 }

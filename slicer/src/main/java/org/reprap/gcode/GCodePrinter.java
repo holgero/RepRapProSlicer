@@ -124,23 +124,18 @@ public class GCodePrinter implements PreferenceChangeListener {
     private void qXYMove(final double x, final double y, double feedrate) {
         final double dx = x - currentX;
         final double dy = y - currentY;
-
-        double extrudeLength = extruders[currentExtruder].getDistance(Math.sqrt(dx * dx + dy * dy));
+        final GCodeExtruder extruder = extruders[currentExtruder];
+        double extrudeLength = extruder.getDistance(Math.sqrt(dx * dx + dy * dy));
         String se = "";
-
         if (extrudeLength > 0) {
-            if (extruders[currentExtruder].getReversing()) {
+            if (extruder.getReversing()) {
                 extrudeLength = -extrudeLength;
             }
-            extruders[currentExtruder].getExtruderState().add(extrudeLength);
-            if (relativeExtrusion) {
-                se = " E" + round(extrudeLength, 3);
-            } else {
-                se = " E" + round(extruders[currentExtruder].getExtruderState().length(), 3);
-            }
+            extruder.getExtruderState().add(extrudeLength);
+            se = " " + getECoordinate(extrudeLength);
         }
 
-        final double xyFeedrate = round(extruders[currentExtruder].getFastXYFeedrate(), 1);
+        final double xyFeedrate = round(extruder.getFastXYFeedrate(), 1);
         if (xyFeedrate < feedrate && Math.abs(extrudeLength) > Constants.TINY_VALUE) {
             LOGGER.debug("GCodeRepRap().qXYMove: extruding feedrate (" + feedrate + ") exceeds maximum (" + xyFeedrate + ").");
             feedrate = xyFeedrate;
@@ -175,6 +170,14 @@ public class GCodePrinter implements PreferenceChangeListener {
         currentY = y;
     }
 
+    private String getECoordinate(final double extrudeLength) {
+        if (relativeExtrusion) {
+            return "E" + round(extrudeLength, 3);
+        } else {
+            return "E" + round(extruders[currentExtruder].getExtruderState().length(), 3);
+        }
+    }
+
     private void qZMove(final double z, double feedrate) {
         // note we set the feedrate whether we move or not
 
@@ -202,11 +205,7 @@ public class GCodePrinter implements PreferenceChangeListener {
                 extrudeLength = -extrudeLength;
             }
             extruders[currentExtruder].getExtruderState().add(extrudeLength);
-            if (relativeExtrusion) {
-                s += " E" + round(extrudeLength, 3);
-            } else {
-                s += " E" + round(extruders[currentExtruder].getExtruderState().length(), 3);
-            }
+            s = s + " " + getECoordinate(extrudeLength);
         }
         if (currentFeedrate != feedrate) {
             s += " F" + feedrate;
@@ -451,13 +450,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         qFeedrate(round(scaledFeedRate, 1));
         final int sign = extruder.getReversing() ? -1 : 1;
         extruder.getExtruderState().add(sign * extrudeLength);
-
-        final String command;
-        if (relativeExtrusion) {
-            command = "G1 E" + round(sign * extrudeLength, 3);
-        } else {
-            command = "G1 E" + round(extruder.getExtruderState().length(), 3);
-        }
+        final String command = "G1 " + getECoordinate(sign * extrudeLength);
         final String comment;
         if (extruder.getReversing()) {
             comment = "extruder retraction";
@@ -719,7 +712,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         maximumYvalue = printerSettings.getBedSizeY();
         maximumZvalue = printerSettings.getMaximumZ();
         bedNorthEast = new Point2D(maximumXvalue, maximumYvalue);
-        relativeExtrusion = prefs.loadBool("ExtrusionRelative");
+        relativeExtrusion = printerSettings.useRelativeDistanceE();
 
         // Load our maximum feedrate variables
         final double maxFeedrateX = prefs.loadDouble("MaximumFeedrateX(mm/minute)");
