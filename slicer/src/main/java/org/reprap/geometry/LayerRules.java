@@ -8,6 +8,7 @@ import java.io.PrintStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.configuration.FillPattern;
 import org.reprap.configuration.Preferences;
 import org.reprap.configuration.PrintSettings;
 import org.reprap.gcode.GCodeExtruder;
@@ -266,7 +267,13 @@ public class LayerRules {
         } else {
             mylayer = machineLayer;
         }
-        final double angle = toRadian(preferences.getPrintSettings().getFillPattern().angle(mylayer));
+        final FillPattern fillPattern;
+        if (support) {
+            fillPattern = preferences.getPrintSettings().getSupportPattern();
+        } else {
+            fillPattern = preferences.getPrintSettings().getFillPattern();
+        }
+        final double angle = toRadian(fillPattern.angle(mylayer));
         HalfPlane result = new HalfPlane(new Point2D(0.0, 0.0), new Point2D(Math.sin(angle), Math.cos(angle)));
 
         if (((mylayer / 2) % 2 == 0) && !support) {

@@ -58,7 +58,8 @@ public class Preferences {
             "Extruder\\d_ExtrusionDelayForLayer\\(ms\\)", "Extruder\\d_ExtrusionDelayForPolygon\\(ms\\)",
             "Extruder\\d_ExtrusionSpeed\\(mm/minute\\)", "Extruder\\d_SlowXYFeedrate\\(mm/minute\\)",
             "Extruder\\d_SupportMaterialType\\(name\\)", "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)",
-            "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "Support", "FoundationLayers", "Debug");
+            "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "Support", "FoundationLayers", "Debug",
+            "Extruder[2357]_.*");
 
     private static String propsFile = "reprap.properties";
 
@@ -183,12 +184,57 @@ public class Preferences {
             mainPreferences.setProperty("Support", "false");
         }
         printSettings.setSupport(loadBool("Support"));
+        final int supportExtruderNo = getNumberFromMaterial(loadString("Extruder0_SupportMaterialType(name)"));
+        printSettings.setSupportPattern(new LinearFillPattern(loadDouble("Extruder" + supportExtruderNo
+                + "_EvenHatchDirection(degrees)")));
+        printSettings.setSupportSpacing(loadDouble("Extruder" + supportExtruderNo + "_ExtrusionBroadWidth(mm)"));
         printSettings.setRaftLayers(loadInt("FoundationLayers"));
         printSettings.setVerboseGCode(loadBool("Debug"));
-        final int supportExtruderNo = getNumberFromMaterial(loadString("Extruder0_SupportMaterialType(name)"));
-        printSettings.setSupportExtruder(supportExtruderNo);
+        // assumes physNo# corresponds to No in the resulting properties
+        printSettings.setSupportExtruder(loadInt("Extruder" + supportExtruderNo + "_Address"));
         fixupExtruderDelayProperties();
         removeUnusedProperties();
+        renumberExtruders();
+    }
+
+    private void renumberExtruders() {
+        int maxextruder = -1;
+        do {
+            final int nextExtruder = nextExtruderNumber(maxextruder);
+            if (nextExtruder == maxextruder) {
+                break;
+            }
+            maxextruder++;
+            if (nextExtruder > maxextruder) {
+                shiftDownExtruderNumber(nextExtruder, maxextruder);
+            }
+        } while (true);
+        mainPreferences.setProperty("NumberOfExtruders", Integer.toString(maxextruder + 1));
+    }
+
+    private void shiftDownExtruderNumber(final int from, final int to) {
+        final String prefix = "Extruder" + from + "_";
+        final Map<String, String> newValues = new HashMap<>();
+        for (final Iterator<?> keyIterator = mainPreferences.keySet().iterator(); keyIterator.hasNext();) {
+            final String key = (String) keyIterator.next();
+            if (key.startsWith(prefix)) {
+                final String remainder = key.substring(prefix.length());
+                newValues.put("Extruder" + to + "_" + remainder, mainPreferences.getProperty(key));
+                keyIterator.remove();
+            }
+        }
+        for (final String key : newValues.keySet()) {
+            mainPreferences.setProperty(key, newValues.get(key));
+        }
+    }
+
+    private int nextExtruderNumber(final int maxextruder) {
+        for (int i = maxextruder + 1; i < loadInt("NumberOfExtruders"); i++) {
+            if (mainPreferences.containsKey("Extruder" + i + "_Address")) {
+                return i;
+            }
+        }
+        return maxextruder;
     }
 
     private void fixupExtruderDelayProperties() {

@@ -36,10 +36,11 @@ public class PrintSettings {
     // brim
     private int brimLines; // # 8
     // shield
-    // TODO print no shield if the print is not multimaterial (what happens currently?)
     private boolean shield; // boolean true
     // support material
     private boolean support; // boolean false
+    private FillPattern supportPattern; // linear
+    private double supportSpacing; // mm 2.5
     private int raftLayers; // # 0
     // output options
     private boolean verboseGCode; // boolean false
@@ -132,6 +133,22 @@ public class PrintSettings {
 
     void setSupport(final boolean support) {
         this.support = support;
+    }
+
+    public FillPattern getSupportPattern() {
+        return supportPattern;
+    }
+
+    void setSupportPattern(final FillPattern supportPattern) {
+        this.supportPattern = supportPattern;
+    }
+
+    public double getSupportSpacing() {
+        return supportSpacing;
+    }
+
+    void setSupportSpacing(final double supportSpacing) {
+        this.supportSpacing = supportSpacing;
     }
 
     public int getRaftLayers() {

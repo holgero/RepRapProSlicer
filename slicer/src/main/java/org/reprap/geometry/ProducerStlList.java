@@ -40,6 +40,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Constants;
 import org.reprap.configuration.Preferences;
+import org.reprap.configuration.PrintSettings;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.gcode.Purge;
@@ -858,16 +859,19 @@ class ProducerStlList {
      */
     static PolygonList hatch(final BooleanGridList list, final LayerRules layerConditions, final boolean surface,
             final boolean support) {
+        final PrintSettings printSettings = Preferences.getInstance().getPrintSettings();
         final PolygonList result = new PolygonList();
         for (int i = 0; i < list.size(); i++) {
             final BooleanGrid grid = list.get(i);
             final Attributes att = grid.attribute();
             final GCodeExtruder e = layerConditions.getPrinter().getExtruder(att.getMaterial());
             final double infillWidth;
-            if (!surface) {
-                infillWidth = e.getExtrusionSize() / Preferences.getInstance().getPrintSettings().getFillDensity();
-            } else {
+            if (support) {
+                infillWidth = printSettings.getSupportSpacing();
+            } else if (surface) {
                 infillWidth = e.getExtrusionSize();
+            } else {
+                infillWidth = e.getExtrusionSize() / printSettings.getFillDensity();
             }
             final HalfPlane hatchLine = layerConditions.getHatchDirection(support, infillWidth);
             result.add(grid.hatch(hatchLine, infillWidth, att));
