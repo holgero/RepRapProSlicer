@@ -16,7 +16,7 @@ import org.reprap.configuration.Preferences;
  * @author adrian
  */
 public class Attributes {
-    public static final Logger LOGGER = LogManager.getLogger(Attributes.class);
+    private static final Logger LOGGER = LogManager.getLogger(Attributes.class);
     /**
      * The name of the material
      */
@@ -78,17 +78,28 @@ public class Attributes {
     /**
      * Change the material name
      */
-    public void setMaterial(final String s) {
-        material = s;
+    public void setMaterial(final String newMaterial) {
+        material = existingMaterial(newMaterial);
         app = getAppearanceFromMaterial(material);
         if (parent != null) {
             parent.restoreAppearance();
         }
     }
 
+    private static String existingMaterial(final String newMaterial) {
+        final String[] materials = Preferences.getInstance().getAllMaterials();
+        for (final String existingMaterial : materials) {
+            if (existingMaterial.equals(newMaterial)) {
+                return newMaterial;
+            }
+        }
+        LOGGER.warn("Requested material " + newMaterial + " not found, substituting with " + materials[0] + ".");
+        return materials[0];
+    }
+
     private static Appearance getAppearanceFromMaterial(final String material) {
-        final Appearance a = new Appearance();
         final Color3f col = Preferences.getInstance().loadMaterialColor(material);
+        final Appearance a = new Appearance();
         a.setMaterial(new Material(col, Constants.BLACK, col, Constants.BLACK, 101f));
         return a;
     }

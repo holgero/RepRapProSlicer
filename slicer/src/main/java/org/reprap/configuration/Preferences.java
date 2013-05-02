@@ -59,7 +59,7 @@ public class Preferences {
             "Extruder\\d_ExtrusionSpeed\\(mm/minute\\)", "Extruder\\d_SlowXYFeedrate\\(mm/minute\\)",
             "Extruder\\d_SupportMaterialType\\(name\\)", "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)",
             "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "Support", "FoundationLayers", "Debug",
-            "Extruder[2357]_.*");
+            "Extruder[12357]_.*");
 
     private static String propsFile = "reprap.properties";
 
@@ -460,8 +460,7 @@ public class Preferences {
                 return i;
             }
         }
-        LOGGER.debug("getNumberFromMaterial - can't find " + material);
-        return -1;
+        throw new RuntimeException("getNumberFromMaterial - can't find " + material);
     }
 
     /**
