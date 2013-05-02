@@ -60,7 +60,8 @@ public class Preferences {
             "Extruder\\d_SupportMaterialType\\(name\\)", "Extruder\\d_Address", "SlowXYFeedrate\\(mm/minute\\)",
             "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "DumpX\\(mm\\)",
             "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug", "WorkingX\\(mm\\)", "WorkingY\\(mm\\)",
-            "WorkingZ\\(mm\\)", "ExtrusionRelative", "PathOptimise");
+            "WorkingZ\\(mm\\)", "ExtrusionRelative", "PathOptimise", "MaximumFeedrateX\\(mm/minute\\)",
+            "MaximumFeedrateY\\(mm/minute\\)", "MaximumFeedrateZ\\(mm/minute\\)");
 
     private static String propsFile = "reprap.properties";
 
@@ -180,6 +181,9 @@ public class Preferences {
         result.setBedSizeY(loadDouble("WorkingY(mm)"));
         result.setMaximumZ(loadDouble("WorkingZ(mm)"));
         result.setRelativeDistanceE(loadBool("ExtrusionRelative"));
+        result.setMaximumFeedrateX(loadDouble("MaximumFeedrateX(mm/minute)"));
+        result.setMaximumFeedrateY(loadDouble("MaximumFeedrateY(mm/minute)"));
+        result.setMaximumFeedrateZ(loadDouble("MaximumFeedrateZ(mm/minute)"));
         return result;
     }
 

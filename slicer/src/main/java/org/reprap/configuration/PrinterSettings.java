@@ -23,6 +23,10 @@ public class PrinterSettings {
     private double bedSizeX; // mm 200
     private double bedSizeY; // mm 200
     private double maximumZ; // mm 100
+    // travel speeds
+    private double maximumFeedrateX; // mm/minute 15000
+    private double maximumFeedrateY; // mm/minute 15000
+    private double maximumFeedrateZ; // mm/minute 200
     // G-Code
     private boolean relativeDistanceE; // boolean true
 
@@ -56,5 +60,29 @@ public class PrinterSettings {
 
     void setRelativeDistanceE(final boolean relativeDistanceE) {
         this.relativeDistanceE = relativeDistanceE;
+    }
+
+    public double getMaximumFeedrateX() {
+        return maximumFeedrateX;
+    }
+
+    void setMaximumFeedrateX(final double maximumFeedrateX) {
+        this.maximumFeedrateX = maximumFeedrateX;
+    }
+
+    public double getMaximumFeedrateY() {
+        return maximumFeedrateY;
+    }
+
+    void setMaximumFeedrateY(final double maximumFeedrateY) {
+        this.maximumFeedrateY = maximumFeedrateY;
+    }
+
+    public double getMaximumFeedrateZ() {
+        return maximumFeedrateZ;
+    }
+
+    void setMaximumFeedrateZ(final double maximumFeedrateZ) {
+        this.maximumFeedrateZ = maximumFeedrateZ;
     }
 }

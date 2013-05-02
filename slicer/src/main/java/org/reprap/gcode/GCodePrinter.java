@@ -1,13 +1,5 @@
 package org.reprap.gcode;
 
-/*
- * TODO: fixup warmup segments GCode (forgets to turn on extruder) 
- * TODO: fixup all the RR: println commands 
- * TODO: find a better place for the code. You cannot even detect a layer change without hacking now. 
- * TODO: read Zach's GCode examples to check if I messed up. 
- * TODO: make GCodeWriter a subclass of NullCartesian, so I don't have to fix code all over the place.
- */
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -52,10 +44,6 @@ public class GCodePrinter implements PreferenceChangeListener {
      * Current Z position of the extruder
      */
     private double currentZ = 0;
-    /**
-     * Maximum feedrate for Z axis
-     */
-    private double maxFeedrateZ;
     /**
      * Current feedrate for the machine.
      */
@@ -179,13 +167,9 @@ public class GCodePrinter implements PreferenceChangeListener {
     }
 
     private void qZMove(final double z, double feedrate) {
-        // note we set the feedrate whether we move or not
-
-        final double zFeedrate = round(getMaxFeedrateZ(), 1);
-
-        if (zFeedrate < feedrate) {
-            LOGGER.debug("GCodeRepRap().qZMove: feedrate (" + feedrate + ") exceeds maximum (" + zFeedrate + ").");
-            feedrate = zFeedrate;
+        if (fastFeedrateZ < feedrate) {
+            LOGGER.debug("GCodeRepRap().qZMove: feedrate (" + feedrate + ") exceeds maximum (" + fastFeedrateZ + ").");
+            feedrate = fastFeedrateZ;
         }
 
         if (getMaxZAcceleration() <= 0) {
@@ -245,7 +229,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         if (lift) {
             final double liftIncrement = extruders[currentExtruder].getLift();
             final double liftedZ = round(currentZ + liftIncrement, 4);
-            qZMove(liftedZ, round(getMaxFeedrateZ(), 1));
+            qZMove(liftedZ, fastFeedrateZ);
             qFeedrate(feedrate);
         }
 
@@ -364,7 +348,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         for (int e = extruders.length - 1; e >= 0; e--) { // Count down so we end with the one most likely to start the rest
             if (extruderUsed[e]) {
                 if (!zRight) {
-                    singleMove(currentX, currentY, preferences.getPrintSettings().getLayerHeight(), getFastFeedrateZ(), true);
+                    singleMove(currentX, currentY, preferences.getPrintSettings().getLayerHeight(), fastFeedrateZ, true);
                     currentZ = machineZ;
                 }
                 zRight = true;
@@ -404,7 +388,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         }
 
         setZ(machineZ - zStep);
-        singleMove(getX(), getY(), machineZ, getFastFeedrateZ(), reversing);
+        singleMove(getX(), getY(), machineZ, fastFeedrateZ, reversing);
 
         return result;
     }
@@ -636,16 +620,8 @@ public class GCodePrinter implements PreferenceChangeListener {
         extruder.getExtruderState().setRetraction(extruder.getExtruderState().retraction() + distance);
     }
 
-    private void setFastFeedrateZ(final double feedrate) {
-        fastFeedrateZ = feedrate;
-    }
-
     public double getFastFeedrateZ() {
         return fastFeedrateZ;
-    }
-
-    private double getMaxFeedrateZ() {
-        return maxFeedrateZ;
     }
 
     /**
@@ -713,18 +689,11 @@ public class GCodePrinter implements PreferenceChangeListener {
         maximumZvalue = printerSettings.getMaximumZ();
         bedNorthEast = new Point2D(maximumXvalue, maximumYvalue);
         relativeExtrusion = printerSettings.useRelativeDistanceE();
-
-        // Load our maximum feedrate variables
-        final double maxFeedrateX = prefs.loadDouble("MaximumFeedrateX(mm/minute)");
-        final double maxFeedrateY = prefs.loadDouble("MaximumFeedrateY(mm/minute)");
-        maxFeedrateZ = prefs.loadDouble("MaximumFeedrateZ(mm/minute)");
+        fastFeedrateZ = round(printerSettings.getMaximumFeedrateZ(), 1);
+        fastXYFeedrate = Math.min(printerSettings.getMaximumFeedrateX(), printerSettings.getMaximumFeedrateY());
 
         maxXYAcceleration = prefs.loadDouble("MaxXYAcceleration(mm/mininute/minute)");
         maxZAcceleration = prefs.loadDouble("MaxZAcceleration(mm/mininute/minute)");
-
-        //set our standard feedrates.
-        fastXYFeedrate = Math.min(maxFeedrateX, maxFeedrateY);
-        setFastFeedrateZ(maxFeedrateZ);
 
         loadExtruders();
     }

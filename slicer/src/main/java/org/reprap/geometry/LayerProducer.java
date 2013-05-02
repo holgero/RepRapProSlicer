@@ -120,11 +120,6 @@ class LayerProducer {
         }
     }
 
-    private void singleMove(final Point2D p) {
-        final GCodePrinter pt = layerRules.getPrinter();
-        pt.singleMove(p.x(), p.y(), pt.getZ(), pt.getFastXYFeedrate(), true);
-    }
-
     private void move(final Point2D first, final boolean lift) {
         final GCodePrinter printer = layerRules.getPrinter();
         final double z = layerRules.getMachineZ();
@@ -191,15 +186,8 @@ class LayerProducer {
         extrusionPath.backStepExtrude(extrudeBackLength);
 
         final GCodePrinter printer = layerRules.getPrinter();
-        final double currentZ = printer.getZ();
         final double liftZ = extruder.getLift();
-        if (liftZ > 0) {
-            printer.singleMove(printer.getX(), printer.getY(), currentZ + liftZ, printer.getFastFeedrateZ(), true);
-        }
-        singleMove(extrusionPath.point(0));
-        if (liftZ > 0) {
-            printer.singleMove(printer.getX(), printer.getY(), currentZ, printer.getFastFeedrateZ(), true);
-        }
+        singleMove(printer, liftZ, extrusionPath.point(0));
 
         // Print any lead-in.
         printer.startExtruder(firstOneInLayer);
@@ -223,6 +211,18 @@ class LayerProducer {
         // If getMinLiftedZ() is negative, never lift the head
         final boolean lift = extruder.getMinLiftedZ() >= 0 || liftZ > 0;
         move(posNow(), lift);
+    }
+
+    private void singleMove(final GCodePrinter printer, final double liftZ, final Point2D point) {
+        final double currentZ = printer.getZ();
+        final double fastFeedrateZ = printer.getFastFeedrateZ();
+        if (liftZ > 0) {
+            printer.singleMove(printer.getX(), printer.getY(), currentZ + liftZ, fastFeedrateZ, true);
+        }
+        printer.singleMove(point.x(), point.y(), currentZ + liftZ, printer.getFastXYFeedrate(), true);
+        if (liftZ > 0) {
+            printer.singleMove(point.x(), point.y(), currentZ, fastFeedrateZ, true);
+        }
     }
 
     /**
