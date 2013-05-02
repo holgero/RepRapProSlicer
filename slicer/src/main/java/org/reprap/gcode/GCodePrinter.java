@@ -454,9 +454,8 @@ public class GCodePrinter implements PreferenceChangeListener {
         return Math.round(c * power) / power;
     }
 
-    private void extrude(final double distance, final double feedRate) {
+    private void extrude(final double extrudeLength, final double feedRate) {
         final GCodeExtruder extruder = getExtruder();
-        double extrudeLength = extruder.getDistance(distance);
 
         final double scaledFeedRate;
         if (extruder.getFeedDiameter() > 0) {
@@ -467,14 +466,12 @@ public class GCodePrinter implements PreferenceChangeListener {
         }
         currentFeedrate = 0; // force it to output feedrate
         qFeedrate(round(scaledFeedRate, 1));
-        if (extruder.getReversing()) {
-            extrudeLength = -extrudeLength;
-        }
-        extruder.getExtruderState().add(extrudeLength);
+        final int sign = extruder.getReversing() ? -1 : 1;
+        extruder.getExtruderState().add(sign * extrudeLength);
 
         final String command;
         if (relativeExtrusion) {
-            command = "G1 E" + round(extrudeLength, 3);
+            command = "G1 E" + round(sign * extrudeLength, 3);
         } else {
             command = "G1 E" + round(extruder.getExtruderState().length(), 3);
         }
@@ -632,17 +629,16 @@ public class GCodePrinter implements PreferenceChangeListener {
             extruder.getExtruderState().setRetraction(0);
         }
 
-        // Extrude motor delays (ms)
-        double eDelay;
+        final double extraExtrusion;
         if (firstOneInLayer) {
-            eDelay = extruder.getExtraExtrusionForLayer();
+            extraExtrusion = extruder.getExtraExtrusionForLayer();
         } else {
-            eDelay = extruder.getExtraExtrusionForPolygon();
+            extraExtrusion = extruder.getExtraExtrusionForPolygon();
         }
 
         extruder.startExtrusion(false);
-        if (eDelay > 0) {
-            extrude(eDelay, extruder.getFastXYFeedrate());
+        if (extraExtrusion > 0) {
+            extrude(extraExtrusion, extruder.getFastXYFeedrate());
         }
     }
 

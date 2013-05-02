@@ -209,14 +209,18 @@ public class Preferences {
             if (matcher.matches()) {
                 final int extruderNo = Integer.parseInt(matcher.group(1));
                 newValues.put("Extruder" + extruderNo + "_" + distanceName,
-                        Double.toString(toDistance(loadDouble(key), extruderNo)));
+                        Double.toString(toFilamentLength(loadDouble(key), extruderNo)));
             }
         }
     }
 
-    private double toDistance(final double delay, final int extruder) {
-        final double extrusionSpeed = loadDouble("Extruder" + extruder + "_ExtrusionSpeed(mm/minute)");
-        return extrusionSpeed * delay / 60000;
+    private double toFilamentLength(final double delay, final int extruder) {
+        final String prefix = "Extruder" + extruder + "_";
+        final double extrusionSpeed = loadDouble(prefix + "ExtrusionSpeed(mm/minute)");
+        final double feedDiameter = loadDouble(prefix + "FeedDiameter(mm)");
+        final double extrusionSize = loadDouble(prefix + "ExtrusionSize(mm)");
+        return extrusionSpeed * delay / 60000 * printSettings.getLayerHeight() * extrusionSize
+                / (feedDiameter * feedDiameter * Math.PI / 4);
     }
 
     private void removeUnusedProperties() {

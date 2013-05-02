@@ -284,28 +284,18 @@ public class GCodeExtruder {
     }
 
     /**
-     * If we are working with feedstock lengths, compute that from the actual
-     * length we want to extrude from the nozzle, otherwise just return the
-     * extruded length.
-     */
-    public double filamentDistance(final double distance) {
-        if (getFeedDiameter() < 0) {
-            return extrudeRatio * distance;
-        }
-
-        return extrudeRatio * distance * Preferences.getInstance().getPrintSettings().getLayerHeight() * getExtrusionSize()
-                / (getFeedDiameter() * getFeedDiameter() * Math.PI / 4);
-    }
-
-    /**
-     * Get how much extrudate is deposited for a given xy movement currentSpeed
-     * is in mm per minute. Valve extruders cannot know, so return 0.
+     * Get how much filament must be extruded for a given xy movement.
      */
     public double getDistance(final double distance) {
         if (!extruderState.isExtruding()) {
             return 0;
         }
-        return filamentDistance(distance);
+        if (feedDiameter < 0) {
+            return extrudeRatio * distance;
+        }
+
+        final double layerHeight = Preferences.getInstance().getPrintSettings().getLayerHeight();
+        return extrudeRatio * distance * layerHeight * extrusionSize / (feedDiameter * feedDiameter * Math.PI / 4);
     }
 
     /**
