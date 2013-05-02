@@ -316,18 +316,17 @@ public class PolygonList {
      * extruder (otherwise it would be nonsense to join them). It is the calling
      * function's responsibility to make sure this is the case.
      */
-    public void radicalReOrder(final double linkUp, final GCodePrinter printer) {
+    public void radicalReOrder(final double linkUp) {
         if (size() < 2) {
             return;
         }
 
-        // First check that we all have the same physical extruder
-        final int physicalExtruder = printer.getExtruder(polygon(0).getAttributes().getMaterial()).getPhysicalExtruderNumber();
+        // First check that we all have the same material
+        final String material = polygon(0).getAttributes().getMaterial();
         for (int i = 1; i < size(); i++) {
             polygon(i).getAttributes();
-            if (printer.getExtruder(polygon(i).getAttributes().getMaterial()).getPhysicalExtruderNumber() != physicalExtruder) {
-                throw new RuntimeException(
-                        "RrPolygonList.radicalReOrder(): more than one physical extruder needed by the list!");
+            if (!material.equals(polygon(i).getAttributes().getMaterial())) {
+                throw new RuntimeException("RrPolygonList.radicalReOrder(): more than one material in the list!");
             }
         }
 
@@ -489,9 +488,9 @@ public class PolygonList {
      * Search a polygon list to find the nearest point on all the polygons
      * within it to the point p.
      * 
-     * Only polygons with the same physical extruder are compared.
+     * Only polygons with the same material are compared.
      */
-    public PolygonIndexedPoint ppSearch(final Point2D p, final GCodePrinter printer, final int physicalExtruder) {
+    public PolygonIndexedPoint ppSearch(final Point2D p, final String material) {
         if (size() <= 0) {
             return null;
         }
@@ -500,7 +499,7 @@ public class PolygonList {
         for (int i = 0; i < size(); i++) {
             final Polygon pgon = polygon(i);
             pgon.getAttributes();
-            if (physicalExtruder == printer.getExtruder(pgon.getAttributes().getMaterial()).getPhysicalExtruderNumber()) {
+            if (material.equals(pgon.getAttributes().getMaterial())) {
                 final int n = pgon.nearestVertex(p);
                 final double distance = Point2D.dSquared(p, pgon.point(n));
                 if (distance < minDistance) {

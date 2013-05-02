@@ -25,7 +25,7 @@ public class Producer {
     private final ProducerStlList stlList;
     private final ProductionProgressListener progressListener;
     private final GCodePrinter printer;
-    private final int totalPhysicalExtruders;
+    private final int totalExtruders;
     /*
      * Skip generating the shield if only one color is printed
      */
@@ -42,13 +42,14 @@ public class Producer {
         final BoundingBox buildVolume = ProducerStlList.calculateBoundingBox(allStls, purge);
         layerRules = new LayerRules(printer, buildVolume);
         stlList = new ProducerStlList(allStls, purge, layerRules);
-        totalPhysicalExtruders = countPhysicalExtruders();
+        final Preferences preferences = Preferences.getInstance();
+        totalExtruders = preferences.loadInt("NumberOfExtruders");
         if (displayPaths) {
             simulationPlot = new SimulationPlotter("RepRap building simulation");
         } else {
             simulationPlot = null;
         }
-        final PrintSettings printSettings = Preferences.getInstance().getPrintSettings();
+        final PrintSettings printSettings = preferences.getPrintSettings();
         omitShield = printSettings.printShield();
         brimLines = printSettings.getBrimLines();
         printSupport = printSettings.printSupport();
@@ -69,12 +70,12 @@ public class Producer {
                 layerRules.getMachineLayer(), layerRules.getMachineLayerMax(), false));
         progressListener.productionProgress(layerRules.getMachineLayer(), layerRules.getMachineLayerMax());
 
-        final PolygonList allPolygons[] = new PolygonList[totalPhysicalExtruders];
+        final PolygonList allPolygons[] = new PolygonList[totalExtruders];
 
         Point2D startNearHere = Point2D.mul(layerRules.getPrinter().getBedNorthEast(), 0.5);
         if (omitShield) {
-            for (int physicalExtruder = 0; physicalExtruder < allPolygons.length; physicalExtruder++) {
-                allPolygons[physicalExtruder] = new PolygonList();
+            for (int extruder = 0; extruder < allPolygons.length; extruder++) {
+                allPolygons[extruder] = new PolygonList();
             }
             for (int stl = 1; stl < stlList.size(); stl++) {
                 startNearHere = collectPolygonsForObject(stl, startNearHere, allPolygons);
@@ -84,8 +85,8 @@ public class Producer {
             }
         }
         if (!omitShield) {
-            for (int physicalExtruder = 0; physicalExtruder < allPolygons.length; physicalExtruder++) {
-                allPolygons[physicalExtruder] = new PolygonList();
+            for (int extruder = 0; extruder < allPolygons.length; extruder++) {
+                allPolygons[extruder] = new PolygonList();
             }
             startNearHere = new Point2D(0, 0);
             for (int stl = 0; stl < stlList.size(); stl++) {
@@ -109,11 +110,11 @@ public class Producer {
     }
 
     private Point2D collectPolygonsForObject(final int stl, Point2D startNearHere, final PolygonList[] allPolygons) {
-        final PolygonList tempBorderPolygons[] = new PolygonList[totalPhysicalExtruders];
-        final PolygonList tempFillPolygons[] = new PolygonList[totalPhysicalExtruders];
-        for (int physicalExtruder = 0; physicalExtruder < totalPhysicalExtruders; physicalExtruder++) {
-            tempBorderPolygons[physicalExtruder] = new PolygonList();
-            tempFillPolygons[physicalExtruder] = new PolygonList();
+        final PolygonList tempBorderPolygons[] = new PolygonList[totalExtruders];
+        final PolygonList tempFillPolygons[] = new PolygonList[totalExtruders];
+        for (int extruder = 0; extruder < totalExtruders; extruder++) {
+            tempBorderPolygons[extruder] = new PolygonList();
+            tempFillPolygons[extruder] = new PolygonList();
         }
         if (layerRules.getModelLayer() == 1 && brimLines > 0) {
             final PolygonList brim = stlList.computeBrim(stl, brimLines);
@@ -123,73 +124,52 @@ public class Producer {
         final PolygonList borders = stlList.computeOutlines(stl, fills);
         for (int pol = 0; pol < borders.size(); pol++) {
             final Polygon polygon = borders.polygon(pol);
-            tempBorderPolygons[getPhysicalExtruder(polygon)].add(polygon);
+            tempBorderPolygons[getExtruder(polygon)].add(polygon);
         }
         fills = fills.cullShorts(layerRules.getPrinter());
         for (int pol = 0; pol < fills.size(); pol++) {
             final Polygon p = fills.polygon(pol);
-            tempFillPolygons[getPhysicalExtruder(p)].add(p);
+            tempFillPolygons[getExtruder(p)].add(p);
         }
         if (printSupport) {
             final PolygonList support = stlList.computeSupport(stl);
             for (int pol = 0; pol < support.size(); pol++) {
                 final Polygon p = support.polygon(pol);
-                tempFillPolygons[getPhysicalExtruder(p)].add(p);
+                tempFillPolygons[getExtruder(p)].add(p);
             }
         }
-        for (int physicalExtruder = 0; physicalExtruder < totalPhysicalExtruders; physicalExtruder++) {
-            if (tempBorderPolygons[physicalExtruder].size() > 0) {
-                double linkUp = printer.getExtruder(
-                        tempBorderPolygons[physicalExtruder].polygon(0).getAttributes().getMaterial()).getExtrusionSize();
-                linkUp = (4 * linkUp * linkUp);
-                tempBorderPolygons[physicalExtruder].radicalReOrder(linkUp, printer);
-                tempBorderPolygons[physicalExtruder] = tempBorderPolygons[physicalExtruder].nearEnds(startNearHere);
-                if (tempBorderPolygons[physicalExtruder].size() > 0) {
-                    final Polygon last = tempBorderPolygons[physicalExtruder].polygon(tempBorderPolygons[physicalExtruder]
-                            .size() - 1);
-                    startNearHere = last.point(last.size() - 1);
-                }
-                allPolygons[physicalExtruder].add(tempBorderPolygons[physicalExtruder]);
-            }
-            if (tempFillPolygons[physicalExtruder].size() > 0) {
-                tempFillPolygons[physicalExtruder].polygon(0).getAttributes();
-                double linkUp = printer
-                        .getExtruder(tempFillPolygons[physicalExtruder].polygon(0).getAttributes().getMaterial())
+        for (int extruder = 0; extruder < totalExtruders; extruder++) {
+            if (tempBorderPolygons[extruder].size() > 0) {
+                double linkUp = printer.getExtruder(tempBorderPolygons[extruder].polygon(0).getAttributes().getMaterial())
                         .getExtrusionSize();
                 linkUp = (4 * linkUp * linkUp);
-                tempFillPolygons[physicalExtruder].radicalReOrder(linkUp, printer);
-                tempFillPolygons[physicalExtruder] = tempFillPolygons[physicalExtruder].nearEnds(startNearHere);
-                if (tempFillPolygons[physicalExtruder].size() > 0) {
-                    final Polygon last = tempFillPolygons[physicalExtruder]
-                            .polygon(tempFillPolygons[physicalExtruder].size() - 1);
+                tempBorderPolygons[extruder].radicalReOrder(linkUp);
+                tempBorderPolygons[extruder] = tempBorderPolygons[extruder].nearEnds(startNearHere);
+                if (tempBorderPolygons[extruder].size() > 0) {
+                    final Polygon last = tempBorderPolygons[extruder].polygon(tempBorderPolygons[extruder].size() - 1);
                     startNearHere = last.point(last.size() - 1);
                 }
-                allPolygons[physicalExtruder].add(tempFillPolygons[physicalExtruder]);
+                allPolygons[extruder].add(tempBorderPolygons[extruder]);
+            }
+            if (tempFillPolygons[extruder].size() > 0) {
+                tempFillPolygons[extruder].polygon(0).getAttributes();
+                double linkUp = printer.getExtruder(tempFillPolygons[extruder].polygon(0).getAttributes().getMaterial())
+                        .getExtrusionSize();
+                linkUp = (4 * linkUp * linkUp);
+                tempFillPolygons[extruder].radicalReOrder(linkUp);
+                tempFillPolygons[extruder] = tempFillPolygons[extruder].nearEnds(startNearHere);
+                if (tempFillPolygons[extruder].size() > 0) {
+                    final Polygon last = tempFillPolygons[extruder].polygon(tempFillPolygons[extruder].size() - 1);
+                    startNearHere = last.point(last.size() - 1);
+                }
+                allPolygons[extruder].add(tempFillPolygons[extruder]);
             }
         }
         return startNearHere;
     }
 
-    private int countPhysicalExtruders() {
-        int result = 0;
-        int lastExtruder = -1;
-        for (int extruder = 0; extruder < printer.getExtruders().length; extruder++) {
-            final int thisExtruder = printer.getExtruders()[extruder].getPhysicalExtruderNumber();
-            if (thisExtruder > lastExtruder) {
-                result++;
-                if (thisExtruder - lastExtruder != 1) {
-                    LOGGER.fatal("Producer.produceAdditiveTopDown(): Physical extruders out of sequence: " + lastExtruder
-                            + " then " + thisExtruder);
-                    throw new RuntimeException("Extruder addresses must be monotonically increasing starting at 0.");
-                }
-                lastExtruder = thisExtruder;
-            }
-        }
-        return result;
-    }
-
-    private int getPhysicalExtruder(final Polygon polygon) {
-        return printer.getExtruder(polygon.getAttributes().getMaterial()).getPhysicalExtruderNumber();
+    private int getExtruder(final Polygon polygon) {
+        return printer.getExtruder(polygon.getAttributes().getMaterial()).getID();
     }
 
     public void dispose() {

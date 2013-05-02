@@ -89,7 +89,6 @@ public class GCodeExtruder {
     private boolean middleStart;
     private boolean insideOut = false;
     private final GCodePrinter printer;
-    private int physicalExtruderId;
     private double retractionDistance;
     private double extraExtrusionForLayer;
     private double extraExtrusionForPolygon;
@@ -99,7 +98,7 @@ public class GCodeExtruder {
         myExtruderID = extruderId;
         printer = p;
         loadPreferences(Preferences.getInstance());
-        extruderState = new ExtruderState(physicalExtruderId);
+        extruderState = new ExtruderState();
         // when we are first called (top down calculation means at our top
         // layer) the layer below will have reversed us at its end on the way up
         // in the actual build.
@@ -126,7 +125,6 @@ public class GCodeExtruder {
 
     private void loadPreferences(final Preferences preferences) {
         final String prefName = "Extruder" + myExtruderID + "_";
-        physicalExtruderId = preferences.loadInt(prefName + "Address");
         extrusionSize = preferences.loadDouble(prefName + "ExtrusionSize(mm)");
         lowerFineLayers = 2;
         fastXYFeedrate = preferences.loadDouble(prefName + "FastXYFeedrate(mm/minute)");
@@ -310,14 +308,6 @@ public class GCodeExtruder {
      */
     public int getID() {
         return myExtruderID;
-    }
-
-    /**
-     * Several logical extruders can share one physical extruder This number is
-     * unique to each physical extruder
-     */
-    public int getPhysicalExtruderNumber() {
-        return extruderState.physicalExtruder();
     }
 
     /**

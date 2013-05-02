@@ -14,18 +14,12 @@ public class ExtruderState {
     private double retractionAmount;
     private boolean isReversed;
     private boolean isExtruding;
-    private final int physicalExtruderNumber;
 
-    ExtruderState(final int physEx) {
+    ExtruderState() {
         extrudedLength = 1;
         retractionAmount = 0;
         isReversed = false;
         isExtruding = false;
-        physicalExtruderNumber = physEx;
-    }
-
-    int physicalExtruder() {
-        return physicalExtruderNumber;
     }
 
     public double length() {

@@ -718,7 +718,8 @@ class ProducerStlList {
         for (int i = 0; i < list.size(); i++) {
             Polygon outline = list.polygon(i);
             final GCodePrinter printer = lc.getPrinter();
-            final GCodeExtruder ex = printer.getExtruder(outline.getAttributes().getMaterial());
+            final String material = outline.getAttributes().getMaterial();
+            final GCodeExtruder ex = printer.getExtruder(material);
             if (ex.getMiddleStart()) {
                 Line l = lc.getHatchDirection(false, ex.getExtrusionSize()).pLine();
                 if (i % 2 != 0 ^ lc.getMachineLayer() % 4 > 1) {
@@ -727,7 +728,7 @@ class ProducerStlList {
                 outline = outline.newStart(outline.maximalVertex(l));
 
                 final Point2D start = outline.point(0);
-                final PolygonIndexedPoint pp = hatching.ppSearch(start, printer, ex.getPhysicalExtruderNumber());
+                final PolygonIndexedPoint pp = hatching.ppSearch(start, material);
                 boolean failed = true;
                 if (pp != null) {
                     pp.findLongEnough(10, 30);

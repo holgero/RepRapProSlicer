@@ -37,7 +37,7 @@ public class GCodePrinter implements PreferenceChangeListener {
     /**
      * Have we actually used this extruder?
      */
-    private boolean physicalExtruderUsed[];
+    private boolean extruderUsed[];
     private JCheckBoxMenuItem layerPauseCheckbox = null;
     /**
      * Current X position of the extruder
@@ -102,29 +102,12 @@ public class GCodePrinter implements PreferenceChangeListener {
             throw new IllegalStateException("A Reprap printer must contain at least one extruder.");
         }
         extruders = new GCodeExtruder[extruderCount];
-
-        // TODO: construct first all logical extruders (without extrusion state), then construct extrusion state for each physical extruder and
-        // then make the assignment to logical extruders.
-        int physExCount = -1;
         for (int i = 0; i < extruders.length; i++) {
             extruders[i] = new GCodeExtruder(gcode, i, this);
-
-            // Make sure all instances of each physical extruder share the same
-            // ExtrudedLength instance
-            final int pe = extruders[i].getPhysicalExtruderNumber();
-            if (pe > physExCount) {
-                physExCount = pe;
-            }
-            for (int j = 0; j < i; j++) {
-                if (extruders[j].getPhysicalExtruderNumber() == pe) {
-                    extruders[i].setExtrudeState(extruders[j].getExtruderState());
-                    break;
-                }
-            }
         }
-        physicalExtruderUsed = new boolean[physExCount + 1];
-        for (int i = 0; i <= physExCount; i++) {
-            physicalExtruderUsed[i] = false;
+        extruderUsed = new boolean[extruderCount];
+        for (int i = 0; i < extruderUsed.length; i++) {
+            extruderUsed[i] = false;
         }
         currentExtruder = 0;
     }
@@ -379,8 +362,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         boolean zRight = false;
 
         for (int e = extruders.length - 1; e >= 0; e--) { // Count down so we end with the one most likely to start the rest
-            final int pe = extruders[e].getPhysicalExtruderNumber();
-            if (physicalExtruderUsed[pe]) {
+            if (extruderUsed[e]) {
                 if (!zRight) {
                     singleMove(currentX, currentY, preferences.getPrintSettings().getLayerHeight(), getFastFeedrateZ(), true);
                     currentZ = machineZ;
@@ -398,7 +380,7 @@ public class GCodePrinter implements PreferenceChangeListener {
                 currentY = rectangle.y().low();
                 retract();
                 rectangle = rectangle.offset(2 * extruder.getExtrusionSize());
-                physicalExtruderUsed[pe] = false; // Stop us doing it again
+                extruderUsed[e] = false; // Stop us doing it again
             }
         }
     }
@@ -499,10 +481,10 @@ public class GCodePrinter implements PreferenceChangeListener {
 
     private void selectExtruder(final int materialIndex, final boolean really, final boolean update) {
         final GCodeExtruder oldExtruder = getExtruder();
-        final int newPhysicalExtruder = extruders[materialIndex].getPhysicalExtruderNumber();
+        final GCodeExtruder newExtruder = extruders[materialIndex];
         final boolean shield = preferences.getPrintSettings().printShield();
 
-        if (newPhysicalExtruder != oldExtruder.getPhysicalExtruderNumber() || forceSelection) {
+        if (newExtruder != oldExtruder || forceSelection) {
             if (really) {
                 oldExtruder.stopExtruding();
 
@@ -514,46 +496,46 @@ public class GCodePrinter implements PreferenceChangeListener {
                 }
 
                 if (update) {
-                    physicalExtruderUsed[newPhysicalExtruder] = true;
+                    extruderUsed[materialIndex] = true;
                 }
                 final GCodeExtruder extruder = getExtruder();
                 extruder.stopExtruding(); // Make sure we are off
 
                 if (shield) {
-                    final Point2D purgePoint = purge.getPurgeEnd(true, 0);
+                    final Point2D purgePoint = purge.getPurgeEnd(currentExtruder, true, 0);
                     singleMove(purgePoint.x(), purgePoint.y(), currentZ, getFastXYFeedrate(), true);
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();
                 }
 
                 // Now tell the GCodes to select the new extruder and stabilise all temperatures
-                gcode.writeCommand("T" + newPhysicalExtruder, "select new extruder");
+                gcode.writeCommand("T" + newExtruder.getID(), "select new extruder");
 
                 if (shield) {
                     // Plot the purge pattern with the new extruder
                     startExtruder(true);
 
-                    Point2D purgePoint = purge.getPurgeEnd(false, 0);
+                    Point2D purgePoint = purge.getPurgeEnd(currentExtruder, false, 0);
                     singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();
 
-                    purgePoint = purge.getPurgeEnd(false, 1);
+                    purgePoint = purge.getPurgeEnd(currentExtruder, false, 1);
                     singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();
 
-                    purgePoint = purge.getPurgeEnd(true, 1);
+                    purgePoint = purge.getPurgeEnd(currentExtruder, true, 1);
                     singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();
 
-                    purgePoint = purge.getPurgeEnd(true, 2);
+                    purgePoint = purge.getPurgeEnd(currentExtruder, true, 2);
                     singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();
 
-                    purgePoint = purge.getPurgeEnd(false, 2);
+                    purgePoint = purge.getPurgeEnd(currentExtruder, false, 2);
                     singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();
@@ -604,7 +586,7 @@ public class GCodePrinter implements PreferenceChangeListener {
 
     public GCodeExtruder getExtruder(final String name) {
         for (final GCodeExtruder extruder2 : extruders) {
-            if (name.equals(extruder2.toString())) {
+            if (name.equals(extruder2.getMaterial())) {
                 return extruder2;
             }
         }

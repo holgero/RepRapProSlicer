@@ -45,13 +45,12 @@ public final class Purge {
         purgeXOriented = Math.abs(maximumYvalue / 2 - purgePoint.y()) > Math.abs(maximumXvalue / 2 - purgePoint.x());
     }
 
-    public Point2D getPurgeEnd(final boolean low, final int pass) {
+    public Point2D getPurgeEnd(final int extruderNumber, final boolean low, final int pass) {
         double a = purgeL * 0.5;
         if (low) {
             a = -a;
         }
-        final double b = 4 * printer.getExtruder().getExtrusionSize()
-                - (printer.getExtruder().getPhysicalExtruderNumber() * 3 + pass) * printer.getExtruder().getExtrusionSize();
+        final double b = printer.getExtruder().getExtrusionSize() * (4 - (extruderNumber * 3 + pass));
         if (purgeXOriented) {
             return Point2D.add(purgePoint, new Point2D(a, b));
         } else {
