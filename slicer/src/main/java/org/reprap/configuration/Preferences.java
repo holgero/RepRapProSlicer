@@ -61,8 +61,8 @@ public class Preferences {
             "Extruder\\d_ExtrusionBroadWidth\\(mm\\)", "Extruder\\d_InsideOut", "Extruder\\d_MiddleStart",
             "Extruder\\d_Purge\\(ms\\)", "Extruder\\d_ArcCompensationFactor\\(0..\\)", "Extruder\\d_ArcShortSides\\(0..\\)",
             "Extruder\\d_FastEFeedrate\\(mm/minute\\)", "Extruder\\d_FastXYFeedrate\\(mm/minute\\)",
-            "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling", "StartRectangle",
-            "BrimLines", "Shield", "DumpX\\(mm\\)", "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug",
+            "Extruder\\d_Lift\\(mm\\)", "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling",
+            "StartRectangle", "BrimLines", "Shield", "DumpX\\(mm\\)", "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug",
             "WorkingX\\(mm\\)", "WorkingY\\(mm\\)", "WorkingZ\\(mm\\)", "ExtrusionRelative", "PathOptimise",
             "MaximumFeedrateX\\(mm/minute\\)", "MaximumFeedrateY\\(mm/minute\\)", "MaximumFeedrateZ\\(mm/minute\\)",
             "MaxXYAcceleration\\(mm/mininute/minute\\)", "MaxZAcceleration\\(mm/mininute/minute\\)", "NumberOfExtruders",
@@ -201,6 +201,7 @@ public class Preferences {
         settings.setEarlyRetraction(getIntegerProperty(properties, prefix + "ExtrusionOverRun(mm)"));
         settings.setAirExtrusionFeedRate(getDoubleProperty(properties, prefix + "FastEFeedrate(mm/minute)"));
         settings.setPrintExtrusionRate(getDoubleProperty(properties, prefix + "FastXYFeedrate(mm/minute)"));
+        settings.setLift(getDoubleProperty(properties, prefix + "Lift(mm)"));
         return settings;
     }
 

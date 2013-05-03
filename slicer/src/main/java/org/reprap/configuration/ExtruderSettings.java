@@ -27,6 +27,7 @@ public class ExtruderSettings {
     private double extraLengthPerLayer; // mm 0.104
     private double extraLengthPerPolygon; // mm 0.104
     private int earlyRetraction; // # -1
+    private double lift; // mm 0
 
     public double getNozzleDiameter() {
         return nozzleDiameter;
@@ -90,5 +91,13 @@ public class ExtruderSettings {
 
     void setPrintExtrusionRate(final double printExtrusionRate) {
         this.printExtrusionRate = printExtrusionRate;
+    }
+
+    public double getLift() {
+        return lift;
+    }
+
+    void setLift(final double lift) {
+        this.lift = lift;
     }
 }

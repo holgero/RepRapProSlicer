@@ -95,10 +95,10 @@ public class GCodeExtruder {
         extrusionOverRun = extruderSettings.getEarlyRetraction();
         fastEFeedrate = extruderSettings.getAirExtrusionFeedRate();
         fastXYFeedrate = extruderSettings.getPrintExtrusionRate();
+        lift = extruderSettings.getLift();
         final String prefName = "Extruder" + myExtruderID + "_";
         material = preferences.loadString(prefName + "MaterialType(name)");
         infillOverlap = preferences.loadDouble(prefName + "InfillOverlap(mm)");
-        lift = preferences.loadDouble(prefName + "Lift(mm)");
         final Color3f col = new Color3f((float) preferences.loadDouble(prefName + "ColourR(0..1)"),
                 (float) preferences.loadDouble(prefName + "ColourG(0..1)"), (float) preferences.loadDouble(prefName
                         + "ColourB(0..1)"));
