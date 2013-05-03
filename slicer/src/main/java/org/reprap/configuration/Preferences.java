@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.vecmath.Color3f;
@@ -169,7 +168,6 @@ public class Preferences {
         printerSettings = createPrinterSettings(mainPreferences);
         printerSettings.setExtruderSettings(createAllExtruderSettings(remaining, mainPreferences,
                 printSettings.getLayerHeight()));
-        fixupExtruderDelayProperties(mainPreferences, printSettings.getLayerHeight());
         removeUnusedProperties(mainPreferences);
     }
 
@@ -191,6 +189,10 @@ public class Preferences {
         settings.setNozzleDiameter(getDoubleProperty(properties, prefix + "ExtrusionSize(mm)"));
         settings.setRetraction(toFilamentLength(properties, getDoubleProperty(properties, prefix + "Reverse(ms)"), number,
                 layerHeight));
+        settings.setExtraLengthPerLayer(toFilamentLength(properties,
+                getDoubleProperty(properties, prefix + "ExtrusionDelayForLayer(ms)"), number, layerHeight));
+        settings.setExtraLengthPerPolygon(toFilamentLength(properties,
+                getDoubleProperty(properties, prefix + "ExtrusionDelayForPolygon(ms)"), number, layerHeight));
         return settings;
     }
 
@@ -333,31 +335,6 @@ public class Preferences {
             }
         }
         return from;
-    }
-
-    private static void fixupExtruderDelayProperties(final Properties properties, final double layerHeight) {
-        final Map<String, String> newValues = new HashMap<>();
-        calculateDistance(properties, newValues, "ExtrusionDelayForLayer\\(ms\\)", "ExtraExtrusionDistanceForLayer(mm)",
-                layerHeight);
-        calculateDistance(properties, newValues, "ExtrusionDelayForPolygon\\(ms\\)", "ExtraExtrusionDistanceForPolygon(mm)",
-                layerHeight);
-        for (final String key : newValues.keySet()) {
-            properties.setProperty(key, newValues.get(key));
-        }
-    }
-
-    private static void calculateDistance(final Properties properties, final Map<String, String> newValues,
-            final String delayName, final String distanceName, final double layerHeight) {
-        final Pattern pattern = Pattern.compile("Extruder(\\d)_" + delayName);
-        for (final Object name : properties.keySet()) {
-            final String key = (String) name;
-            final Matcher matcher = pattern.matcher(key);
-            if (matcher.matches()) {
-                final int extruderNo = Integer.parseInt(matcher.group(1));
-                newValues.put("Extruder" + extruderNo + "_" + distanceName, Double.toString(toFilamentLength(properties,
-                        getDoubleProperty(properties, key), extruderNo, layerHeight)));
-            }
-        }
     }
 
     private static double toFilamentLength(final Properties properties, final double delay, final int extruder,
