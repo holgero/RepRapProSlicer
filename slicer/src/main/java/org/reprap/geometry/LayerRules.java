@@ -6,9 +6,14 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 
+import javax.media.j3d.Appearance;
+import javax.media.j3d.Material;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.configuration.Constants;
 import org.reprap.configuration.FillPattern;
+import org.reprap.configuration.MaterialSettings;
 import org.reprap.configuration.Preferences;
 import org.reprap.configuration.PrintSettings;
 import org.reprap.gcode.GCodeExtruder;
@@ -355,7 +360,10 @@ public class LayerRules {
     private void fillFoundationRectangle(final SimulationPlotter simulationPlot) throws IOException {
         final PolygonList shield = new PolygonList();
         final GCodeExtruder e = printer.getExtruder();
-        final Attributes fa = new Attributes(e.getMaterial(), null, e.getAppearance());
+        final MaterialSettings material = e.getMaterial();
+        final Appearance appearance = new Appearance();
+        appearance.setMaterial(new Material(material.getColor(), Constants.BLACK, material.getColor(), Constants.BLACK, 101f));
+        final Attributes fa = new Attributes(material.getName(), null, appearance);
         final CSG2D rect = CSG2D.RrCSGFromBox(bBox);
         final BooleanGrid bg = new BooleanGrid(rect, bBox.scale(1.1), fa);
         final PolygonList h[] = { shield,

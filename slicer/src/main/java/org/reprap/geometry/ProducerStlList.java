@@ -26,9 +26,11 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
+import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.GeometryArray;
 import javax.media.j3d.Group;
+import javax.media.j3d.Material;
 import javax.media.j3d.SceneGraphObject;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Transform3D;
@@ -39,6 +41,7 @@ import javax.vecmath.Vector3d;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Constants;
+import org.reprap.configuration.MaterialSettings;
 import org.reprap.configuration.Preferences;
 import org.reprap.configuration.PrintSettings;
 import org.reprap.gcode.GCodeExtruder;
@@ -355,7 +358,11 @@ class ProducerStlList {
         // for all the materials in it.
         for (int i = 0; i < support.size(); i++) {
             final BooleanGrid grid = support.get(i);
-            grid.forceAttribute(new Attributes(supportExtruder.getMaterial(), null, supportExtruder.getAppearance()));
+            final MaterialSettings material = supportExtruder.getMaterial();
+            final Appearance appearance = new Appearance();
+            appearance.setMaterial(new Material(material.getColor(), Constants.BLACK, material.getColor(), Constants.BLACK,
+                    101f));
+            grid.forceAttribute(new Attributes(material.getName(), null, appearance));
         }
 
         return hatch(support, layerRules, false, true);

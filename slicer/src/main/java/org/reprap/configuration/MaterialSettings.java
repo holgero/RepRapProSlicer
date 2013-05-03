@@ -18,8 +18,12 @@
  */
 package org.reprap.configuration;
 
+import javax.vecmath.Color3f;
+
 public class MaterialSettings {
     private final String name;
+    private double diameter; // mm 1.75
+    private Color3f color; // rgb value
 
     public MaterialSettings(final String name) {
         this.name = name;
@@ -27,5 +31,21 @@ public class MaterialSettings {
 
     public String getName() {
         return name;
+    }
+
+    public double getDiameter() {
+        return diameter;
+    }
+
+    void setDiameter(final double diameter) {
+        this.diameter = diameter;
+    }
+
+    public Color3f getColor() {
+        return color;
+    }
+
+    void setColor(final Color3f color) {
+        this.color = color;
     }
 }

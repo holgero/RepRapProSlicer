@@ -511,7 +511,7 @@ public class GCodePrinter {
 
     public void selectExtruder(final Attributes att) {
         for (int i = 0; i < extruders.length; i++) {
-            if (att.getMaterial().equals(extruders[i].getMaterial())) {
+            if (att.getMaterial().equals(extruders[i].getMaterial().getName())) {
                 selectExtruder(i, true, true);
                 return;
             }
@@ -533,7 +533,7 @@ public class GCodePrinter {
 
     public GCodeExtruder getExtruder(final String name) {
         for (final GCodeExtruder extruder2 : extruders) {
-            if (name.equals(extruder2.getMaterial())) {
+            if (name.equals(extruder2.getMaterial().getName())) {
                 return extruder2;
             }
         }

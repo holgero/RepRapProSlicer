@@ -2,12 +2,8 @@ package org.reprap.gcode;
 
 import static org.reprap.configuration.MathRoutines.circleAreaForDiameter;
 
-import javax.media.j3d.Appearance;
-import javax.media.j3d.Material;
-import javax.vecmath.Color3f;
-
-import org.reprap.configuration.Constants;
 import org.reprap.configuration.ExtruderSettings;
+import org.reprap.configuration.MaterialSettings;
 import org.reprap.configuration.Preferences;
 
 public class GCodeExtruder {
@@ -29,10 +25,6 @@ public class GCodeExtruder {
      */
     private double fastEFeedrate;
     /**
-     * The name of this extruder's material
-     */
-    private String material;
-    /**
      * Number of mm to overlap the hatching infill with the outline. 0 gives
      * none; -ve will leave a gap between the two
      */
@@ -46,10 +38,6 @@ public class GCodeExtruder {
      */
     private final int myExtruderID;
     /**
-     * The colour of the material to use in the simulation windows
-     */
-    private Appearance materialColour;
-    /**
      * How high to move above the surface for non-extruding movements
      */
     private double lift;
@@ -62,6 +50,7 @@ public class GCodeExtruder {
     private double retractionDistance;
     private double extraExtrusionForLayer;
     private double extraExtrusionForPolygon;
+    private MaterialSettings materialSettings;
 
     GCodeExtruder(final GCodeWriter writer, final int extruderId, final GCodePrinter p) {
         gcode = writer;
@@ -94,18 +83,12 @@ public class GCodeExtruder {
         extrudeRatio = extruderSettings.getExtrudeRatio();
         extrusionOverRun = extruderSettings.getEarlyRetraction();
         fastEFeedrate = extruderSettings.getAirExtrusionFeedRate();
-        fastXYFeedrate = extruderSettings.getPrintExtrusionRate();
+        fastXYFeedrate = Math.min(printer.getFastXYFeedrate(), extruderSettings.getPrintExtrusionRate());
         lift = extruderSettings.getLift();
-        material = extruderSettings.getMaterial().getName();
+        materialSettings = extruderSettings.getMaterial();
+        feedDiameter = materialSettings.getDiameter();
         final String prefName = "Extruder" + myExtruderID + "_";
         infillOverlap = preferences.loadDouble(prefName + "InfillOverlap(mm)");
-        final Color3f col = new Color3f((float) preferences.loadDouble(prefName + "ColourR(0..1)"),
-                (float) preferences.loadDouble(prefName + "ColourG(0..1)"), (float) preferences.loadDouble(prefName
-                        + "ColourB(0..1)"));
-        materialColour = new Appearance();
-        materialColour.setMaterial(new Material(col, Constants.BLACK, col, Constants.BLACK, 101f));
-        feedDiameter = preferences.loadDouble(prefName + "FeedDiameter(mm)");
-        fastXYFeedrate = Math.min(printer.getFastXYFeedrate(), fastXYFeedrate);
     }
 
     void startExtrusion(final boolean reverse) {
@@ -132,10 +115,6 @@ public class GCodeExtruder {
         return extrusionSize;
     }
 
-    public Appearance getAppearance() {
-        return materialColour;
-    }
-
     @Override
     public String toString() {
         return "Extruder " + myExtruderID;
@@ -156,8 +135,8 @@ public class GCodeExtruder {
     /**
      * What stuff are we working with?
      */
-    public String getMaterial() {
-        return material;
+    public MaterialSettings getMaterial() {
+        return materialSettings;
     }
 
     /**

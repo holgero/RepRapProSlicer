@@ -61,11 +61,12 @@ public class Preferences {
             "Extruder\\d_ExtrusionBroadWidth\\(mm\\)", "Extruder\\d_InsideOut", "Extruder\\d_MiddleStart",
             "Extruder\\d_Purge\\(ms\\)", "Extruder\\d_ArcCompensationFactor\\(0..\\)", "Extruder\\d_ArcShortSides\\(0..\\)",
             "Extruder\\d_FastEFeedrate\\(mm/minute\\)", "Extruder\\d_FastXYFeedrate\\(mm/minute\\)",
-            "Extruder\\d_Lift\\(mm\\)", "Extruder\\d_MaterialType\\(name\\)", "SlowXYFeedrate\\(mm/minute\\)",
-            "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "DumpX\\(mm\\)",
-            "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug", "WorkingX\\(mm\\)", "WorkingY\\(mm\\)",
-            "WorkingZ\\(mm\\)", "ExtrusionRelative", "PathOptimise", "MaximumFeedrateX\\(mm/minute\\)",
-            "MaximumFeedrateY\\(mm/minute\\)", "MaximumFeedrateZ\\(mm/minute\\)", "MaxXYAcceleration\\(mm/mininute/minute\\)",
+            "Extruder\\d_Lift\\(mm\\)", "Extruder\\d_MaterialType\\(name\\)", "Extruder\\d_FeedDiameter\\(mm\\)",
+            "Extruder\\d_Colour[RGB]\\(0\\.\\.1\\)", "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)",
+            "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "DumpX\\(mm\\)", "DumpY\\(mm\\)", "Support",
+            "FoundationLayers", "Debug", "WorkingX\\(mm\\)", "WorkingY\\(mm\\)", "WorkingZ\\(mm\\)", "ExtrusionRelative",
+            "PathOptimise", "MaximumFeedrateX\\(mm/minute\\)", "MaximumFeedrateY\\(mm/minute\\)",
+            "MaximumFeedrateZ\\(mm/minute\\)", "MaxXYAcceleration\\(mm/mininute/minute\\)",
             "MaxZAcceleration\\(mm/mininute/minute\\)", "NumberOfExtruders", "BedTemperature\\(C\\)");
 
     private static String propsFile = "reprap.properties";
@@ -202,8 +203,20 @@ public class Preferences {
         settings.setAirExtrusionFeedRate(getDoubleProperty(properties, prefix + "FastEFeedrate(mm/minute)"));
         settings.setPrintExtrusionRate(getDoubleProperty(properties, prefix + "FastXYFeedrate(mm/minute)"));
         settings.setLift(getDoubleProperty(properties, prefix + "Lift(mm)"));
-        settings.setMaterial(new MaterialSettings(properties.getProperty(prefix + "MaterialType(name)")));
+        settings.setMaterial(createMaterialSettings(properties, prefix));
         return settings;
+    }
+
+    private static MaterialSettings createMaterialSettings(final Properties properties, final String prefix) {
+        final MaterialSettings material = new MaterialSettings(properties.getProperty(prefix + "MaterialType(name)"));
+        material.setDiameter(getDoubleProperty(properties, prefix + "FeedDiameter(mm)"));
+        material.setColor(new Color3f(loadColorComponent(properties, prefix, "R"), loadColorComponent(properties, prefix, "G"),
+                loadColorComponent(properties, prefix, "B")));
+        return material;
+    }
+
+    private static float loadColorComponent(final Properties properties, final String prefix, final String component) {
+        return (float) getDoubleProperty(properties, prefix + "Colour" + component + "(0..1)");
     }
 
     private static PrinterSettings createPrinterSettings(final Properties properties) {
@@ -497,15 +510,15 @@ public class Preferences {
         load(new File(getActiveMachineDir(), fileName));
     }
 
-    private int getNumberFromMaterial(final String material) {
+    private ExtruderSettings getExtruderForMaterial(final String material) {
         if (material.equalsIgnoreCase("null")) {
-            return -1;
+            return null;
         }
 
         final String[] names = getAllMaterials();
         for (int i = 0; i < names.length; i++) {
             if (names[i].equals(material)) {
-                return i;
+                return printerSettings.getExtruderSettings()[i];
             }
         }
         throw new RuntimeException("getNumberFromMaterial - can't find " + material);
@@ -525,12 +538,7 @@ public class Preferences {
     }
 
     public Color3f loadMaterialColor(final String material) {
-        final String prefix = "Extruder" + getNumberFromMaterial(material) + "_";
-        return new Color3f(loadColorComponent(prefix, "R"), loadColorComponent(prefix, "G"), loadColorComponent(prefix, "B"));
-    }
-
-    private float loadColorComponent(final String prefix, final String component) {
-        return (float) loadDouble(prefix + "Colour" + component + "(0..1)");
+        return getExtruderForMaterial(material).getMaterial().getColor();
     }
 
     public static Preferences getInstance() {
