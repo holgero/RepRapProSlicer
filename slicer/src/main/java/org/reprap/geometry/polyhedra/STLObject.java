@@ -811,7 +811,7 @@ public class STLObject {
         }
 
         final Transform3D zAngle = new Transform3D();
-        zAngle.set(new AxisAngle4d(0, 0, 1, angle * Math.PI / 180.0));
+        zAngle.set(new AxisAngle4d(0, 0, 1, Math.toRadians(angle)));
 
         rClick(zAngle);
     }

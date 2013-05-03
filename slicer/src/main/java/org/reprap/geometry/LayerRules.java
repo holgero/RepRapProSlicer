@@ -273,7 +273,7 @@ public class LayerRules {
         } else {
             fillPattern = preferences.getPrintSettings().getFillPattern();
         }
-        final double angle = toRadian(fillPattern.angle(mylayer));
+        final double angle = Math.toRadians(fillPattern.angle(mylayer));
         HalfPlane result = new HalfPlane(new Point2D(0.0, 0.0), new Point2D(Math.sin(angle), Math.cos(angle)));
 
         if (((mylayer / 2) % 2 == 0) && !support) {
@@ -281,10 +281,6 @@ public class LayerRules {
         }
 
         return result;
-    }
-
-    private double toRadian(final double angle) {
-        return angle * Math.PI / 180;
     }
 
     /**
