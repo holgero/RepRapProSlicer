@@ -1,5 +1,7 @@
 package org.reprap.configuration;
 
+import static org.reprap.configuration.MathRoutines.circleAreaForDiameter;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -343,7 +345,7 @@ public class Preferences {
         final double extrusionSpeed = getDoubleProperty(properties, prefix + "ExtrusionSpeed(mm/minute)");
         final double feedDiameter = getDoubleProperty(properties, prefix + "FeedDiameter(mm)");
         final double extrusionSize = getDoubleProperty(properties, prefix + "ExtrusionSize(mm)");
-        return extrusionSpeed * delay / 60000 * layerHeight * extrusionSize / (feedDiameter * feedDiameter * Math.PI / 4);
+        return extrusionSpeed * delay / 60000 * layerHeight * extrusionSize / circleAreaForDiameter(feedDiameter);
     }
 
     private static void removeUnusedProperties(final Properties mainPreferences) {

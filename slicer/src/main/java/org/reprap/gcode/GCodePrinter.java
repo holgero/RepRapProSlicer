@@ -1,5 +1,7 @@
 package org.reprap.gcode;
 
+import static org.reprap.configuration.MathRoutines.circleAreaForDiameter;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -393,7 +395,7 @@ public class GCodePrinter {
         final double scaledFeedRate;
         if (extruder.getFeedDiameter() > 0) {
             scaledFeedRate = feedRate * getPrintSettings().getLayerHeight() * extruder.getExtrusionSize()
-                    / (extruder.getFeedDiameter() * extruder.getFeedDiameter() * Math.PI / 4);
+                    / circleAreaForDiameter(extruder.getFeedDiameter());
         } else {
             scaledFeedRate = feedRate;
         }

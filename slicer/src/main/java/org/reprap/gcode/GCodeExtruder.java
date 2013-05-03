@@ -1,5 +1,7 @@
 package org.reprap.gcode;
 
+import static org.reprap.configuration.MathRoutines.circleAreaForDiameter;
+
 import javax.media.j3d.Appearance;
 import javax.media.j3d.Material;
 import javax.vecmath.Color3f;
@@ -199,7 +201,7 @@ public class GCodeExtruder {
         }
 
         final double layerHeight = Preferences.getInstance().getPrintSettings().getLayerHeight();
-        return extrudeRatio * distance * layerHeight * extrusionSize / (feedDiameter * feedDiameter * Math.PI / 4);
+        return extrudeRatio * distance * layerHeight * extrusionSize / circleAreaForDiameter(feedDiameter);
     }
 
     /**
