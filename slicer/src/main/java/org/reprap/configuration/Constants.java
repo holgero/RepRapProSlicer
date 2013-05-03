@@ -24,4 +24,5 @@ public final class Constants {
     public static final double TINY_VALUE = 1.0e-12;
     public static final double INCH_TO_MM = 25.4;
     public static final Color3f BLACK = new Color3f(0, 0, 0);
+    public static final double GRID_RESOLUTION = 0.01;
 }

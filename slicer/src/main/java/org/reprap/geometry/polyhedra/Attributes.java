@@ -7,6 +7,7 @@ import javax.vecmath.Color3f;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Constants;
+import org.reprap.configuration.MaterialSettings;
 import org.reprap.configuration.Preferences;
 
 /**
@@ -80,27 +81,24 @@ public class Attributes {
      */
     public void setMaterial(final String newMaterial) {
         material = existingMaterial(newMaterial);
-        app = getAppearanceFromMaterial(material);
+        final MaterialSettings materialSettings = Preferences.getInstance().getMaterialSettings(material);
+        final Color3f color = materialSettings.getColor();
+        final Appearance appearance = new Appearance();
+        appearance.setMaterial(new Material(color, Constants.BLACK, color, Constants.BLACK, 101f));
+        app = appearance;
         if (parent != null) {
             parent.restoreAppearance();
         }
     }
 
     private static String existingMaterial(final String newMaterial) {
-        final String[] materials = Preferences.getInstance().getAllMaterials();
-        for (final String existingMaterial : materials) {
-            if (existingMaterial.equals(newMaterial)) {
-                return newMaterial;
-            }
+        final MaterialSettings materialSettings = Preferences.getInstance().getMaterialSettings(newMaterial);
+        if (materialSettings != null) {
+            return newMaterial;
         }
-        LOGGER.warn("Requested material " + newMaterial + " not found, substituting with " + materials[0] + ".");
-        return materials[0];
-    }
-
-    private static Appearance getAppearanceFromMaterial(final String material) {
-        final Color3f col = Preferences.getInstance().loadMaterialColor(material);
-        final Appearance a = new Appearance();
-        a.setMaterial(new Material(col, Constants.BLACK, col, Constants.BLACK, 101f));
-        return a;
+        final String substitute = Preferences.getInstance().getPrinterSettings().getExtruderSettings()[0].getMaterial()
+                .getName();
+        LOGGER.warn("Requested material " + newMaterial + " not found, substituting with " + substitute + ".");
+        return substitute;
     }
 }

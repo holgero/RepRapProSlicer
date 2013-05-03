@@ -9,17 +9,14 @@ import java.io.InputStream;
 import java.net.JarURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.regex.Pattern;
 
 import javax.vecmath.Color3f;
 
@@ -41,34 +38,6 @@ public class Preferences {
     private static final String PROLOGUE_FILE = "prologue.gcode";
     private static final String EPILOGUE_FILE = "epilogue.gcode";
     private static final String BASE_FILE = "base.stl";
-    private static final int GRID_SIZE = 100;
-    private static final double GRID_RESOLUTION = 1.0 / GRID_SIZE;
-    private static final double MACHINE_RESOLUTION = 0.05; // RepRap step size in mm
-    private static final List<Pattern> OBSOLETE_PROPERTIES_PATTERNS = compilePatterns("RepRapAccelerations", "FiveD",
-            "Extruder\\d_ExtrusionHeight\\(mm\\)", "Extruder\\d_NumberOfShells\\(0\\.\\.N\\)",
-            "Extruder\\d_SurfaceLayers\\(0\\.\\.N\\)", "Extruder\\d_ExtrusionInfillWidth\\(mm\\)",
-            "Extruder\\d_InFillMaterialType\\(name\\)", "Extruder\\d_EvenHatchDirection\\(degrees\\)",
-            "Extruder\\d_OddHatchDirection\\(degrees\\)", "Extruder\\d_ValveDelayForLayer\\(ms\\)",
-            "Extruder\\d_ValveDelayForPolygon\\(ms\\)", "Extruder\\d_ValveOverRun\\(mm\\)",
-            "Extruder\\d_ValvePulseTime\\(ms\\)", "Extruder\\d_CoolingPeriod\\(s\\)", "Extruder\\d_OutlineSpeed\\(0\\.\\.1\\)",
-            "Extruder\\d_InfillSpeed\\(0\\.\\.1\\)", "Extruder\\d_Reverse\\(ms\\)",
-            "Extruder\\d_ExtrusionDelayForLayer\\(ms\\)", "Extruder\\d_ExtrusionDelayForPolygon\\(ms\\)",
-            "Extruder\\d_ExtrusionSpeed\\(mm/minute\\)", "Extruder\\d_SlowXYFeedrate\\(mm/minute\\)",
-            "Extruder\\d_SupportMaterialType\\(name\\)", "Extruder\\d_Address",
-            "Extruder\\d_MaxAcceleration\\(mm/minute/minute\\)", "Extruder\\d_ExtrusionFoundationWidth\\(mm\\)",
-            "Extruder\\d_ExtrusionLastFoundationWidth\\(mm\\)", "Extruder\\d_ExtrusionTemp\\(C\\)", "Extruder\\d_SingleLine",
-            "Extruder\\d_ExtrusionSize\\(mm\\)", "Extruder\\d_ExtrudeRatio\\(0..\\)", "Extruder\\d_ExtrusionOverRun\\(mm\\)",
-            "Extruder\\d_ExtrusionBroadWidth\\(mm\\)", "Extruder\\d_InsideOut", "Extruder\\d_MiddleStart",
-            "Extruder\\d_Purge\\(ms\\)", "Extruder\\d_ArcCompensationFactor\\(0..\\)", "Extruder\\d_ArcShortSides\\(0..\\)",
-            "Extruder\\d_FastEFeedrate\\(mm/minute\\)", "Extruder\\d_FastXYFeedrate\\(mm/minute\\)",
-            "Extruder\\d_Lift\\(mm\\)", "Extruder\\d_MaterialType\\(name\\)", "Extruder\\d_FeedDiameter\\(mm\\)",
-            "Extruder\\d_Colour[RGB]\\(0\\.\\.1\\)", "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)",
-            "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "DumpX\\(mm\\)", "DumpY\\(mm\\)", "Support",
-            "FoundationLayers", "Debug", "WorkingX\\(mm\\)", "WorkingY\\(mm\\)", "WorkingZ\\(mm\\)", "ExtrusionRelative",
-            "PathOptimise", "MaximumFeedrateX\\(mm/minute\\)", "MaximumFeedrateY\\(mm/minute\\)",
-            "MaximumFeedrateZ\\(mm/minute\\)", "MaxXYAcceleration\\(mm/mininute/minute\\)",
-            "MaxZAcceleration\\(mm/mininute/minute\\)", "NumberOfExtruders", "BedTemperature\\(C\\)");
-
     private static String propsFile = "reprap.properties";
 
     static {
@@ -78,14 +47,6 @@ public class Preferences {
         }
     }
     private static final Preferences globalPrefs = new Preferences();
-
-    private static List<Pattern> compilePatterns(final String... patternStrings) {
-        final List<Pattern> result = new ArrayList<>();
-        for (final String patternText : patternStrings) {
-            result.add(Pattern.compile(patternText));
-        }
-        return result;
-    }
 
     private static void copySystemConfigurations(final File usersDir) {
         try {
@@ -162,18 +123,16 @@ public class Preferences {
         return sysConfig;
     }
 
-    private final Properties mainPreferences = new Properties();
     private final PrintSettings printSettings;
     private final PrinterSettings printerSettings;
 
     private Preferences() {
-        loadConfiguration(propsFile);
+        final Properties mainPreferences = loadConfiguration(propsFile);
         printSettings = createPrintSettings(mainPreferences);
         final int remaining = removeUnusedExtruders(mainPreferences);
         printerSettings = createPrinterSettings(mainPreferences);
         printerSettings.setExtruderSettings(createAllExtruderSettings(remaining, mainPreferences,
                 printSettings.getLayerHeight()));
-        removeUnusedProperties(mainPreferences);
     }
 
     private static ExtruderSettings[] createAllExtruderSettings(final int extruderCount, final Properties properties,
@@ -272,6 +231,7 @@ public class Preferences {
         result.setMiddleStart(getBooleanProperty(properties, "Extruder0_MiddleStart"));
         result.setArcCompensation(getDoubleProperty(properties, "Extruder0_ArcCompensationFactor(0..)"));
         result.setArcShortSides(getDoubleProperty(properties, "Extruder0_ArcShortSides(0..)"));
+        result.setInfillOverlap(getDoubleProperty(properties, "Extruder0_InfillOverlap(mm)"));
         return result;
     }
 
@@ -373,28 +333,8 @@ public class Preferences {
         return extrusionSpeed * delay / 60000 * layerHeight * extrusionSize / circleAreaForDiameter(feedDiameter);
     }
 
-    private static void removeUnusedProperties(final Properties mainPreferences) {
-        for (final Iterator<?> iterator = mainPreferences.keySet().iterator(); iterator.hasNext();) {
-            final String key = (String) iterator.next();
-            for (final Pattern pattern : OBSOLETE_PROPERTIES_PATTERNS) {
-                if (pattern.matcher(key).matches()) {
-                    iterator.remove();
-                    break;
-                }
-            }
-        }
-    }
-
-    public double gridResultion() {
-        return GRID_RESOLUTION;
-    }
-
-    public double getMachineResolution() {
-        return MACHINE_RESOLUTION;
-    }
-
-    private void load(final File mainFile) {
-        mainPreferences.clear();
+    private static Properties load(final File mainFile) {
+        final Properties mainPreferences = new Properties();
         try {
             final InputStream preferencesStream = new FileInputStream(mainFile);
             try {
@@ -405,7 +345,8 @@ public class Preferences {
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
-        comparePreferences();
+        comparePreferences(mainPreferences);
+        return mainPreferences;
     }
 
     public File getBuildBaseStlFile() {
@@ -416,7 +357,7 @@ public class Preferences {
      * Compare the user's preferences with the distribution one and report any
      * different names.
      */
-    private void comparePreferences() {
+    private static void comparePreferences(final Properties mainPreferences) {
         final Properties sysPreferences;
         try {
             sysPreferences = loadSystemProperties();
@@ -477,7 +418,7 @@ public class Preferences {
         }
     }
 
-    private Properties loadSystemProperties() throws IOException {
+    private static Properties loadSystemProperties() throws IOException {
         final String systemPropertiesPath = PROPERTIES_DIR_DISTRIBUTION + "/" + getActiveMachineName() + "/" + propsFile;
         final URL sysProperties = ClassLoader.getSystemResource(systemPropertiesPath);
         final InputStream sysPropStream = sysProperties.openStream();
@@ -490,38 +431,19 @@ public class Preferences {
         }
     }
 
-    public String loadString(final String name) {
-        if (!mainPreferences.containsKey(name)) {
-            throw new RuntimeException("RepRap preference: " + name + " not found in your preference file: "
-                    + getActiveMachineDir() + "/" + propsFile);
-        }
-        return mainPreferences.getProperty(name);
+    private static Properties loadConfiguration(final String fileName) {
+        return load(new File(getActiveMachineDir(), fileName));
     }
 
-    public double loadDouble(final String name) {
-        return Double.parseDouble(loadString(name));
-    }
-
-    public boolean loadBool(final String name) {
-        return "true".equalsIgnoreCase(loadString(name));
-    }
-
-    private void loadConfiguration(final String fileName) {
-        load(new File(getActiveMachineDir(), fileName));
-    }
-
-    private ExtruderSettings getExtruderForMaterial(final String material) {
-        if (material.equalsIgnoreCase("null")) {
-            return null;
-        }
-
-        final String[] names = getAllMaterials();
-        for (int i = 0; i < names.length; i++) {
-            if (names[i].equals(material)) {
-                return printerSettings.getExtruderSettings()[i];
+    public MaterialSettings getMaterialSettings(final String material) {
+        final ExtruderSettings[] extruderSettings = printerSettings.getExtruderSettings();
+        for (final ExtruderSettings settings : extruderSettings) {
+            final MaterialSettings materialSettings = settings.getMaterial();
+            if (materialSettings.getName().equals(material)) {
+                return materialSettings;
             }
         }
-        throw new RuntimeException("getNumberFromMaterial - can't find " + material);
+        return null;
     }
 
     /**
@@ -535,10 +457,6 @@ public class Preferences {
             result[i] = settings.getMaterial().getName();
         }
         return result;
-    }
-
-    public Color3f loadMaterialColor(final String material) {
-        return getExtruderForMaterial(material).getMaterial().getColor();
     }
 
     public static Preferences getInstance() {

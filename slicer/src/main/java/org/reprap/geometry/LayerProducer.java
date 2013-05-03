@@ -58,7 +58,7 @@ class LayerProducer {
             lastPoint = n;
         }
 
-        if (plotDist < preferences.getMachineResolution() * 0.5) {
+        if (plotDist < preferences.getPrinterSettings().getMachineResolution() * 0.5) {
             LOGGER.info("Rejected line with " + polygon.size() + " points, length: " + plotDist);
             return;
         }

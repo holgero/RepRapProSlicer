@@ -32,7 +32,7 @@ public class BooleanGrid {
     /**
      * The resolution of the RepRap machine
      */
-    private static final double pixSize = Preferences.getInstance().getMachineResolution() * 0.6;
+    private static final double pixSize = Preferences.getInstance().getPrinterSettings().getMachineResolution() * 0.6;
     private static final double realResolution = pixSize * 1.5;
     private static final double rSwell = 0.5; // mm by which to swell rectangles to give margins round stuff
 

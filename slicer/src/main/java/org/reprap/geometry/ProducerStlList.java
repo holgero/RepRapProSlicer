@@ -230,7 +230,7 @@ class ProducerStlList {
         temp = edges.get(0);
         edges.set(0, edges.get(swap));
         edges.set(swap, temp);
-        if (Math.sqrt(d) < preferences.gridResultion()) {
+        if (Math.sqrt(d) < Constants.GRID_RESOLUTION) {
             LOGGER.debug("startLong(): edge length: " + Math.sqrt(d) + " is the longest.");
         }
     }
@@ -411,23 +411,19 @@ class ProducerStlList {
         if (!preferences.getPrintSettings().printShield()) {
             return;
         }
+        final STLObject shield = new STLObject();
+        final Attributes attribute = shield.addSTL(new File(Preferences.getActiveMachineDir(), "shield.stl"), null, null, null);
+        attribute.setMaterial(preferences.getPrinterSettings().getExtruderSettings()[0].getMaterial().getName());
+
         final BoundingBox boxWithoutShield = getBoundingBox(stls);
         final double modelZMax = boxWithoutShield.getZint().high();
-        final String material = preferences.getAllMaterials()[0];
-        final STLObject shield = new STLObject();
-        final Attributes att = shield.addSTL(new File(Preferences.getActiveMachineDir(), "shield.stl"), null, null, null);
-
         final Vector3d shieldSize = shield.extent();
+        shield.rScale(modelZMax / shieldSize.z, true);
 
+        final double zOff = 0.5 * (modelZMax - shieldSize.z);
         final Point2D purgePoint = purge.getPurgeMiddle();
         double xOff = purgePoint.x();
         double yOff = purgePoint.y();
-
-        final double zScale = modelZMax / shieldSize.z;
-        final double zOff = 0.5 * (modelZMax - shieldSize.z);
-
-        shield.rScale(zScale, true);
-
         if (!purge.isPurgeXOriented()) {
             shield.translate(new Vector3d(-0.5 * shieldSize.x, -0.5 * shieldSize.y, 0));
             final Transform3D t3d1 = shield.getTransform();
@@ -442,7 +438,6 @@ class ProducerStlList {
             shield.translate(new Vector3d(xOff, yOff, zOff));
         }
 
-        att.setMaterial(material);
         stls.add(0, shield);
     }
 
@@ -568,7 +563,7 @@ class ProducerStlList {
 
                 if (pgl.size() > 0) {
                     // Remove wrinkles
-                    pgl = pgl.simplify(preferences.gridResultion() * 1.5);
+                    pgl = pgl.simplify(Constants.GRID_RESOLUTION * 1.5);
 
                     // Fix small radii
                     pgl = arcCompensate(pgl);
@@ -931,12 +926,12 @@ class ProducerStlList {
             }
             final GCodeExtruder e = lc.getPrinter().getExtruder(att.getMaterial());
             final double extrusionSize = e.getExtrusionSize();
-            final double infillOverlap = e.getInfillOverlap();
-            final int shells = Preferences.getInstance().getPrintSettings().getVerticalShells();
+            final PrintSettings printSettings = Preferences.getInstance().getPrintSettings();
+            final int shells = printSettings.getVerticalShells();
             // Must be a hatch.  Only do it if the gap is +ve or we're building the foundation
             final double offSize;
             if (multiplier < 0) {
-                offSize = multiplier * (shells + 0.5) * extrusionSize + infillOverlap;
+                offSize = multiplier * (shells + 0.5) * extrusionSize + printSettings.getInfillOverlap();
             } else {
                 offSize = multiplier * (shells + 0.5) * extrusionSize;
             }

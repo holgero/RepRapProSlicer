@@ -21,6 +21,7 @@ package org.reprap.configuration;
 import java.io.File;
 
 public class PrinterSettings {
+    private static final double MACHINE_RESOLUTION = 0.05; // mm
     // dimensions
     private double bedSizeX; // mm 200
     private double bedSizeY; // mm 200
@@ -114,5 +115,9 @@ public class PrinterSettings {
 
     void setEpilogueFile(final File epilogueFile) {
         this.epilogueFile = epilogueFile;
+    }
+
+    public double getMachineResolution() {
+        return MACHINE_RESOLUTION;
     }
 }

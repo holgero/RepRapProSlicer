@@ -28,10 +28,10 @@ public class PrintSettings {
     private boolean middleStart; // boolean false
     private double arcCompensation; // factor 8.0
     private double arcShortSides; // mm 1.0
-
     // infill
     private double fillDensity; // fraction 0.21
     private FillPattern pattern; // rectilinear
+    private double infillOverlap; // mm 0.2
     // speeds
     private double perimeterSpeed; // fraction 0.9
     private double infillSpeed; // fraction 1.0
@@ -236,5 +236,13 @@ public class PrintSettings {
 
     void setArcShortSides(final double arcShortSides) {
         this.arcShortSides = arcShortSides;
+    }
+
+    public double getInfillOverlap() {
+        return infillOverlap;
+    }
+
+    void setInfillOverlap(final double infillOverlap) {
+        this.infillOverlap = infillOverlap;
     }
 }

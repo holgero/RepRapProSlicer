@@ -25,11 +25,6 @@ public class GCodeExtruder {
      */
     private double fastEFeedrate;
     /**
-     * Number of mm to overlap the hatching infill with the outline. 0 gives
-     * none; -ve will leave a gap between the two
-     */
-    private double infillOverlap;
-    /**
      * The diameter of the feedstock (if any)
      */
     private double feedDiameter;
@@ -57,7 +52,7 @@ public class GCodeExtruder {
         myExtruderID = extruderId;
         printer = p;
         final Preferences preferences = Preferences.getInstance();
-        loadPreferences(preferences, preferences.getPrinterSettings().getExtruderSettings()[extruderId]);
+        loadPreferences(preferences.getPrinterSettings().getExtruderSettings()[extruderId]);
         extruderState = new ExtruderState();
         // when we are first called (top down calculation means at our top
         // layer) the layer below will have reversed us at its end on the way up
@@ -75,7 +70,7 @@ public class GCodeExtruder {
         }
     }
 
-    private void loadPreferences(final Preferences preferences, final ExtruderSettings extruderSettings) {
+    private void loadPreferences(final ExtruderSettings extruderSettings) {
         extrusionSize = extruderSettings.getNozzleDiameter();
         retractionDistance = extruderSettings.getRetraction();
         extraExtrusionForLayer = extruderSettings.getExtraLengthPerLayer();
@@ -87,8 +82,6 @@ public class GCodeExtruder {
         lift = extruderSettings.getLift();
         materialSettings = extruderSettings.getMaterial();
         feedDiameter = materialSettings.getDiameter();
-        final String prefName = "Extruder" + myExtruderID + "_";
-        infillOverlap = preferences.loadDouble(prefName + "InfillOverlap(mm)");
     }
 
     void startExtrusion(final boolean reverse) {
@@ -118,14 +111,6 @@ public class GCodeExtruder {
     @Override
     public String toString() {
         return "Extruder " + myExtruderID;
-    }
-
-    /**
-     * Number of mm to overlap the hatching infill with the outline. 0 gives
-     * none; -ve will leave a gap between the two
-     */
-    public double getInfillOverlap() {
-        return infillOverlap;
     }
 
     public double getExtrusionOverRun() {
