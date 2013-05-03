@@ -352,7 +352,7 @@ class ProducerStlList {
         }
 
         // Now force the attributes of the support pattern to be the support extruders
-        // for all the materials in it.  If the material isn't active in this layer, remove it from the list
+        // for all the materials in it.
         for (int i = 0; i < support.size(); i++) {
             final BooleanGrid grid = support.get(i);
             grid.forceAttribute(new Attributes(supportExtruder.getMaterial(), null, supportExtruder.getAppearance()));

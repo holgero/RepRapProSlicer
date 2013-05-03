@@ -61,12 +61,12 @@ public class Preferences {
             "Extruder\\d_ExtrusionBroadWidth\\(mm\\)", "Extruder\\d_InsideOut", "Extruder\\d_MiddleStart",
             "Extruder\\d_Purge\\(ms\\)", "Extruder\\d_ArcCompensationFactor\\(0..\\)", "Extruder\\d_ArcShortSides\\(0..\\)",
             "Extruder\\d_FastEFeedrate\\(mm/minute\\)", "Extruder\\d_FastXYFeedrate\\(mm/minute\\)",
-            "Extruder\\d_Lift\\(mm\\)", "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling",
-            "StartRectangle", "BrimLines", "Shield", "DumpX\\(mm\\)", "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug",
-            "WorkingX\\(mm\\)", "WorkingY\\(mm\\)", "WorkingZ\\(mm\\)", "ExtrusionRelative", "PathOptimise",
-            "MaximumFeedrateX\\(mm/minute\\)", "MaximumFeedrateY\\(mm/minute\\)", "MaximumFeedrateZ\\(mm/minute\\)",
-            "MaxXYAcceleration\\(mm/mininute/minute\\)", "MaxZAcceleration\\(mm/mininute/minute\\)", "NumberOfExtruders",
-            "BedTemperature\\(C\\)");
+            "Extruder\\d_Lift\\(mm\\)", "Extruder\\d_MaterialType\\(name\\)", "SlowXYFeedrate\\(mm/minute\\)",
+            "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "DumpX\\(mm\\)",
+            "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug", "WorkingX\\(mm\\)", "WorkingY\\(mm\\)",
+            "WorkingZ\\(mm\\)", "ExtrusionRelative", "PathOptimise", "MaximumFeedrateX\\(mm/minute\\)",
+            "MaximumFeedrateY\\(mm/minute\\)", "MaximumFeedrateZ\\(mm/minute\\)", "MaxXYAcceleration\\(mm/mininute/minute\\)",
+            "MaxZAcceleration\\(mm/mininute/minute\\)", "NumberOfExtruders", "BedTemperature\\(C\\)");
 
     private static String propsFile = "reprap.properties";
 
@@ -202,6 +202,7 @@ public class Preferences {
         settings.setAirExtrusionFeedRate(getDoubleProperty(properties, prefix + "FastEFeedrate(mm/minute)"));
         settings.setPrintExtrusionRate(getDoubleProperty(properties, prefix + "FastXYFeedrate(mm/minute)"));
         settings.setLift(getDoubleProperty(properties, prefix + "Lift(mm)"));
+        settings.setMaterial(new MaterialSettings(properties.getProperty(prefix + "MaterialType(name)")));
         return settings;
     }
 
@@ -514,14 +515,12 @@ public class Preferences {
      * @return an array of all the names of all the materials in extruders
      */
     public String[] getAllMaterials() {
-        final int extruderCount = printerSettings.getExtruderSettings().length;
-        final String[] result = new String[extruderCount];
-
-        for (int i = 0; i < extruderCount; i++) {
-            final String prefix = "Extruder" + i + "_";
-            result[i] = loadString(prefix + "MaterialType(name)");
+        final ExtruderSettings[] extruderSettings = printerSettings.getExtruderSettings();
+        final String[] result = new String[extruderSettings.length];
+        for (int i = 0; i < extruderSettings.length; i++) {
+            final ExtruderSettings settings = extruderSettings[i];
+            result[i] = settings.getMaterial().getName();
         }
-
         return result;
     }
 

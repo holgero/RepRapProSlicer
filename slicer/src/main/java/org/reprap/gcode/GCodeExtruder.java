@@ -96,8 +96,8 @@ public class GCodeExtruder {
         fastEFeedrate = extruderSettings.getAirExtrusionFeedRate();
         fastXYFeedrate = extruderSettings.getPrintExtrusionRate();
         lift = extruderSettings.getLift();
+        material = extruderSettings.getMaterial().getName();
         final String prefName = "Extruder" + myExtruderID + "_";
-        material = preferences.loadString(prefName + "MaterialType(name)");
         infillOverlap = preferences.loadDouble(prefName + "InfillOverlap(mm)");
         final Color3f col = new Color3f((float) preferences.loadDouble(prefName + "ColourR(0..1)"),
                 (float) preferences.loadDouble(prefName + "ColourG(0..1)"), (float) preferences.loadDouble(prefName
@@ -138,9 +138,7 @@ public class GCodeExtruder {
 
     @Override
     public String toString() {
-        // TODO: should this give more information?
-        // CAVE!!! used in GCodePrinter to search for a extruder by material name! CAVE!!!
-        return material;
+        return "Extruder " + myExtruderID;
     }
 
     /**

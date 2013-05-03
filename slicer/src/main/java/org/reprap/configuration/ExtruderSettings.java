@@ -28,6 +28,7 @@ public class ExtruderSettings {
     private double extraLengthPerPolygon; // mm 0.104
     private int earlyRetraction; // # -1
     private double lift; // mm 0
+    private MaterialSettings material;
 
     public double getNozzleDiameter() {
         return nozzleDiameter;
@@ -99,5 +100,13 @@ public class ExtruderSettings {
 
     void setLift(final double lift) {
         this.lift = lift;
+    }
+
+    public MaterialSettings getMaterial() {
+        return material;
+    }
+
+    void setMaterial(final MaterialSettings material) {
+        this.material = material;
     }
 }
