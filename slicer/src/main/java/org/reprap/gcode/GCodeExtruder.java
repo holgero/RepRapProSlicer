@@ -93,9 +93,9 @@ public class GCodeExtruder {
         extraExtrusionForPolygon = extruderSettings.getExtraLengthPerPolygon();
         extrudeRatio = extruderSettings.getExtrudeRatio();
         extrusionOverRun = extruderSettings.getEarlyRetraction();
+        fastEFeedrate = extruderSettings.getAirExtrusionFeedRate();
+        fastXYFeedrate = extruderSettings.getPrintExtrusionRate();
         final String prefName = "Extruder" + myExtruderID + "_";
-        fastXYFeedrate = preferences.loadDouble(prefName + "FastXYFeedrate(mm/minute)");
-        fastEFeedrate = preferences.loadDouble(prefName + "FastEFeedrate(mm/minute)");
         material = preferences.loadString(prefName + "MaterialType(name)");
         infillOverlap = preferences.loadDouble(prefName + "InfillOverlap(mm)");
         lift = preferences.loadDouble(prefName + "Lift(mm)");

@@ -60,6 +60,7 @@ public class Preferences {
             "Extruder\\d_ExtrusionSize\\(mm\\)", "Extruder\\d_ExtrudeRatio\\(0..\\)", "Extruder\\d_ExtrusionOverRun\\(mm\\)",
             "Extruder\\d_ExtrusionBroadWidth\\(mm\\)", "Extruder\\d_InsideOut", "Extruder\\d_MiddleStart",
             "Extruder\\d_Purge\\(ms\\)", "Extruder\\d_ArcCompensationFactor\\(0..\\)", "Extruder\\d_ArcShortSides\\(0..\\)",
+            "Extruder\\d_FastEFeedrate\\(mm/minute\\)", "Extruder\\d_FastXYFeedrate\\(mm/minute\\)",
             "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling", "StartRectangle",
             "BrimLines", "Shield", "DumpX\\(mm\\)", "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug",
             "WorkingX\\(mm\\)", "WorkingY\\(mm\\)", "WorkingZ\\(mm\\)", "ExtrusionRelative", "PathOptimise",
@@ -198,6 +199,8 @@ public class Preferences {
                 getDoubleProperty(properties, prefix + "ExtrusionDelayForPolygon(ms)"), number, layerHeight));
         settings.setExtrudeRatio(getDoubleProperty(properties, prefix + "ExtrudeRatio(0..)"));
         settings.setEarlyRetraction(getIntegerProperty(properties, prefix + "ExtrusionOverRun(mm)"));
+        settings.setAirExtrusionFeedRate(getDoubleProperty(properties, prefix + "FastEFeedrate(mm/minute)"));
+        settings.setPrintExtrusionRate(getDoubleProperty(properties, prefix + "FastXYFeedrate(mm/minute)"));
         return settings;
     }
 

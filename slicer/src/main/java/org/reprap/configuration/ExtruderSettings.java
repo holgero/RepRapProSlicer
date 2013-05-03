@@ -21,6 +21,8 @@ package org.reprap.configuration;
 public class ExtruderSettings {
     private double nozzleDiameter; // mm 0.5
     private double extrudeRatio; // ratio 1.0
+    private double airExtrusionFeedRate; // mm/minute 40000.0
+    private double printExtrusionRate; // mm/minute 2000.0
     private double retraction; // mm 2.079
     private double extraLengthPerLayer; // mm 0.104
     private double extraLengthPerPolygon; // mm 0.104
@@ -72,5 +74,21 @@ public class ExtruderSettings {
 
     void setEarlyRetraction(final int earlyRetraction) {
         this.earlyRetraction = earlyRetraction;
+    }
+
+    public double getAirExtrusionFeedRate() {
+        return airExtrusionFeedRate;
+    }
+
+    void setAirExtrusionFeedRate(final double airExtrusionFeedRate) {
+        this.airExtrusionFeedRate = airExtrusionFeedRate;
+    }
+
+    public double getPrintExtrusionRate() {
+        return printExtrusionRate;
+    }
+
+    void setPrintExtrusionRate(final double printExtrusionRate) {
+        this.printExtrusionRate = printExtrusionRate;
     }
 }
