@@ -26,6 +26,9 @@ public class PrintSettings {
     private int horizontalShells; // # 3
     private boolean insideOut; // boolean true
     private boolean middleStart; // boolean false
+    private double arcCompensation; // factor 8.0
+    private double arcShortSides; // mm 1.0
+
     // infill
     private double fillDensity; // fraction 0.21
     private FillPattern pattern; // rectilinear
@@ -217,5 +220,21 @@ public class PrintSettings {
 
     void setMiddleStart(final boolean middleStart) {
         this.middleStart = middleStart;
+    }
+
+    public double getArcCompensation() {
+        return arcCompensation;
+    }
+
+    void setArcCompensation(final double arcCompensation) {
+        this.arcCompensation = arcCompensation;
+    }
+
+    public double getArcShortSides() {
+        return arcShortSides;
+    }
+
+    void setArcShortSides(final double arcShortSides) {
+        this.arcShortSides = arcShortSides;
     }
 }

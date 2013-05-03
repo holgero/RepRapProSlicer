@@ -799,17 +799,18 @@ class ProducerStlList {
      */
     private Polygon arcCompensate(final Polygon polygon) {
         final Attributes attributes = polygon.getAttributes();
-        final GCodeExtruder e = layerRules.getPrinter().getExtruder(attributes.getMaterial());
 
         // Multiply the geometrically correct result by factor
-        final double factor = e.getArcCompensationFactor();
+        final PrintSettings printSettings = preferences.getPrintSettings();
+        final double factor = printSettings.getArcCompensation();
         if (factor < Constants.TINY_VALUE) {
             return polygon;
         }
 
         // The points making the arc must be closer than this together
-        final double shortSides = e.getArcShortSides();
-        final double thickness = e.getExtrusionSize();
+        final double shortSides = printSettings.getArcShortSides();
+        final GCodeExtruder extruder = layerRules.getPrinter().getExtruder(attributes.getMaterial());
+        final double thickness = extruder.getExtrusionSize();
         final Polygon result = new Polygon(attributes, polygon.isClosed());
         Point2D previous = polygon.point(polygon.size() - 1);
         Point2D current = polygon.point(0);

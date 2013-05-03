@@ -59,6 +59,7 @@ public class Preferences {
             "Extruder\\d_ExtrusionLastFoundationWidth\\(mm\\)", "Extruder\\d_ExtrusionTemp\\(C\\)", "Extruder\\d_SingleLine",
             "Extruder\\d_ExtrusionSize\\(mm\\)", "Extruder\\d_ExtrudeRatio\\(0..\\)", "Extruder\\d_ExtrusionOverRun\\(mm\\)",
             "Extruder\\d_ExtrusionBroadWidth\\(mm\\)", "Extruder\\d_InsideOut", "Extruder\\d_MiddleStart",
+            "Extruder\\d_Purge\\(ms\\)", "Extruder\\d_ArcCompensationFactor\\(0..\\)", "Extruder\\d_ArcShortSides\\(0..\\)",
             "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling", "StartRectangle",
             "BrimLines", "Shield", "DumpX\\(mm\\)", "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug",
             "WorkingX\\(mm\\)", "WorkingY\\(mm\\)", "WorkingZ\\(mm\\)", "ExtrusionRelative", "PathOptimise",
@@ -251,6 +252,8 @@ public class Preferences {
         result.setPathOptimize(getBooleanProperty(properties, "PathOptimise"));
         result.setInsideOut(getBooleanProperty(properties, "Extruder0_InsideOut"));
         result.setMiddleStart(getBooleanProperty(properties, "Extruder0_MiddleStart"));
+        result.setArcCompensation(getDoubleProperty(properties, "Extruder0_ArcCompensationFactor(0..)"));
+        result.setArcShortSides(getDoubleProperty(properties, "Extruder0_ArcShortSides(0..)"));
         return result;
     }
 

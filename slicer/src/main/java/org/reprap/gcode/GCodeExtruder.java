@@ -57,8 +57,6 @@ public class GCodeExtruder {
      * The number of mm to stop extruding before the end of a track
      */
     private double extrusionOverRun;
-    private double arcCompensationFactor;
-    private double arcShortSides;
     private double extrudeRatio = 1;
     private final GCodePrinter printer;
     private double retractionDistance;
@@ -100,8 +98,6 @@ public class GCodeExtruder {
         fastEFeedrate = preferences.loadDouble(prefName + "FastEFeedrate(mm/minute)");
         material = preferences.loadString(prefName + "MaterialType(name)");
         infillOverlap = preferences.loadDouble(prefName + "InfillOverlap(mm)");
-        arcCompensationFactor = preferences.loadDouble(prefName + "ArcCompensationFactor(0..)");
-        arcShortSides = preferences.loadDouble(prefName + "ArcShortSides(0..)");
         lift = preferences.loadDouble(prefName + "Lift(mm)");
         final Color3f col = new Color3f((float) preferences.loadDouble(prefName + "ColourR(0..1)"),
                 (float) preferences.loadDouble(prefName + "ColourG(0..1)"), (float) preferences.loadDouble(prefName
@@ -164,20 +160,6 @@ public class GCodeExtruder {
      */
     public String getMaterial() {
         return material;
-    }
-
-    /**
-     * The arc compensation factor.
-     */
-    public double getArcCompensationFactor() {
-        return arcCompensationFactor;
-    }
-
-    /**
-     * The arc short sides.
-     */
-    public double getArcShortSides() {
-        return arcShortSides;
     }
 
     /**
