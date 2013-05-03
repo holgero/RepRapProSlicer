@@ -58,12 +58,12 @@ public class Preferences {
             "Extruder\\d_SupportMaterialType\\(name\\)", "Extruder\\d_Address",
             "Extruder\\d_MaxAcceleration\\(mm/minute/minute\\)", "Extruder\\d_ExtrusionFoundationWidth\\(mm\\)",
             "Extruder\\d_ExtrusionLastFoundationWidth\\(mm\\)", "Extruder\\d_ExtrusionTemp\\(C\\)", "Extruder\\d_SingleLine",
-            "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling", "StartRectangle",
-            "BrimLines", "Shield", "DumpX\\(mm\\)", "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug",
-            "WorkingX\\(mm\\)", "WorkingY\\(mm\\)", "WorkingZ\\(mm\\)", "ExtrusionRelative", "PathOptimise",
-            "MaximumFeedrateX\\(mm/minute\\)", "MaximumFeedrateY\\(mm/minute\\)", "MaximumFeedrateZ\\(mm/minute\\)",
-            "MaxXYAcceleration\\(mm/mininute/minute\\)", "MaxZAcceleration\\(mm/mininute/minute\\)", "NumberOfExtruders",
-            "BedTemperature\\(C\\)");
+            "Extruder\\d_ExtrusionSize\\(mm\\)", "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)",
+            "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "DumpX\\(mm\\)", "DumpY\\(mm\\)", "Support",
+            "FoundationLayers", "Debug", "WorkingX\\(mm\\)", "WorkingY\\(mm\\)", "WorkingZ\\(mm\\)", "ExtrusionRelative",
+            "PathOptimise", "MaximumFeedrateX\\(mm/minute\\)", "MaximumFeedrateY\\(mm/minute\\)",
+            "MaximumFeedrateZ\\(mm/minute\\)", "MaxXYAcceleration\\(mm/mininute/minute\\)",
+            "MaxZAcceleration\\(mm/mininute/minute\\)", "NumberOfExtruders", "BedTemperature\\(C\\)");
 
     private static String propsFile = "reprap.properties";
 
@@ -166,12 +166,29 @@ public class Preferences {
         loadConfiguration(propsFile);
         printSettings = createPrintSettings(mainPreferences);
         final int remaining = removeUnusedExtruders(mainPreferences);
-        printerSettings = createPrinterSettings(mainPreferences, remaining);
+        printerSettings = createPrinterSettings(mainPreferences);
+        printerSettings.setExtruderSettings(createAllExtruderSettings(remaining, mainPreferences));
         fixupExtruderDelayProperties(mainPreferences, printSettings.getLayerHeight());
         removeUnusedProperties(mainPreferences);
     }
 
-    private static PrinterSettings createPrinterSettings(final Properties properties, final int extruderCount) {
+    private static ExtruderSettings[] createAllExtruderSettings(final int extruderCount, final Properties properties) {
+        final ExtruderSettings[] extruderSettings = new ExtruderSettings[extruderCount];
+        for (int i = 0; i < extruderSettings.length; i++) {
+            final ExtruderSettings settings = createExtruderSettings(i, properties);
+            extruderSettings[i] = settings;
+        }
+        return extruderSettings;
+    }
+
+    private static ExtruderSettings createExtruderSettings(final int number, final Properties properties) {
+        final ExtruderSettings settings = new ExtruderSettings();
+        // this is wrong, but the migration from the properties must somehow guess the nozzle diameter
+        settings.setNozzleDiameter(getDoubleProperty(properties, "Extruder" + number + "_ExtrusionSize(mm)"));
+        return settings;
+    }
+
+    private static PrinterSettings createPrinterSettings(final Properties properties) {
         final PrinterSettings result = new PrinterSettings();
         result.setBedSizeX(getDoubleProperty(properties, "WorkingX(mm)"));
         result.setBedSizeY(getDoubleProperty(properties, "WorkingY(mm)"));
@@ -180,7 +197,6 @@ public class Preferences {
         result.setMaximumFeedrateX(getDoubleProperty(properties, "MaximumFeedrateX(mm/minute)"));
         result.setMaximumFeedrateY(getDoubleProperty(properties, "MaximumFeedrateY(mm/minute)"));
         result.setMaximumFeedrateZ(getDoubleProperty(properties, "MaximumFeedrateZ(mm/minute)"));
-        result.setExtruderSettings(new ExtruderSettings[extruderCount]);
         result.setPrologueFile(new File(getActiveMachineDir(), PROLOGUE_FILE));
         result.setEpilogueFile(new File(getActiveMachineDir(), EPILOGUE_FILE));
         return result;

@@ -7,6 +7,7 @@ import javax.media.j3d.Material;
 import javax.vecmath.Color3f;
 
 import org.reprap.configuration.Constants;
+import org.reprap.configuration.ExtruderSettings;
 import org.reprap.configuration.Preferences;
 
 public class GCodeExtruder {
@@ -70,7 +71,8 @@ public class GCodeExtruder {
         gcode = writer;
         myExtruderID = extruderId;
         printer = p;
-        loadPreferences(Preferences.getInstance());
+        final Preferences preferences = Preferences.getInstance();
+        loadPreferences(preferences, preferences.getPrinterSettings().getExtruderSettings()[extruderId]);
         extruderState = new ExtruderState();
         // when we are first called (top down calculation means at our top
         // layer) the layer below will have reversed us at its end on the way up
@@ -88,9 +90,9 @@ public class GCodeExtruder {
         }
     }
 
-    private void loadPreferences(final Preferences preferences) {
+    private void loadPreferences(final Preferences preferences, final ExtruderSettings extruderSettings) {
+        extrusionSize = extruderSettings.getNozzleDiameter();
         final String prefName = "Extruder" + myExtruderID + "_";
-        extrusionSize = preferences.loadDouble(prefName + "ExtrusionSize(mm)");
         fastXYFeedrate = preferences.loadDouble(prefName + "FastXYFeedrate(mm/minute)");
         fastEFeedrate = preferences.loadDouble(prefName + "FastEFeedrate(mm/minute)");
         middleStart = preferences.loadBool(prefName + "MiddleStart");
