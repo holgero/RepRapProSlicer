@@ -532,9 +532,9 @@ public class GCodePrinter {
     }
 
     public GCodeExtruder getExtruder(final String name) {
-        for (final GCodeExtruder extruder2 : extruders) {
-            if (name.equals(extruder2.getMaterial().getName())) {
-                return extruder2;
+        for (final GCodeExtruder extruder : extruders) {
+            if (name.equals(extruder.getMaterial().getName())) {
+                return extruder;
             }
         }
         return null;

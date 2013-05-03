@@ -18,6 +18,8 @@
  */
 package org.reprap.configuration;
 
+import java.io.File;
+
 public class PrintSettings {
     // layers
     private double layerHeight; // mm 0.24
@@ -42,6 +44,7 @@ public class PrintSettings {
     private int brimLines; // # 8
     // dump area and shield
     private boolean shield; // boolean true
+    private File shieldStlFile; // file 
     private int dumpX; // mm 50
     private int dumpY; // mm 100
     // support material
@@ -244,5 +247,13 @@ public class PrintSettings {
 
     void setInfillOverlap(final double infillOverlap) {
         this.infillOverlap = infillOverlap;
+    }
+
+    public File getShieldStlFile() {
+        return shieldStlFile;
+    }
+
+    void setShieldStlFile(final File shieldStlFile) {
+        this.shieldStlFile = shieldStlFile;
     }
 }

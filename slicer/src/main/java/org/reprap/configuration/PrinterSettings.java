@@ -22,10 +22,13 @@ import java.io.File;
 
 public class PrinterSettings {
     private static final double MACHINE_RESOLUTION = 0.05; // mm
+    private final String name;
     // dimensions
     private double bedSizeX; // mm 200
     private double bedSizeY; // mm 200
     private double maximumZ; // mm 100
+    // visualization
+    private File buildPlatformStl; // file
     // travel speeds
     private double maximumFeedrateX; // mm/minute 15000
     private double maximumFeedrateY; // mm/minute 15000
@@ -36,6 +39,14 @@ public class PrinterSettings {
     private File epilogueFile; // file
     // Extruders
     private ExtruderSettings[] extruderSettings;
+
+    PrinterSettings(final String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
 
     public double getBedSizeX() {
         return bedSizeX;
@@ -119,5 +130,13 @@ public class PrinterSettings {
 
     public double getMachineResolution() {
         return MACHINE_RESOLUTION;
+    }
+
+    public File getBuildPlatformStl() {
+        return buildPlatformStl;
+    }
+
+    void setBuildPlatformStl(final File buildPlatformStl) {
+        this.buildPlatformStl = buildPlatformStl;
     }
 }

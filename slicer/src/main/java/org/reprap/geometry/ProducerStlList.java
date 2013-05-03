@@ -20,7 +20,6 @@
  */
 package org.reprap.geometry;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -408,11 +407,12 @@ class ProducerStlList {
     }
 
     private static void setUpShield(final Purge purge, final List<STLObject> stls, final Preferences preferences) {
-        if (!preferences.getPrintSettings().printShield()) {
+        final PrintSettings printSettings = preferences.getPrintSettings();
+        if (!printSettings.printShield()) {
             return;
         }
         final STLObject shield = new STLObject();
-        final Attributes attribute = shield.addSTL(new File(Preferences.getActiveMachineDir(), "shield.stl"), null, null, null);
+        final Attributes attribute = shield.addSTL(printSettings.getShieldStlFile(), null, null, null);
         attribute.setMaterial(preferences.getPrinterSettings().getExtruderSettings()[0].getMaterial().getName());
 
         final BoundingBox boxWithoutShield = getBoundingBox(stls);

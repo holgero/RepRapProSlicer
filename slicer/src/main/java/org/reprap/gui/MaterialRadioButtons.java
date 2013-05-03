@@ -19,6 +19,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
+import org.reprap.configuration.ExtruderSettings;
 import org.reprap.configuration.Preferences;
 import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.geometry.polyhedra.STLObject;
@@ -61,7 +62,7 @@ class MaterialRadioButtons extends JPanel {
         jLabel1.setHorizontalAlignment(SwingConstants.CENTER);
         radioPanel.add(jLabel1);
 
-        final String[] names = Preferences.getInstance().getAllMaterials();
+        final ExtruderSettings[] extruders = Preferences.getInstance().getPrinterSettings().getExtruderSettings();
         String matname = att.getMaterial();
         if (matname == null) {
             matname = "";
@@ -69,12 +70,13 @@ class MaterialRadioButtons extends JPanel {
 
         final ButtonGroup bGroup = new ButtonGroup();
         int matnumber = -1;
-        for (int i = 0; i < names.length; i++) {
-            if (matname.contentEquals(names[i])) {
+        for (int i = 0; i < extruders.length; i++) {
+            final String material = extruders[i].getMaterial().getName();
+            if (matname.contentEquals(material)) {
                 matnumber = i;
             }
-            final JRadioButton b = new JRadioButton(names[i]);
-            b.setActionCommand(names[i]);
+            final JRadioButton b = new JRadioButton(material);
+            b.setActionCommand(material);
             b.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(final ActionEvent e) {
@@ -88,7 +90,7 @@ class MaterialRadioButtons extends JPanel {
             radioPanel.add(b);
         }
         if (matnumber < 0) {
-            att.setMaterial(names[0]);
+            att.setMaterial(extruders[0].getMaterial().getName());
             final JRadioButton b = (JRadioButton) bGroup.getElements().nextElement();
             b.setSelected(true);
         } else {

@@ -106,6 +106,7 @@ import javax.media.j3d.Canvas3D;
 import javax.media.j3d.DirectionalLight;
 import javax.media.j3d.GraphicsConfigTemplate3D;
 import javax.media.j3d.Group;
+import javax.media.j3d.Locale;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.PhysicalBody;
@@ -120,6 +121,7 @@ import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
+import org.reprap.configuration.Constants;
 import org.reprap.configuration.Preferences;
 import org.reprap.configuration.PrinterSettings;
 import org.reprap.geometry.polygons.Point2D;
@@ -138,35 +140,26 @@ import com.sun.j3d.utils.picking.PickTool;
  * arrange them, and build them in the machine.
  */
 public class RepRapBuild extends JPanel implements MouseListener {
-    private static final long serialVersionUID = 1L;
-    private MouseObject mouse = null;
-    private PickCanvas pickCanvas = null; // The thing picked by a mouse click
-    private STLObject lastPicked = null; // The last thing picked
+    private MouseObject mouse;
+    private PickCanvas pickCanvas; // The thing picked by a mouse click
+    private STLObject lastPicked; // The last thing picked
     private final AllSTLsToBuild stls;
     private boolean reordering;
-    private File wv_location = null;
-    private double mouse_tf = 50;
-    private double mouse_zf = 50;
-    private double xwv = 300;
-    private double ywv = 300;
-    private double zwv = 300;
-    private double RadiusFactor = 0.7;
-    private double BackFactor = 2.0;
-    private double FrontFactor = 0.001;
-    private double BoundFactor = 3.0;
-    private Vector3d wv_offset = new Vector3d(-17.3, -24.85, -2);
-    private Color3f bgColour = new Color3f(0.9f, 0.9f, 0.9f);
-    private Color3f selectedColour = new Color3f(0.6f, 0.2f, 0.2f);
-    private Color3f machineColour = new Color3f(0.7f, 0.7f, 0.7f);
-    private Appearance picked_app = null;
-    private Appearance wv_app = null;
-    private final BranchGroup wv_and_stls = new BranchGroup();
-    private STLObject world = null;
-    private STLObject workingVolume = null;
-    private VirtualUniverse universe = null;
-    private BranchGroup sceneBranchGroup = null;
-    private Bounds applicationBounds = null;
-    private static final Color3f black = new Color3f(0, 0, 0);
+    private double xwv;
+    private double ywv;
+    private double zwv;
+    private static final double RADIUS_FACTOR = 0.7;
+    private static final double BACK_CLIP_FACTOR = 2.0;
+    private static final double FRONT_FACTOR = 0.001;
+    private static final double BOUNDS_FACTOR = 3.0;
+    private static final Color3f BACKGROUND_COLOR = new Color3f(0.9f, 0.9f, 0.9f);
+    private static final Color3f SELECTED_COLOR = new Color3f(0.6f, 0.2f, 0.2f);
+    private static final Color3f MACHINE_COLOR = new Color3f((float) 0.3, (float) 0.3, (float) 0.3);
+    private final Appearance pickedAppearance = new Appearance();
+    private final BranchGroup workingVolumeAndStls = new BranchGroup();
+    private STLObject world;
+    private STLObject workingVolume;
+    private BranchGroup sceneBranchGroup;
 
     public RepRapBuild() throws IOException {
         initialise();
@@ -180,9 +173,9 @@ public class RepRapBuild extends JPanel implements MouseListener {
     }
 
     private Background createBackground() {
-        final Background back = new Background(bgColour);
-        back.setApplicationBounds(createApplicationBounds());
-        return back;
+        final Background background = new Background(BACKGROUND_COLOR);
+        background.setApplicationBounds(createApplicationBounds());
+        return background;
     }
 
     private BranchGroup createViewBranchGroup(final TransformGroup[] tgArray, final ViewPlatform vp) {
@@ -206,9 +199,9 @@ public class RepRapBuild extends JPanel implements MouseListener {
         return vpBranchGroup;
     }
 
-    private BranchGroup createSceneBranchGroup() {
+    private BranchGroup createSceneBranchGroup(final File baseFile) {
         final BranchGroup objRoot = new BranchGroup();
-        final Bounds lightBounds = getApplicationBounds();
+        final Bounds lightBounds = createApplicationBounds();
         final AmbientLight ambLight = new AmbientLight(true, new Color3f(1.0f, 1.0f, 1.0f));
         ambLight.setInfluencingBounds(lightBounds);
         objRoot.addChild(ambLight);
@@ -217,18 +210,20 @@ public class RepRapBuild extends JPanel implements MouseListener {
         headLight.setInfluencingBounds(lightBounds);
         objRoot.addChild(headLight);
 
-        mouse = new MouseObject(getApplicationBounds(), mouse_tf, mouse_zf);
+        mouse = new MouseObject(createApplicationBounds());
 
-        wv_and_stls.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-        wv_and_stls.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        wv_and_stls.setCapability(Group.ALLOW_CHILDREN_READ);
+        workingVolumeAndStls.setCapability(Group.ALLOW_CHILDREN_EXTEND);
+        workingVolumeAndStls.setCapability(Group.ALLOW_CHILDREN_WRITE);
+        workingVolumeAndStls.setCapability(Group.ALLOW_CHILDREN_READ);
 
         // Load the STL file for the working volume
-        world = new STLObject(wv_and_stls);
+        world = new STLObject(workingVolumeAndStls);
 
+        final Appearance workingVolumeAppearance = new Appearance();
+        workingVolumeAppearance.setMaterial(new Material(MACHINE_COLOR, Constants.BLACK, MACHINE_COLOR, Constants.BLACK, 0f));
         workingVolume = new STLObject();
-        workingVolume.addSTL(getStlBackground(), wv_offset, wv_app, null);
-        wv_and_stls.addChild(workingVolume.top());
+        workingVolume.addSTL(baseFile, null, workingVolumeAppearance, null);
+        workingVolumeAndStls.addChild(workingVolume.top());
 
         // Set the mouse to move everything
         mouse.move(world, false);
@@ -252,7 +247,7 @@ public class RepRapBuild extends JPanel implements MouseListener {
             picked = att.getParent();
             if (picked != null) {
                 if (picked != workingVolume) {
-                    picked.setAppearance(picked_app); // Highlight it
+                    picked.setAppearance(pickedAppearance); // Highlight it
                     if (lastPicked != null && !reordering) {
                         lastPicked.restoreAppearance(); // lowlight
                     }
@@ -311,7 +306,7 @@ public class RepRapBuild extends JPanel implements MouseListener {
                 newAtt.setMaterial(originalAttributes.getMaterial());
                 stl.translate(offset);
                 if (stl.numChildren() > 0) {
-                    wv_and_stls.addChild(stl.top());
+                    workingVolumeAndStls.addChild(stl.top());
                     stls.add(stl);
                 }
             }
@@ -339,7 +334,7 @@ public class RepRapBuild extends JPanel implements MouseListener {
         if (att != null) {
             // New separate object, or just appended to lastPicked?
             if (stl.numChildren() > 0) {
-                wv_and_stls.addChild(stl.top());
+                workingVolumeAndStls.addChild(stl.top());
                 stls.add(stl);
             }
 
@@ -355,7 +350,7 @@ public class RepRapBuild extends JPanel implements MouseListener {
 
         // New separate object, or just appended to lastPicked?
         if (stl.numChildren() > 0) {
-            wv_and_stls.addChild(stl.top());
+            workingVolumeAndStls.addChild(stl.top());
             stls.add(index, stl);
         }
     }
@@ -379,7 +374,7 @@ public class RepRapBuild extends JPanel implements MouseListener {
             throw new RuntimeException(e);
         }
         for (int i = 0; i < newStls.size(); i++) {
-            wv_and_stls.addChild(newStls.get(i).top());
+            workingVolumeAndStls.addChild(newStls.get(i).top());
         }
         stls.add(newStls);
     }
@@ -392,23 +387,17 @@ public class RepRapBuild extends JPanel implements MouseListener {
         stls.saveSCAD(selectedFile);
     }
 
-    private void addCanvas3D(final Canvas3D c3d) {
+    private void addCanvas3D(final Canvas3D canvas3d) {
         setLayout(new BorderLayout());
-        add(c3d, BorderLayout.CENTER);
+        add(canvas3d, BorderLayout.CENTER);
         doLayout();
-
-        if (sceneBranchGroup != null) {
-            c3d.addMouseListener(this);
-
-            pickCanvas = new PickCanvas(c3d, sceneBranchGroup);
-            pickCanvas.setMode(PickTool.GEOMETRY_INTERSECT_INFO);
-            pickCanvas.setTolerance(4.0f);
-        }
-
-        c3d.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+        canvas3d.addMouseListener(this);
+        pickCanvas = new PickCanvas(canvas3d, sceneBranchGroup);
+        pickCanvas.setMode(PickTool.GEOMETRY_INTERSECT_INFO);
+        pickCanvas.setTolerance(4.0f);
+        canvas3d.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
     }
 
-    // Callbacks for when the user rotates the selected object
     public void xRotate() {
         if (lastPicked != null) {
             lastPicked.xClick();
@@ -427,7 +416,6 @@ public class RepRapBuild extends JPanel implements MouseListener {
         }
     }
 
-    // Callback for a request to convert units
     public void inToMM() {
         if (lastPicked != null) {
             lastPicked.inToMM();
@@ -464,7 +452,7 @@ public class RepRapBuild extends JPanel implements MouseListener {
             lastPicked.restoreAppearance();
             lastPicked = stls.getNextOne(lastPicked);
         }
-        lastPicked.setAppearance(picked_app);
+        lastPicked.setAppearance(pickedAppearance);
         mouse.move(lastPicked, true);
     }
 
@@ -481,80 +469,50 @@ public class RepRapBuild extends JPanel implements MouseListener {
         }
         if (index >= 0) {
             stls.remove(index);
-            index = wv_and_stls.indexOfChild(lastPicked.top());
+            index = workingVolumeAndStls.indexOfChild(lastPicked.top());
             mouseToWorld();
-            wv_and_stls.removeChild(index);
+            workingVolumeAndStls.removeChild(index);
             lastPicked = null;
         }
     }
 
     private void initialise() throws IOException {
-        final Preferences preferences = Preferences.getInstance();
-        // TODO Set everything up from the properties file
-        // TODO All this needs to go into Preferences.java
-        wv_location = preferences.getBuildBaseStlFile();
-        mouse_tf = 50;
-        mouse_zf = 50;
-        RadiusFactor = 0.7;
-        BackFactor = 2.0;
-        FrontFactor = 0.001;
-        BoundFactor = 3.0;
-        final PrinterSettings printerSettings = preferences.getPrinterSettings();
+        final PrinterSettings printerSettings = Preferences.getInstance().getPrinterSettings();
         xwv = printerSettings.getBedSizeX();
         ywv = printerSettings.getBedSizeY();
         zwv = printerSettings.getMaximumZ();
-        wv_offset = new Vector3d(0, 0, 0);
-        bgColour = new Color3f((float) 0.9, (float) 0.9, (float) 0.9);
-        selectedColour = new Color3f((float) 0.6, (float) 0.2, (float) 0.2);
-        machineColour = new Color3f((float) 0.3, (float) 0.3, (float) 0.3);
-        picked_app = new Appearance();
-        picked_app.setMaterial(new Material(selectedColour, RepRapBuild.black, selectedColour, RepRapBuild.black, 0f));
-
-        wv_app = new Appearance();
-        wv_app.setMaterial(new Material(machineColour, RepRapBuild.black, machineColour, RepRapBuild.black, 0f));
-
-        initJava3d();
-    }
-
-    private double getBackClipDistance() {
-        return BackFactor * getViewPlatformActivationRadius();
-    }
-
-    private double getFrontClipDistance() {
-        return FrontFactor * getViewPlatformActivationRadius();
+        pickedAppearance.setMaterial(new Material(SELECTED_COLOR, Constants.BLACK, SELECTED_COLOR, Constants.BLACK, 0f));
+        sceneBranchGroup = createSceneBranchGroup(printerSettings.getBuildPlatformStl());
+        final ViewPlatform viewPlatform = createViewPlatform();
+        final BranchGroup viewBranchGroup = createViewBranchGroup(getViewTransformGroupArray(), viewPlatform);
+        createView(viewPlatform);
+        final Background background = createBackground();
+        sceneBranchGroup.addChild(background);
+        final Locale locale = new Locale(new VirtualUniverse());
+        locale.addBranchGraph(sceneBranchGroup);
+        locale.addBranchGraph(viewBranchGroup);
     }
 
     private Bounds createApplicationBounds() {
-        applicationBounds = new BoundingSphere(new Point3d(xwv * 0.5, ywv * 0.5, zwv * 0.5), BoundFactor
+        return new BoundingSphere(new Point3d(xwv * 0.5, ywv * 0.5, zwv * 0.5), BOUNDS_FACTOR
                 * getViewPlatformActivationRadius());
-        return applicationBounds;
     }
 
     private float getViewPlatformActivationRadius() {
-        return (float) (RadiusFactor * Math.sqrt(xwv * xwv + ywv * ywv + zwv * zwv));
+        return (float) (RADIUS_FACTOR * Math.sqrt(xwv * xwv + ywv * ywv + zwv * zwv));
     }
 
-    private View createView(final ViewPlatform vp) {
+    private void createView(final ViewPlatform viewPlatform) {
         final View view = new View();
+        view.setPhysicalEnvironment(new PhysicalEnvironment());
+        view.setPhysicalBody(new PhysicalBody());
+        view.attachViewPlatform(viewPlatform);
+        view.setBackClipDistance(BACK_CLIP_FACTOR * getViewPlatformActivationRadius());
+        view.setFrontClipDistance(FRONT_FACTOR * getViewPlatformActivationRadius());
 
-        final PhysicalBody pb = createPhysicalBody();
-        final PhysicalEnvironment pe = createPhysicalEnvironment();
-
-        view.setPhysicalEnvironment(pe);
-        view.setPhysicalBody(pb);
-
-        if (vp != null) {
-            view.attachViewPlatform(vp);
-        }
-
-        view.setBackClipDistance(getBackClipDistance());
-        view.setFrontClipDistance(getFrontClipDistance());
-
-        final Canvas3D c3d = createCanvas3D();
-        view.addCanvas3D(c3d);
-        addCanvas3D(c3d);
-
-        return view;
+        final Canvas3D canvas3d = createCanvas3D();
+        view.addCanvas3D(canvas3d);
+        addCanvas3D(canvas3d);
     }
 
     private Canvas3D createCanvas3D() {
@@ -565,62 +523,12 @@ public class RepRapBuild extends JPanel implements MouseListener {
         return new Canvas3D(gd[0].getBestConfiguration(gc3D));
     }
 
-    private Bounds getApplicationBounds() {
-        if (applicationBounds == null) {
-            applicationBounds = createApplicationBounds();
-        }
-
-        return applicationBounds;
-    }
-
-    private void initJava3d() {
-        universe = createVirtualUniverse();
-
-        final javax.media.j3d.Locale locale = createLocale(universe);
-
-        sceneBranchGroup = createSceneBranchGroup();
-
-        final ViewPlatform vp = createViewPlatform();
-        final BranchGroup viewBranchGroup = createViewBranchGroup(getViewTransformGroupArray(), vp);
-
-        createView(vp);
-
-        final Background background = createBackground();
-
-        if (background != null) {
-            sceneBranchGroup.addChild(background);
-        }
-
-        locale.addBranchGraph(sceneBranchGroup);
-        addViewBranchGroup(locale, viewBranchGroup);
-    }
-
-    private PhysicalBody createPhysicalBody() {
-        return new PhysicalBody();
-    }
-
-    private PhysicalEnvironment createPhysicalEnvironment() {
-        return new PhysicalEnvironment();
-    }
-
     private ViewPlatform createViewPlatform() {
-        final ViewPlatform vp = new ViewPlatform();
-        vp.setViewAttachPolicy(View.RELATIVE_TO_FIELD_OF_VIEW);
-        vp.setActivationRadius(getViewPlatformActivationRadius());
+        final ViewPlatform viewPlatform = new ViewPlatform();
+        viewPlatform.setViewAttachPolicy(View.RELATIVE_TO_FIELD_OF_VIEW);
+        viewPlatform.setActivationRadius(getViewPlatformActivationRadius());
 
-        return vp;
-    }
-
-    private VirtualUniverse createVirtualUniverse() {
-        return new VirtualUniverse();
-    }
-
-    private void addViewBranchGroup(final javax.media.j3d.Locale locale, final BranchGroup bg) {
-        locale.addBranchGraph(bg);
-    }
-
-    private javax.media.j3d.Locale createLocale(final VirtualUniverse u) {
-        return new javax.media.j3d.Locale(u);
+        return viewPlatform;
     }
 
     private TransformGroup[] getViewTransformGroupArray() {
@@ -651,9 +559,4 @@ public class RepRapBuild extends JPanel implements MouseListener {
 
         return tgArray;
     }
-
-    private File getStlBackground() {
-        return wv_location;
-    }
-
 }

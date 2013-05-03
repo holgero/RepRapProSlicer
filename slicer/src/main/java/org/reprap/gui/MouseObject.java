@@ -69,15 +69,15 @@ import com.sun.j3d.utils.behaviors.mouse.MouseTranslate;
 import com.sun.j3d.utils.behaviors.mouse.MouseZoom;
 
 public class MouseObject {
+    private static final double MOUSE_TRANSLATION_FACTOR = 50;
+    private static final double MOUSE_ZOOM_FACTOR = 50;
     private final BranchGroup top; // Attach this to the rest of the tree
     private final TransformGroup free; // Mouse transform with no restrictions
     private final TransformGroup slide; // Mouse transform that only does XY sliding
     private TransformGroup trans; // Set to one of the two above   
     private STLObject movingThing = null; // The part of the scene being moved
 
-    // Constructor takes the bounds of the world and two factors for translate
-    // and zoom movements
-    MouseObject(final Bounds behaviorBounds, final double mouse_tf, final double mouse_zf) {
+    MouseObject(final Bounds behaviorBounds) {
         // Set up the free transform that allows all movements
 
         free = new TransformGroup();
@@ -90,12 +90,12 @@ public class MouseObject {
 
         final MouseTranslate mt = new MouseTranslate(free);
         mt.setSchedulingBounds(behaviorBounds);
-        mt.setFactor(mouse_tf * mt.getXFactor(), mouse_tf * mt.getYFactor());
+        mt.setFactor(MOUSE_TRANSLATION_FACTOR * mt.getXFactor(), MOUSE_TRANSLATION_FACTOR * mt.getYFactor());
         free.addChild(mt);
 
         final MouseZoom mz = new MouseZoom(free);
         mz.setSchedulingBounds(behaviorBounds);
-        mz.setFactor(mouse_zf * mz.getFactor());
+        mz.setFactor(MOUSE_ZOOM_FACTOR * mz.getFactor());
         free.addChild(mz);
 
         // Set up the slide transform that only allows XY movement
@@ -106,7 +106,7 @@ public class MouseObject {
 
         final MouseTranslate mts = new MouseTranslate(slide);
         mts.setSchedulingBounds(behaviorBounds);
-        mts.setFactor(mouse_tf * mts.getXFactor(), mouse_tf * mts.getYFactor());
+        mts.setFactor(MOUSE_TRANSLATION_FACTOR * mts.getXFactor(), MOUSE_TRANSLATION_FACTOR * mts.getYFactor());
         slide.addChild(mts);
 
         // Set up the thing to attach and detach

@@ -32,6 +32,7 @@ import org.apache.logging.log4j.Logger;
  * space.
  */
 public class Preferences {
+    private static final String SHIELD_STL_FILENAME = "shield.stl";
     private static final Logger LOGGER = LogManager.getLogger(Preferences.class);
     static final String PROPERTIES_FOLDER = ".reprap";
     private static final String PROPERTIES_DIR_DISTRIBUTION = "reprap-configurations";
@@ -100,7 +101,7 @@ public class Preferences {
     /**
      * The name of the user's active machine configuration.
      */
-    public static String getActiveMachineName() {
+    private static String getActiveMachineName() {
         return Machine.getActiveMachine();
     }
 
@@ -108,7 +109,7 @@ public class Preferences {
      * The directory containing all the user's configuration files for their
      * active machine
      */
-    public static File getActiveMachineDir() {
+    private static File getActiveMachineDir() {
         return new File(getReprapRootDir(), getActiveMachineName());
     }
 
@@ -179,7 +180,7 @@ public class Preferences {
     }
 
     private static PrinterSettings createPrinterSettings(final Properties properties) {
-        final PrinterSettings result = new PrinterSettings();
+        final PrinterSettings result = new PrinterSettings(getActiveMachineName());
         result.setBedSizeX(getDoubleProperty(properties, "WorkingX(mm)"));
         result.setBedSizeY(getDoubleProperty(properties, "WorkingY(mm)"));
         result.setMaximumZ(getDoubleProperty(properties, "WorkingZ(mm)"));
@@ -189,6 +190,7 @@ public class Preferences {
         result.setMaximumFeedrateZ(getDoubleProperty(properties, "MaximumFeedrateZ(mm/minute)"));
         result.setPrologueFile(new File(getActiveMachineDir(), PROLOGUE_FILE));
         result.setEpilogueFile(new File(getActiveMachineDir(), EPILOGUE_FILE));
+        result.setBuildPlatformStl(new File(getActiveMachineDir(), BASE_FILE));
         return result;
     }
 
@@ -211,6 +213,9 @@ public class Preferences {
         }
         result.setBrimLines(getIntegerProperty(properties, "BrimLines"));
         result.setShield(getBooleanProperty(properties, "Shield"));
+        final File shieldStlFile = new File(getReprapRootDir(), SHIELD_STL_FILENAME);
+        ensureCorrectStlFilePosition(shieldStlFile);
+        result.setShieldStlFile(shieldStlFile);
         result.setDumpX(getIntegerProperty(properties, "DumpX(mm)"));
         result.setDumpY(getIntegerProperty(properties, "DumpY(mm)"));
         if (properties.getProperty("Support") == null) {
@@ -233,6 +238,22 @@ public class Preferences {
         result.setArcShortSides(getDoubleProperty(properties, "Extruder0_ArcShortSides(0..)"));
         result.setInfillOverlap(getDoubleProperty(properties, "Extruder0_InfillOverlap(mm)"));
         return result;
+    }
+
+    private static void ensureCorrectStlFilePosition(final File shieldStlFile) {
+        if (shieldStlFile.canRead()) {
+            return;
+        }
+        final File legacyStlFile = new File(getActiveMachineDir(), SHIELD_STL_FILENAME);
+        if (legacyStlFile.exists()) {
+            if (!legacyStlFile.renameTo(shieldStlFile)) {
+                throw new RuntimeException("File " + legacyStlFile.getAbsolutePath()
+                        + " exists, but cannot be moved to its new position: " + shieldStlFile.getAbsolutePath() + ".");
+            }
+            return;
+        }
+        throw new RuntimeException("Neither " + legacyStlFile.getAbsolutePath() + " nor " + shieldStlFile.getAbsolutePath()
+                + " exist.");
     }
 
     private static int findExtruderWithMaterial(final Properties properties, final String material) {
@@ -349,10 +370,6 @@ public class Preferences {
         return mainPreferences;
     }
 
-    public File getBuildBaseStlFile() {
-        return new File(getActiveMachineDir(), BASE_FILE);
-    }
-
     /**
      * Compare the user's preferences with the distribution one and report any
      * different names.
@@ -444,19 +461,6 @@ public class Preferences {
             }
         }
         return null;
-    }
-
-    /**
-     * @return an array of all the names of all the materials in extruders
-     */
-    public String[] getAllMaterials() {
-        final ExtruderSettings[] extruderSettings = printerSettings.getExtruderSettings();
-        final String[] result = new String[extruderSettings.length];
-        for (int i = 0; i < extruderSettings.length; i++) {
-            final ExtruderSettings settings = extruderSettings[i];
-            result[i] = settings.getMaterial().getName();
-        }
-        return result;
     }
 
     public static Preferences getInstance() {

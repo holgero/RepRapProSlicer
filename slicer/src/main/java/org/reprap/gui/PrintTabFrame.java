@@ -177,7 +177,7 @@ public class PrintTabFrame extends JInternalFrame {
 
         final JLabel changeMachineLabel = new JLabel();
         changeMachineLabel.setFont(new java.awt.Font("Tahoma", 0, 15));
-        changeMachineLabel.setText("RepRap in use: " + Preferences.getActiveMachineName());
+        changeMachineLabel.setText("RepRap in use: " + Preferences.getInstance().getPrinterSettings().getName());
 
         final JLabel progressLabel = new JLabel();
         progressLabel.setFont(new java.awt.Font("Tahoma", 0, 12));
