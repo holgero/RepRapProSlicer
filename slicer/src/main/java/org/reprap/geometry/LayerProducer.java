@@ -20,9 +20,6 @@ class LayerProducer {
     private final PolygonList allPolygons[];
     private final Preferences preferences = Preferences.getInstance();
 
-    /**
-     * Set up a normal layer
-     */
     LayerProducer(final PolygonList ap[], final LayerRules lc, final SimulationPlotter simPlot) throws IOException {
         layerRules = lc;
         simulationPlot = simPlot;
@@ -32,9 +29,6 @@ class LayerProducer {
         if (simulationPlot != null) {
             if (!simulationPlot.isInitialised()) {
                 final Rectangle rec = new Rectangle(lc.getBox());
-                if (preferences.getPrintSettings().printShield()) {
-                    rec.expand(Point2D.add(rec.sw(), new Point2D(-7, -7))); // TODO: Yuk - this should be a parameter
-                }
                 simulationPlot.init(rec, "" + lc.getModelLayer() + " (z=" + lc.getModelZ() + ")");
             } else {
                 try {
@@ -49,88 +43,6 @@ class LayerProducer {
         }
     }
 
-    private Point2D posNow() {
-        return new Point2D(layerRules.getPrinter().getX(), layerRules.getPrinter().getY());
-    }
-
-    /**
-     * speed up for short lines
-     */
-    private boolean shortLine(final Point2D p, final boolean stopExtruder) {
-        final GCodePrinter printer = layerRules.getPrinter();
-        final double shortLen = printer.getExtruder().getShortLength();
-        if (shortLen < 0) {
-            return false;
-        }
-        final Point2D a = Point2D.sub(posNow(), p);
-        final double amod = a.mod();
-        if (amod > shortLen) {
-            return false;
-        }
-
-        // TODO: FIX THIS
-        //		printer.setSpeed(LinePrinter.speedFix(printer.getExtruder().getXYSpeed(), 
-        //				printer.getExtruder().getShortSpeed()));
-        printer.printTo(p.x(), p.y(), layerRules.getMachineZ(), printer.getExtruder().getShortLineFeedrate(), stopExtruder);
-        return true;
-    }
-
-    /**
-     * @param first
-     *            First point, the end of the line segment to be plotted to from
-     *            the current position.
-     * @param second
-     *            Second point, the end of the next line segment; used for angle
-     *            calculations
-     * @param feedrate
-     *            The feed rate for this plot
-     * @param turnOff
-     *            True if the extruder should be turned off at the end of this
-     *            segment.
-     */
-    private void plot(final Point2D first, final Point2D second, final double feedrate, final boolean stopExtruder) {
-        if (shortLine(first, stopExtruder)) {
-            return;
-        }
-
-        final GCodePrinter printer = layerRules.getPrinter();
-        final double z = layerRules.getMachineZ();
-
-        final double speedUpLength = printer.getExtruder().getAngleSpeedUpLength();
-        if (speedUpLength > 0) {
-            final SegmentSpeeds ss = SegmentSpeeds.createSegmentSpeeds(posNow(), first, speedUpLength);
-            if (ss == null) {
-                return;
-            }
-
-            printer.printTo(ss.getP1().x(), ss.getP1().y(), z, feedrate, false);
-
-            if (ss.isPlotMiddle()) {
-                //TODO: FIX THIS.
-                //				int straightSpeed = LinePrinter.speedFix(currentSpeed, (1 - 
-                //						printer.getExtruder().getAngleSpeedFactor()));
-                //printer.setFeedrate(printer.getExtruder().getAngleFeedrate());
-                printer.printTo(ss.getP2().x(), ss.getP2().y(), z, printer.getExtruder().getAngleFeedrate(), false);
-            }
-
-            printer.printTo(ss.getP3().x(), ss.getP3().y(), z, printer.getExtruder().getAngleFeedrate(), stopExtruder);
-            // Leave speed set for the start of the next line.
-        } else {
-            printer.printTo(first.x(), first.y(), z, feedrate, stopExtruder);
-        }
-    }
-
-    private void move(final Point2D first, final boolean lift) {
-        final GCodePrinter printer = layerRules.getPrinter();
-        final double z = layerRules.getMachineZ();
-        printer.moveTo(first.x(), first.y(), z, printer.getExtruder().getFastXYFeedrate(), lift);
-    }
-
-    /**
-     * Plot a polygon
-     * 
-     * @throws IOException
-     */
     private void plot(final Polygon polygon, final boolean firstOneInLayer) throws IOException {
         if (polygon.size() <= 1) {
             return;
@@ -147,7 +59,7 @@ class LayerProducer {
         }
 
         if (plotDist < preferences.getMachineResolution() * 0.5) {
-            LOGGER.debug("Rejected line with " + polygon.size() + " points, length: " + plotDist);
+            LOGGER.info("Rejected line with " + polygon.size() + " points, length: " + plotDist);
             return;
         }
 
@@ -199,18 +111,16 @@ class LayerProducer {
         }
         for (int i = 0; i < pathLength; i++) {
             final Point2D point = extrusionPath.point(i % extrusionPath.size());
-            final Point2D next = extrusionPath.point((i + 1) % extrusionPath.size());
             final double feedrate = extrusionPath.speed(i % extrusionPath.size());
             final boolean oldexoff = extrudeOff;
             extrudeOff = (i > extrusionPath.extrudeEnd() && extrudeBackLength > 0) || i == pathLength - 1;
-            plot(point, next, feedrate, extrudeOff);
+            printer.printTo(point.x(), point.y(), layerRules.getMachineZ(), feedrate, extrudeOff);
             if (oldexoff ^ extrudeOff) {
                 printer.retract();
             }
         }
-        // If getMinLiftedZ() is negative, never lift the head
-        final boolean lift = extruder.getMinLiftedZ() >= 0 || liftZ > 0;
-        move(posNow(), lift);
+        printer.moveTo(printer.getX(), printer.getY(), layerRules.getMachineZ(), printer.getExtruder().getFastXYFeedrate(),
+                liftZ > 0);
     }
 
     private void singleMove(final GCodePrinter printer, final double liftZ, final Point2D point) {
@@ -225,10 +135,6 @@ class LayerProducer {
         }
     }
 
-    /**
-     * Master plot function - draw everything. Supress border and/or hatch by
-     * setting borderPolygons and/or hatchedPolygons null
-     */
     void plot() throws IOException {
         boolean firstOneInLayer = true;
 
@@ -239,5 +145,4 @@ class LayerProducer {
             }
         }
     }
-
 }

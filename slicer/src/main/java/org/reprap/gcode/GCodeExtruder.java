@@ -30,17 +30,9 @@ public class GCodeExtruder {
      */
     private double fastEFeedrate;
     /**
-     * Length (mm) to speed up round corners
-     */
-    private double asLength;
-    /**
      * Factor by which to speed up round corners
      */
     private double asFactor;
-    /**
-     * Line length below which to plot faster
-     */
-    private double shortLength;
     /**
      * Factor for short line speeds
      */
@@ -74,10 +66,6 @@ public class GCodeExtruder {
      * The number of mm to stop extruding before the end of a track
      */
     private double extrusionOverRun;
-    /**
-     * The smallest allowable free-movement height above the base
-     */
-    private double minLiftedZ = 1;
     private double extrusionFoundationWidth;
     private double arcCompensationFactor;
     private double arcShortSides;
@@ -126,17 +114,14 @@ public class GCodeExtruder {
         fastXYFeedrate = preferences.loadDouble(prefName + "FastXYFeedrate(mm/minute)");
         fastEFeedrate = preferences.loadDouble(prefName + "FastEFeedrate(mm/minute)");
         middleStart = preferences.loadBool(prefName + "MiddleStart");
-        asLength = -1;
         asFactor = 0.5;
         material = preferences.loadString(prefName + "MaterialType(name)");
-        shortLength = -1;
         shortSpeed = 1;
         infillOverlap = preferences.loadDouble(prefName + "InfillOverlap(mm)");
         extraExtrusionForLayer = preferences.loadDouble(prefName + "ExtraExtrusionDistanceForLayer(mm)");
         extraExtrusionForPolygon = preferences.loadDouble(prefName + "ExtraExtrusionDistanceForPolygon(mm)");
         retractionDistance = preferences.loadDouble(prefName + "RetractionDistance(mm)");
         extrusionOverRun = preferences.loadDouble(prefName + "ExtrusionOverRun(mm)");
-        minLiftedZ = -1;
         extrusionFoundationWidth = preferences.loadDouble(prefName + "ExtrusionFoundationWidth(mm)");
         arcCompensationFactor = preferences.loadDouble(prefName + "ArcCompensationFactor(0..)");
         arcShortSides = preferences.loadDouble(prefName + "ArcShortSides(0..)");
@@ -162,13 +147,6 @@ public class GCodeExtruder {
             extruderState.setExtruding(false);
             extruderState.setReverse(false);
         }
-    }
-
-    /**
-     * The length in mm to speed up when going round corners (non-Javadoc)
-     */
-    public double getAngleSpeedUpLength() {
-        return asLength;
     }
 
     public double getAngleFeedrate() {
@@ -203,14 +181,6 @@ public class GCodeExtruder {
     }
 
     /**
-     * get short lengths which need to be plotted faster set -ve to turn this
-     * off.
-     */
-    public double getShortLength() {
-        return shortLength;
-    }
-
-    /**
      * Feedrate for short lines in mm/minute
      */
     public double getShortLineFeedrate() {
@@ -227,13 +197,6 @@ public class GCodeExtruder {
 
     public double getExtrusionOverRun() {
         return extrusionOverRun;
-    }
-
-    /**
-     * The smallest allowable free-movement height above the base
-     */
-    public double getMinLiftedZ() {
-        return minLiftedZ;
     }
 
     /**
