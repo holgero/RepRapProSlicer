@@ -18,16 +18,28 @@
  */
 package org.reprap.configuration;
 
+import javax.xml.bind.annotation.XmlElement;
+
 public class ExtruderSettings {
+    @XmlElement
     private double nozzleDiameter; // mm 0.5
+    @XmlElement
     private double extrudeRatio; // ratio 1.0
+    @XmlElement
     private double airExtrusionFeedRate; // mm/minute 40000.0
+    @XmlElement
     private double printExtrusionRate; // mm/minute 2000.0
+    @XmlElement
     private double retraction; // mm 2.079
+    @XmlElement
     private double extraLengthPerLayer; // mm 0.104
+    @XmlElement
     private double extraLengthPerPolygon; // mm 0.104
+    @XmlElement
     private int earlyRetraction; // # -1
+    @XmlElement
     private double lift; // mm 0
+    @XmlElement
     private MaterialSettings material;
 
     public double getNozzleDiameter() {

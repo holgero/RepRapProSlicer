@@ -20,32 +20,42 @@ package org.reprap.configuration;
 
 import java.io.File;
 
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+
 public class PrinterSettings {
     private static final double MACHINE_RESOLUTION = 0.05; // mm
-    private final String name;
+    @XmlAttribute
+    private String name; // text
     // dimensions
+    @XmlElement
     private double bedSizeX; // mm 200
+    @XmlElement
     private double bedSizeY; // mm 200
+    @XmlElement
     private double maximumZ; // mm 100
     // visualization
+    @XmlElement
     private File buildPlatformStl; // file
     // travel speeds
+    @XmlElement
     private double maximumFeedrateX; // mm/minute 15000
+    @XmlElement
     private double maximumFeedrateY; // mm/minute 15000
+    @XmlElement
     private double maximumFeedrateZ; // mm/minute 200
     // G-Code
+    @XmlElement
     private boolean relativeDistanceE; // boolean true
+    @XmlElement
     private File prologueFile; // file
+    @XmlElement
     private File epilogueFile; // file
     // Extruders
+    @XmlElement
     private ExtruderSettings[] extruderSettings;
 
-    PrinterSettings(final String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
+    PrinterSettings() {
     }
 
     public double getBedSizeX() {
@@ -138,5 +148,13 @@ public class PrinterSettings {
 
     void setBuildPlatformStl(final File buildPlatformStl) {
         this.buildPlatformStl = buildPlatformStl;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    void setName(final String name) {
+        this.name = name;
     }
 }

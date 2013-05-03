@@ -19,19 +19,17 @@
 package org.reprap.configuration;
 
 import javax.vecmath.Color3f;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 public class MaterialSettings {
-    private final String name;
+    @XmlAttribute
+    private String name; // text
+    @XmlElement
     private double diameter; // mm 1.75
+    @XmlJavaTypeAdapter(Color3fXmlAdapter.class)
     private Color3f color; // rgb value
-
-    public MaterialSettings(final String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
 
     public double getDiameter() {
         return diameter;
@@ -47,5 +45,13 @@ public class MaterialSettings {
 
     void setColor(final Color3f color) {
         this.color = color;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    void setName(final String name) {
+        this.name = name;
     }
 }

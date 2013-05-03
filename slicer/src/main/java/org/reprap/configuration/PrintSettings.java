@@ -20,41 +20,66 @@ package org.reprap.configuration;
 
 import java.io.File;
 
+import javax.xml.bind.annotation.XmlElement;
+
 public class PrintSettings {
     // layers
+    @XmlElement
     private double layerHeight; // mm 0.24
     // perimeters
+    @XmlElement
     private int verticalShells; // # 2
+    @XmlElement
     private int horizontalShells; // # 3
+    @XmlElement
     private boolean insideOut; // boolean true
+    @XmlElement
     private boolean middleStart; // boolean false
+    @XmlElement
     private double arcCompensation; // factor 8.0
+    @XmlElement
     private double arcShortSides; // mm 1.0
     // infill
+    @XmlElement
     private double fillDensity; // fraction 0.21
     private FillPattern pattern; // rectilinear
+    @XmlElement
     private double infillOverlap; // mm 0.2
     // speeds
+    @XmlElement
     private double perimeterSpeed; // fraction 0.9
+    @XmlElement
     private double infillSpeed; // fraction 1.0
     // skirt
     // TODO make this a real skirt around the print, give it a width, a height and a distance from the print
+    @XmlElement
     private boolean skirt; // boolean false
     // brim
+    @XmlElement
     private int brimLines; // # 8
     // dump area and shield
+    @XmlElement
     private boolean shield; // boolean true
+    @XmlElement
     private File shieldStlFile; // file 
+    @XmlElement
     private int dumpX; // mm 50
+    @XmlElement
     private int dumpY; // mm 100
     // support material
+    @XmlElement
     private boolean support; // boolean false
+    @XmlElement
     private int supportExtruder; // # 0
     private FillPattern supportPattern; // linear
+    @XmlElement
     private double supportSpacing; // mm 2.5
+    @XmlElement
     private int raftLayers; // # 0
     // output options
+    @XmlElement
     private boolean verboseGCode; // boolean false
+    @XmlElement
     private boolean pathOptimize; // boolean true
 
     public double getLayerHeight() {

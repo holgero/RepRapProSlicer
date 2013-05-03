@@ -19,6 +19,11 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 import javax.vecmath.Color3f;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -31,6 +36,7 @@ import org.apache.logging.log4j.Logger;
  * are no current preferences the system-wide ones are copied to the user's
  * space.
  */
+@XmlRootElement
 public class Preferences {
     private static final String SHIELD_STL_FILENAME = "shield.stl";
     private static final Logger LOGGER = LogManager.getLogger(Preferences.class);
@@ -124,7 +130,9 @@ public class Preferences {
         return sysConfig;
     }
 
+    @XmlElement
     private final PrintSettings printSettings;
+    @XmlElement
     private final PrinterSettings printerSettings;
 
     private Preferences() {
@@ -134,6 +142,20 @@ public class Preferences {
         printerSettings = createPrinterSettings(mainPreferences);
         printerSettings.setExtruderSettings(createAllExtruderSettings(remaining, mainPreferences,
                 printSettings.getLayerHeight()));
+        writeToXml();
+    }
+
+    private void writeToXml() {
+        try {
+            final JAXBContext context = JAXBContext.newInstance(Preferences.class);
+            final Marshaller marshaller = context.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            marshaller.marshal(this, File.createTempFile("pref", ".xml"));
+        } catch (final JAXBException e) {
+            throw new RuntimeException(e);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static ExtruderSettings[] createAllExtruderSettings(final int extruderCount, final Properties properties,
@@ -168,7 +190,8 @@ public class Preferences {
     }
 
     private static MaterialSettings createMaterialSettings(final Properties properties, final String prefix) {
-        final MaterialSettings material = new MaterialSettings(properties.getProperty(prefix + "MaterialType(name)"));
+        final MaterialSettings material = new MaterialSettings();
+        material.setName(properties.getProperty(prefix + "MaterialType(name)"));
         material.setDiameter(getDoubleProperty(properties, prefix + "FeedDiameter(mm)"));
         material.setColor(new Color3f(loadColorComponent(properties, prefix, "R"), loadColorComponent(properties, prefix, "G"),
                 loadColorComponent(properties, prefix, "B")));
@@ -180,7 +203,8 @@ public class Preferences {
     }
 
     private static PrinterSettings createPrinterSettings(final Properties properties) {
-        final PrinterSettings result = new PrinterSettings(getActiveMachineName());
+        final PrinterSettings result = new PrinterSettings();
+        result.setName(getActiveMachineName());
         result.setBedSizeX(getDoubleProperty(properties, "WorkingX(mm)"));
         result.setBedSizeY(getDoubleProperty(properties, "WorkingY(mm)"));
         result.setMaximumZ(getDoubleProperty(properties, "WorkingZ(mm)"));
