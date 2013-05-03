@@ -20,6 +20,7 @@ package org.reprap.configuration;
 
 public class ExtruderSettings {
     private double nozzleDiameter; // mm 0.5
+    private double retraction; // mm 2.079
 
     public double getNozzleDiameter() {
         return nozzleDiameter;
@@ -27,5 +28,13 @@ public class ExtruderSettings {
 
     void setNozzleDiameter(final double nozzleDiameter) {
         this.nozzleDiameter = nozzleDiameter;
+    }
+
+    public double getRetraction() {
+        return retraction;
+    }
+
+    void setRetraction(final double retraction) {
+        this.retraction = retraction;
     }
 }

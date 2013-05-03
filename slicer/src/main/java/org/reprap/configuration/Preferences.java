@@ -167,24 +167,30 @@ public class Preferences {
         printSettings = createPrintSettings(mainPreferences);
         final int remaining = removeUnusedExtruders(mainPreferences);
         printerSettings = createPrinterSettings(mainPreferences);
-        printerSettings.setExtruderSettings(createAllExtruderSettings(remaining, mainPreferences));
+        printerSettings.setExtruderSettings(createAllExtruderSettings(remaining, mainPreferences,
+                printSettings.getLayerHeight()));
         fixupExtruderDelayProperties(mainPreferences, printSettings.getLayerHeight());
         removeUnusedProperties(mainPreferences);
     }
 
-    private static ExtruderSettings[] createAllExtruderSettings(final int extruderCount, final Properties properties) {
+    private static ExtruderSettings[] createAllExtruderSettings(final int extruderCount, final Properties properties,
+            final double layerHeight) {
         final ExtruderSettings[] extruderSettings = new ExtruderSettings[extruderCount];
         for (int i = 0; i < extruderSettings.length; i++) {
-            final ExtruderSettings settings = createExtruderSettings(i, properties);
+            final ExtruderSettings settings = createExtruderSettings(i, properties, layerHeight);
             extruderSettings[i] = settings;
         }
         return extruderSettings;
     }
 
-    private static ExtruderSettings createExtruderSettings(final int number, final Properties properties) {
+    private static ExtruderSettings createExtruderSettings(final int number, final Properties properties,
+            final double layerHeight) {
         final ExtruderSettings settings = new ExtruderSettings();
         // this is wrong, but the migration from the properties must somehow guess the nozzle diameter
-        settings.setNozzleDiameter(getDoubleProperty(properties, "Extruder" + number + "_ExtrusionSize(mm)"));
+        final String prefix = "Extruder" + number + "_";
+        settings.setNozzleDiameter(getDoubleProperty(properties, prefix + "ExtrusionSize(mm)"));
+        settings.setRetraction(toFilamentLength(properties, getDoubleProperty(properties, prefix + "Reverse(ms)"), number,
+                layerHeight));
         return settings;
     }
 
@@ -331,7 +337,6 @@ public class Preferences {
 
     private static void fixupExtruderDelayProperties(final Properties properties, final double layerHeight) {
         final Map<String, String> newValues = new HashMap<>();
-        calculateDistance(properties, newValues, "Reverse\\(ms\\)", "RetractionDistance(mm)", layerHeight);
         calculateDistance(properties, newValues, "ExtrusionDelayForLayer\\(ms\\)", "ExtraExtrusionDistanceForLayer(mm)",
                 layerHeight);
         calculateDistance(properties, newValues, "ExtrusionDelayForPolygon\\(ms\\)", "ExtraExtrusionDistanceForPolygon(mm)",

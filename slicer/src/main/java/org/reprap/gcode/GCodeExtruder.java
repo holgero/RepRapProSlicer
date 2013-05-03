@@ -92,6 +92,7 @@ public class GCodeExtruder {
 
     private void loadPreferences(final Preferences preferences, final ExtruderSettings extruderSettings) {
         extrusionSize = extruderSettings.getNozzleDiameter();
+        retractionDistance = extruderSettings.getRetraction();
         final String prefName = "Extruder" + myExtruderID + "_";
         fastXYFeedrate = preferences.loadDouble(prefName + "FastXYFeedrate(mm/minute)");
         fastEFeedrate = preferences.loadDouble(prefName + "FastEFeedrate(mm/minute)");
@@ -100,7 +101,6 @@ public class GCodeExtruder {
         infillOverlap = preferences.loadDouble(prefName + "InfillOverlap(mm)");
         extraExtrusionForLayer = preferences.loadDouble(prefName + "ExtraExtrusionDistanceForLayer(mm)");
         extraExtrusionForPolygon = preferences.loadDouble(prefName + "ExtraExtrusionDistanceForPolygon(mm)");
-        retractionDistance = preferences.loadDouble(prefName + "RetractionDistance(mm)");
         extrusionOverRun = preferences.loadDouble(prefName + "ExtrusionOverRun(mm)");
         arcCompensationFactor = preferences.loadDouble(prefName + "ArcCompensationFactor(0..)");
         arcShortSides = preferences.loadDouble(prefName + "ArcShortSides(0..)");
