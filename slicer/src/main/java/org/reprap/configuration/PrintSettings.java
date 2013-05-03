@@ -24,6 +24,8 @@ public class PrintSettings {
     // perimeters
     private int verticalShells; // # 2
     private int horizontalShells; // # 3
+    private boolean insideOut; // boolean true
+    private boolean middleStart; // boolean false
     // infill
     private double fillDensity; // fraction 0.21
     private FillPattern pattern; // rectilinear
@@ -199,5 +201,21 @@ public class PrintSettings {
 
     void setPathOptimize(final boolean pathOptimize) {
         this.pathOptimize = pathOptimize;
+    }
+
+    public boolean isInsideOut() {
+        return insideOut;
+    }
+
+    void setInsideOut(final boolean insideOut) {
+        this.insideOut = insideOut;
+    }
+
+    public boolean isMiddleStart() {
+        return middleStart;
+    }
+
+    void setMiddleStart(final boolean middleStart) {
+        this.middleStart = middleStart;
     }
 }

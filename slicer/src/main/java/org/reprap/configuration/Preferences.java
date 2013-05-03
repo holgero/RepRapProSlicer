@@ -58,12 +58,13 @@ public class Preferences {
             "Extruder\\d_MaxAcceleration\\(mm/minute/minute\\)", "Extruder\\d_ExtrusionFoundationWidth\\(mm\\)",
             "Extruder\\d_ExtrusionLastFoundationWidth\\(mm\\)", "Extruder\\d_ExtrusionTemp\\(C\\)", "Extruder\\d_SingleLine",
             "Extruder\\d_ExtrusionSize\\(mm\\)", "Extruder\\d_ExtrudeRatio\\(0..\\)", "Extruder\\d_ExtrusionOverRun\\(mm\\)",
-            "Extruder\\d_ExtrusionBroadWidth\\(mm\\)", "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)",
-            "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "DumpX\\(mm\\)", "DumpY\\(mm\\)", "Support",
-            "FoundationLayers", "Debug", "WorkingX\\(mm\\)", "WorkingY\\(mm\\)", "WorkingZ\\(mm\\)", "ExtrusionRelative",
-            "PathOptimise", "MaximumFeedrateX\\(mm/minute\\)", "MaximumFeedrateY\\(mm/minute\\)",
-            "MaximumFeedrateZ\\(mm/minute\\)", "MaxXYAcceleration\\(mm/mininute/minute\\)",
-            "MaxZAcceleration\\(mm/mininute/minute\\)", "NumberOfExtruders", "BedTemperature\\(C\\)");
+            "Extruder\\d_ExtrusionBroadWidth\\(mm\\)", "Extruder\\d_InsideOut", "Extruder\\d_MiddleStart",
+            "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling", "StartRectangle",
+            "BrimLines", "Shield", "DumpX\\(mm\\)", "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug",
+            "WorkingX\\(mm\\)", "WorkingY\\(mm\\)", "WorkingZ\\(mm\\)", "ExtrusionRelative", "PathOptimise",
+            "MaximumFeedrateX\\(mm/minute\\)", "MaximumFeedrateY\\(mm/minute\\)", "MaximumFeedrateZ\\(mm/minute\\)",
+            "MaxXYAcceleration\\(mm/mininute/minute\\)", "MaxZAcceleration\\(mm/mininute/minute\\)", "NumberOfExtruders",
+            "BedTemperature\\(C\\)");
 
     private static String propsFile = "reprap.properties";
 
@@ -248,6 +249,8 @@ public class Preferences {
         // assumes physNo# corresponds to No in the resulting properties
         result.setSupportExtruder(getIntegerProperty(properties, "Extruder" + supportExtruderNo + "_Address"));
         result.setPathOptimize(getBooleanProperty(properties, "PathOptimise"));
+        result.setInsideOut(getBooleanProperty(properties, "Extruder0_InsideOut"));
+        result.setMiddleStart(getBooleanProperty(properties, "Extruder0_MiddleStart"));
         return result;
     }
 

@@ -456,12 +456,11 @@ class ProducerStlList {
         final BooleanGridList offBorder = offsetOutline(slice, layerRules, -1);
         final PolygonList borderPolygons = offBorder.borders();
 
-        // If we've got polygons to plot, maybe amend them so they start in the middle 
-        // of a hatch (this gives cleaner boundaries).  
-        if (borderPolygons != null && borderPolygons.size() > 0) {
-            middleStarts(borderPolygons, hatchedPolygons, layerRules, slice);
+        if (Preferences.getInstance().getPrintSettings().isMiddleStart()) {
+            if (borderPolygons != null && borderPolygons.size() > 0) {
+                middleStarts(borderPolygons, hatchedPolygons, layerRules, slice);
+            }
         }
-
         return borderPolygons;
     }
 
@@ -720,56 +719,54 @@ class ProducerStlList {
             final GCodePrinter printer = lc.getPrinter();
             final String material = outline.getAttributes().getMaterial();
             final GCodeExtruder ex = printer.getExtruder(material);
-            if (ex.getMiddleStart()) {
-                Line l = lc.getHatchDirection(false, ex.getExtrusionSize()).pLine();
-                if (i % 2 != 0 ^ lc.getMachineLayer() % 4 > 1) {
-                    l = l.neg();
-                }
-                outline = outline.newStart(outline.maximalVertex(l));
+            Line l = lc.getHatchDirection(false, ex.getExtrusionSize()).pLine();
+            if (i % 2 != 0 ^ lc.getMachineLayer() % 4 > 1) {
+                l = l.neg();
+            }
+            outline = outline.newStart(outline.maximalVertex(l));
 
-                final Point2D start = outline.point(0);
-                final PolygonIndexedPoint pp = hatching.ppSearch(start, material);
-                boolean failed = true;
-                if (pp != null) {
-                    pp.findLongEnough(10, 30);
-                    final int st = pp.near();
-                    final int en = pp.end();
-                    final Polygon pg = pp.polygon();
+            final Point2D start = outline.point(0);
+            final PolygonIndexedPoint pp = hatching.ppSearch(start, material);
+            boolean failed = true;
+            if (pp != null) {
+                pp.findLongEnough(10, 30);
+                final int st = pp.near();
+                final int en = pp.end();
+                final Polygon pg = pp.polygon();
 
-                    // Check that the line from the start of the outline polygon to the first point
-                    // of the tail-in is in solid.  If not, we have jumped between polygons and don't
-                    // want to use that as a lead in.
-                    final Point2D pDif = Point2D.sub(pg.point(st), start);
-                    final Point2D pq1 = Point2D.add(start, Point2D.mul(0.25, pDif));
-                    final Point2D pq2 = Point2D.add(start, Point2D.mul(0.5, pDif));
-                    final Point2D pq3 = Point2D.add(start, Point2D.mul(0.5, pDif));
+                // Check that the line from the start of the outline polygon to the first point
+                // of the tail-in is in solid.  If not, we have jumped between polygons and don't
+                // want to use that as a lead in.
+                final Point2D pDif = Point2D.sub(pg.point(st), start);
+                final Point2D pq1 = Point2D.add(start, Point2D.mul(0.25, pDif));
+                final Point2D pq2 = Point2D.add(start, Point2D.mul(0.5, pDif));
+                final Point2D pq3 = Point2D.add(start, Point2D.mul(0.5, pDif));
 
-                    if (slice.membership(pq1) & slice.membership(pq2) & slice.membership(pq3)) {
-                        outline.add(start);
+                if (slice.membership(pq1) & slice.membership(pq2) & slice.membership(pq3)) {
+                    outline.add(start);
 
-                        if (en >= st) {
-                            for (int j = st; j <= en; j++) {
-                                outline.add(0, pg.point(j)); // Put it on the beginning...
-                                if (j < en) {
-                                    outline.add(pg.point(j)); // ...and the end.
-                                }
-                            }
-                        } else {
-                            for (int j = st; j >= en; j--) {
-                                outline.add(0, pg.point(j));
-                                if (j > en) {
-                                    outline.add(pg.point(j));
-                                }
+                    if (en >= st) {
+                        for (int j = st; j <= en; j++) {
+                            outline.add(0, pg.point(j)); // Put it on the beginning...
+                            if (j < en) {
+                                outline.add(pg.point(j)); // ...and the end.
                             }
                         }
-                        list.set(i, outline);
-                        hatching.cutPolygon(pp.pIndex(), st, en);
-                        failed = false;
+                    } else {
+                        for (int j = st; j >= en; j--) {
+                            outline.add(0, pg.point(j));
+                            if (j > en) {
+                                outline.add(pg.point(j));
+                            }
+                        }
                     }
+                    list.set(i, outline);
+                    hatching.cutPolygon(pp.pIndex(), st, en);
+                    failed = false;
                 }
-                if (failed) {
-                    list.set(i, outline.randomStart()); // Best we can do.
-                }
+            }
+            if (failed) {
+                list.set(i, outline.randomStart()); // Best we can do.
             }
         }
     }
@@ -885,7 +882,7 @@ class ProducerStlList {
         for (int i = 0; i < gridList.size(); i++) {
             final BooleanGrid grid = gridList.get(i);
             final BooleanGridList offset = offsetOutline(grid, lc, multiplier);
-            if (lc.getPrinter().getExtruder(grid.attribute().getMaterial()).getInsideOut()) {
+            if (Preferences.getInstance().getPrintSettings().isInsideOut()) {
                 offset.reverse();
             }
             for (int j = 0; j < offset.size(); j++) {

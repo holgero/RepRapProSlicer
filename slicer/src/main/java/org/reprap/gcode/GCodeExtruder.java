@@ -60,8 +60,6 @@ public class GCodeExtruder {
     private double arcCompensationFactor;
     private double arcShortSides;
     private double extrudeRatio = 1;
-    private boolean middleStart;
-    private boolean insideOut = false;
     private final GCodePrinter printer;
     private double retractionDistance;
     private double extraExtrusionForLayer;
@@ -100,7 +98,6 @@ public class GCodeExtruder {
         final String prefName = "Extruder" + myExtruderID + "_";
         fastXYFeedrate = preferences.loadDouble(prefName + "FastXYFeedrate(mm/minute)");
         fastEFeedrate = preferences.loadDouble(prefName + "FastEFeedrate(mm/minute)");
-        middleStart = preferences.loadBool(prefName + "MiddleStart");
         material = preferences.loadString(prefName + "MaterialType(name)");
         infillOverlap = preferences.loadDouble(prefName + "InfillOverlap(mm)");
         arcCompensationFactor = preferences.loadDouble(prefName + "ArcCompensationFactor(0..)");
@@ -112,7 +109,6 @@ public class GCodeExtruder {
         materialColour = new Appearance();
         materialColour.setMaterial(new Material(col, Constants.BLACK, col, Constants.BLACK, 101f));
         feedDiameter = preferences.loadDouble(prefName + "FeedDiameter(mm)");
-        insideOut = preferences.loadBool(prefName + "InsideOut");
         fastXYFeedrate = Math.min(printer.getFastXYFeedrate(), fastXYFeedrate);
     }
 
@@ -220,15 +216,6 @@ public class GCodeExtruder {
         return myExtruderID;
     }
 
-    /**
-     * If this is true, plot outlines from the middle of their infilling hatch
-     * to reduce dribble at their starts and ends. If false, plot the outline as
-     * the outline.
-     */
-    public boolean getMiddleStart() {
-        return middleStart;
-    }
-
     public double getLift() {
         return lift;
     }
@@ -238,13 +225,6 @@ public class GCodeExtruder {
      */
     double getFeedDiameter() {
         return feedDiameter;
-    }
-
-    /**
-     * Plot perimiters inside out or outside in?
-     */
-    public boolean getInsideOut() {
-        return insideOut;
     }
 
     double getRetractionDistance() {
