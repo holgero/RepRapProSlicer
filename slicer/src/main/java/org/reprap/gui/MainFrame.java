@@ -46,7 +46,6 @@ import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import org.reprap.configuration.Preferences;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.Producer;
 import org.reprap.geometry.ProductionProgressListener;
@@ -67,7 +66,6 @@ public class MainFrame extends JFrame {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         printer = new GCodePrinter();
-        Preferences.getInstance().registerPreferenceChangeListener(printer);
 
         final JMenuBar menubar = new JMenuBar();
         menubar.add(createMenu());
@@ -80,7 +78,6 @@ public class MainFrame extends JFrame {
         final Box builderFrame = new Box(BoxLayout.Y_AXIS);
         builderFrame.add(new JLabel("Arrange items to print on the build bed"));
         builder = new RepRapBuild();
-        org.reprap.configuration.Preferences.getInstance().registerPreferenceChangeListener(builder);
         builderFrame.setMinimumSize(new Dimension(0, 0));
         builderFrame.add(builder);
         builderFrame.setPreferredSize(new Dimension(1000, 800));

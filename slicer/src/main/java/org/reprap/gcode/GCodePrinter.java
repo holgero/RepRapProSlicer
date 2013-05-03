@@ -13,14 +13,14 @@ import javax.swing.JOptionPane;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Constants;
-import org.reprap.configuration.PreferenceChangeListener;
 import org.reprap.configuration.Preferences;
+import org.reprap.configuration.PrintSettings;
 import org.reprap.configuration.PrinterSettings;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.Attributes;
 
-public class GCodePrinter implements PreferenceChangeListener {
+public class GCodePrinter {
     private static final Logger LOGGER = LogManager.getLogger(GCodePrinter.class);
     private final GCodeWriter gcode = new GCodeWriter();
     /**
@@ -49,36 +49,19 @@ public class GCodePrinter implements PreferenceChangeListener {
      */
     private double currentFeedrate = 0;
     /**
-     * Feedrate for fast XY moves on the machine.
-     */
-    private double fastXYFeedrate;
-    /**
-     * Feedrate for fast Z moves on the machine.
-     */
-    private double fastFeedrateZ;
-    /**
      * Array containing the extruders on the 3D printer
      */
     private GCodeExtruder extruders[];
     private int currentExtruder;
-    /**
-     * The maximum X and Y point we can move to
-     */
-    private Point2D bedNorthEast;
-    private double maximumXvalue;
-    private double maximumYvalue;
-    private double maximumZvalue;
-    private boolean relativeExtrusion;
-    private final Preferences preferences = Preferences.getInstance();
     private Purge purge;
 
     public GCodePrinter() throws IOException {
-        refreshPreferences(preferences);
+        loadExtruders();
         gcode.writeCommand("M110", "reset the line numbers");
     }
 
     private void loadExtruders() {
-        final int extruderCount = preferences.getPrinterSettings().getExtruderSettings().length;
+        final int extruderCount = getPrinterSettings().getExtruderSettings().length;
         if (extruderCount < 1) {
             throw new IllegalStateException("A Reprap printer must contain at least one extruder.");
         }
@@ -147,7 +130,7 @@ public class GCodePrinter implements PreferenceChangeListener {
     }
 
     private String getECoordinate(final double extrudeLength) {
-        if (relativeExtrusion) {
+        if (useRelativeExtrusion()) {
             return "E" + round(extrudeLength, 3);
         } else {
             return "E" + round(extruders[currentExtruder].getExtruderState().length(), 3);
@@ -155,9 +138,9 @@ public class GCodePrinter implements PreferenceChangeListener {
     }
 
     private void qZMove(final double z, double feedrate) {
-        if (fastFeedrateZ < feedrate) {
-            LOGGER.debug("GCodeRepRap().qZMove: feedrate (" + feedrate + ") exceeds maximum (" + fastFeedrateZ + ").");
-            feedrate = fastFeedrateZ;
+        if (getFastFeedrateZ() < feedrate) {
+            LOGGER.debug("GCodeRepRap().qZMove: feedrate (" + feedrate + ") exceeds maximum (" + getFastFeedrateZ() + ").");
+            feedrate = getFastFeedrateZ();
         }
 
         final double dz = z - currentZ;
@@ -184,9 +167,9 @@ public class GCodePrinter implements PreferenceChangeListener {
     }
 
     public void moveTo(double x, double y, double z, double feedrate, final boolean lift) {
-        x = checkCoordinate("x", x, 0, maximumXvalue);
-        y = checkCoordinate("y", y, 0, maximumYvalue);
-        z = checkCoordinate("z", z, 0, maximumZvalue);
+        x = checkCoordinate("x", x, 0, getMaximumXvalue());
+        y = checkCoordinate("y", y, 0, getMaximumYvalue());
+        z = checkCoordinate("z", z, 0, getMaximumZvalue());
         x = round(x, 2);
         y = round(y, 2);
         z = round(z, 4);
@@ -213,7 +196,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         if (lift) {
             final double liftIncrement = extruders[currentExtruder].getLift();
             final double liftedZ = round(currentZ + liftIncrement, 4);
-            qZMove(liftedZ, fastFeedrateZ);
+            qZMove(liftedZ, getFastFeedrateZ());
             qFeedrate(feedrate);
         }
 
@@ -241,9 +224,9 @@ public class GCodePrinter implements PreferenceChangeListener {
     }
 
     private void checkCoordinates(final double x, final double y, final double z) {
-        checkCoordinate("x", x, 0, maximumXvalue);
-        checkCoordinate("y", y, 0, maximumYvalue);
-        checkCoordinate("z", z, 0, maximumZvalue);
+        checkCoordinate("x", x, 0, getMaximumXvalue());
+        checkCoordinate("y", y, 0, getMaximumYvalue());
+        checkCoordinate("z", z, 0, getMaximumZvalue());
     }
 
     private double checkCoordinate(final String name, final double value, final double minimumValue, final double maximumValue) {
@@ -303,11 +286,11 @@ public class GCodePrinter implements PreferenceChangeListener {
         final String myDateString = sdf.format(myDate);
         gcode.writeComment(" Created: " + myDateString);
         gcode.writeComment("#!RECTANGLE: " + rectangle + ", height: " + machineMaxZ);
-        final boolean debugGcode = preferences.getPrintSettings().isVerboseGCode();
+        final boolean debugGcode = getPrintSettings().isVerboseGCode();
         if (debugGcode) {
             gcode.writeComment(" Prologue:");
         }
-        gcode.copyFile(preferences.getPrologueFile());
+        gcode.copyFile(getPrinterSettings().getPrologueFile());
         if (debugGcode) {
             gcode.writeComment(" ------");
         }
@@ -317,7 +300,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         currentFeedrate = -100; // Force it to set the feedrate at the start
         forceSelection = true; // Force it to set the extruder to use at the start
 
-        if (preferences.getPrintSettings().printSkirt()) {
+        if (getPrintSettings().printSkirt()) {
             // plot the outline
             plotOutlines(rectangle, machineZ);
         }
@@ -332,7 +315,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         for (int e = extruders.length - 1; e >= 0; e--) { // Count down so we end with the one most likely to start the rest
             if (extruderUsed[e]) {
                 if (!zRight) {
-                    singleMove(currentX, currentY, preferences.getPrintSettings().getLayerHeight(), fastFeedrateZ, true);
+                    singleMove(currentX, currentY, getPrintSettings().getLayerHeight(), getFastFeedrateZ(), true);
                     currentZ = machineZ;
                 }
                 zRight = true;
@@ -372,7 +355,7 @@ public class GCodePrinter implements PreferenceChangeListener {
         }
 
         setZ(machineZ - zStep);
-        singleMove(getX(), getY(), machineZ, fastFeedrateZ, reversing);
+        singleMove(getX(), getY(), machineZ, getFastFeedrateZ(), reversing);
 
         return result;
     }
@@ -388,11 +371,11 @@ public class GCodePrinter implements PreferenceChangeListener {
         currentY = round(lastPoint.y(), 2);
         currentZ = round(lastZ, 1);
 
-        final boolean debugGcode = preferences.getPrintSettings().isVerboseGCode();
+        final boolean debugGcode = getPrintSettings().isVerboseGCode();
         if (debugGcode) {
             gcode.writeComment(" Epilogue:");
         }
-        gcode.copyFile(preferences.getEpilogueFile());
+        gcode.copyFile(getPrinterSettings().getEpilogueFile());
         if (debugGcode) {
             gcode.writeComment(" ------");
         }
@@ -409,7 +392,7 @@ public class GCodePrinter implements PreferenceChangeListener {
 
         final double scaledFeedRate;
         if (extruder.getFeedDiameter() > 0) {
-            scaledFeedRate = feedRate * preferences.getPrintSettings().getLayerHeight() * extruder.getExtrusionSize()
+            scaledFeedRate = feedRate * getPrintSettings().getLayerHeight() * extruder.getExtrusionSize()
                     / (extruder.getFeedDiameter() * extruder.getFeedDiameter() * Math.PI / 4);
         } else {
             scaledFeedRate = feedRate;
@@ -444,7 +427,7 @@ public class GCodePrinter implements PreferenceChangeListener {
     private void selectExtruder(final int materialIndex, final boolean really, final boolean update) {
         final GCodeExtruder oldExtruder = getExtruder();
         final GCodeExtruder newExtruder = extruders[materialIndex];
-        final boolean shield = preferences.getPrintSettings().printShield();
+        final boolean shield = getPrintSettings().printShield();
 
         if (newExtruder != oldExtruder || forceSelection) {
             if (really) {
@@ -605,7 +588,7 @@ public class GCodePrinter implements PreferenceChangeListener {
     }
 
     public double getFastFeedrateZ() {
-        return fastFeedrateZ;
+        return round(getPrinterSettings().getMaximumFeedrateZ(), 1);
     }
 
     /**
@@ -640,7 +623,7 @@ public class GCodePrinter implements PreferenceChangeListener {
      * @return fast XY movement feedrate in mm/minute
      */
     public double getFastXYFeedrate() {
-        return fastXYFeedrate;
+        return Math.min(getPrinterSettings().getMaximumFeedrateX(), getPrinterSettings().getMaximumFeedrateY());
     }
 
     public void forceNextExtruder() {
@@ -651,23 +634,34 @@ public class GCodePrinter implements PreferenceChangeListener {
      * The XY point furthest from the origin
      */
     public Point2D getBedNorthEast() {
-        return bedNorthEast;
-    }
-
-    @Override
-    public void refreshPreferences(final Preferences prefs) {
-        final PrinterSettings printerSettings = prefs.getPrinterSettings();
-        maximumXvalue = printerSettings.getBedSizeX();
-        maximumYvalue = printerSettings.getBedSizeY();
-        maximumZvalue = printerSettings.getMaximumZ();
-        bedNorthEast = new Point2D(maximumXvalue, maximumYvalue);
-        relativeExtrusion = printerSettings.useRelativeDistanceE();
-        fastFeedrateZ = round(printerSettings.getMaximumFeedrateZ(), 1);
-        fastXYFeedrate = Math.min(printerSettings.getMaximumFeedrateX(), printerSettings.getMaximumFeedrateY());
-        loadExtruders();
+        return new Point2D(getMaximumXvalue(), getMaximumYvalue());
     }
 
     public void setPurge(final Purge purge) {
         this.purge = purge;
+    }
+
+    private double getMaximumXvalue() {
+        return getPrinterSettings().getBedSizeX();
+    }
+
+    private double getMaximumYvalue() {
+        return getPrinterSettings().getBedSizeY();
+    }
+
+    private double getMaximumZvalue() {
+        return getPrinterSettings().getMaximumZ();
+    }
+
+    private boolean useRelativeExtrusion() {
+        return getPrinterSettings().useRelativeDistanceE();
+    }
+
+    private PrintSettings getPrintSettings() {
+        return Preferences.getInstance().getPrintSettings();
+    }
+
+    private PrinterSettings getPrinterSettings() {
+        return Preferences.getInstance().getPrinterSettings();
     }
 }

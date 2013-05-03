@@ -12,10 +12,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
-import org.reprap.configuration.PreferenceChangeListener;
 import org.reprap.configuration.Preferences;
 
-public class GCodeWriter implements PreferenceChangeListener {
+public class GCodeWriter {
     private static final Logger LOGGER = LogManager.getLogger(GCodeWriter.class);
     private static final Marker GCODE_MARKER = MarkerManager.getMarker("GCODE");
     private static final String COMMENT_CHAR = ";";
@@ -33,16 +32,14 @@ public class GCodeWriter implements PreferenceChangeListener {
      */
     private String opFileName;
     private String layerFileNames;
-    private boolean debugGcode;
+    private final boolean debugGcode;
 
     private static final String TMP_STRING = "_TeMpOrArY_";
 
     private PrintStream fileOutStream = null;
 
     public GCodeWriter() {
-        final Preferences preferences = Preferences.getInstance();
-        preferences.registerPreferenceChangeListener(this);
-        refreshPreferences(preferences);
+        debugGcode = Preferences.getInstance().getPrintSettings().isVerboseGCode();
     }
 
     /**
@@ -147,10 +144,5 @@ public class GCodeWriter implements PreferenceChangeListener {
 
     public String getOutputFilename() {
         return opFileName + GCODE_EXTENSION;
-    }
-
-    @Override
-    public void refreshPreferences(final Preferences preferences) {
-        debugGcode = preferences.getPrintSettings().isVerboseGCode();
     }
 }

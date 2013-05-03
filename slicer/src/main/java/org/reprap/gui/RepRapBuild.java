@@ -120,7 +120,6 @@ import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
-import org.reprap.configuration.PreferenceChangeListener;
 import org.reprap.configuration.Preferences;
 import org.reprap.configuration.PrinterSettings;
 import org.reprap.geometry.polygons.Point2D;
@@ -138,7 +137,7 @@ import com.sun.j3d.utils.picking.PickTool;
  * working volume, allows you to put STL-file objects in it, move them about to
  * arrange them, and build them in the machine.
  */
-public class RepRapBuild extends JPanel implements MouseListener, PreferenceChangeListener {
+public class RepRapBuild extends JPanel implements MouseListener {
     private static final long serialVersionUID = 1L;
     private MouseObject mouse = null;
     private PickCanvas pickCanvas = null; // The thing picked by a mouse click
@@ -490,7 +489,24 @@ public class RepRapBuild extends JPanel implements MouseListener, PreferenceChan
     }
 
     private void initialise() throws IOException {
-        refreshPreferences(Preferences.getInstance());
+        final Preferences preferences = Preferences.getInstance();
+        // TODO Set everything up from the properties file
+        // TODO All this needs to go into Preferences.java
+        wv_location = preferences.getBuildBaseStlFile();
+        mouse_tf = 50;
+        mouse_zf = 50;
+        RadiusFactor = 0.7;
+        BackFactor = 2.0;
+        FrontFactor = 0.001;
+        BoundFactor = 3.0;
+        final PrinterSettings printerSettings = preferences.getPrinterSettings();
+        xwv = printerSettings.getBedSizeX();
+        ywv = printerSettings.getBedSizeY();
+        zwv = printerSettings.getMaximumZ();
+        wv_offset = new Vector3d(0, 0, 0);
+        bgColour = new Color3f((float) 0.9, (float) 0.9, (float) 0.9);
+        selectedColour = new Color3f((float) 0.6, (float) 0.2, (float) 0.2);
+        machineColour = new Color3f((float) 0.3, (float) 0.3, (float) 0.3);
         picked_app = new Appearance();
         picked_app.setMaterial(new Material(selectedColour, RepRapBuild.black, selectedColour, RepRapBuild.black, 0f));
 
@@ -638,27 +654,6 @@ public class RepRapBuild extends JPanel implements MouseListener, PreferenceChan
 
     private File getStlBackground() {
         return wv_location;
-    }
-
-    @Override
-    public void refreshPreferences(final Preferences preferences) {
-        // TODO Set everything up from the properties file
-        // TODO All this needs to go into Preferences.java
-        wv_location = preferences.getBuildBaseStlFile();
-        mouse_tf = 50;
-        mouse_zf = 50;
-        RadiusFactor = 0.7;
-        BackFactor = 2.0;
-        FrontFactor = 0.001;
-        BoundFactor = 3.0;
-        final PrinterSettings printerSettings = preferences.getPrinterSettings();
-        xwv = printerSettings.getBedSizeX();
-        ywv = printerSettings.getBedSizeY();
-        zwv = printerSettings.getMaximumZ();
-        wv_offset = new Vector3d(0, 0, 0);
-        bgColour = new Color3f((float) 0.9, (float) 0.9, (float) 0.9);
-        selectedColour = new Color3f((float) 0.6, (float) 0.2, (float) 0.2);
-        machineColour = new Color3f((float) 0.3, (float) 0.3, (float) 0.3);
     }
 
 }

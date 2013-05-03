@@ -18,6 +18,8 @@
  */
 package org.reprap.configuration;
 
+import java.io.File;
+
 public class PrinterSettings {
     // dimensions
     private double bedSizeX; // mm 200
@@ -29,6 +31,8 @@ public class PrinterSettings {
     private double maximumFeedrateZ; // mm/minute 200
     // G-Code
     private boolean relativeDistanceE; // boolean true
+    private File prologueFile; // file
+    private File epilogueFile; // file
     // Extruders
     private ExtruderSettings[] extruderSettings;
 
@@ -94,5 +98,21 @@ public class PrinterSettings {
 
     void setExtruderSettings(final ExtruderSettings[] extruderSettings) {
         this.extruderSettings = extruderSettings;
+    }
+
+    public File getPrologueFile() {
+        return prologueFile;
+    }
+
+    void setPrologueFile(final File prologueFile) {
+        this.prologueFile = prologueFile;
+    }
+
+    public File getEpilogueFile() {
+        return epilogueFile;
+    }
+
+    void setEpilogueFile(final File epilogueFile) {
+        this.epilogueFile = epilogueFile;
     }
 }

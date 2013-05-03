@@ -2,10 +2,8 @@ package org.reprap.configuration;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.JarURLConnection;
 import java.net.URI;
 import java.net.URL;
@@ -13,12 +11,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
@@ -163,7 +159,6 @@ public class Preferences {
     }
 
     private final Properties mainPreferences = new Properties();
-    private final Set<PreferenceChangeListener> listeners = new HashSet<>();
     private final PrintSettings printSettings;
     private final PrinterSettings printerSettings;
 
@@ -186,6 +181,8 @@ public class Preferences {
         result.setMaximumFeedrateY(getDoubleProperty(properties, "MaximumFeedrateY(mm/minute)"));
         result.setMaximumFeedrateZ(getDoubleProperty(properties, "MaximumFeedrateZ(mm/minute)"));
         result.setExtruderSettings(new ExtruderSettings[extruderCount]);
+        result.setPrologueFile(new File(getActiveMachineDir(), PROLOGUE_FILE));
+        result.setEpilogueFile(new File(getActiveMachineDir(), EPILOGUE_FILE));
         return result;
     }
 
@@ -391,20 +388,6 @@ public class Preferences {
     }
 
     /**
-     * Where the user's GCode prologue file is
-     */
-    public File getPrologueFile() {
-        return new File(getActiveMachineDir(), PROLOGUE_FILE);
-    }
-
-    /**
-     * Where the user's GCode epilogue file is
-     */
-    public File getEpilogueFile() {
-        return new File(getActiveMachineDir(), EPILOGUE_FILE);
-    }
-
-    /**
      * Compare the user's preferences with the distribution one and report any
      * different names.
      */
@@ -479,27 +462,6 @@ public class Preferences {
             return systemProperties;
         } finally {
             sysPropStream.close();
-        }
-    }
-
-    public void save() throws IOException {
-        final OutputStream output = new FileOutputStream(new File(getActiveMachineDir(), propsFile));
-        try {
-            mainPreferences.store(output,
-                    "RepRap machine parameters. See http://reprap.org/wiki/Java_Software_Preferences_File");
-        } finally {
-            output.close();
-        }
-        notifyPreferenceChangeListeners();
-    }
-
-    public void registerPreferenceChangeListener(final PreferenceChangeListener listener) {
-        listeners.add(listener);
-    }
-
-    private void notifyPreferenceChangeListeners() {
-        for (final PreferenceChangeListener listener : listeners) {
-            listener.refreshPreferences(this);
         }
     }
 
