@@ -95,16 +95,16 @@ public class GCodeExtruder {
         retractionDistance = extruderSettings.getRetraction();
         extraExtrusionForLayer = extruderSettings.getExtraLengthPerLayer();
         extraExtrusionForPolygon = extruderSettings.getExtraLengthPerPolygon();
+        extrudeRatio = extruderSettings.getExtrudeRatio();
+        extrusionOverRun = extruderSettings.getEarlyRetraction();
         final String prefName = "Extruder" + myExtruderID + "_";
         fastXYFeedrate = preferences.loadDouble(prefName + "FastXYFeedrate(mm/minute)");
         fastEFeedrate = preferences.loadDouble(prefName + "FastEFeedrate(mm/minute)");
         middleStart = preferences.loadBool(prefName + "MiddleStart");
         material = preferences.loadString(prefName + "MaterialType(name)");
         infillOverlap = preferences.loadDouble(prefName + "InfillOverlap(mm)");
-        extrusionOverRun = preferences.loadDouble(prefName + "ExtrusionOverRun(mm)");
         arcCompensationFactor = preferences.loadDouble(prefName + "ArcCompensationFactor(0..)");
         arcShortSides = preferences.loadDouble(prefName + "ArcShortSides(0..)");
-        extrudeRatio = preferences.loadDouble(prefName + "ExtrudeRatio(0..)");
         lift = preferences.loadDouble(prefName + "Lift(mm)");
         final Color3f col = new Color3f((float) preferences.loadDouble(prefName + "ColourR(0..1)"),
                 (float) preferences.loadDouble(prefName + "ColourG(0..1)"), (float) preferences.loadDouble(prefName

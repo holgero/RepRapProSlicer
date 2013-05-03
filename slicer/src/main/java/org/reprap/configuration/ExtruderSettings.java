@@ -20,9 +20,11 @@ package org.reprap.configuration;
 
 public class ExtruderSettings {
     private double nozzleDiameter; // mm 0.5
+    private double extrudeRatio; // ratio 1.0
     private double retraction; // mm 2.079
     private double extraLengthPerLayer; // mm 0.104
     private double extraLengthPerPolygon; // mm 0.104
+    private int earlyRetraction; // # -1
 
     public double getNozzleDiameter() {
         return nozzleDiameter;
@@ -54,5 +56,21 @@ public class ExtruderSettings {
 
     void setExtraLengthPerPolygon(final double extraLengthPerPolygon) {
         this.extraLengthPerPolygon = extraLengthPerPolygon;
+    }
+
+    public double getExtrudeRatio() {
+        return extrudeRatio;
+    }
+
+    void setExtrudeRatio(final double extrudeRatio) {
+        this.extrudeRatio = extrudeRatio;
+    }
+
+    public int getEarlyRetraction() {
+        return earlyRetraction;
+    }
+
+    void setEarlyRetraction(final int earlyRetraction) {
+        this.earlyRetraction = earlyRetraction;
     }
 }

@@ -57,7 +57,8 @@ public class Preferences {
             "Extruder\\d_SupportMaterialType\\(name\\)", "Extruder\\d_Address",
             "Extruder\\d_MaxAcceleration\\(mm/minute/minute\\)", "Extruder\\d_ExtrusionFoundationWidth\\(mm\\)",
             "Extruder\\d_ExtrusionLastFoundationWidth\\(mm\\)", "Extruder\\d_ExtrusionTemp\\(C\\)", "Extruder\\d_SingleLine",
-            "Extruder\\d_ExtrusionSize\\(mm\\)", "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)",
+            "Extruder\\d_ExtrusionSize\\(mm\\)", "Extruder\\d_ExtrudeRatio\\(0..\\)", "Extruder\\d_ExtrusionOverRun\\(mm\\)",
+            "Extruder\\d_ExtrusionBroadWidth\\(mm\\)", "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)",
             "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "DumpX\\(mm\\)", "DumpY\\(mm\\)", "Support",
             "FoundationLayers", "Debug", "WorkingX\\(mm\\)", "WorkingY\\(mm\\)", "WorkingZ\\(mm\\)", "ExtrusionRelative",
             "PathOptimise", "MaximumFeedrateX\\(mm/minute\\)", "MaximumFeedrateY\\(mm/minute\\)",
@@ -193,6 +194,8 @@ public class Preferences {
                 getDoubleProperty(properties, prefix + "ExtrusionDelayForLayer(ms)"), number, layerHeight));
         settings.setExtraLengthPerPolygon(toFilamentLength(properties,
                 getDoubleProperty(properties, prefix + "ExtrusionDelayForPolygon(ms)"), number, layerHeight));
+        settings.setExtrudeRatio(getDoubleProperty(properties, prefix + "ExtrudeRatio(0..)"));
+        settings.setEarlyRetraction(getIntegerProperty(properties, prefix + "ExtrusionOverRun(mm)"));
         return settings;
     }
 
