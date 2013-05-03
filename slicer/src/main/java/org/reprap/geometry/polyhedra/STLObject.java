@@ -132,7 +132,7 @@ public class STLObject {
         handle.addChild(trans);
         top.addChild(handle);
 
-        final Attributes nullAtt = new Attributes(null, this, null);
+        final Attributes nullAtt = new Attributes(this, null);
         top.setUserData(nullAtt);
         handle.setUserData(nullAtt);
         trans.setUserData(nullAtt);
@@ -161,9 +161,9 @@ public class STLObject {
     public Attributes addSTL(final File location, final Vector3d offset, final Appearance app, final STLObject lastPicked) {
         final Attributes att;
         if (app == null) {
-            att = new Attributes(null, this, unselectedApp());
+            att = new Attributes(this, unselectedApp());
         } else {
-            att = new Attributes(null, this, app);
+            att = new Attributes(this, app);
         }
 
         try {

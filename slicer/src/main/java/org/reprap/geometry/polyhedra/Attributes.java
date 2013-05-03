@@ -7,6 +7,7 @@ import javax.vecmath.Color3f;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Constants;
+import org.reprap.configuration.ExtruderSettings;
 import org.reprap.configuration.MaterialSettings;
 import org.reprap.configuration.Preferences;
 
@@ -18,36 +19,22 @@ import org.reprap.configuration.Preferences;
  */
 public class Attributes {
     private static final Logger LOGGER = LogManager.getLogger(Attributes.class);
-    /**
-     * The name of the material
-     */
-    private String material;
-
-    /**
-     * The STLObject of which this is a part
-     */
+    private MaterialSettings material;
     private final STLObject parent;
+    private Appearance appearance;
 
-    /**
-     * The appearance (colour) in the loading and simulation windows
-     */
-    private Appearance app;
+    public Attributes(final MaterialSettings material) {
+        this(material, null, createAppearance(material));
+    }
 
-    /**
-     * Constructor - it is permissible to set any argument null. If you know
-     * what you're doing of course...
-     * 
-     * @param s
-     *            The name of the material
-     * @param p
-     *            Parent STLObject
-     * @param a
-     *            what it looks like
-     */
-    public Attributes(final String s, final STLObject p, final Appearance a) {
-        material = s;
-        parent = p;
-        app = a;
+    public Attributes(final STLObject parent, final Appearance appearance) {
+        this(null, parent, appearance);
+    }
+
+    private Attributes(final MaterialSettings material, final STLObject parent, final Appearance appearance) {
+        this.material = material;
+        this.parent = parent;
+        this.appearance = appearance;
     }
 
     @Override
@@ -55,50 +42,43 @@ public class Attributes {
         return "Attributes: material is " + material;
     }
 
-    /**
-     * @return the name of the material
-     */
     public String getMaterial() {
-        return material;
+        return material.getName();
     }
 
-    /**
-     * @return the parent object
-     */
     public STLObject getParent() {
         return parent;
     }
 
-    /**
-     * @return what colour am I?
-     */
     public Appearance getAppearance() {
-        return app;
+        return appearance;
     }
 
-    /**
-     * Change the material name
-     */
     public void setMaterial(final String newMaterial) {
-        material = existingMaterial(newMaterial);
-        final MaterialSettings materialSettings = Preferences.getInstance().getMaterialSettings(material);
-        final Color3f color = materialSettings.getColor();
-        final Appearance appearance = new Appearance();
-        appearance.setMaterial(new Material(color, Constants.BLACK, color, Constants.BLACK, 101f));
-        app = appearance;
+        material = getMaterialSettings(newMaterial);
+        appearance = createAppearance(material);
         if (parent != null) {
             parent.restoreAppearance();
         }
     }
 
-    private static String existingMaterial(final String newMaterial) {
-        final MaterialSettings materialSettings = Preferences.getInstance().getMaterialSettings(newMaterial);
-        if (materialSettings != null) {
-            return newMaterial;
+    private static Appearance createAppearance(final MaterialSettings material) {
+        final Color3f color = material.getColor();
+        final Appearance appearance = new Appearance();
+        appearance.setMaterial(new Material(color, Constants.BLACK, color, Constants.BLACK, 101f));
+        return appearance;
+    }
+
+    private static MaterialSettings getMaterialSettings(final String material) {
+        final ExtruderSettings[] extruderSettings = Preferences.getInstance().getPrinterSettings().getExtruderSettings();
+        for (final ExtruderSettings settings : extruderSettings) {
+            final MaterialSettings materialSettings = settings.getMaterial();
+            if (materialSettings.getName().equals(material)) {
+                return materialSettings;
+            }
         }
-        final String substitute = Preferences.getInstance().getPrinterSettings().getExtruderSettings()[0].getMaterial()
-                .getName();
-        LOGGER.warn("Requested material " + newMaterial + " not found, substituting with " + substitute + ".");
+        final MaterialSettings substitute = extruderSettings[0].getMaterial();
+        LOGGER.warn("Requested material " + material + " not found, substituting with " + substitute.getName() + ".");
         return substitute;
     }
 }

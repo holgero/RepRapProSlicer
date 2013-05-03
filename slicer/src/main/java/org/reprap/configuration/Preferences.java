@@ -452,17 +452,6 @@ public class Preferences {
         return load(new File(getActiveMachineDir(), fileName));
     }
 
-    public MaterialSettings getMaterialSettings(final String material) {
-        final ExtruderSettings[] extruderSettings = printerSettings.getExtruderSettings();
-        for (final ExtruderSettings settings : extruderSettings) {
-            final MaterialSettings materialSettings = settings.getMaterial();
-            if (materialSettings.getName().equals(material)) {
-                return materialSettings;
-            }
-        }
-        return null;
-    }
-
     public static Preferences getInstance() {
         return globalPrefs;
     }
