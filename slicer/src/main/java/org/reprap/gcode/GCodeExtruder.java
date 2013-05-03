@@ -12,15 +12,11 @@ public class GCodeExtruder {
     /**
      * How far we have extruded plus other things like temperature
      */
-    private ExtruderState extruderState;
+    private final ExtruderState extruderState;
     /**
      * The extrusion width in XY
      */
     private double extrusionSize;
-    /**
-     * below this infill finely
-     */
-    private int lowerFineLayers;
     /**
      * The fastest speed of movement in XY when depositing
      */
@@ -29,14 +25,6 @@ public class GCodeExtruder {
      * The fastest the extruder can extrude
      */
     private double fastEFeedrate;
-    /**
-     * Factor by which to speed up round corners
-     */
-    private double asFactor;
-    /**
-     * Factor for short line speeds
-     */
-    private double shortSpeed;
     /**
      * The name of this extruder's material
      */
@@ -66,7 +54,6 @@ public class GCodeExtruder {
      * The number of mm to stop extruding before the end of a track
      */
     private double extrusionOverRun;
-    private double extrusionFoundationWidth;
     private double arcCompensationFactor;
     private double arcShortSides;
     private double extrudeRatio = 1;
@@ -77,7 +64,7 @@ public class GCodeExtruder {
     private double extraExtrusionForLayer;
     private double extraExtrusionForPolygon;
 
-    public GCodeExtruder(final GCodeWriter writer, final int extruderId, final GCodePrinter p) {
+    GCodeExtruder(final GCodeWriter writer, final int extruderId, final GCodePrinter p) {
         gcode = writer;
         myExtruderID = extruderId;
         printer = p;
@@ -92,37 +79,25 @@ public class GCodeExtruder {
     /**
      * Zero the extruded length
      */
-    public void zeroExtrudedLength(final boolean really) {
+    void zeroExtrudedLength(final boolean really) {
         extruderState.zero();
         if (really) {
             gcode.writeCommand("G92 E0", "zero the extruded length");
         }
     }
 
-    /**
-     * Allow others to set our extrude length so that all logical extruders
-     * talking to one physical extruder can use the same length instance.
-     */
-    public void setExtrudeState(final ExtruderState e) {
-        extruderState = e;
-    }
-
     private void loadPreferences(final Preferences preferences) {
         final String prefName = "Extruder" + myExtruderID + "_";
         extrusionSize = preferences.loadDouble(prefName + "ExtrusionSize(mm)");
-        lowerFineLayers = 2;
         fastXYFeedrate = preferences.loadDouble(prefName + "FastXYFeedrate(mm/minute)");
         fastEFeedrate = preferences.loadDouble(prefName + "FastEFeedrate(mm/minute)");
         middleStart = preferences.loadBool(prefName + "MiddleStart");
-        asFactor = 0.5;
         material = preferences.loadString(prefName + "MaterialType(name)");
-        shortSpeed = 1;
         infillOverlap = preferences.loadDouble(prefName + "InfillOverlap(mm)");
         extraExtrusionForLayer = preferences.loadDouble(prefName + "ExtraExtrusionDistanceForLayer(mm)");
         extraExtrusionForPolygon = preferences.loadDouble(prefName + "ExtraExtrusionDistanceForPolygon(mm)");
         retractionDistance = preferences.loadDouble(prefName + "RetractionDistance(mm)");
         extrusionOverRun = preferences.loadDouble(prefName + "ExtrusionOverRun(mm)");
-        extrusionFoundationWidth = preferences.loadDouble(prefName + "ExtrusionFoundationWidth(mm)");
         arcCompensationFactor = preferences.loadDouble(prefName + "ArcCompensationFactor(0..)");
         arcShortSides = preferences.loadDouble(prefName + "ArcShortSides(0..)");
         extrudeRatio = preferences.loadDouble(prefName + "ExtrudeRatio(0..)");
@@ -137,7 +112,7 @@ public class GCodeExtruder {
         fastXYFeedrate = Math.min(printer.getFastXYFeedrate(), fastXYFeedrate);
     }
 
-    public void startExtrusion(final boolean reverse) {
+    void startExtrusion(final boolean reverse) {
         extruderState.setExtruding(true);
         extruderState.setReverse(reverse);
     }
@@ -149,24 +124,16 @@ public class GCodeExtruder {
         }
     }
 
-    public double getAngleFeedrate() {
-        return asFactor * getFastXYFeedrate();
-    }
-
     public double getFastXYFeedrate() {
         return fastXYFeedrate;
     }
 
-    public double getFastEFeedrate() {
+    double getFastEFeedrate() {
         return fastEFeedrate;
     }
 
     public double getExtrusionSize() {
         return extrusionSize;
-    }
-
-    public int getLowerFineLayers() {
-        return lowerFineLayers;
     }
 
     public Appearance getAppearance() {
@@ -178,13 +145,6 @@ public class GCodeExtruder {
         // TODO: should this give more information?
         // CAVE!!! used in GCodePrinter to search for a extruder by material name! CAVE!!!
         return material;
-    }
-
-    /**
-     * Feedrate for short lines in mm/minute
-     */
-    public double getShortLineFeedrate() {
-        return shortSpeed * getFastXYFeedrate();
     }
 
     /**
@@ -206,10 +166,6 @@ public class GCodeExtruder {
         return material;
     }
 
-    public double getExtrusionFoundationWidth() {
-        return extrusionFoundationWidth;
-    }
-
     /**
      * The arc compensation factor.
      */
@@ -227,14 +183,14 @@ public class GCodeExtruder {
     /**
      * Find out if we are currently in reverse
      */
-    public boolean getReversing() {
+    boolean getReversing() {
         return extruderState.reverse();
     }
 
     /**
      * Get how much filament must be extruded for a given xy movement.
      */
-    public double getDistance(final double distance) {
+    double getDistance(final double distance) {
         if (!extruderState.isExtruding()) {
             return 0;
         }
@@ -249,7 +205,7 @@ public class GCodeExtruder {
     /**
      * Find out how far we have extruded so far
      */
-    public ExtruderState getExtruderState() {
+    ExtruderState getExtruderState() {
         return extruderState;
     }
 
@@ -276,7 +232,7 @@ public class GCodeExtruder {
     /**
      * The diameter of the input filament
      */
-    public double getFeedDiameter() {
+    double getFeedDiameter() {
         return feedDiameter;
     }
 
@@ -287,15 +243,15 @@ public class GCodeExtruder {
         return insideOut;
     }
 
-    public double getRetractionDistance() {
+    double getRetractionDistance() {
         return retractionDistance;
     }
 
-    public double getExtraExtrusionForLayer() {
+    double getExtraExtrusionForLayer() {
         return extraExtrusionForLayer;
     }
 
-    public double getExtraExtrusionForPolygon() {
+    double getExtraExtrusionForPolygon() {
         return extraExtrusionForPolygon;
     }
 

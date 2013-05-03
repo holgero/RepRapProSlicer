@@ -54,12 +54,13 @@ public class Preferences {
             "Extruder\\d_ExtrusionDelayForLayer\\(ms\\)", "Extruder\\d_ExtrusionDelayForPolygon\\(ms\\)",
             "Extruder\\d_ExtrusionSpeed\\(mm/minute\\)", "Extruder\\d_SlowXYFeedrate\\(mm/minute\\)",
             "Extruder\\d_SupportMaterialType\\(name\\)", "Extruder\\d_Address",
-            "Extruder\\d_MaxAcceleration\\(mm/minute/minute\\)", "SlowXYFeedrate\\(mm/minute\\)",
-            "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling", "StartRectangle", "BrimLines", "Shield", "DumpX\\(mm\\)",
-            "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug", "WorkingX\\(mm\\)", "WorkingY\\(mm\\)",
-            "WorkingZ\\(mm\\)", "ExtrusionRelative", "PathOptimise", "MaximumFeedrateX\\(mm/minute\\)",
-            "MaximumFeedrateY\\(mm/minute\\)", "MaximumFeedrateZ\\(mm/minute\\)", "MaxXYAcceleration\\(mm/mininute/minute\\)",
-            "MaxZAcceleration\\(mm/mininute/minute\\)", "NumberOfExtruders", "BedTemperature\\(C\\)");
+            "Extruder\\d_MaxAcceleration\\(mm/minute/minute\\)", "Extruder\\d_ExtrusionFoundationWidth\\(mm\\)",
+            "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling", "StartRectangle",
+            "BrimLines", "Shield", "DumpX\\(mm\\)", "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug",
+            "WorkingX\\(mm\\)", "WorkingY\\(mm\\)", "WorkingZ\\(mm\\)", "ExtrusionRelative", "PathOptimise",
+            "MaximumFeedrateX\\(mm/minute\\)", "MaximumFeedrateY\\(mm/minute\\)", "MaximumFeedrateZ\\(mm/minute\\)",
+            "MaxXYAcceleration\\(mm/mininute/minute\\)", "MaxZAcceleration\\(mm/mininute/minute\\)", "NumberOfExtruders",
+            "BedTemperature\\(C\\)");
 
     private static String propsFile = "reprap.properties";
 
