@@ -106,7 +106,7 @@ public class MainFrame extends JFrame {
             public void productionProgress(final int layer, final int totalLayers) {
                 System.out.println(layer + "/" + totalLayers);
             }
-        }, true);
+        }, true, true);
     }
 
     private JMenu createMenu() {
@@ -314,8 +314,8 @@ public class MainFrame extends JFrame {
         }
     }
 
-    boolean slice(final String gcodeFileName, final ProductionProgressListener listener, final boolean autoExit)
-            throws FileNotFoundException {
+    boolean slice(final String gcodeFileName, final ProductionProgressListener listener, final boolean autoExit,
+            final boolean displayPaths) throws FileNotFoundException {
         final File defaultFile = new File(gcodeFileName + ".gcode");
         final File gcodeFile;
         if (autoExit) {
@@ -333,7 +333,7 @@ public class MainFrame extends JFrame {
             public void run() {
                 Thread.currentThread().setName("Producer");
                 builder.mouseToWorld();
-                final Producer producer = new Producer(printer, builder.getSTLs(), listener, slicerFrame.displayPaths());
+                final Producer producer = new Producer(printer, builder.getSTLs(), listener, displayPaths);
                 printer.setLayerPause(layerPause);
                 try {
                     producer.produce();

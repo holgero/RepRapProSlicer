@@ -36,10 +36,6 @@ public class SlicerFrame extends JFrame {
         pack();
     }
 
-    public boolean displayPaths() {
-        return printTabFrame1.displayPaths();
-    }
-
     public void slicingFinished() {
         printTabFrame1.slicingFinished();
     }

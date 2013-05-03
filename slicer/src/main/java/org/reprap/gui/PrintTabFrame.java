@@ -370,7 +370,7 @@ public class PrintTabFrame extends JInternalFrame {
             return;
         }
         if (mainFrame.slice(stripExtension(loadedFile), new ProgressBarUpdater(currentLayerOutOfN, progressBar,
-                expectedBuildTime, expectedBuildTime, System.currentTimeMillis()), false)) {
+                expectedBuildTime, expectedBuildTime, System.currentTimeMillis()), false, displayPathsCheck.isSelected())) {
             printLive();
         }
     }
@@ -494,10 +494,6 @@ public class PrintTabFrame extends JInternalFrame {
             JOptionPane.showMessageDialog(null, "The loaded file is not an STL or an RFO file.");
         }
         mainFrame.saveSCAD(stripExtension(loadedFile));
-    }
-
-    public boolean displayPaths() {
-        return displayPathsCheck.isSelected();
     }
 
     void slicingFinished() {

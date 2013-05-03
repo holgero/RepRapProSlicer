@@ -32,7 +32,7 @@ class LayerProducer {
         if (simulationPlot != null) {
             if (!simulationPlot.isInitialised()) {
                 final Rectangle rec = new Rectangle(lc.getBox());
-                if (preferences.loadBool("Shield")) {
+                if (preferences.getPrintSettings().printShield()) {
                     rec.expand(Point2D.add(rec.sw(), new Point2D(-7, -7))); // TODO: Yuk - this should be a parameter
                 }
                 simulationPlot.init(rec, "" + lc.getModelLayer() + " (z=" + lc.getModelZ() + ")");
