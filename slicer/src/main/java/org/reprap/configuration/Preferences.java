@@ -124,7 +124,7 @@ public class Preferences {
     /**
      * Where the user stores all their configuration files
      */
-    public static File getReprapRootDir() {
+    private static File getReprapRootDir() {
         return new File(FileUtils.getUserDirectory(), PROPERTIES_FOLDER);
     }
 
@@ -152,10 +152,6 @@ public class Preferences {
             throw new RuntimeException("Can't find system RepRap configurations: " + PROPERTIES_DIR_DISTRIBUTION);
         }
         return sysConfig;
-    }
-
-    public static String getDefaultPropsFile() {
-        return propsFile;
     }
 
     private final Properties mainPreferences = new Properties();
@@ -473,10 +469,6 @@ public class Preferences {
         return mainPreferences.getProperty(name);
     }
 
-    public int loadInt(final String name) {
-        return Integer.parseInt(loadString(name));
-    }
-
     public double loadDouble(final String name) {
         return Double.parseDouble(loadString(name));
     }
@@ -485,12 +477,8 @@ public class Preferences {
         return "true".equalsIgnoreCase(loadString(name));
     }
 
-    public void loadConfiguration(final String fileName) {
+    private void loadConfiguration(final String fileName) {
         load(new File(getActiveMachineDir(), fileName));
-    }
-
-    public void setString(final String name, final String value) {
-        mainPreferences.setProperty(name, value);
     }
 
     private int getNumberFromMaterial(final String material) {
