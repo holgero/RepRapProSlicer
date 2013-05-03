@@ -55,6 +55,7 @@ public class Preferences {
             "Extruder\\d_ExtrusionSpeed\\(mm/minute\\)", "Extruder\\d_SlowXYFeedrate\\(mm/minute\\)",
             "Extruder\\d_SupportMaterialType\\(name\\)", "Extruder\\d_Address",
             "Extruder\\d_MaxAcceleration\\(mm/minute/minute\\)", "Extruder\\d_ExtrusionFoundationWidth\\(mm\\)",
+            "Extruder\\d_ExtrusionLastFoundationWidth\\(mm\\)", "Extruder\\d_ExtrusionTemp\\(C\\)", "Extruder\\d_SingleLine",
             "SlowXYFeedrate\\(mm/minute\\)", "SlowZFeedrate\\(mm/minute\\)", "InterLayerCooling", "StartRectangle",
             "BrimLines", "Shield", "DumpX\\(mm\\)", "DumpY\\(mm\\)", "Support", "FoundationLayers", "Debug",
             "WorkingX\\(mm\\)", "WorkingY\\(mm\\)", "WorkingZ\\(mm\\)", "ExtrusionRelative", "PathOptimise",
