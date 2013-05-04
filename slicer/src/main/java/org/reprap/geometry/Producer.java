@@ -1,10 +1,12 @@
 package org.reprap.geometry;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.CurrentConfiguration;
+import org.reprap.configuration.ExtruderSettings;
 import org.reprap.configuration.Preferences;
 import org.reprap.configuration.PrintSettings;
 import org.reprap.gcode.GCodePrinter;
@@ -127,21 +129,21 @@ public class Producer {
         final PolygonList borders = stlList.computeOutlines(stl, fills);
         for (int pol = 0; pol < borders.size(); pol++) {
             final Polygon polygon = borders.polygon(pol);
-            tempBorderPolygons[getExtruder(polygon)].add(polygon);
+            tempBorderPolygons[getExtruderId(polygon)].add(polygon);
         }
         for (int pol = 0; pol < fills.size(); pol++) {
             final Polygon polygon = fills.polygon(pol);
             final double minLength = 3 * configuration.getExtruderSettings(polygon.getAttributes().getMaterial())
                     .getExtrusionSize();
             if (polygon.getLength() > minLength) {
-                tempFillPolygons[getExtruder(polygon)].add(polygon);
+                tempFillPolygons[getExtruderId(polygon)].add(polygon);
             }
         }
         if (printSupport) {
             final PolygonList support = stlList.computeSupport(stl);
             for (int pol = 0; pol < support.size(); pol++) {
                 final Polygon polygon = support.polygon(pol);
-                tempFillPolygons[getExtruder(polygon)].add(polygon);
+                tempFillPolygons[getExtruderId(polygon)].add(polygon);
             }
         }
         for (int extruder = 0; extruder < totalExtruders; extruder++) {
@@ -174,8 +176,15 @@ public class Producer {
         return startNearHere;
     }
 
-    private int getExtruder(final Polygon polygon) {
-        return printer.getExtruder(polygon.getAttributes().getMaterial()).getID();
+    private int getExtruderId(final Polygon polygon) {
+        final List<ExtruderSettings> extruderSettings = configuration.getPrinterSettings().getExtruderSettings();
+        for (int i = 0; i < extruderSettings.size(); i++) {
+            final ExtruderSettings settings = extruderSettings.get(i);
+            if (settings.getMaterial().getName().equals(polygon.getAttributes().getMaterial())) {
+                return i;
+            }
+        }
+        return 0;
     }
 
     public void dispose() {

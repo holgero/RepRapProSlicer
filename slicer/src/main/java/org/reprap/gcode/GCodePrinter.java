@@ -277,7 +277,7 @@ public class GCodePrinter {
         moveTo(x, y, z, feedrate, false);
 
         if (stopExtruder) {
-            getExtruder().stopExtruding();
+            extruders[currentExtruder].stopExtruding();
         }
     }
 
@@ -322,7 +322,7 @@ public class GCodePrinter {
                 }
                 zRight = true;
                 selectExtruder(e, true, false);
-                final GCodeExtruder extruder = getExtruder();
+                final GCodeExtruder extruder = extruders[currentExtruder];
                 singleMove(rectangle.x().low(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate(), true);
                 startExtruder(true);
                 singleMove(rectangle.x().high(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate(), true);
@@ -350,13 +350,13 @@ public class GCodePrinter {
             result = temporaryFile.getPath();
         }
 
-        getExtruder().zeroExtrudedLength(really);
+        extruders[currentExtruder].zeroExtrudedLength(really);
 
         if (layerPauseCheckbox != null && layerPauseCheckbox.isSelected()) {
             layerPause();
         }
 
-        setZ(machineZ - zStep);
+        currentZ = round(machineZ - zStep, 4);
         singleMove(getX(), getY(), machineZ, getFastFeedrateZ(), really);
 
         return result;
@@ -390,7 +390,7 @@ public class GCodePrinter {
     }
 
     private void extrude(final double extrudeLength, final double feedRate) {
-        final GCodeExtruder extruder = getExtruder();
+        final GCodeExtruder extruder = extruders[currentExtruder];
 
         final double scaledFeedRate;
         if (extruder.getFeedDiameter() > 0) {
@@ -418,16 +418,8 @@ public class GCodePrinter {
         gcode.setGCodeFileForOutput(gcodeFile);
     }
 
-    /**
-     * Tell the printer class it's Z position. Only to be used if you know what
-     * you're doing...
-     */
-    public void setZ(final double z) {
-        currentZ = round(z, 4);
-    }
-
     private void selectExtruder(final int materialIndex, final boolean really, final boolean update) {
-        final GCodeExtruder oldExtruder = getExtruder();
+        final GCodeExtruder oldExtruder = extruders[currentExtruder];
         final GCodeExtruder newExtruder = extruders[materialIndex];
         final boolean shield = getPrintSettings().printShield();
 
@@ -445,7 +437,7 @@ public class GCodePrinter {
                 if (update) {
                     extruderUsed[materialIndex] = true;
                 }
-                final GCodeExtruder extruder = getExtruder();
+                final GCodeExtruder extruder = extruders[currentExtruder];
                 extruder.stopExtruding(); // Make sure we are off
 
                 if (shield) {
@@ -531,25 +523,8 @@ public class GCodePrinter {
         return currentZ;
     }
 
-    public GCodeExtruder getExtruder(final String name) {
-        for (final GCodeExtruder extruder : extruders) {
-            if (name.equals(extruder.getMaterial().getName())) {
-                return extruder;
-            }
-        }
-        return null;
-    }
-
-    public GCodeExtruder getExtruder() {
-        return extruders[currentExtruder];
-    }
-
-    public GCodeExtruder[] getExtruders() {
-        return extruders;
-    }
-
     public void startExtruder(final boolean firstOneInLayer) {
-        final GCodeExtruder extruder = getExtruder();
+        final GCodeExtruder extruder = extruders[currentExtruder];
         final double retraction = extruder.getExtruderState().retraction();
 
         if (retraction > 0) {
@@ -576,7 +551,7 @@ public class GCodePrinter {
      * polymer is stopped flowing at the end of a track.
      */
     public void retract() {
-        final GCodeExtruder extruder = getExtruder();
+        final GCodeExtruder extruder = extruders[currentExtruder];
         final double distance = extruder.getRetractionDistance();
 
         if (distance <= 0) {
@@ -612,13 +587,6 @@ public class GCodePrinter {
      */
     public void setLayerPause(final JCheckBoxMenuItem layerPause) {
         layerPauseCheckbox = layerPause;
-    }
-
-    /**
-     * Get the feedrate currently being used
-     */
-    public double getCurrentFeedrate() {
-        return currentFeedrate;
     }
 
     /**

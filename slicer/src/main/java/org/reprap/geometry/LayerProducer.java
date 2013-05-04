@@ -119,8 +119,7 @@ class LayerProducer {
                 printer.retract();
             }
         }
-        printer.moveTo(printer.getX(), printer.getY(), layerRules.getMachineZ(), printer.getExtruder().getFastXYFeedrate(),
-                liftZ > 0);
+        printer.moveTo(printer.getX(), printer.getY(), layerRules.getMachineZ(), extruder.getPrintExtrusionRate(), liftZ > 0);
     }
 
     private void singleMove(final GCodePrinter printer, final double liftZ, final Point2D point) {

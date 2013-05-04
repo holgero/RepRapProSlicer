@@ -44,7 +44,6 @@ import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSettings;
 import org.reprap.configuration.Preferences;
 import org.reprap.configuration.PrintSettings;
-import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.Purge;
 import org.reprap.geometry.polygons.BooleanGrid;
 import org.reprap.geometry.polygons.BooleanGridList;
@@ -340,8 +339,8 @@ class ProducerStlList {
 
         cache.setSupport(BooleanGridList.unions(previousSupport, slice(stl, layer)), layer, stl);
 
-        final GCodeExtruder supportExtruder = layerRules.getPrinter().getExtruders()[configuration.getPrintSettings()
-                .getSupportExtruder()];
+        final ExtruderSettings supportExtruder = configuration.getPrinterSettings().getExtruderSettings()
+                .get(configuration.getPrintSettings().getSupportExtruder());
 
         // Now we subtract the union of this layer from all the stuff requiring support in the layer above.
         BooleanGridList support = new BooleanGridList();

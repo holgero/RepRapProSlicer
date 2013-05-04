@@ -344,7 +344,6 @@ public class LayerRules {
         setFirstAndLast(new PolygonList[] { foundationPolygon });
         final LayerProducer lp = new LayerProducer(this, simulationPlot);
         lp.plot(foundationPolygon);
-        printer.getExtruder().stopExtruding();
     }
 
 }
