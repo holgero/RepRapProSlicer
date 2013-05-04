@@ -23,7 +23,9 @@ package org.reprap.geometry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.GeometryArray;
@@ -200,7 +202,7 @@ class ProducerStlList {
      * Make sure the list starts with and edge longer than 1.5mm (or the longest
      * if not)
      */
-    private void startLong(final ArrayList<LineSegment> edges) {
+    private void startLong(final List<LineSegment> edges) {
         if (edges.size() <= 0) {
             return;
         }
@@ -235,7 +237,7 @@ class ProducerStlList {
     /**
      * Stitch together the some of the edges to form a polygon.
      */
-    private Polygon getNextPolygon(final ArrayList<LineSegment> edges) {
+    private Polygon getNextPolygon(final List<LineSegment> edges) {
         if (edges.size() <= 0) {
             return null;
         }
@@ -298,7 +300,7 @@ class ProducerStlList {
     /**
      * Get all the polygons represented by the edges.
      */
-    private PolygonList simpleCull(final ArrayList<LineSegment> edges) {
+    private PolygonList simpleCull(final List<LineSegment> edges) {
         final PolygonList result = new PolygonList();
         Polygon next = getNextPolygon(edges);
         while (next != null) {
@@ -482,95 +484,52 @@ class ProducerStlList {
         return result;
     }
 
+    private static final class EdgeAndCsgsCollector {
+        private final List<LineSegment> edges = new ArrayList<>();
+        private final List<CSG3D> csgs = new ArrayList<>();
+        private Attributes attributes = null;
+    }
+
     /**
-     * Generate a set of pixel-map representations, one for each extruder, for
+     * Generate a set of pixel-map representations, one for each material, for
      * STLObject stl at height z.
-     * 
-     * TODO clean up this method
      */
     BooleanGridList slice(final int stlIndex, final int layer) {
         if (layer < 0) {
             return new BooleanGridList();
         }
 
-        // Is the result in the cache?  If so, just use that.
-        BooleanGridList result = cache.getSlice(layer, stlIndex);
-        if (result != null) {
-            return result;
+        final BooleanGridList cachedSlice = cache.getSlice(layer, stlIndex);
+        if (cachedSlice != null) {
+            return cachedSlice;
         }
 
-        // Haven't got it in the cache, so we need to compute it
-        // Anything there?
         if (rectangles.get(stlIndex) == null) {
             return new BooleanGridList();
         }
 
-        // Probably...
-        final double z = layerRules.getModelZ(layer) + layerRules.getZStep() * 0.5;
-        final GCodeExtruder[] extruders = layerRules.getPrinter().getExtruders();
-        result = new BooleanGridList();
-        CSG2D csgp = null;
-        PolygonList pgl = new PolygonList();
-        int extruderID;
+        final double currentZ = layerRules.getModelZ(layer) + layerRules.getZStep() * 0.5;
+        final Map<String, EdgeAndCsgsCollector> collectorMap = collectEdgeLinesAndCsgs(stlIndex, currentZ);
 
-        // Bin the edges and CSGs (if any) by extruder ID.
-        @SuppressWarnings("unchecked")
-        final ArrayList<LineSegment>[] edges = new ArrayList[extruders.length];
-        @SuppressWarnings("unchecked")
-        final ArrayList<CSG3D>[] csgs = new ArrayList[extruders.length];
-        final Attributes[] atts = new Attributes[extruders.length];
-
-        for (extruderID = 0; extruderID < extruders.length; extruderID++) {
-            if (extruders[extruderID].getID() != extruderID) {
-                LOGGER.error("slice(): extruder " + extruderID + "out of sequence: " + extruders[extruderID].getID());
-            }
-            edges[extruderID] = new ArrayList<LineSegment>();
-            csgs[extruderID] = new ArrayList<CSG3D>();
-        }
-
-        // Generate all the edges for STLObject i at this z
-        final STLObject stlObject = stlsToBuild.get(stlIndex);
-        final Transform3D trans = stlObject.getTransform();
-        final Matrix4d m4 = new Matrix4d();
-        trans.get(m4);
-
-        for (int i = 0; i < stlObject.getCount(); i++) {
-            final BranchGroup bg1 = stlObject.getSTL(i);
-            final Attributes attr = (Attributes) (bg1.getUserData());
-            atts[layerRules.getPrinter().getExtruder(attr.getMaterial()).getID()] = attr;
-            final CSG3D csg = stlObject.getCSG(i);
-            if (csg != null) {
-                csgs[layerRules.getPrinter().getExtruder(attr.getMaterial()).getID()].add(csg.transform(m4));
-            } else {
-                recursiveSetEdges(bg1, trans, z, attr, edges[layerRules.getPrinter().getExtruder(attr.getMaterial()).getID()]);
-            }
-        }
-
-        // Turn them into lists of polygons, one for each extruder, then
-        // turn those into pixelmaps.
-        for (extruderID = 0; extruderID < edges.length; extruderID++) {
+        final BooleanGridList result = new BooleanGridList();
+        // Turn them into lists of polygons, one for each material, then turn those into pixelmaps.
+        for (final String material : collectorMap.keySet()) {
+            final EdgeAndCsgsCollector collector = collectorMap.get(material);
             // Deal with CSG shapes (much simpler and faster).
-            for (int i = 0; i < csgs[extruderID].size(); i++) {
-                csgp = CSG3D.slice(csgs[extruderID].get(i), z);
-                result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), atts[extruderID]));
+            for (int i = 0; i < collector.csgs.size(); i++) {
+                final CSG2D csgp = CSG3D.slice(collector.csgs.get(i), currentZ);
+                result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), collector.attributes));
             }
 
             // Deal with STL-generated edges
-            if (edges[extruderID].size() > 0) {
-                pgl = simpleCull(edges[extruderID]);
+            if (collector.edges.size() > 0) {
+                PolygonList pgl = simpleCull(collector.edges);
 
                 if (pgl.size() > 0) {
-                    // Remove wrinkles
                     pgl = pgl.simplify(Constants.GRID_RESOLUTION * 1.5);
-
-                    // Fix small radii
                     pgl = arcCompensate(pgl);
 
-                    csgp = pgl.toCSG();
-
-                    // We use the plan rectangle of the entire stl object to store the bitmap, even though this slice may be
-                    // much smaller than the whole.  This allows booleans on slices to be computed much more
-                    // quickly as each is in the same rectangle so the bit patterns match exactly.  But it does use more memory.
+                    final CSG2D csgp = pgl.toCSG();
                     result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), pgl.polygon(0).getAttributes()));
                 }
             }
@@ -580,13 +539,40 @@ class ProducerStlList {
         return result;
     }
 
+    private Map<String, EdgeAndCsgsCollector> collectEdgeLinesAndCsgs(final int stlIndex, final double currentZ) {
+        final Map<String, EdgeAndCsgsCollector> collectorMap = new HashMap<String, ProducerStlList.EdgeAndCsgsCollector>();
+        for (final ExtruderSettings settings : configuration.getPrinterSettings().getExtruderSettings()) {
+            collectorMap.put(settings.getMaterial().getName(), new EdgeAndCsgsCollector());
+        }
+
+        // Generate all the edges for STLObject i at this z
+        final STLObject stlObject = stlsToBuild.get(stlIndex);
+        final Transform3D trans = stlObject.getTransform();
+        final Matrix4d m4 = new Matrix4d();
+        trans.get(m4);
+
+        for (int i = 0; i < stlObject.getCount(); i++) {
+            final BranchGroup group = stlObject.getSTL(i);
+            final Attributes attributes = (Attributes) (group.getUserData());
+            final EdgeAndCsgsCollector collector = collectorMap.get(attributes.getMaterial());
+            collector.attributes = attributes;
+            final CSG3D csg = stlObject.getCSG(i);
+            if (csg != null) {
+                collector.csgs.add(csg.transform(m4));
+            } else {
+                recursiveSetEdges(group, trans, currentZ, attributes, collector.edges);
+            }
+        }
+        return collectorMap;
+    }
+
     /**
      * Add the edge where the plane z cuts the triangle (p, q, r) (if it does).
      * Also update the triangulation of the object below the current slice used
      * for the simulation window.
      */
     private void addEdge(final Point3d p, final Point3d q, final Point3d r, final double z, final Attributes att,
-            final ArrayList<LineSegment> edges) {
+            final List<LineSegment> edges) {
         Point3d odd = null, even1 = null, even2 = null;
         int pat = 0;
 
@@ -657,7 +643,7 @@ class ProducerStlList {
      * transform first
      */
     private void addAllEdges(final Shape3D shape, final Transform3D trans, final double z, final Attributes att,
-            final ArrayList<LineSegment> edges) {
+            final List<LineSegment> edges) {
         final GeometryArray g = (GeometryArray) shape.getGeometry();
         final Point3d p1 = new Point3d();
         final Point3d p2 = new Point3d();
@@ -684,7 +670,7 @@ class ProducerStlList {
      * Unpack the Shape3D(s) from value and set edges from them
      */
     private void recursiveSetEdges(final Object value, final Transform3D trans, final double z, final Attributes att,
-            final ArrayList<LineSegment> edges) {
+            final List<LineSegment> edges) {
         if (value instanceof SceneGraphObject) {
             final SceneGraphObject sg = (SceneGraphObject) value;
             if (sg instanceof Group) {
