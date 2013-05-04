@@ -45,6 +45,9 @@ public class Attributes {
     }
 
     public String getMaterial() {
+        if (material == null) {
+            return null;
+        }
         return material.getName();
     }
 
