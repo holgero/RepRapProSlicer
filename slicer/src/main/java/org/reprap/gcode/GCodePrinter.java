@@ -339,25 +339,25 @@ public class GCodePrinter {
     }
 
     public String startingLayer(final double zStep, final double machineZ, final int machineLayer, final int maxMachineLayer,
-            final boolean reversing) {
-        final String result;
+            final boolean really) {
         currentFeedrate = -1; // Force it to set the feedrate
-        if (!reversing) {
-            final File temporaryFile = gcode.openTemporaryOutFile(machineLayer);
-            result = temporaryFile.getPath();
-        } else {
+        final String result;
+        if (really) {
             gcode.writeComment("#!LAYER: " + machineLayer + "/" + (maxMachineLayer - 1));
             result = null;
+        } else {
+            final File temporaryFile = gcode.openTemporaryOutFile(machineLayer);
+            result = temporaryFile.getPath();
         }
 
-        getExtruder().zeroExtrudedLength(reversing);
+        getExtruder().zeroExtrudedLength(really);
 
         if (layerPauseCheckbox != null && layerPauseCheckbox.isSelected()) {
             layerPause();
         }
 
         setZ(machineZ - zStep);
-        singleMove(getX(), getY(), machineZ, getFastFeedrateZ(), reversing);
+        singleMove(getX(), getY(), machineZ, getFastFeedrateZ(), really);
 
         return result;
     }
@@ -449,7 +449,7 @@ public class GCodePrinter {
                 extruder.stopExtruding(); // Make sure we are off
 
                 if (shield) {
-                    final Point2D purgePoint = purge.getPurgeEnd(currentExtruder, true, 0);
+                    final Point2D purgePoint = purge.getPurgeEnd(extruder, true, 0);
                     singleMove(purgePoint.x(), purgePoint.y(), currentZ, getFastXYFeedrate(), true);
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();
@@ -462,27 +462,27 @@ public class GCodePrinter {
                     // Plot the purge pattern with the new extruder
                     startExtruder(true);
 
-                    Point2D purgePoint = purge.getPurgeEnd(currentExtruder, false, 0);
+                    Point2D purgePoint = purge.getPurgeEnd(extruder, false, 0);
                     singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();
 
-                    purgePoint = purge.getPurgeEnd(currentExtruder, false, 1);
+                    purgePoint = purge.getPurgeEnd(extruder, false, 1);
                     singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();
 
-                    purgePoint = purge.getPurgeEnd(currentExtruder, true, 1);
+                    purgePoint = purge.getPurgeEnd(extruder, true, 1);
                     singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();
 
-                    purgePoint = purge.getPurgeEnd(currentExtruder, true, 2);
+                    purgePoint = purge.getPurgeEnd(extruder, true, 2);
                     singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();
 
-                    purgePoint = purge.getPurgeEnd(currentExtruder, false, 2);
+                    purgePoint = purge.getPurgeEnd(extruder, false, 2);
                     singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
                     currentX = purgePoint.x();
                     currentY = purgePoint.y();

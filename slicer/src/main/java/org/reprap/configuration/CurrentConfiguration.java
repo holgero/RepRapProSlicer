@@ -68,4 +68,13 @@ public class CurrentConfiguration {
     void setPrinterSettings(final PrinterSettings printerSettings) {
         this.printerSettings = printerSettings;
     }
+
+    public ExtruderSettings getExtruderSettings(final String materialName) {
+        for (final ExtruderSettings extruderSettings : printerSettings.getExtruderSettings()) {
+            if (extruderSettings.getMaterial().getName().equals(materialName)) {
+                return extruderSettings;
+            }
+        }
+        return null;
+    }
 }

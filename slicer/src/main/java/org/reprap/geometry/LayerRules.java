@@ -35,19 +35,9 @@ public class LayerRules {
     private final Point2D[] firstPoint;
 
     /**
-     * The extruder first used in a layer
-     */
-    private final int[] firstExtruder;
-
-    /**
      * The coordinates of the last point plotted in a layer
      */
     private final Point2D[] lastPoint;
-
-    /**
-     * The extruder last used in a layer
-     */
-    private final int[] lastExtruder;
 
     /**
      * The heights of the layers
@@ -138,9 +128,7 @@ public class LayerRules {
 
         // Set up the records of the layers for later reversing (top->down ==>> bottom->up)
         firstPoint = new Point2D[machineLayerMax + 1];
-        firstExtruder = new int[machineLayerMax + 1];
         lastPoint = new Point2D[machineLayerMax + 1];
-        lastExtruder = new int[machineLayerMax + 1];
         layerZ = new double[machineLayerMax + 1];
         layerFileNames = new String[machineLayerMax + 1];
         for (int i = 0; i < machineLayerMax + 1; i++) {
@@ -182,8 +170,6 @@ public class LayerRules {
     void setFirstAndLast(final PolygonList[] pl) {
         firstPoint[machineLayer] = null;
         lastPoint[machineLayer] = null;
-        firstExtruder[machineLayer] = -1;
-        lastExtruder[machineLayer] = -1;
         layerZ[machineLayer] = machineZ;
         if (pl == null) {
             return;
@@ -208,11 +194,8 @@ public class LayerRules {
         }
         firstPoint[machineLayer] = pl[bottom].polygon(0).point(0);
         pl[bottom].polygon(0).getAttributes();
-        firstExtruder[machineLayer] = printer.getExtruder(pl[bottom].polygon(0).getAttributes().getMaterial()).getID();
         lastPoint[machineLayer] = pl[top].polygon(pl[top].size() - 1).point(pl[top].polygon(pl[top].size() - 1).size() - 1);
         pl[top].polygon(pl[top].size() - 1).getAttributes();
-        lastExtruder[machineLayer] = printer.getExtruder(pl[top].polygon(pl[top].size() - 1).getAttributes().getMaterial())
-                .getID();
     }
 
     public int realTopLayer() {
@@ -354,15 +337,14 @@ public class LayerRules {
     }
 
     private void fillFoundationRectangle(final SimulationPlotter simulationPlot) throws IOException {
-        final PolygonList shield = new PolygonList();
         final GCodeExtruder extruder = printer.getExtruder();
         final Attributes fa = new Attributes(extruder.getMaterial());
         final CSG2D rect = CSG2D.RrCSGFromBox(bBox);
         final BooleanGrid bg = new BooleanGrid(rect, bBox.scale(1.1), fa);
-        final PolygonList h[] = { shield,
-                bg.hatch(getHatchDirection(false, extruder.getExtrusionSize()), extruder.getExtrusionSize(), bg.attribute()) };
-        setFirstAndLast(h);
-        final LayerProducer lp = new LayerProducer(h, this, simulationPlot);
+        final PolygonList allPolygons[] = { bg.hatch(getHatchDirection(false, extruder.getExtrusionSize()),
+                extruder.getExtrusionSize(), bg.attribute()) };
+        setFirstAndLast(allPolygons);
+        final LayerProducer lp = new LayerProducer(allPolygons, this, simulationPlot);
         lp.plot();
         printer.getExtruder().stopExtruding();
     }

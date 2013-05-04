@@ -75,7 +75,7 @@ public class GCodeExtruder {
         extraExtrusionForLayer = extruderSettings.getExtraLengthPerLayer();
         extraExtrusionForPolygon = extruderSettings.getExtraLengthPerPolygon();
         extrudeRatio = extruderSettings.getExtrudeRatio();
-        extrusionOverRun = extruderSettings.getEarlyRetraction();
+        extrusionOverRun = extruderSettings.getExtrusionOverrun();
         fastEFeedrate = extruderSettings.getAirExtrusionFeedRate();
         fastXYFeedrate = Math.min(printer.getFastXYFeedrate(), extruderSettings.getPrintExtrusionRate());
         lift = extruderSettings.getLift();

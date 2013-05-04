@@ -159,7 +159,7 @@ public class Preferences {
         settings.setExtraLengthPerPolygon(toFilamentLength(properties,
                 getDoubleProperty(properties, prefix + "ExtrusionDelayForPolygon(ms)"), number, layerHeight));
         settings.setExtrudeRatio(getDoubleProperty(properties, prefix + "ExtrudeRatio(0..)"));
-        settings.setEarlyRetraction(getIntegerProperty(properties, prefix + "ExtrusionOverRun(mm)"));
+        settings.setExtrusionOverrun(getDoubleProperty(properties, prefix + "ExtrusionOverRun(mm)"));
         settings.setAirExtrusionFeedRate(getDoubleProperty(properties, prefix + "FastEFeedrate(mm/minute)"));
         settings.setPrintExtrusionRate(getDoubleProperty(properties, prefix + "FastXYFeedrate(mm/minute)"));
         settings.setLift(getDoubleProperty(properties, prefix + "Lift(mm)"));
@@ -456,13 +456,5 @@ public class Preferences {
 
     public static CurrentConfiguration getCurrentConfiguration() {
         return globalPrefs.currentConfiguration;
-    }
-
-    public PrintSettings getPrintSettings() {
-        return currentConfiguration.getPrintSettings();
-    }
-
-    public PrinterSettings getPrinterSettings() {
-        return currentConfiguration.getPrinterSettings();
     }
 }

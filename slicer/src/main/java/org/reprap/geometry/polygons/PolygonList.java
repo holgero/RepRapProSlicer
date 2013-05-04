@@ -61,7 +61,6 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.gcode.GCodePrinter;
 
 /**
  * RrPolygonList: A collection of 2D polygons List of polygons class. This too
@@ -512,22 +511,6 @@ public class PolygonList {
             throw new RuntimeException("no point found!");
         }
         return result;
-    }
-
-    /**
-     * Remove polygons shorter than 3 times the infillwidth
-     */
-    public PolygonList cullShorts(final GCodePrinter printer) {
-        final PolygonList r = new PolygonList();
-
-        for (int i = 0; i < size(); i++) {
-            final Polygon p = polygon(i);
-            p.getAttributes();
-            if (p.getLength() > printer.getExtruder(p.getAttributes().getMaterial()).getExtrusionSize() * 3) {
-                r.add(p);
-            }
-        }
-        return r;
     }
 
     /**

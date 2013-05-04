@@ -39,10 +39,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Constants;
 import org.reprap.configuration.CurrentConfiguration;
+import org.reprap.configuration.ExtruderSettings;
 import org.reprap.configuration.Preferences;
 import org.reprap.configuration.PrintSettings;
 import org.reprap.gcode.GCodeExtruder;
-import org.reprap.gcode.GCodePrinter;
 import org.reprap.gcode.Purge;
 import org.reprap.geometry.polygons.BooleanGrid;
 import org.reprap.geometry.polygons.BooleanGridList;
@@ -325,7 +325,7 @@ class ProducerStlList {
             attribute = unionOfThisLayer.attribute();
             // Expand the union of this layer a bit, so that any support is a little clear of 
             // this layer's boundaries.
-            final BooleanGridList allThis = offsetOutline(unionOfThisLayer, layerRules, 2);
+            final BooleanGridList allThis = offsetOutline(unionOfThisLayer, 2);
             // the first grid in the resulting grid list is now offset by its extruders extrusionSize.
             unionOfThisLayer = allThis.get(0);
         } else {
@@ -385,7 +385,7 @@ class ProducerStlList {
         final BooleanGridList neededSlice = new BooleanGridList();
         for (int i = 0; i < allLayer.size(); i++) {
             final Attributes attribute = allLayer.get(i).attribute();
-            final GCodeExtruder e = layerRules.getPrinter().getExtruder(attribute.getMaterial());
+            final ExtruderSettings e = configuration.getExtruderSettings(attribute.getMaterial());
             if (e != null) {
                 neededSlice.add(allLayer.get(i));
             }
@@ -450,7 +450,7 @@ class ProducerStlList {
             return new PolygonList();
         }
 
-        final BooleanGridList offBorder = offsetOutline(slice, layerRules, -1);
+        final BooleanGridList offBorder = offsetOutline(slice, -1);
         final PolygonList borderPolygons = offBorder.borders();
 
         if (Preferences.getCurrentConfiguration().getPrintSettings().isMiddleStart()) {
@@ -462,7 +462,8 @@ class ProducerStlList {
     }
 
     PolygonList computeBrim(final int stl, final int brimLines) {
-        final GCodeExtruder extruder = layerRules.getPrinter().getExtruders()[0];
+        final ExtruderSettings extruder = Preferences.getCurrentConfiguration().getPrinterSettings().getExtruderSettings()
+                .get(0);
         final double extrusionSize = extruder.getExtrusionSize();
 
         BooleanGridList slice = neededThisLayer(slice(stl, 0));
@@ -484,6 +485,8 @@ class ProducerStlList {
     /**
      * Generate a set of pixel-map representations, one for each extruder, for
      * STLObject stl at height z.
+     * 
+     * TODO clean up this method
      */
     BooleanGridList slice(final int stlIndex, final int layer) {
         if (layer < 0) {
@@ -713,9 +716,8 @@ class ProducerStlList {
             final BooleanGridList slice) {
         for (int i = 0; i < list.size(); i++) {
             Polygon outline = list.polygon(i);
-            final GCodePrinter printer = lc.getPrinter();
             final String material = outline.getAttributes().getMaterial();
-            final GCodeExtruder ex = printer.getExtruder(material);
+            final ExtruderSettings ex = Preferences.getCurrentConfiguration().getExtruderSettings(material);
             Line l = lc.getHatchDirection(false, ex.getExtrusionSize()).pLine();
             if (i % 2 != 0 ^ lc.getMachineLayer() % 4 > 1) {
                 l = l.neg();
@@ -806,8 +808,7 @@ class ProducerStlList {
 
         // The points making the arc must be closer than this together
         final double shortSides = printSettings.getArcShortSides();
-        final GCodeExtruder extruder = layerRules.getPrinter().getExtruder(attributes.getMaterial());
-        final double thickness = extruder.getExtrusionSize();
+        final double thickness = configuration.getExtruderSettings(attributes.getMaterial()).getExtrusionSize();
         final Polygon result = new Polygon(attributes, polygon.isClosed());
         Point2D previous = polygon.point(polygon.size() - 1);
         Point2D current = polygon.point(0);
@@ -855,19 +856,22 @@ class ProducerStlList {
      */
     static PolygonList hatch(final BooleanGridList list, final LayerRules layerConditions, final boolean surface,
             final boolean support) {
-        final PrintSettings printSettings = Preferences.getCurrentConfiguration().getPrintSettings();
+        final CurrentConfiguration currentConfiguration = Preferences.getCurrentConfiguration();
+        final PrintSettings printSettings = currentConfiguration.getPrintSettings();
         final PolygonList result = new PolygonList();
         for (int i = 0; i < list.size(); i++) {
             final BooleanGrid grid = list.get(i);
             final Attributes att = grid.attribute();
-            final GCodeExtruder e = layerConditions.getPrinter().getExtruder(att.getMaterial());
             final double infillWidth;
             if (support) {
                 infillWidth = printSettings.getSupportSpacing();
-            } else if (surface) {
-                infillWidth = e.getExtrusionSize();
             } else {
-                infillWidth = e.getExtrusionSize() / printSettings.getFillDensity();
+                final double extrusionSize = currentConfiguration.getExtruderSettings(att.getMaterial()).getExtrusionSize();
+                if (surface) {
+                    infillWidth = extrusionSize;
+                } else {
+                    infillWidth = extrusionSize / printSettings.getFillDensity();
+                }
             }
             final HalfPlane hatchLine = layerConditions.getHatchDirection(support, infillWidth);
             result.add(grid.hatch(hatchLine, infillWidth, att));
@@ -875,11 +879,11 @@ class ProducerStlList {
         return result;
     }
 
-    private static BooleanGridList offsetOutline(final BooleanGridList gridList, final LayerRules lc, final double multiplier) {
+    private static BooleanGridList offsetOutline(final BooleanGridList gridList, final double multiplier) {
         final BooleanGridList result = new BooleanGridList();
         for (int i = 0; i < gridList.size(); i++) {
             final BooleanGrid grid = gridList.get(i);
-            final BooleanGridList offset = offsetOutline(grid, lc, multiplier);
+            final BooleanGridList offset = offsetOutline(grid, multiplier);
             if (Preferences.getCurrentConfiguration().getPrintSettings().isInsideOut()) {
                 offset.reverse();
             }
@@ -890,12 +894,12 @@ class ProducerStlList {
         return result;
     }
 
-    private static BooleanGridList offsetOutline(final BooleanGrid grid, final LayerRules lc, final double multiplier) {
+    private static BooleanGridList offsetOutline(final BooleanGrid grid, final double multiplier) {
         final Attributes att = grid.attribute();
         if (att == null) {
             throw new RuntimeException("grid attribute is null");
         }
-        final GCodeExtruder e = lc.getPrinter().getExtruder(att.getMaterial());
+        final ExtruderSettings e = Preferences.getCurrentConfiguration().getExtruderSettings(att.getMaterial());
         final BooleanGridList result = new BooleanGridList();
         final int shells = Preferences.getCurrentConfiguration().getPrintSettings().getVerticalShells();
         for (int shell = 0; shell < shells; shell++) {
@@ -911,7 +915,7 @@ class ProducerStlList {
         return result;
     }
 
-    static BooleanGridList offset(final BooleanGridList gridList, final LayerRules lc, final double multiplier) {
+    static BooleanGridList offset(final BooleanGridList gridList, final double multiplier) {
         final BooleanGridList result = new BooleanGridList();
         for (int i = 0; i < gridList.size(); i++) {
             final BooleanGrid grid = gridList.get(i);
@@ -919,7 +923,7 @@ class ProducerStlList {
             if (att == null) {
                 throw new RuntimeException("grid attribute is null");
             }
-            final GCodeExtruder e = lc.getPrinter().getExtruder(att.getMaterial());
+            final ExtruderSettings e = Preferences.getCurrentConfiguration().getExtruderSettings(att.getMaterial());
             final double extrusionSize = e.getExtrusionSize();
             final PrintSettings printSettings = Preferences.getCurrentConfiguration().getPrintSettings();
             final int shells = printSettings.getVerticalShells();

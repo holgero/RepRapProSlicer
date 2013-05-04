@@ -5,8 +5,8 @@ import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.CurrentConfiguration;
+import org.reprap.configuration.ExtruderSettings;
 import org.reprap.configuration.Preferences;
-import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
@@ -80,22 +80,23 @@ class LayerProducer {
             simulationPlot.add(pgl);
         }
 
-        final GCodeExtruder extruder = printer.getExtruder(attributes.getMaterial());
-        final ExtrusionPath extrusionPath = new ExtrusionPath(polygon, calculateFeedrate(polygon, extruder));
+        final ExtruderSettings extruder = configuration.getExtruderSettings(attributes.getMaterial());
+        final ExtrusionPath extrusionPath = new ExtrusionPath(polygon, calculateFeedrate(polygon,
+                extruder.getPrintExtrusionRate()));
         plotExtrusionPath(extrusionPath, firstOneInLayer, extruder);
     }
 
-    private double calculateFeedrate(final Polygon polygon, final GCodeExtruder extruder) {
+    private double calculateFeedrate(final Polygon polygon, final double extrusionRate) {
         if (polygon.isClosed()) {
-            return configuration.getPrintSettings().getPerimeterSpeed() * extruder.getFastXYFeedrate();
+            return configuration.getPrintSettings().getPerimeterSpeed() * extrusionRate;
         } else {
-            return configuration.getPrintSettings().getInfillSpeed() * extruder.getFastXYFeedrate();
+            return configuration.getPrintSettings().getInfillSpeed() * extrusionRate;
         }
     }
 
     private void plotExtrusionPath(final ExtrusionPath extrusionPath, final boolean firstOneInLayer,
-            final GCodeExtruder extruder) throws IOException {
-        final double extrudeBackLength = extruder.getExtrusionOverRun();
+            final ExtruderSettings extruder) throws IOException {
+        final double extrudeBackLength = extruder.getExtrusionOverrun();
         extrusionPath.backStepExtrude(extrudeBackLength);
 
         final GCodePrinter printer = layerRules.getPrinter();

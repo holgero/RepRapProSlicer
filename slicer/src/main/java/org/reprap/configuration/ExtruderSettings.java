@@ -36,7 +36,7 @@ public class ExtruderSettings {
     @XmlElement
     private double extraLengthPerPolygon; // mm 0.104
     @XmlElement
-    private int earlyRetraction; // # -1
+    private double extrusionOverrun; // # -1
     @XmlElement
     private double lift; // mm 0
     @XmlElement
@@ -82,12 +82,12 @@ public class ExtruderSettings {
         this.extrudeRatio = extrudeRatio;
     }
 
-    public int getEarlyRetraction() {
-        return earlyRetraction;
+    public double getExtrusionOverrun() {
+        return extrusionOverrun;
     }
 
-    void setEarlyRetraction(final int earlyRetraction) {
-        this.earlyRetraction = earlyRetraction;
+    void setExtrusionOverrun(final double extrusionOverrun) {
+        this.extrusionOverrun = extrusionOverrun;
     }
 
     public double getAirExtrusionFeedRate() {
@@ -120,5 +120,9 @@ public class ExtruderSettings {
 
     void setMaterial(final MaterialSettings material) {
         this.material = material;
+    }
+
+    public double getExtrusionSize() {
+        return getNozzleDiameter();
     }
 }

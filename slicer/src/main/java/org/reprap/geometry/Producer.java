@@ -17,9 +17,8 @@ import org.reprap.geometry.polyhedra.BoundingBox;
 
 public class Producer {
     private static final Logger LOGGER = LogManager.getLogger(Producer.class);
-    private LayerRules layerRules = null;
-    private SimulationPlotter simulationPlot = null;
-
+    private final LayerRules layerRules;
+    private final SimulationPlotter simulationPlot;
     /**
      * The list of objects to be built
      */
@@ -27,23 +26,24 @@ public class Producer {
     private final ProductionProgressListener progressListener;
     private final GCodePrinter printer;
     private final int totalExtruders;
+    private final int brimLines;
+    private final boolean printSupport;
+    private final CurrentConfiguration configuration;
     /*
      * Skip generating the shield if only one color is printed
      */
     private boolean omitShield;
-    private final int brimLines;
-    private final boolean printSupport;
 
     public Producer(final GCodePrinter printer, final AllSTLsToBuild allStls, final ProductionProgressListener listener,
             final boolean displayPaths) {
         this.printer = printer;
         progressListener = listener;
-        final Purge purge = new Purge(printer);
+        final Purge purge = new Purge();
         printer.setPurge(purge);
         final BoundingBox buildVolume = ProducerStlList.calculateBoundingBox(allStls, purge);
         layerRules = new LayerRules(printer, buildVolume);
         stlList = new ProducerStlList(allStls, purge, layerRules);
-        final CurrentConfiguration configuration = Preferences.getCurrentConfiguration();
+        configuration = Preferences.getCurrentConfiguration();
         totalExtruders = configuration.getPrinterSettings().getExtruderSettings().size();
         if (displayPaths) {
             simulationPlot = new SimulationPlotter("RepRap building simulation");
@@ -121,28 +121,31 @@ public class Producer {
             final PolygonList brim = stlList.computeBrim(stl, brimLines);
             tempBorderPolygons[0].add(brim);
         }
-        PolygonList fills = stlList.computeInfill(stl);
+        final PolygonList fills = stlList.computeInfill(stl);
         final PolygonList borders = stlList.computeOutlines(stl, fills);
         for (int pol = 0; pol < borders.size(); pol++) {
             final Polygon polygon = borders.polygon(pol);
             tempBorderPolygons[getExtruder(polygon)].add(polygon);
         }
-        fills = fills.cullShorts(layerRules.getPrinter());
         for (int pol = 0; pol < fills.size(); pol++) {
-            final Polygon p = fills.polygon(pol);
-            tempFillPolygons[getExtruder(p)].add(p);
+            final Polygon polygon = fills.polygon(pol);
+            final double minLength = 3 * configuration.getExtruderSettings(polygon.getAttributes().getMaterial())
+                    .getExtrusionSize();
+            if (polygon.getLength() > minLength) {
+                tempFillPolygons[getExtruder(polygon)].add(polygon);
+            }
         }
         if (printSupport) {
             final PolygonList support = stlList.computeSupport(stl);
             for (int pol = 0; pol < support.size(); pol++) {
-                final Polygon p = support.polygon(pol);
-                tempFillPolygons[getExtruder(p)].add(p);
+                final Polygon polygon = support.polygon(pol);
+                tempFillPolygons[getExtruder(polygon)].add(polygon);
             }
         }
         for (int extruder = 0; extruder < totalExtruders; extruder++) {
             if (tempBorderPolygons[extruder].size() > 0) {
-                double linkUp = printer.getExtruder(tempBorderPolygons[extruder].polygon(0).getAttributes().getMaterial())
-                        .getExtrusionSize();
+                double linkUp = configuration.getExtruderSettings(
+                        tempBorderPolygons[extruder].polygon(0).getAttributes().getMaterial()).getExtrusionSize();
                 linkUp = (4 * linkUp * linkUp);
                 tempBorderPolygons[extruder].radicalReOrder(linkUp);
                 tempBorderPolygons[extruder] = tempBorderPolygons[extruder].nearEnds(startNearHere);
@@ -154,8 +157,8 @@ public class Producer {
             }
             if (tempFillPolygons[extruder].size() > 0) {
                 tempFillPolygons[extruder].polygon(0).getAttributes();
-                double linkUp = printer.getExtruder(tempFillPolygons[extruder].polygon(0).getAttributes().getMaterial())
-                        .getExtrusionSize();
+                double linkUp = configuration.getExtruderSettings(
+                        tempFillPolygons[extruder].polygon(0).getAttributes().getMaterial()).getExtrusionSize();
                 linkUp = (4 * linkUp * linkUp);
                 tempFillPolygons[extruder].radicalReOrder(linkUp);
                 tempFillPolygons[extruder] = tempFillPolygons[extruder].nearEnds(startNearHere);

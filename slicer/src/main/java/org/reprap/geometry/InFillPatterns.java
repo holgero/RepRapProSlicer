@@ -2,8 +2,8 @@ package org.reprap.geometry;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.configuration.ExtruderSettings;
 import org.reprap.configuration.Preferences;
-import org.reprap.gcode.GCodeExtruder;
 import org.reprap.geometry.polygons.BooleanGrid;
 import org.reprap.geometry.polygons.BooleanGridList;
 import org.reprap.geometry.polygons.HalfPlane;
@@ -33,7 +33,7 @@ public final class InFillPatterns {
 
         // Get the bottom out of the way - no fancy calculations needed.
         if (layer <= surfaceLayers) {
-            slice = ProducerStlList.offset(slice, layerRules, -1);
+            slice = ProducerStlList.offset(slice, -1);
             slice = slicer.neededThisLayer(slice);
             return ProducerStlList.hatch(slice, layerRules, true, false);
         }
@@ -76,7 +76,7 @@ public final class InFillPatterns {
         // Make the bridges fatter, then crop them to the slice.
         // This will make them interpenetrate at their ends/sides to give
         // bridge landing areas.
-        bridges = ProducerStlList.offset(bridges, layerRules, 2);
+        bridges = ProducerStlList.offset(bridges, 2);
         bridges = BooleanGridList.intersections(bridges, slice);
 
         // Find the landing areas as a separate set of shapes that go with the bridges.
@@ -84,9 +84,9 @@ public final class InFillPatterns {
 
         // Shapes will be outlined, and so need to be shrunk to allow for that.  But they
         // must not also shrink from each other internally.  So initially expand them so they overlap
-        bridges = ProducerStlList.offset(bridges, layerRules, 1);
-        insides = ProducerStlList.offset(insides, layerRules, 1);
-        surfaces = ProducerStlList.offset(surfaces, layerRules, 1);
+        bridges = ProducerStlList.offset(bridges, 1);
+        insides = ProducerStlList.offset(insides, 1);
+        surfaces = ProducerStlList.offset(surfaces, 1);
 
         // Now intersect them with the slice so the outer edges are back where they should be.
         bridges = BooleanGridList.intersections(bridges, slice);
@@ -96,9 +96,9 @@ public final class InFillPatterns {
         // Now shrink them so the edges are in a bit to allow the outlines to
         // be put round the outside.  The inner joins should now shrink back to be
         // adjacent to each other as they should be.
-        bridges = ProducerStlList.offset(bridges, layerRules, -1);
-        insides = ProducerStlList.offset(insides, layerRules, -1);
-        surfaces = ProducerStlList.offset(surfaces, layerRules, -1);
+        bridges = ProducerStlList.offset(bridges, -1);
+        insides = ProducerStlList.offset(insides, -1);
+        surfaces = ProducerStlList.offset(surfaces, -1);
 
         // Generate the infill patterns.  We do the bridges first, as each bridge subtracts its
         // lands from the other two sets of shapes.  We want that, so they don't get infilled twice.
@@ -195,7 +195,8 @@ public final class InFillPatterns {
                 // Find the middle of this land
                 final Point2D cen2 = land2.findCentroid();
                 final Attributes attribute = bridge.attribute();
-                final GCodeExtruder extruder = layerConditions.getPrinter().getExtruder(attribute.getMaterial());
+                final ExtruderSettings extruder = Preferences.getCurrentConfiguration().getExtruderSettings(
+                        attribute.getMaterial());
                 final double extrusionWidth = extruder.getExtrusionSize();
                 if (cen2 == null) {
                     LOGGER.debug("Second land found with no centroid.");

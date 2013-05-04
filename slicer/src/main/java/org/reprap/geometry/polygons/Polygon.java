@@ -214,7 +214,7 @@ public class Polygon {
     /**
      * Sum of the edge lengths
      */
-    double getLength() {
+    public double getLength() {
         double len = 0;
         for (int i = 1; i < size(); i++) {
             len = len + Point2D.d(point(i), point(i - 1));
