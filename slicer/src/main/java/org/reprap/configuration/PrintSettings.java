@@ -21,6 +21,7 @@ package org.reprap.configuration;
 import java.io.File;
 
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 public class PrintSettings {
     // layers
@@ -42,6 +43,7 @@ public class PrintSettings {
     // infill
     @XmlElement
     private double fillDensity; // fraction 0.21
+    @XmlJavaTypeAdapter(FillPatternXmlAdapter.class)
     private FillPattern pattern; // rectilinear
     @XmlElement
     private double infillOverlap; // mm 0.2
@@ -71,6 +73,7 @@ public class PrintSettings {
     private boolean support; // boolean false
     @XmlElement
     private int supportExtruder; // # 0
+    @XmlJavaTypeAdapter(FillPatternXmlAdapter.class)
     private FillPattern supportPattern; // linear
     @XmlElement
     private double supportSpacing; // mm 2.5

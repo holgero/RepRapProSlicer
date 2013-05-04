@@ -8,10 +8,10 @@ import javax.vecmath.Color3f;
 import org.junit.Test;
 
 public class Color3fXmlAdapterUnmarshallTest {
+    final Color3fXmlAdapter adapter = new Color3fXmlAdapter();
 
     @Test
     public void testMapBlack() {
-        final Color3fXmlAdapter adapter = new Color3fXmlAdapter();
         final Color3f adapted = adapter.unmarshal(new XmlRgbColor());
         assertThat(adapted.x, is(0.0f));
         assertThat(adapted.y, is(0.0f));
@@ -20,7 +20,6 @@ public class Color3fXmlAdapterUnmarshallTest {
 
     @Test
     public void testMapRed() {
-        final Color3fXmlAdapter adapter = new Color3fXmlAdapter();
         final Color3f adapted = adapter.unmarshal(new XmlRgbColor(1.0f, 0.0f, 0.0f));
         assertThat(adapted.x, is(1.0f));
         assertThat(adapted.y, is(0.0f));
@@ -29,7 +28,6 @@ public class Color3fXmlAdapterUnmarshallTest {
 
     @Test
     public void testMapGreen() {
-        final Color3fXmlAdapter adapter = new Color3fXmlAdapter();
         final Color3f adapted = adapter.unmarshal(new XmlRgbColor(0.0f, 1.0f, 0.0f));
         assertThat(adapted.x, is(0.0f));
         assertThat(adapted.y, is(1.0f));
@@ -38,7 +36,6 @@ public class Color3fXmlAdapterUnmarshallTest {
 
     @Test
     public void testMapBlue() {
-        final Color3fXmlAdapter adapter = new Color3fXmlAdapter();
         final Color3f adapted = adapter.unmarshal(new XmlRgbColor(0.0f, 0.0f, 1.0f));
         assertThat(adapted.x, is(0.0f));
         assertThat(adapted.y, is(0.0f));
@@ -47,7 +44,6 @@ public class Color3fXmlAdapterUnmarshallTest {
 
     @Test
     public void testMapWhite() {
-        final Color3fXmlAdapter adapter = new Color3fXmlAdapter();
         final XmlRgbColor adapted = adapter.marshal(new Color3f(1.0f, 1.0f, 1.0f));
         assertThat(adapted.getRed(), is(1.0f));
         assertThat(adapted.getGreen(), is(1.0f));

@@ -18,19 +18,19 @@
  */
 package org.reprap.configuration;
 
-import javax.vecmath.Color3f;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.xml.bind.annotation.XmlAttribute;
 
-public class Color3fXmlAdapter extends XmlAdapter<XmlRgbColor, Color3f> {
+public class FillPatternDescriptor {
+    @XmlAttribute
+    String type;
+    @XmlAttribute
+    double angle;
 
-    @Override
-    public Color3f unmarshal(final XmlRgbColor v) {
-        return new Color3f(v.getRed(), v.getGreen(), v.getBlue());
+    public FillPatternDescriptor() {
     }
 
-    @Override
-    public XmlRgbColor marshal(final Color3f v) {
-        return new XmlRgbColor(v.x, v.y, v.z);
+    public FillPatternDescriptor(final String type, final double angle) {
+        this.type = type;
+        this.angle = angle;
     }
-
 }

@@ -18,11 +18,6 @@
  */
 package org.reprap.configuration;
 
-import java.io.File;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -40,17 +35,6 @@ public class CurrentConfiguration {
     CurrentConfiguration(final PrintSettings printSettings, final PrinterSettings printerSettings) {
         setPrintSettings(printSettings);
         setPrinterSettings(printerSettings);
-    }
-
-    void writeToXml(final File file) {
-        try {
-            final JAXBContext context = JAXBContext.newInstance(CurrentConfiguration.class);
-            final Marshaller marshaller = context.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-            marshaller.marshal(this, file);
-        } catch (final JAXBException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public PrintSettings getPrintSettings() {

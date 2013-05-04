@@ -33,4 +33,8 @@ final class RectilinearFillPattern implements FillPattern {
             return fillAngle - 90;
         }
     }
+
+    double getFillAngle() {
+        return fillAngle;
+    }
 }

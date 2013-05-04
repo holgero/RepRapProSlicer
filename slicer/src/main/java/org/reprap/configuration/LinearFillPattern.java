@@ -29,4 +29,8 @@ final class LinearFillPattern implements FillPattern {
     public double angle(final int layer) {
         return fillAngle;
     }
+
+    double getFillAngle() {
+        return fillAngle;
+    }
 }
