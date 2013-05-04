@@ -238,13 +238,12 @@ public class RepRapBuild extends JPanel implements MouseListener {
         pickCanvas.setShapeLocation(e);
 
         final PickResult pickResult = pickCanvas.pickClosest();
-        STLObject picked = null;
 
         if (pickResult != null) {
             final Node actualNode = pickResult.getObject();
 
             final Attributes att = (Attributes) actualNode.getUserData();
-            picked = att.getParent();
+            final STLObject picked = att.getParent();
             if (picked != null) {
                 if (picked != workingVolume) {
                     picked.setAppearance(pickedAppearance); // Highlight it
