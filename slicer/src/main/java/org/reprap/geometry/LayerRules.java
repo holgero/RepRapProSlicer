@@ -9,10 +9,10 @@ import java.io.PrintStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.CurrentConfiguration;
+import org.reprap.configuration.ExtruderSettings;
 import org.reprap.configuration.FillPattern;
 import org.reprap.configuration.Preferences;
 import org.reprap.configuration.PrintSettings;
-import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.BooleanGrid;
 import org.reprap.geometry.polygons.CSG2D;
@@ -335,7 +335,8 @@ public class LayerRules {
     }
 
     private void fillFoundationRectangle(final SimulationPlotter simulationPlot) throws IOException {
-        final GCodeExtruder extruder = printer.getExtruder();
+        final ExtruderSettings extruder = configuration.getPrinterSettings().getExtruderSettings()
+                .get(configuration.getPrintSettings().getSupportExtruder());
         final BooleanGrid bg = new BooleanGrid(CSG2D.RrCSGFromBox(bBox), bBox.scale(1.1),
                 new Attributes(extruder.getMaterial()));
         final PolygonList foundationPolygon = bg.hatch(getHatchDirection(false, extruder.getExtrusionSize()),
