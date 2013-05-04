@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.Preferences;
 import org.reprap.configuration.PrintSettings;
 import org.reprap.gcode.GCodePrinter;
@@ -42,14 +43,14 @@ public class Producer {
         final BoundingBox buildVolume = ProducerStlList.calculateBoundingBox(allStls, purge);
         layerRules = new LayerRules(printer, buildVolume);
         stlList = new ProducerStlList(allStls, purge, layerRules);
-        final Preferences preferences = Preferences.getInstance();
-        totalExtruders = preferences.getPrinterSettings().getExtruderSettings().length;
+        final CurrentConfiguration configuration = Preferences.getCurrentConfiguration();
+        totalExtruders = configuration.getPrinterSettings().getExtruderSettings().size();
         if (displayPaths) {
             simulationPlot = new SimulationPlotter("RepRap building simulation");
         } else {
             simulationPlot = null;
         }
-        final PrintSettings printSettings = preferences.getPrintSettings();
+        final PrintSettings printSettings = configuration.getPrintSettings();
         omitShield = printSettings.printShield();
         brimLines = printSettings.getBrimLines();
         printSupport = printSettings.printSupport();

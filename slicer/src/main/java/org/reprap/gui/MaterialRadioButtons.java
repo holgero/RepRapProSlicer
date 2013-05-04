@@ -5,6 +5,7 @@ import java.awt.Dialog;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -62,19 +63,17 @@ class MaterialRadioButtons extends JPanel {
         jLabel1.setHorizontalAlignment(SwingConstants.CENTER);
         radioPanel.add(jLabel1);
 
-        final ExtruderSettings[] extruders = Preferences.getInstance().getPrinterSettings().getExtruderSettings();
+        final List<ExtruderSettings> extruders = Preferences.getCurrentConfiguration().getPrinterSettings()
+                .getExtruderSettings();
         String matname = att.getMaterial();
         if (matname == null) {
             matname = "";
         }
 
         final ButtonGroup bGroup = new ButtonGroup();
-        int matnumber = -1;
-        for (int i = 0; i < extruders.length; i++) {
-            final String material = extruders[i].getMaterial().getName();
-            if (matname.contentEquals(material)) {
-                matnumber = i;
-            }
+        boolean foundMaterial = false;
+        for (final ExtruderSettings extruderSettings : extruders) {
+            final String material = extruderSettings.getMaterial().getName();
             final JRadioButton b = new JRadioButton(material);
             b.setActionCommand(material);
             b.addActionListener(new ActionListener() {
@@ -83,14 +82,15 @@ class MaterialRadioButtons extends JPanel {
                     att.setMaterial(e.getActionCommand());
                 }
             });
-            if (i == matnumber) {
+            if (matname.contentEquals(material)) {
                 b.setSelected(true);
+                foundMaterial = true;
             }
             bGroup.add(b);
             radioPanel.add(b);
         }
-        if (matnumber < 0) {
-            att.setMaterial(extruders[0].getMaterial().getName());
+        if (!foundMaterial) {
+            att.setMaterial(extruders.get(0).getMaterial().getName());
             final JRadioButton b = (JRadioButton) bGroup.getElements().nextElement();
             b.setSelected(true);
         } else {

@@ -51,8 +51,7 @@ public class GCodeExtruder {
         gcode = writer;
         myExtruderID = extruderId;
         printer = p;
-        final Preferences preferences = Preferences.getInstance();
-        loadPreferences(preferences.getPrinterSettings().getExtruderSettings()[extruderId]);
+        loadPreferences(Preferences.getCurrentConfiguration().getPrinterSettings().getExtruderSettings().get(extruderId));
         extruderState = new ExtruderState();
         // when we are first called (top down calculation means at our top
         // layer) the layer below will have reversed us at its end on the way up
@@ -142,7 +141,7 @@ public class GCodeExtruder {
             return extrudeRatio * distance;
         }
 
-        final double layerHeight = Preferences.getInstance().getPrintSettings().getLayerHeight();
+        final double layerHeight = Preferences.getCurrentConfiguration().getPrintSettings().getLayerHeight();
         return extrudeRatio * distance * layerHeight * extrusionSize / circleAreaForDiameter(feedDiameter);
     }
 

@@ -19,6 +19,9 @@
 package org.reprap.configuration;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
@@ -114,8 +117,8 @@ public class PrinterSettings {
         this.maximumFeedrateZ = maximumFeedrateZ;
     }
 
-    public ExtruderSettings[] getExtruderSettings() {
-        return extruderSettings;
+    public List<ExtruderSettings> getExtruderSettings() {
+        return Collections.unmodifiableList(Arrays.asList(extruderSettings));
     }
 
     void setExtruderSettings(final ExtruderSettings[] extruderSettings) {

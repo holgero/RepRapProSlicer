@@ -63,7 +63,7 @@ public class GCodePrinter {
     }
 
     private void loadExtruders() {
-        final int extruderCount = getPrinterSettings().getExtruderSettings().length;
+        final int extruderCount = getPrinterSettings().getExtruderSettings().size();
         if (extruderCount < 1) {
             throw new IllegalStateException("A Reprap printer must contain at least one extruder.");
         }
@@ -660,10 +660,10 @@ public class GCodePrinter {
     }
 
     private PrintSettings getPrintSettings() {
-        return Preferences.getInstance().getPrintSettings();
+        return Preferences.getCurrentConfiguration().getPrintSettings();
     }
 
     private PrinterSettings getPrinterSettings() {
-        return Preferences.getInstance().getPrinterSettings();
+        return Preferences.getCurrentConfiguration().getPrinterSettings();
     }
 }

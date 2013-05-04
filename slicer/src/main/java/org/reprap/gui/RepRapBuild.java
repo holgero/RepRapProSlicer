@@ -477,7 +477,7 @@ public class RepRapBuild extends JPanel implements MouseListener {
     }
 
     private void initialise() throws IOException {
-        final PrinterSettings printerSettings = Preferences.getInstance().getPrinterSettings();
+        final PrinterSettings printerSettings = Preferences.getCurrentConfiguration().getPrinterSettings();
         xwv = printerSettings.getBedSizeX();
         ywv = printerSettings.getBedSizeY();
         zwv = printerSettings.getMaximumZ();

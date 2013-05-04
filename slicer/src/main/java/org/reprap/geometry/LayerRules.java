@@ -8,6 +8,7 @@ import java.io.PrintStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.FillPattern;
 import org.reprap.configuration.Preferences;
 import org.reprap.configuration.PrintSettings;
@@ -97,7 +98,7 @@ public class LayerRules {
      */
     private final int maxSurfaceLayers;
 
-    private final Preferences preferences = Preferences.getInstance();
+    private final CurrentConfiguration configuration = Preferences.getCurrentConfiguration();
 
     /**
      * How far up the model we are in mm
@@ -121,7 +122,7 @@ public class LayerRules {
 
     LayerRules(final GCodePrinter printer, final BoundingBox box) {
         this.printer = printer;
-        final PrintSettings printSettings = preferences.getPrintSettings();
+        final PrintSettings printSettings = configuration.getPrintSettings();
         zStep = printSettings.getLayerHeight();
         maxSurfaceLayers = printSettings.getHorizontalShells();
 
@@ -269,9 +270,9 @@ public class LayerRules {
         }
         final FillPattern fillPattern;
         if (support) {
-            fillPattern = preferences.getPrintSettings().getSupportPattern();
+            fillPattern = configuration.getPrintSettings().getSupportPattern();
         } else {
-            fillPattern = preferences.getPrintSettings().getFillPattern();
+            fillPattern = configuration.getPrintSettings().getFillPattern();
         }
         final double angle = Math.toRadians(fillPattern.angle(mylayer));
         HalfPlane result = new HalfPlane(new Point2D(0.0, 0.0), new Point2D(Math.sin(angle), Math.cos(angle)));

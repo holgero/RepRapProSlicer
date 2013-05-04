@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.Preferences;
 import org.reprap.gcode.GCodeExtruder;
 import org.reprap.gcode.GCodePrinter;
@@ -18,7 +19,7 @@ class LayerProducer {
     private final SimulationPlotter simulationPlot;
     private final LayerRules layerRules;
     private final PolygonList allPolygons[];
-    private final Preferences preferences = Preferences.getInstance();
+    private final CurrentConfiguration configuration = Preferences.getCurrentConfiguration();
 
     LayerProducer(final PolygonList ap[], final LayerRules lc, final SimulationPlotter simPlot) throws IOException {
         layerRules = lc;
@@ -58,7 +59,7 @@ class LayerProducer {
             lastPoint = n;
         }
 
-        if (plotDist < preferences.getPrinterSettings().getMachineResolution() * 0.5) {
+        if (plotDist < configuration.getPrinterSettings().getMachineResolution() * 0.5) {
             LOGGER.info("Rejected line with " + polygon.size() + " points, length: " + plotDist);
             return;
         }
@@ -86,9 +87,9 @@ class LayerProducer {
 
     private double calculateFeedrate(final Polygon polygon, final GCodeExtruder extruder) {
         if (polygon.isClosed()) {
-            return preferences.getPrintSettings().getPerimeterSpeed() * extruder.getFastXYFeedrate();
+            return configuration.getPrintSettings().getPerimeterSpeed() * extruder.getFastXYFeedrate();
         } else {
-            return preferences.getPrintSettings().getInfillSpeed() * extruder.getFastXYFeedrate();
+            return configuration.getPrintSettings().getInfillSpeed() * extruder.getFastXYFeedrate();
         }
     }
 

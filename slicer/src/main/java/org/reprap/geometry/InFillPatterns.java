@@ -29,7 +29,7 @@ public final class InFillPatterns {
         final int layer = layerRules.getModelLayer();
         BooleanGridList slice = slicer.slice(stl, layer);
 
-        final int surfaceLayers = Preferences.getInstance().getPrintSettings().getHorizontalShells();
+        final int surfaceLayers = Preferences.getCurrentConfiguration().getPrintSettings().getHorizontalShells();
 
         // Get the bottom out of the way - no fancy calculations needed.
         if (layer <= surfaceLayers) {
@@ -118,7 +118,7 @@ public final class InFillPatterns {
     public static BooleanGridList cullNoSupport(final BooleanGridList list) {
         final BooleanGridList result = new BooleanGridList();
 
-        if (!Preferences.getInstance().getPrintSettings().printSupport()) {
+        if (!Preferences.getCurrentConfiguration().getPrintSettings().printSupport()) {
             for (int i = 0; i < list.size(); i++) {
                 final BooleanGrid grid = list.get(i);
                 result.add(grid);

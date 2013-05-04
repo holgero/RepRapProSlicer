@@ -19,11 +19,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 import javax.vecmath.Color3f;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -36,7 +31,6 @@ import org.apache.logging.log4j.Logger;
  * are no current preferences the system-wide ones are copied to the user's
  * space.
  */
-@XmlRootElement
 public class Preferences {
     private static final String SHIELD_STL_FILENAME = "shield.stl";
     private static final Logger LOGGER = LogManager.getLogger(Preferences.class);
@@ -130,32 +124,16 @@ public class Preferences {
         return sysConfig;
     }
 
-    @XmlElement
-    private final PrintSettings printSettings;
-    @XmlElement
-    private final PrinterSettings printerSettings;
+    private final CurrentConfiguration currentConfiguration;
 
     private Preferences() {
         final Properties mainPreferences = loadConfiguration(propsFile);
-        printSettings = createPrintSettings(mainPreferences);
+        final PrintSettings printSettings = createPrintSettings(mainPreferences);
         final int remaining = removeUnusedExtruders(mainPreferences);
-        printerSettings = createPrinterSettings(mainPreferences);
+        final PrinterSettings printerSettings = createPrinterSettings(mainPreferences);
         printerSettings.setExtruderSettings(createAllExtruderSettings(remaining, mainPreferences,
                 printSettings.getLayerHeight()));
-        writeToXml();
-    }
-
-    private void writeToXml() {
-        try {
-            final JAXBContext context = JAXBContext.newInstance(Preferences.class);
-            final Marshaller marshaller = context.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-            marshaller.marshal(this, File.createTempFile("pref", ".xml"));
-        } catch (final JAXBException e) {
-            throw new RuntimeException(e);
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
-        }
+        currentConfiguration = new CurrentConfiguration(printSettings, printerSettings);
     }
 
     private static ExtruderSettings[] createAllExtruderSettings(final int extruderCount, final Properties properties,
@@ -476,15 +454,15 @@ public class Preferences {
         return load(new File(getActiveMachineDir(), fileName));
     }
 
-    public static Preferences getInstance() {
-        return globalPrefs;
+    public static CurrentConfiguration getCurrentConfiguration() {
+        return globalPrefs.currentConfiguration;
     }
 
     public PrintSettings getPrintSettings() {
-        return printSettings;
+        return currentConfiguration.getPrintSettings();
     }
 
     public PrinterSettings getPrinterSettings() {
-        return printerSettings;
+        return currentConfiguration.getPrinterSettings();
     }
 }

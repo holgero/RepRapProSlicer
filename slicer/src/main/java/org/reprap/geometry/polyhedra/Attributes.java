@@ -1,5 +1,7 @@
 package org.reprap.geometry.polyhedra;
 
+import java.util.List;
+
 import javax.media.j3d.Appearance;
 import javax.media.j3d.Material;
 import javax.vecmath.Color3f;
@@ -70,14 +72,15 @@ public class Attributes {
     }
 
     private static MaterialSettings getMaterialSettings(final String material) {
-        final ExtruderSettings[] extruderSettings = Preferences.getInstance().getPrinterSettings().getExtruderSettings();
+        final List<ExtruderSettings> extruderSettings = Preferences.getCurrentConfiguration().getPrinterSettings()
+                .getExtruderSettings();
         for (final ExtruderSettings settings : extruderSettings) {
             final MaterialSettings materialSettings = settings.getMaterial();
             if (materialSettings.getName().equals(material)) {
                 return materialSettings;
             }
         }
-        final MaterialSettings substitute = extruderSettings[0].getMaterial();
+        final MaterialSettings substitute = extruderSettings.get(0).getMaterial();
         LOGGER.warn("Requested material " + material + " not found, substituting with " + substitute.getName() + ".");
         return substitute;
     }

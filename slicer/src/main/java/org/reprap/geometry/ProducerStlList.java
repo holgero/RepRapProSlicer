@@ -38,6 +38,7 @@ import javax.vecmath.Vector3d;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Constants;
+import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.Preferences;
 import org.reprap.configuration.PrintSettings;
 import org.reprap.gcode.GCodeExtruder;
@@ -68,11 +69,11 @@ class ProducerStlList {
     static BoundingBox calculateBoundingBox(final AllSTLsToBuild allStls, final Purge purge) {
         final List<STLObject> stlList = new ArrayList<>();
         copyAllStls(allStls, stlList);
-        setUpShield(purge, stlList, Preferences.getInstance());
+        setUpShield(purge, stlList, Preferences.getCurrentConfiguration());
         return getBoundingBox(stlList);
     }
 
-    private final Preferences preferences = Preferences.getInstance();
+    private final CurrentConfiguration configuration = Preferences.getCurrentConfiguration();
     private final List<STLObject> stlsToBuild = new ArrayList<STLObject>();
     /**
      * A plan box round each item
@@ -83,7 +84,7 @@ class ProducerStlList {
 
     ProducerStlList(final AllSTLsToBuild allStls, final Purge purge, final LayerRules layerRules) {
         copyAllStls(allStls, stlsToBuild);
-        setUpShield(purge, stlsToBuild, preferences);
+        setUpShield(purge, stlsToBuild, configuration);
         setRectangles(stlsToBuild, rectangles);
         this.layerRules = layerRules;
         cache = new SliceCache(layerRules, stlsToBuild);
@@ -337,7 +338,7 @@ class ProducerStlList {
 
         cache.setSupport(BooleanGridList.unions(previousSupport, slice(stl, layer)), layer, stl);
 
-        final GCodeExtruder supportExtruder = layerRules.getPrinter().getExtruders()[preferences.getPrintSettings()
+        final GCodeExtruder supportExtruder = layerRules.getPrinter().getExtruders()[configuration.getPrintSettings()
                 .getSupportExtruder()];
 
         // Now we subtract the union of this layer from all the stuff requiring support in the layer above.
@@ -399,14 +400,15 @@ class ProducerStlList {
         return new InFillPatterns().computeHatchedPolygons(stl, layerRules, this);
     }
 
-    private static void setUpShield(final Purge purge, final List<STLObject> stls, final Preferences preferences) {
-        final PrintSettings printSettings = preferences.getPrintSettings();
+    private static void setUpShield(final Purge purge, final List<STLObject> stls,
+            final CurrentConfiguration currentConfiguration) {
+        final PrintSettings printSettings = currentConfiguration.getPrintSettings();
         if (!printSettings.printShield()) {
             return;
         }
         final STLObject shield = new STLObject();
         final Attributes attribute = shield.addSTL(printSettings.getShieldStlFile(), null, null, null);
-        attribute.setMaterial(preferences.getPrinterSettings().getExtruderSettings()[0].getMaterial().getName());
+        attribute.setMaterial(currentConfiguration.getPrinterSettings().getExtruderSettings().get(0).getMaterial().getName());
 
         final BoundingBox boxWithoutShield = getBoundingBox(stls);
         final double modelZMax = boxWithoutShield.getZint().high();
@@ -451,7 +453,7 @@ class ProducerStlList {
         final BooleanGridList offBorder = offsetOutline(slice, layerRules, -1);
         final PolygonList borderPolygons = offBorder.borders();
 
-        if (Preferences.getInstance().getPrintSettings().isMiddleStart()) {
+        if (Preferences.getCurrentConfiguration().getPrintSettings().isMiddleStart()) {
             if (borderPolygons != null && borderPolygons.size() > 0) {
                 middleStarts(borderPolygons, hatchedPolygons, layerRules, slice);
             }
@@ -796,7 +798,7 @@ class ProducerStlList {
         final Attributes attributes = polygon.getAttributes();
 
         // Multiply the geometrically correct result by factor
-        final PrintSettings printSettings = preferences.getPrintSettings();
+        final PrintSettings printSettings = configuration.getPrintSettings();
         final double factor = printSettings.getArcCompensation();
         if (factor < Constants.TINY_VALUE) {
             return polygon;
@@ -853,7 +855,7 @@ class ProducerStlList {
      */
     static PolygonList hatch(final BooleanGridList list, final LayerRules layerConditions, final boolean surface,
             final boolean support) {
-        final PrintSettings printSettings = Preferences.getInstance().getPrintSettings();
+        final PrintSettings printSettings = Preferences.getCurrentConfiguration().getPrintSettings();
         final PolygonList result = new PolygonList();
         for (int i = 0; i < list.size(); i++) {
             final BooleanGrid grid = list.get(i);
@@ -878,7 +880,7 @@ class ProducerStlList {
         for (int i = 0; i < gridList.size(); i++) {
             final BooleanGrid grid = gridList.get(i);
             final BooleanGridList offset = offsetOutline(grid, lc, multiplier);
-            if (Preferences.getInstance().getPrintSettings().isInsideOut()) {
+            if (Preferences.getCurrentConfiguration().getPrintSettings().isInsideOut()) {
                 offset.reverse();
             }
             for (int j = 0; j < offset.size(); j++) {
@@ -895,7 +897,7 @@ class ProducerStlList {
         }
         final GCodeExtruder e = lc.getPrinter().getExtruder(att.getMaterial());
         final BooleanGridList result = new BooleanGridList();
-        final int shells = Preferences.getInstance().getPrintSettings().getVerticalShells();
+        final int shells = Preferences.getCurrentConfiguration().getPrintSettings().getVerticalShells();
         for (int shell = 0; shell < shells; shell++) {
             final double extrusionSize = e.getExtrusionSize();
             final double offset = multiplier * (shell + 0.5) * extrusionSize;
@@ -919,7 +921,7 @@ class ProducerStlList {
             }
             final GCodeExtruder e = lc.getPrinter().getExtruder(att.getMaterial());
             final double extrusionSize = e.getExtrusionSize();
-            final PrintSettings printSettings = Preferences.getInstance().getPrintSettings();
+            final PrintSettings printSettings = Preferences.getCurrentConfiguration().getPrintSettings();
             final int shells = printSettings.getVerticalShells();
             // Must be a hatch.  Only do it if the gap is +ve or we're building the foundation
             final double offSize;
