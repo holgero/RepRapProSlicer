@@ -3,4 +3,4 @@
 
 cd $(dirname $0)
 
-exec java -jar slicer/target/slicer-0.1.0-SNAPSHOT-jar-with-dependencies.jar -Xmx1024M "$@"
+exec java -Xmx1024M -jar slicer/target/slicer-0.1.0-SNAPSHOT-jar-with-dependencies.jar "$@"
