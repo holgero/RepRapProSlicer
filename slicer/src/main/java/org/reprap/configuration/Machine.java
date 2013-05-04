@@ -28,6 +28,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 
 public final class Machine {
+    private static final String PROPERTIES_FOLDER = ".reprap";
     private static final String MACHINE_FILE = "Machine";
     private static Machine activeMachine = null;
 
@@ -74,7 +75,7 @@ public final class Machine {
     }
 
     private static File getMachineFile() {
-        return new File(new File(FileUtils.getUserDirectory(), Preferences.PROPERTIES_FOLDER), MACHINE_FILE);
+        return new File(new File(FileUtils.getUserDirectory(), PROPERTIES_FOLDER), MACHINE_FILE);
     }
 
     private static Machine parseMachineLine(final String line) {
@@ -87,17 +88,17 @@ public final class Machine {
     private final String name;
     private final boolean isActive;
 
-    Machine(final String name, final boolean isActive) {
+    private Machine(final String name, final boolean isActive) {
         super();
         this.name = name;
         this.isActive = isActive;
     }
 
-    String getName() {
+    private String getName() {
         return name;
     }
 
-    boolean isActive() {
+    private boolean isActive() {
         return isActive;
     }
 }

@@ -20,7 +20,6 @@
 package org.reprap.gcode;
 
 import org.reprap.configuration.CurrentConfiguration;
-import org.reprap.configuration.Preferences;
 import org.reprap.configuration.PrintSettings;
 import org.reprap.configuration.PrinterSettings;
 import org.reprap.geometry.polygons.Point2D;
@@ -37,7 +36,7 @@ public final class Purge {
     private final boolean purgeXOriented;
 
     public Purge() {
-        final CurrentConfiguration configuration = Preferences.getCurrentConfiguration();
+        final CurrentConfiguration configuration = CurrentConfiguration.getCurrentConfiguration();
         final PrintSettings printSettings = configuration.getPrintSettings();
         final PrinterSettings printerSettings = configuration.getPrinterSettings();
         purgePoint = new Point2D(printSettings.getDumpX(), printSettings.getDumpY());

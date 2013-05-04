@@ -6,7 +6,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSettings;
-import org.reprap.configuration.Preferences;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
@@ -18,7 +17,7 @@ class LayerProducer {
     private static final Logger LOGGER = LogManager.getLogger(LayerProducer.class);
     private final SimulationPlotter simulationPlot;
     private final LayerRules layerRules;
-    private final CurrentConfiguration configuration = Preferences.getCurrentConfiguration();
+    private final CurrentConfiguration configuration = CurrentConfiguration.getCurrentConfiguration();
     boolean firstOneInLayer = true;
 
     LayerProducer(final LayerRules lc, final SimulationPlotter simPlot) throws IOException {

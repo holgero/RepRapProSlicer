@@ -12,7 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
-import org.reprap.configuration.Preferences;
+import org.reprap.configuration.CurrentConfiguration;
 
 public class GCodeWriter {
     private static final Logger LOGGER = LogManager.getLogger(GCodeWriter.class);
@@ -39,7 +39,7 @@ public class GCodeWriter {
     private PrintStream fileOutStream = null;
 
     public GCodeWriter() {
-        debugGcode = Preferences.getCurrentConfiguration().getPrintSettings().isVerboseGCode();
+        debugGcode = CurrentConfiguration.getCurrentConfiguration().getPrintSettings().isVerboseGCode();
     }
 
     /**

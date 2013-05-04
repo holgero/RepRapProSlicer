@@ -42,7 +42,6 @@ import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Constants;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSettings;
-import org.reprap.configuration.Preferences;
 import org.reprap.configuration.PrintSettings;
 import org.reprap.gcode.Purge;
 import org.reprap.geometry.polygons.BooleanGrid;
@@ -70,11 +69,11 @@ class ProducerStlList {
     static BoundingBox calculateBoundingBox(final AllSTLsToBuild allStls, final Purge purge) {
         final List<STLObject> stlList = new ArrayList<>();
         copyAllStls(allStls, stlList);
-        setUpShield(purge, stlList, Preferences.getCurrentConfiguration());
+        setUpShield(purge, stlList, CurrentConfiguration.getCurrentConfiguration());
         return getBoundingBox(stlList);
     }
 
-    private final CurrentConfiguration configuration = Preferences.getCurrentConfiguration();
+    private final CurrentConfiguration configuration = CurrentConfiguration.getCurrentConfiguration();
     private final List<STLObject> stlsToBuild = new ArrayList<STLObject>();
     /**
      * A plan box round each item
@@ -454,7 +453,7 @@ class ProducerStlList {
         final BooleanGridList offBorder = offsetOutline(slice, -1);
         final PolygonList borderPolygons = offBorder.borders();
 
-        if (Preferences.getCurrentConfiguration().getPrintSettings().isMiddleStart()) {
+        if (CurrentConfiguration.getCurrentConfiguration().getPrintSettings().isMiddleStart()) {
             if (borderPolygons != null && borderPolygons.size() > 0) {
                 middleStarts(borderPolygons, hatchedPolygons, layerRules, slice);
             }
@@ -463,8 +462,8 @@ class ProducerStlList {
     }
 
     PolygonList computeBrim(final int stl, final int brimLines) {
-        final ExtruderSettings extruder = Preferences.getCurrentConfiguration().getPrinterSettings().getExtruderSettings()
-                .get(0);
+        final ExtruderSettings extruder = CurrentConfiguration.getCurrentConfiguration().getPrinterSettings()
+                .getExtruderSettings().get(0);
         final double extrusionSize = extruder.getExtrusionSize();
 
         BooleanGridList slice = neededThisLayer(slice(stl, 0));
@@ -702,7 +701,7 @@ class ProducerStlList {
         for (int i = 0; i < list.size(); i++) {
             Polygon outline = list.polygon(i);
             final String material = outline.getAttributes().getMaterial();
-            final ExtruderSettings ex = Preferences.getCurrentConfiguration().getExtruderSettings(material);
+            final ExtruderSettings ex = CurrentConfiguration.getCurrentConfiguration().getExtruderSettings(material);
             Line l = lc.getHatchDirection(false, ex.getExtrusionSize()).pLine();
             if (i % 2 != 0 ^ lc.getMachineLayer() % 4 > 1) {
                 l = l.neg();
@@ -841,7 +840,7 @@ class ProducerStlList {
      */
     static PolygonList hatch(final BooleanGridList list, final LayerRules layerConditions, final boolean surface,
             final boolean support) {
-        final CurrentConfiguration currentConfiguration = Preferences.getCurrentConfiguration();
+        final CurrentConfiguration currentConfiguration = CurrentConfiguration.getCurrentConfiguration();
         final PrintSettings printSettings = currentConfiguration.getPrintSettings();
         final PolygonList result = new PolygonList();
         for (int i = 0; i < list.size(); i++) {
@@ -869,7 +868,7 @@ class ProducerStlList {
         for (int i = 0; i < gridList.size(); i++) {
             final BooleanGrid grid = gridList.get(i);
             final BooleanGridList offset = offsetOutline(grid, multiplier);
-            if (Preferences.getCurrentConfiguration().getPrintSettings().isInsideOut()) {
+            if (CurrentConfiguration.getCurrentConfiguration().getPrintSettings().isInsideOut()) {
                 offset.reverse();
             }
             for (int j = 0; j < offset.size(); j++) {
@@ -884,9 +883,9 @@ class ProducerStlList {
         if (att == null) {
             throw new RuntimeException("grid attribute is null");
         }
-        final ExtruderSettings e = Preferences.getCurrentConfiguration().getExtruderSettings(att.getMaterial());
+        final ExtruderSettings e = CurrentConfiguration.getCurrentConfiguration().getExtruderSettings(att.getMaterial());
         final BooleanGridList result = new BooleanGridList();
-        final int shells = Preferences.getCurrentConfiguration().getPrintSettings().getVerticalShells();
+        final int shells = CurrentConfiguration.getCurrentConfiguration().getPrintSettings().getVerticalShells();
         for (int shell = 0; shell < shells; shell++) {
             final double extrusionSize = e.getExtrusionSize();
             final double offset = multiplier * (shell + 0.5) * extrusionSize;
@@ -908,9 +907,9 @@ class ProducerStlList {
             if (att == null) {
                 throw new RuntimeException("grid attribute is null");
             }
-            final ExtruderSettings e = Preferences.getCurrentConfiguration().getExtruderSettings(att.getMaterial());
+            final ExtruderSettings e = CurrentConfiguration.getCurrentConfiguration().getExtruderSettings(att.getMaterial());
             final double extrusionSize = e.getExtrusionSize();
-            final PrintSettings printSettings = Preferences.getCurrentConfiguration().getPrintSettings();
+            final PrintSettings printSettings = CurrentConfiguration.getCurrentConfiguration().getPrintSettings();
             final int shells = printSettings.getVerticalShells();
             // Must be a hatch.  Only do it if the gap is +ve or we're building the foundation
             final double offSize;

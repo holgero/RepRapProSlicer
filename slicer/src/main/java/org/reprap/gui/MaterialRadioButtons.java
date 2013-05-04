@@ -20,8 +20,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
+import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSettings;
-import org.reprap.configuration.Preferences;
 import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.geometry.polyhedra.STLObject;
 
@@ -63,7 +63,7 @@ class MaterialRadioButtons extends JPanel {
         jLabel1.setHorizontalAlignment(SwingConstants.CENTER);
         radioPanel.add(jLabel1);
 
-        final List<ExtruderSettings> extruders = Preferences.getCurrentConfiguration().getPrinterSettings()
+        final List<ExtruderSettings> extruders = CurrentConfiguration.getCurrentConfiguration().getPrinterSettings()
                 .getExtruderSettings();
         String matname = att.getMaterial();
         if (matname == null) {

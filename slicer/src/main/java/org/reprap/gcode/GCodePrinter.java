@@ -15,7 +15,7 @@ import javax.swing.JOptionPane;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Constants;
-import org.reprap.configuration.Preferences;
+import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.PrintSettings;
 import org.reprap.configuration.PrinterSettings;
 import org.reprap.geometry.polygons.Point2D;
@@ -628,10 +628,10 @@ public class GCodePrinter {
     }
 
     private PrintSettings getPrintSettings() {
-        return Preferences.getCurrentConfiguration().getPrintSettings();
+        return CurrentConfiguration.getCurrentConfiguration().getPrintSettings();
     }
 
     private PrinterSettings getPrinterSettings() {
-        return Preferences.getCurrentConfiguration().getPrinterSettings();
+        return CurrentConfiguration.getCurrentConfiguration().getPrinterSettings();
     }
 }

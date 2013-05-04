@@ -42,7 +42,7 @@ import org.junit.rules.TemporaryFolder;
 public class CurrentConfigurationPersistenceTest {
     @Rule
     public final TemporaryFolder folder = new TemporaryFolder();
-    private final CurrentConfiguration currentConfiguration = Preferences.getCurrentConfiguration();
+    private final CurrentConfiguration currentConfiguration = CurrentConfiguration.getCurrentConfiguration();
     private JAXBContext context;
 
     @Before
@@ -58,7 +58,8 @@ public class CurrentConfigurationPersistenceTest {
         assertThat(result.getPrintSettings(), is(notNullValue()));
         assertThat(result.getPrinterSettings(), is(notNullValue()));
 
-        compareFieldByField(result, currentConfiguration);
+        compareFieldByField(result.getPrintSettings(), currentConfiguration.getPrintSettings());
+        compareFieldByField(result.getPrinterSettings(), currentConfiguration.getPrinterSettings());
     }
 
     private static void compareFieldByField(final Object actual, final Object expected) {

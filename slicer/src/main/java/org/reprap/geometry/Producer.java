@@ -7,7 +7,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSettings;
-import org.reprap.configuration.Preferences;
 import org.reprap.configuration.PrintSettings;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.gcode.Purge;
@@ -45,7 +44,7 @@ public class Producer {
         final BoundingBox buildVolume = ProducerStlList.calculateBoundingBox(allStls, purge);
         layerRules = new LayerRules(printer, buildVolume);
         stlList = new ProducerStlList(allStls, purge, layerRules);
-        configuration = Preferences.getCurrentConfiguration();
+        configuration = CurrentConfiguration.getCurrentConfiguration();
         totalExtruders = configuration.getPrinterSettings().getExtruderSettings().size();
         if (displayPaths) {
             simulationPlot = new SimulationPlotter("RepRap building simulation");

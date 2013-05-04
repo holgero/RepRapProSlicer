@@ -122,7 +122,7 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 import org.reprap.configuration.Constants;
-import org.reprap.configuration.Preferences;
+import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.PrinterSettings;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
@@ -476,7 +476,7 @@ public class RepRapBuild extends JPanel implements MouseListener {
     }
 
     private void initialise() throws IOException {
-        final PrinterSettings printerSettings = Preferences.getCurrentConfiguration().getPrinterSettings();
+        final PrinterSettings printerSettings = CurrentConfiguration.getCurrentConfiguration().getPrinterSettings();
         xwv = printerSettings.getBedSizeX();
         ywv = printerSettings.getBedSizeY();
         zwv = printerSettings.getMaximumZ();

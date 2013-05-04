@@ -11,7 +11,6 @@ import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSettings;
 import org.reprap.configuration.FillPattern;
-import org.reprap.configuration.Preferences;
 import org.reprap.configuration.PrintSettings;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.BooleanGrid;
@@ -89,7 +88,7 @@ public class LayerRules {
      */
     private final int maxSurfaceLayers;
 
-    private final CurrentConfiguration configuration = Preferences.getCurrentConfiguration();
+    private final CurrentConfiguration configuration = CurrentConfiguration.getCurrentConfiguration();
 
     /**
      * How far up the model we are in mm

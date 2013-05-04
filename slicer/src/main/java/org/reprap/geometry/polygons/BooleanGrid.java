@@ -7,7 +7,7 @@ import java.util.List;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.configuration.Preferences;
+import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.geometry.polyhedra.Attributes;
 
 /**
@@ -32,7 +32,8 @@ public class BooleanGrid {
     /**
      * The resolution of the RepRap machine
      */
-    private static final double pixSize = Preferences.getCurrentConfiguration().getPrinterSettings().getMachineResolution() * 0.6;
+    private static final double pixSize = CurrentConfiguration.getCurrentConfiguration().getPrinterSettings()
+            .getMachineResolution() * 0.6;
     private static final double realResolution = pixSize * 1.5;
     private static final double rSwell = 0.5; // mm by which to swell rectangles to give margins round stuff
 
@@ -1158,7 +1159,7 @@ public class BooleanGrid {
             }
         } while (segment >= 0);
 
-        if (Preferences.getCurrentConfiguration().getPrintSettings().isPathOptimize()) {
+        if (CurrentConfiguration.getCurrentConfiguration().getPrintSettings().isPathOptimize()) {
             joinUpSnakes(snakes, hatches, gap);
         }
 

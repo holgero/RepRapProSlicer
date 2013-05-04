@@ -18,11 +18,23 @@
  */
 package org.reprap.configuration;
 
+import java.io.File;
+
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.apache.commons.io.FileUtils;
+
 @XmlRootElement
 public class CurrentConfiguration {
+    private static final File REPRAP_DIRECTORY = new File(FileUtils.getUserDirectory(), ".reprap");
+    private static final CurrentConfiguration currentConfiguration = new ConfigurationInitializer(REPRAP_DIRECTORY)
+            .loadCurrentConfiguration();
+
+    public static CurrentConfiguration getCurrentConfiguration() {
+        return currentConfiguration;
+    }
+
     @XmlElement
     private PrintSettings printSettings;
     @XmlElement

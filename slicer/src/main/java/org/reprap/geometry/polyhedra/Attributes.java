@@ -9,9 +9,9 @@ import javax.vecmath.Color3f;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Constants;
+import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSettings;
 import org.reprap.configuration.MaterialSettings;
-import org.reprap.configuration.Preferences;
 
 /**
  * Holds RepRap attributes that are attached to Java3D shapes as user data,
@@ -75,7 +75,7 @@ public class Attributes {
     }
 
     private static MaterialSettings getMaterialSettings(final String material) {
-        final List<ExtruderSettings> extruderSettings = Preferences.getCurrentConfiguration().getPrinterSettings()
+        final List<ExtruderSettings> extruderSettings = CurrentConfiguration.getCurrentConfiguration().getPrinterSettings()
                 .getExtruderSettings();
         for (final ExtruderSettings settings : extruderSettings) {
             final MaterialSettings materialSettings = settings.getMaterial();
