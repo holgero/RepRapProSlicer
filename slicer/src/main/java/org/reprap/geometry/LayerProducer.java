@@ -18,14 +18,12 @@ class LayerProducer {
     private static final Logger LOGGER = LogManager.getLogger(LayerProducer.class);
     private final SimulationPlotter simulationPlot;
     private final LayerRules layerRules;
-    private final PolygonList allPolygons[];
     private final CurrentConfiguration configuration = Preferences.getCurrentConfiguration();
+    boolean firstOneInLayer = true;
 
-    LayerProducer(final PolygonList ap[], final LayerRules lc, final SimulationPlotter simPlot) throws IOException {
+    LayerProducer(final LayerRules lc, final SimulationPlotter simPlot) throws IOException {
         layerRules = lc;
         simulationPlot = simPlot;
-
-        allPolygons = ap;
 
         if (simulationPlot != null) {
             if (!simulationPlot.isInitialised()) {
@@ -44,7 +42,7 @@ class LayerProducer {
         }
     }
 
-    private void plot(final Polygon polygon, final boolean firstOneInLayer) throws IOException {
+    private void plot(final Polygon polygon) throws IOException {
         if (polygon.size() <= 1) {
             return;
         }
@@ -83,7 +81,7 @@ class LayerProducer {
         final ExtruderSettings extruder = configuration.getExtruderSettings(attributes.getMaterial());
         final ExtrusionPath extrusionPath = new ExtrusionPath(polygon, calculateFeedrate(polygon,
                 extruder.getPrintExtrusionRate()));
-        plotExtrusionPath(extrusionPath, firstOneInLayer, extruder);
+        plotExtrusionPath(extrusionPath, extruder);
     }
 
     private double calculateFeedrate(final Polygon polygon, final double extrusionRate) {
@@ -94,8 +92,7 @@ class LayerProducer {
         }
     }
 
-    private void plotExtrusionPath(final ExtrusionPath extrusionPath, final boolean firstOneInLayer,
-            final ExtruderSettings extruder) throws IOException {
+    private void plotExtrusionPath(final ExtrusionPath extrusionPath, final ExtruderSettings extruder) throws IOException {
         final double extrudeBackLength = extruder.getExtrusionOverrun();
         extrusionPath.backStepExtrude(extrudeBackLength);
 
@@ -105,6 +102,7 @@ class LayerProducer {
 
         // Print any lead-in.
         printer.startExtruder(firstOneInLayer);
+        firstOneInLayer = false;
         boolean extrudeOff = false;
         int pathLength = extrusionPath.size();
         if (extrusionPath.isClosed()) {
@@ -137,14 +135,9 @@ class LayerProducer {
         }
     }
 
-    void plot() throws IOException {
-        boolean firstOneInLayer = true;
-
-        for (final PolygonList pl : allPolygons) {
-            for (int j = 0; j < pl.size(); j++) {
-                plot(pl.polygon(j), firstOneInLayer);
-                firstOneInLayer = false;
-            }
+    void plot(final PolygonList pl) throws IOException {
+        for (int j = 0; j < pl.size(); j++) {
+            plot(pl.polygon(j));
         }
     }
 }

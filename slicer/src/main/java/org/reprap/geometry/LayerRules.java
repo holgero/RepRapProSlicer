@@ -18,6 +18,7 @@ import org.reprap.geometry.polygons.BooleanGrid;
 import org.reprap.geometry.polygons.CSG2D;
 import org.reprap.geometry.polygons.HalfPlane;
 import org.reprap.geometry.polygons.Point2D;
+import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.Attributes;
@@ -167,35 +168,33 @@ public class LayerRules {
         return (int) Math.ceil(2 * (maxSurfaceLayers * 2 + 1));
     }
 
-    void setFirstAndLast(final PolygonList[] pl) {
+    void setFirstAndLast(final PolygonList[] polygonLists) {
         firstPoint[machineLayer] = null;
         lastPoint[machineLayer] = null;
-        layerZ[machineLayer] = machineZ;
-        if (pl == null) {
+        if (polygonLists == null) {
             return;
         }
-        if (pl.length <= 0) {
+        if (polygonLists.length <= 0) {
             return;
         }
-        int bottom = -1;
-        int top = -1;
-        for (int i = 0; i < pl.length; i++) {
-            if (pl[i] != null) {
-                if (pl[i].size() > 0) {
-                    if (bottom < 0) {
-                        bottom = i;
+        Point2D first = null;
+        PolygonList lastList = null;
+        for (final PolygonList polygonList : polygonLists) {
+            if (polygonList != null) {
+                if (polygonList.size() > 0) {
+                    if (first == null) {
+                        first = polygonList.polygon(0).point(0);
                     }
-                    top = i;
+                    lastList = polygonList;
                 }
             }
         }
-        if (bottom < 0) {
+        if (first == null) {
             return;
         }
-        firstPoint[machineLayer] = pl[bottom].polygon(0).point(0);
-        pl[bottom].polygon(0).getAttributes();
-        lastPoint[machineLayer] = pl[top].polygon(pl[top].size() - 1).point(pl[top].polygon(pl[top].size() - 1).size() - 1);
-        pl[top].polygon(pl[top].size() - 1).getAttributes();
+        firstPoint[machineLayer] = first;
+        final Polygon lastPolygon = lastList.polygon(lastList.size() - 1);
+        lastPoint[machineLayer] = lastPolygon.point(lastPolygon.size() - 1);
     }
 
     public int realTopLayer() {
@@ -222,10 +221,6 @@ public class LayerRules {
 
     public Point2D getLastPoint(final int layer) {
         return lastPoint[layer];
-    }
-
-    public double getLayerZ(final int layer) {
-        return layerZ[layer];
     }
 
     public int getMachineLayerMax() {
@@ -273,6 +268,9 @@ public class LayerRules {
     void stepMachine() {
         machineLayer--;
         machineZ = zStep * machineLayer;
+        if (machineLayer >= 0) {
+            layerZ[machineLayer] = machineZ;
+        }
     }
 
     /**
@@ -338,14 +336,13 @@ public class LayerRules {
 
     private void fillFoundationRectangle(final SimulationPlotter simulationPlot) throws IOException {
         final GCodeExtruder extruder = printer.getExtruder();
-        final Attributes fa = new Attributes(extruder.getMaterial());
-        final CSG2D rect = CSG2D.RrCSGFromBox(bBox);
-        final BooleanGrid bg = new BooleanGrid(rect, bBox.scale(1.1), fa);
-        final PolygonList allPolygons[] = { bg.hatch(getHatchDirection(false, extruder.getExtrusionSize()),
-                extruder.getExtrusionSize(), bg.attribute()) };
-        setFirstAndLast(allPolygons);
-        final LayerProducer lp = new LayerProducer(allPolygons, this, simulationPlot);
-        lp.plot();
+        final BooleanGrid bg = new BooleanGrid(CSG2D.RrCSGFromBox(bBox), bBox.scale(1.1),
+                new Attributes(extruder.getMaterial()));
+        final PolygonList foundationPolygon = bg.hatch(getHatchDirection(false, extruder.getExtrusionSize()),
+                extruder.getExtrusionSize(), bg.attribute());
+        setFirstAndLast(new PolygonList[] { foundationPolygon });
+        final LayerProducer lp = new LayerProducer(this, simulationPlot);
+        lp.plot(foundationPolygon);
         printer.getExtruder().stopExtruding();
     }
 

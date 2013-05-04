@@ -95,8 +95,10 @@ public class Producer {
             }
         }
         layerRules.setFirstAndLast(allPolygons);
-        final LayerProducer lp = new LayerProducer(allPolygons, layerRules, simulationPlot);
-        lp.plot();
+        final LayerProducer lp = new LayerProducer(layerRules, simulationPlot);
+        for (final PolygonList pl : allPolygons) {
+            lp.plot(pl);
+        }
         printer.finishedLayer(false);
     }
 
