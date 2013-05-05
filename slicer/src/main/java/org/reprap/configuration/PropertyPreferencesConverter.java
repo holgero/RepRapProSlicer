@@ -22,8 +22,10 @@ import static org.reprap.configuration.MathRoutines.circleAreaForDiameter;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -31,6 +33,7 @@ import java.util.Properties;
 
 import javax.vecmath.Color3f;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -146,14 +149,27 @@ final class PropertyPreferencesConverter {
         result.setMaximumFeedrateX(getDoubleProperty("MaximumFeedrateX(mm/minute)"));
         result.setMaximumFeedrateY(getDoubleProperty("MaximumFeedrateY(mm/minute)"));
         result.setMaximumFeedrateZ(getDoubleProperty("MaximumFeedrateZ(mm/minute)"));
-        result.setPrologueFile(machineDirFile(PROLOGUE_FILE));
-        result.setEpilogueFile(machineDirFile(EPILOGUE_FILE));
-        result.setBuildPlatformStl(machineDirFile(BASE_FILE));
+        result.setGcodePrologue(readGcodeFromFile(PROLOGUE_FILE));
+        result.setGcodeEpilogue(readGcodeFromFile(EPILOGUE_FILE));
+        result.setBuildPlatformStl(machineDirFileName(BASE_FILE));
         return result;
     }
 
-    private File machineDirFile(final String file) {
-        return new File(new File(reprapDirectory, activeMachine), file);
+    private String readGcodeFromFile(final String fileName) {
+        try {
+            final StringWriter text = new StringWriter();
+            final File file = new File(reprapDirectory, machineDirFileName(fileName));
+            try (FileReader fileReader = new FileReader(file)) {
+                IOUtils.copy(fileReader, text);
+            }
+            return text.toString();
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String machineDirFileName(final String fileName) {
+        return new File(activeMachine, fileName).getPath();
     }
 
     private PrintSettings createPrintSettings() {
@@ -177,7 +193,7 @@ final class PropertyPreferencesConverter {
         result.setShield(getBooleanProperty("Shield"));
         final File shieldStlFile = new File(reprapDirectory, SHIELD_STL_FILENAME);
         ensureCorrectStlFilePosition(shieldStlFile);
-        result.setShieldStlFile(shieldStlFile);
+        result.setShieldStlFile(SHIELD_STL_FILENAME);
         result.setDumpX(getIntegerProperty("DumpX(mm)"));
         result.setDumpY(getIntegerProperty("DumpY(mm)"));
         if (properties.getProperty("Support") == null) {

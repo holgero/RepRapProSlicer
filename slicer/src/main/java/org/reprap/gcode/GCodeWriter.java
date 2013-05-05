@@ -1,11 +1,8 @@
 package org.reprap.gcode;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.PrintStream;
 
 import org.apache.logging.log4j.LogManager;
@@ -75,26 +72,24 @@ public class GCodeWriter {
     }
 
     /**
+     * Writes a block of text unchanged to the file. If debugging is on, the
+     * terminating comments are also added before and after the block.
+     */
+    public void writeBlock(final String command, final String commentBefore, final String commentAfter) {
+        if (debugGcode) {
+            queue(COMMENT_CHAR + " " + commentBefore);
+        }
+        queue(command);
+        if (debugGcode) {
+            queue(COMMENT_CHAR + " " + commentAfter);
+        }
+    }
+
+    /**
      * Writes a comment line to the file.
      */
     public void writeComment(final String comment) {
         queue(COMMENT_CHAR + comment);
-    }
-
-    /**
-     * Copy a file of G Codes straight to output - generally used for canned
-     * cycles
-     * 
-     * @throws IOException
-     */
-    public void copyFile(final File file) throws IOException {
-        final FileReader fr = new FileReader(file);
-        final BufferedReader br = new BufferedReader(fr);
-        String s;
-        while ((s = br.readLine()) != null) {
-            queue(s);
-        }
-        fr.close();
     }
 
     public void setGCodeFileForOutput(final File gcodeFile) throws FileNotFoundException {

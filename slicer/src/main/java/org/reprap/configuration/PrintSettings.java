@@ -63,7 +63,7 @@ public class PrintSettings {
     @XmlElement
     private boolean shield; // boolean true
     @XmlElement
-    private File shieldStlFile; // file 
+    private String shieldStlFile; // file (path relative to configuration file) 
     @XmlElement
     private int dumpX; // mm 50
     @XmlElement
@@ -278,10 +278,10 @@ public class PrintSettings {
     }
 
     public File getShieldStlFile() {
-        return shieldStlFile;
+        return new File(CurrentConfiguration.getReprapDirectory(), shieldStlFile);
     }
 
-    void setShieldStlFile(final File shieldStlFile) {
+    void setShieldStlFile(final String shieldStlFile) {
         this.shieldStlFile = shieldStlFile;
     }
 }

@@ -73,4 +73,8 @@ public class CurrentConfiguration {
         }
         return null;
     }
+
+    static File getReprapDirectory() {
+        return REPRAP_DIRECTORY;
+    }
 }

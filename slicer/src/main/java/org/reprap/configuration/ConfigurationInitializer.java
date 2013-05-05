@@ -76,10 +76,6 @@ class ConfigurationInitializer {
                 reprapDirectory.mkdirs();
                 LOGGER.info("Creating new current configuration from distribution files");
                 provideDefaultConfiguration();
-                // TODO: remove this as soon as the distribution contains default configuration in xml
-                if (!xmlFile.exists()) {
-                    provideConfigurationFromOldPropertyFile(xmlFile);
-                }
             }
         } else {
             LOGGER.info("Reading configuration from " + xmlFile);

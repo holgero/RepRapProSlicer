@@ -288,14 +288,7 @@ public class GCodePrinter {
         final String myDateString = sdf.format(myDate);
         gcode.writeComment(" Created: " + myDateString);
         gcode.writeComment("#!RECTANGLE: " + rectangle + ", height: " + machineMaxZ);
-        final boolean debugGcode = getPrintSettings().isVerboseGCode();
-        if (debugGcode) {
-            gcode.writeComment(" Prologue:");
-        }
-        gcode.copyFile(getPrinterSettings().getPrologueFile());
-        if (debugGcode) {
-            gcode.writeComment(" ------");
-        }
+        gcode.writeBlock(getPrinterSettings().getGcodePrologue(), "Prologue:", "------");
         currentX = 0;
         currentY = 0;
         currentZ = 0;
@@ -373,14 +366,7 @@ public class GCodePrinter {
         currentY = round(lastPoint.y(), 2);
         currentZ = round(lastZ, 1);
 
-        final boolean debugGcode = getPrintSettings().isVerboseGCode();
-        if (debugGcode) {
-            gcode.writeComment(" Epilogue:");
-        }
-        gcode.copyFile(getPrinterSettings().getEpilogueFile());
-        if (debugGcode) {
-            gcode.writeComment(" ------");
-        }
+        gcode.writeBlock(getPrinterSettings().getGcodeEpilogue(), "Epilogue:", "------");
     }
 
     private static double round(final double c, final double d) {

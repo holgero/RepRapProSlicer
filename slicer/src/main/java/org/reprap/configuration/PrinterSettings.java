@@ -39,7 +39,7 @@ public class PrinterSettings {
     private double maximumZ; // mm 100
     // visualization
     @XmlElement
-    private File buildPlatformStl; // file
+    private String buildPlatformStl; // file (path relative to configuration file) 
     // travel speeds
     @XmlElement
     private double maximumFeedrateX; // mm/minute 15000
@@ -51,9 +51,9 @@ public class PrinterSettings {
     @XmlElement
     private boolean relativeDistanceE; // boolean true
     @XmlElement
-    private File prologueFile; // file
+    private String gCodePrologue; // text
     @XmlElement
-    private File epilogueFile; // file
+    private String gCodeEpilogue; // text
     // Extruders
     @XmlElement
     private ExtruderSettings[] extruderSettings;
@@ -125,31 +125,15 @@ public class PrinterSettings {
         this.extruderSettings = extruderSettings;
     }
 
-    public File getPrologueFile() {
-        return prologueFile;
-    }
-
-    void setPrologueFile(final File prologueFile) {
-        this.prologueFile = prologueFile;
-    }
-
-    public File getEpilogueFile() {
-        return epilogueFile;
-    }
-
-    void setEpilogueFile(final File epilogueFile) {
-        this.epilogueFile = epilogueFile;
-    }
-
     public double getMachineResolution() {
         return MACHINE_RESOLUTION;
     }
 
     public File getBuildPlatformStl() {
-        return buildPlatformStl;
+        return new File(CurrentConfiguration.getReprapDirectory(), buildPlatformStl);
     }
 
-    void setBuildPlatformStl(final File buildPlatformStl) {
+    void setBuildPlatformStl(final String buildPlatformStl) {
         this.buildPlatformStl = buildPlatformStl;
     }
 
@@ -159,5 +143,21 @@ public class PrinterSettings {
 
     void setName(final String name) {
         this.name = name;
+    }
+
+    public String getGcodePrologue() {
+        return gCodePrologue;
+    }
+
+    void setGcodePrologue(final String gCodePrologue) {
+        this.gCodePrologue = gCodePrologue;
+    }
+
+    public String getGcodeEpilogue() {
+        return gCodeEpilogue;
+    }
+
+    void setGcodeEpilogue(final String gCodeEpilogue) {
+        this.gCodeEpilogue = gCodeEpilogue;
     }
 }
