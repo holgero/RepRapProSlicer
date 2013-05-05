@@ -19,7 +19,6 @@
 package org.reprap.configuration;
 
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlIDREF;
 
 public class ExtruderSetting {
     @XmlElement
@@ -40,9 +39,6 @@ public class ExtruderSetting {
     private double extrusionOverrun; // # -1
     @XmlElement
     private double lift; // mm 0
-    @XmlElement
-    @XmlIDREF
-    private MaterialSetting material;
 
     public double getNozzleDiameter() {
         return nozzleDiameter;
@@ -114,14 +110,6 @@ public class ExtruderSetting {
 
     void setLift(final double lift) {
         this.lift = lift;
-    }
-
-    public MaterialSetting getMaterial() {
-        return material;
-    }
-
-    void setMaterial(final MaterialSetting material) {
-        this.material = material;
     }
 
     public double getExtrusionSize() {

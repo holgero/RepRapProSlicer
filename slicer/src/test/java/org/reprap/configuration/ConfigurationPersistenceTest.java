@@ -24,6 +24,7 @@ import static org.junit.Assert.assertThat;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.util.List;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
@@ -55,12 +56,20 @@ public class ConfigurationPersistenceTest {
 
     @Test
     public void testWriteReadCycleOfCurrentConfiguration() throws Exception {
+        final CurrentConfiguration expectedCurrent = configuration.getCurrentConfiguration();
         final File xmlFile = folder.newFile("test.xml");
         marshaller.marshal(configuration, xmlFile);
         final Configuration result = (Configuration) unmarshaller.unmarshal(xmlFile);
-        assertThat(result.getCurrentConfiguration(), is(notNullValue()));
+        final CurrentConfiguration current = result.getCurrentConfiguration();
+        assertThat(current, is(notNullValue()));
 
-        compareFieldByField(result.getCurrentConfiguration(), configuration.getCurrentConfiguration());
+        compareFieldByField(current.getPrinterSetting(), expectedCurrent.getPrinterSetting());
+        compareFieldByField(current.getPrintSetting(), expectedCurrent.getPrintSetting());
+        final List<MaterialSetting> materials = current.getMaterials();
+        for (int i = 0; i < materials.size(); i++) {
+            final MaterialSetting material = materials.get(i);
+            compareFieldByField(material, current.getMaterials().get(i));
+        }
     }
 
     private static void compareFieldByField(final Object actual, final Object expected) {

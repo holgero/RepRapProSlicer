@@ -9,7 +9,7 @@ import javax.vecmath.Color3f;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Configuration;
-import org.reprap.configuration.ExtruderSetting;
+import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.MaterialSetting;
 
 /**
@@ -73,17 +73,16 @@ public class Attributes {
         return appearance;
     }
 
-    private static MaterialSetting getMaterialSettings(final String material) {
-        final List<ExtruderSetting> extruderSettings = Configuration.getInstance().getCurrentConfiguration().getPrinterSetting()
-                .getExtruderSettings();
-        for (final ExtruderSetting setting : extruderSettings) {
-            final MaterialSetting materialSettings = setting.getMaterial();
-            if (materialSettings.getName().equals(material)) {
-                return materialSettings;
+    private static MaterialSetting getMaterialSettings(final String materialName) {
+        final CurrentConfiguration configuration = Configuration.getInstance().getCurrentConfiguration();
+        final List<MaterialSetting> materials = configuration.getMaterials();
+        for (final MaterialSetting material : materials) {
+            if (material.getName().equals(materialName)) {
+                return material;
             }
         }
-        final MaterialSetting substitute = extruderSettings.get(0).getMaterial();
-        LOGGER.warn("Requested material " + material + " not found, substituting with " + substitute.getName() + ".");
+        final MaterialSetting substitute = materials.get(0);
+        LOGGER.warn("Requested material " + materialName + " not found, substituting with " + substitute.getName() + ".");
         return substitute;
     }
 }

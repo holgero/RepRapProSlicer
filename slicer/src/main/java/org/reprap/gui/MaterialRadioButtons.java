@@ -21,7 +21,7 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
 import org.reprap.configuration.Configuration;
-import org.reprap.configuration.ExtruderSetting;
+import org.reprap.configuration.MaterialSetting;
 import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.geometry.polyhedra.STLObject;
 
@@ -63,8 +63,7 @@ class MaterialRadioButtons extends JPanel {
         jLabel1.setHorizontalAlignment(SwingConstants.CENTER);
         radioPanel.add(jLabel1);
 
-        final List<ExtruderSetting> extruders = Configuration.getInstance().getCurrentConfiguration().getPrinterSetting()
-                .getExtruderSettings();
+        final List<MaterialSetting> materials = Configuration.getInstance().getCurrentConfiguration().getMaterials();
         String matname = att.getMaterial();
         if (matname == null) {
             matname = "";
@@ -72,17 +71,16 @@ class MaterialRadioButtons extends JPanel {
 
         final ButtonGroup bGroup = new ButtonGroup();
         boolean foundMaterial = false;
-        for (final ExtruderSetting extruderSetting : extruders) {
-            final String material = extruderSetting.getMaterial().getName();
-            final JRadioButton b = new JRadioButton(material);
-            b.setActionCommand(material);
+        for (final MaterialSetting material : materials) {
+            final JRadioButton b = new JRadioButton(material.getName());
+            b.setActionCommand(material.getName());
             b.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(final ActionEvent e) {
                     att.setMaterial(e.getActionCommand());
                 }
             });
-            if (matname.contentEquals(material)) {
+            if (matname.contentEquals(material.getName())) {
                 b.setSelected(true);
                 foundMaterial = true;
             }
@@ -90,7 +88,7 @@ class MaterialRadioButtons extends JPanel {
             radioPanel.add(b);
         }
         if (!foundMaterial) {
-            att.setMaterial(extruders.get(0).getMaterial().getName());
+            att.setMaterial(materials.get(0).getName());
             final JRadioButton b = (JRadioButton) bGroup.getElements().nextElement();
             b.setSelected(true);
         } else {

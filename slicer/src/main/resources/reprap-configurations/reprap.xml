@@ -1,51 +1,24 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <configuration>
     <materials>
-        <material name="PLA">
-            <diameter>1.75</diameter>
-            <color blue="0.5" green="0.5" red="0.5"/>
-        </material>
-        <material name="PLA-red">
-            <diameter>1.75</diameter>
-            <color blue="0.1" green="0.1" red="0.7"/>
-        </material>
         <material name="PLA-pink">
             <diameter>1.75</diameter>
             <color blue="0.6" green="0.3" red="0.6"/>
+        </material>
+        <material name="PLA">
+            <diameter>1.75</diameter>
+            <color blue="0.5" green="0.5" red="0.5"/>
         </material>
         <material name="PLA-green">
             <diameter>1.75</diameter>
             <color blue="0.1" green="0.7" red="0.1"/>
         </material>
+        <material name="PLA-red">
+            <diameter>1.75</diameter>
+            <color blue="0.1" green="0.1" red="0.7"/>
+        </material>
     </materials>
     <printSettings>
-        <printSetting name="Setting for Mendel-0.5mm">
-            <layerHeight>0.24</layerHeight>
-            <verticalShells>2</verticalShells>
-            <horizontalShells>3</horizontalShells>
-            <insideOut>true</insideOut>
-            <middleStart>false</middleStart>
-            <arcCompensation>8.0</arcCompensation>
-            <arcShortSides>1.0</arcShortSides>
-            <fillDensity>0.3846153846153846</fillDensity>
-            <pattern type="rectilinear" angle="45.0"/>
-            <infillOverlap>0.2</infillOverlap>
-            <perimeterSpeed>0.9</perimeterSpeed>
-            <infillSpeed>1.0</infillSpeed>
-            <skirt>false</skirt>
-            <brimLines>0</brimLines>
-            <shield>true</shield>
-            <shieldStlFile>shield.stl</shieldStlFile>
-            <dumpX>50</dumpX>
-            <dumpY>100</dumpY>
-            <support>false</support>
-            <supportExtruder>0</supportExtruder>
-            <supportPattern type="linear" angle="45.0"/>
-            <supportSpacing>2.5</supportSpacing>
-            <raftLayers>0</raftLayers>
-            <verboseGCode>false</verboseGCode>
-            <pathOptimize>true</pathOptimize>
-        </printSetting>
         <printSetting name="Setting for Huxley-0.3mm">
             <layerHeight>0.25</layerHeight>
             <verticalShells>2</verticalShells>
@@ -65,6 +38,33 @@
             <shieldStlFile>shield.stl</shieldStlFile>
             <dumpX>0</dumpX>
             <dumpY>0</dumpY>
+            <support>false</support>
+            <supportExtruder>0</supportExtruder>
+            <supportPattern type="linear" angle="45.0"/>
+            <supportSpacing>2.5</supportSpacing>
+            <raftLayers>0</raftLayers>
+            <verboseGCode>false</verboseGCode>
+            <pathOptimize>true</pathOptimize>
+        </printSetting>
+        <printSetting name="Setting for Mendel-0.5mm">
+            <layerHeight>0.24</layerHeight>
+            <verticalShells>2</verticalShells>
+            <horizontalShells>3</horizontalShells>
+            <insideOut>true</insideOut>
+            <middleStart>false</middleStart>
+            <arcCompensation>8.0</arcCompensation>
+            <arcShortSides>1.0</arcShortSides>
+            <fillDensity>0.3846153846153846</fillDensity>
+            <pattern type="rectilinear" angle="45.0"/>
+            <infillOverlap>0.2</infillOverlap>
+            <perimeterSpeed>0.9</perimeterSpeed>
+            <infillSpeed>1.0</infillSpeed>
+            <skirt>false</skirt>
+            <brimLines>0</brimLines>
+            <shield>true</shield>
+            <shieldStlFile>shield.stl</shieldStlFile>
+            <dumpX>50</dumpX>
+            <dumpY>100</dumpY>
             <support>false</support>
             <supportExtruder>0</supportExtruder>
             <supportPattern type="linear" angle="45.0"/>
@@ -109,7 +109,6 @@ M0
                     <extraLengthPerPolygon>0.0649612012619981</extraLengthPerPolygon>
                     <extrusionOverrun>-1.0</extrusionOverrun>
                     <lift>0.0</lift>
-                    <material>PLA-pink</material>
                 </extruderSetting>
             </extruderSettings>
         </printerSetting>
@@ -133,7 +132,6 @@ G92 E0
 G28 X0
 G28 Y0
 G28 Z0
-
 </gCodePrologue>
             <gCodeEpilogue>T0
 G1 X5.0 Y120.0 F2000.0
@@ -150,7 +148,6 @@ M0
                     <extraLengthPerPolygon>0.10393792201919697</extraLengthPerPolygon>
                     <extrusionOverrun>-1.0</extrusionOverrun>
                     <lift>0.0</lift>
-                    <material>PLA</material>
                 </extruderSetting>
                 <extruderSetting>
                     <nozzleDiameter>0.5</nozzleDiameter>
@@ -162,7 +159,6 @@ M0
                     <extraLengthPerPolygon>0.0</extraLengthPerPolygon>
                     <extrusionOverrun>-1.0</extrusionOverrun>
                     <lift>0.0</lift>
-                    <material>PLA-green</material>
                 </extruderSetting>
                 <extruderSetting>
                     <nozzleDiameter>0.5</nozzleDiameter>
@@ -174,7 +170,6 @@ M0
                     <extraLengthPerPolygon>0.0</extraLengthPerPolygon>
                     <extrusionOverrun>-1.0</extrusionOverrun>
                     <lift>0.0</lift>
-                    <material>PLA-red</material>
                 </extruderSetting>
             </extruderSettings>
         </printerSetting>
@@ -182,5 +177,10 @@ M0
     <currentConfiguration>
         <printSetting>Setting for Mendel-0.5mm</printSetting>
         <printerSetting>Mendel-0.5mm</printerSetting>
+        <materials>
+            <material>PLA</material>
+            <material>PLA-green</material>
+            <material>PLA-red</material>
+        </materials>
     </currentConfiguration>
 </configuration>

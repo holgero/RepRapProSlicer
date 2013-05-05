@@ -7,7 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Configuration;
 import org.reprap.configuration.CurrentConfiguration;
-import org.reprap.configuration.ExtruderSetting;
+import org.reprap.configuration.MaterialSetting;
 import org.reprap.configuration.PrintSetting;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.gcode.Purge;
@@ -176,10 +176,10 @@ public class Producer {
     }
 
     private int getExtruderId(final Polygon polygon) {
-        final List<ExtruderSetting> extruderSettings = configuration.getPrinterSetting().getExtruderSettings();
-        for (int i = 0; i < extruderSettings.size(); i++) {
-            final ExtruderSetting setting = extruderSettings.get(i);
-            if (setting.getMaterial().getName().equals(polygon.getAttributes().getMaterial())) {
+        final List<MaterialSetting> materials = configuration.getMaterials();
+        for (int i = 0; i < materials.size(); i++) {
+            final MaterialSetting material = materials.get(i);
+            if (material.getName().equals(polygon.getAttributes().getMaterial())) {
                 return i;
             }
         }

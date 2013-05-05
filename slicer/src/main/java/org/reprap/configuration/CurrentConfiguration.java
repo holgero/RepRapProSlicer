@@ -18,7 +18,11 @@
  */
 package org.reprap.configuration;
 
+import java.util.Collections;
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlIDREF;
 
 public class CurrentConfiguration {
@@ -28,14 +32,20 @@ public class CurrentConfiguration {
     @XmlElement
     @XmlIDREF
     private PrinterSetting printerSetting;
+    @XmlElementWrapper
+    @XmlElement(name = "material")
+    @XmlIDREF
+    private final List<MaterialSetting> materials;
 
     CurrentConfiguration() {
-        this(null, null);
+        this(null, null, null);
     }
 
-    CurrentConfiguration(final PrintSetting printSetting, final PrinterSetting printerSetting) {
-        setPrintSettings(printSetting);
-        setPrinterSetting(printerSetting);
+    CurrentConfiguration(final PrintSetting printSetting, final PrinterSetting printerSetting,
+            final List<MaterialSetting> materials) {
+        this.printSetting = printSetting;
+        this.printerSetting = printerSetting;
+        this.materials = materials;
     }
 
     public PrintSetting getPrintSetting() {
@@ -55,11 +65,15 @@ public class CurrentConfiguration {
     }
 
     public ExtruderSetting getExtruderSetting(final String materialName) {
-        for (final ExtruderSetting extruderSettings : printerSetting.getExtruderSettings()) {
-            if (extruderSettings.getMaterial().getName().equals(materialName)) {
-                return extruderSettings;
+        for (int i = 0; i < materials.size(); i++) {
+            if (materials.get(i).getName().equals(materialName)) {
+                return printerSetting.getExtruderSettings().get(i);
             }
         }
         return null;
+    }
+
+    public List<MaterialSetting> getMaterials() {
+        return Collections.unmodifiableList(materials);
     }
 }

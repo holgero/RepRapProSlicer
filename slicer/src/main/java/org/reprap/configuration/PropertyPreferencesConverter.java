@@ -29,6 +29,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -51,9 +52,10 @@ final class PropertyPreferencesConverter {
     private Properties properties;
     private String machineName;
     private File propertiesFile;
-    private final Map<String, PrinterSetting> printerSettings = new HashMap<>();
-    private final Map<String, PrintSetting> printSettings = new HashMap<>();
-    private final Map<String, MaterialSetting> materialSettings = new HashMap<>();
+    private final Map<String, PrinterSetting> printerSettings = new LinkedHashMap<>();
+    private final Map<String, PrintSetting> printSettings = new LinkedHashMap<>();
+    private final Map<String, MaterialSetting> materialSettings = new LinkedHashMap<>();
+    private final List<MaterialSetting> activeMaterials = new ArrayList<>();
 
     PropertyPreferencesConverter(final File reprapDirectory) {
         this.reprapDirectory = reprapDirectory;
@@ -71,9 +73,7 @@ final class PropertyPreferencesConverter {
 
     private CurrentConfiguration collectPropertiesOfAllMachines() {
         CurrentConfiguration currentConfiguration = null;
-        printSettings.clear();
-        printerSettings.clear();
-        materialSettings.clear();
+        clearAll();
         final List<Machine> machines = Machine.getMachines();
         for (final Machine machine : machines) {
             machineName = machine.getName();
@@ -86,22 +86,22 @@ final class PropertyPreferencesConverter {
             printSettings.put(printSetting.getName(), printSetting);
             final int remaining = removeUnusedExtruders();
             final PrinterSetting printerSetting = createPrinterSetting();
-            final ExtruderSetting[] extruders = createAllExtruderSettings(remaining, printSetting.getLayerHeight());
-            collectMaterials(extruders);
+            final ExtruderSetting[] extruders = createAllExtruderSettings(remaining, printSetting.getLayerHeight(),
+                    machine.isActive());
             printerSetting.setExtruderSettings(extruders);
             printerSettings.put(printerSetting.getName(), printerSetting);
             if (machine.isActive()) {
-                currentConfiguration = new CurrentConfiguration(printSetting, printerSetting);
+                currentConfiguration = new CurrentConfiguration(printSetting, printerSetting, activeMaterials);
             }
         }
         return currentConfiguration;
     }
 
-    private void collectMaterials(final ExtruderSetting[] extruders) {
-        for (final ExtruderSetting extruderSetting : extruders) {
-            final MaterialSetting material = extruderSetting.getMaterial();
-            materialSettings.put(material.getName(), material);
-        }
+    private void clearAll() {
+        printSettings.clear();
+        printerSettings.clear();
+        materialSettings.clear();
+        activeMaterials.clear();
     }
 
     private Properties loadProperties() {
@@ -122,16 +122,16 @@ final class PropertyPreferencesConverter {
         }
     }
 
-    private ExtruderSetting[] createAllExtruderSettings(final int extruderCount, final double layerHeight) {
+    private ExtruderSetting[] createAllExtruderSettings(final int extruderCount, final double layerHeight, final boolean active) {
         final ExtruderSetting[] extruderSettings = new ExtruderSetting[extruderCount];
         for (int i = 0; i < extruderSettings.length; i++) {
-            final ExtruderSetting setting = createExtruderSetting(i, layerHeight);
+            final ExtruderSetting setting = createExtruderSetting(i, layerHeight, active);
             extruderSettings[i] = setting;
         }
         return extruderSettings;
     }
 
-    private ExtruderSetting createExtruderSetting(final int number, final double layerHeight) {
+    private ExtruderSetting createExtruderSetting(final int number, final double layerHeight, final boolean active) {
         final ExtruderSetting setting = new ExtruderSetting();
         // this is wrong, but the migration from the properties must somehow guess the nozzle diameter
         final String prefix = "Extruder" + number + "_";
@@ -146,7 +146,11 @@ final class PropertyPreferencesConverter {
         setting.setAirExtrusionFeedRate(getDoubleProperty(prefix + "FastEFeedrate(mm/minute)"));
         setting.setPrintExtrusionRate(getDoubleProperty(prefix + "FastXYFeedrate(mm/minute)"));
         setting.setLift(getDoubleProperty(prefix + "Lift(mm)"));
-        setting.setMaterial(createMaterialSettings(prefix));
+        final MaterialSetting material = createMaterialSettings(prefix);
+        materialSettings.put(material.getName(), material);
+        if (active) {
+            activeMaterials.add(material);
+        }
         return setting;
     }
 

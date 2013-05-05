@@ -3,6 +3,7 @@ package org.reprap.gcode;
 import static org.reprap.configuration.MathRoutines.circleAreaForDiameter;
 
 import org.reprap.configuration.Configuration;
+import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.MaterialSetting;
 
@@ -51,8 +52,9 @@ public class GCodeExtruder {
         gcode = writer;
         myExtruderID = extruderId;
         printer = p;
-        loadPreferences(Configuration.getInstance().getCurrentConfiguration().getPrinterSetting().getExtruderSettings()
-                .get(extruderId));
+        final CurrentConfiguration currentConfiguration = Configuration.getInstance().getCurrentConfiguration();
+        loadPreferences(currentConfiguration.getPrinterSetting().getExtruderSettings().get(extruderId), currentConfiguration
+                .getMaterials().get(extruderId));
         extruderState = new ExtruderState();
         // when we are first called (top down calculation means at our top
         // layer) the layer below will have reversed us at its end on the way up
@@ -70,7 +72,7 @@ public class GCodeExtruder {
         }
     }
 
-    private void loadPreferences(final ExtruderSetting extruderSetting) {
+    private void loadPreferences(final ExtruderSetting extruderSetting, final MaterialSetting material) {
         extrusionSize = extruderSetting.getNozzleDiameter();
         retractionDistance = extruderSetting.getRetraction();
         extraExtrusionForLayer = extruderSetting.getExtraLengthPerLayer();
@@ -80,7 +82,7 @@ public class GCodeExtruder {
         fastEFeedrate = extruderSetting.getAirExtrusionFeedRate();
         fastXYFeedrate = Math.min(printer.getFastXYFeedrate(), extruderSetting.getPrintExtrusionRate());
         lift = extruderSetting.getLift();
-        materialSettings = extruderSetting.getMaterial();
+        materialSettings = material;
         feedDiameter = materialSettings.getDiameter();
     }
 

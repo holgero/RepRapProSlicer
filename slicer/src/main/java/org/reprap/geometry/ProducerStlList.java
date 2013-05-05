@@ -42,6 +42,7 @@ import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Configuration;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSetting;
+import org.reprap.configuration.MaterialSetting;
 import org.reprap.configuration.MathRoutines;
 import org.reprap.configuration.PrintSetting;
 import org.reprap.gcode.Purge;
@@ -339,9 +340,6 @@ class ProducerStlList {
 
         cache.setSupport(BooleanGridList.unions(previousSupport, slice(stl, layer)), layer, stl);
 
-        final ExtruderSetting supportExtruder = configuration.getPrinterSetting().getExtruderSettings()
-                .get(configuration.getPrintSetting().getSupportExtruder());
-
         // Now we subtract the union of this layer from all the stuff requiring support in the layer above.
         BooleanGridList support = new BooleanGridList();
         if (previousSupport != null) {
@@ -352,11 +350,13 @@ class ProducerStlList {
             support = support.unionDuplicates();
         }
 
+        final int supportExtruderNo = configuration.getPrintSetting().getSupportExtruder();
+        final MaterialSetting supportMaterial = configuration.getMaterials().get(supportExtruderNo);
         // Now force the attributes of the support pattern to be the support extruders
         // for all the materials in it.
         for (int i = 0; i < support.size(); i++) {
             final BooleanGrid grid = support.get(i);
-            grid.forceAttribute(new Attributes(supportExtruder.getMaterial()));
+            grid.forceAttribute(new Attributes(supportMaterial));
         }
 
         return hatch(support, layerRules, false, true);
@@ -409,7 +409,7 @@ class ProducerStlList {
         }
         final STLObject shield = new STLObject();
         final Attributes attribute = shield.addSTL(printSetting.getShieldStlFile(), null, null, null);
-        attribute.setMaterial(currentConfiguration.getPrinterSetting().getExtruderSettings().get(0).getMaterial().getName());
+        attribute.setMaterial(currentConfiguration.getMaterials().get(0).getName());
 
         final BoundingBox boxWithoutShield = getBoundingBox(stls);
         final double modelZMax = boxWithoutShield.getZint().high();
@@ -540,8 +540,8 @@ class ProducerStlList {
 
     private Map<String, EdgeAndCsgsCollector> collectEdgeLinesAndCsgs(final int stlIndex, final double currentZ) {
         final Map<String, EdgeAndCsgsCollector> collectorMap = new HashMap<String, EdgeAndCsgsCollector>();
-        for (final ExtruderSetting setting : configuration.getPrinterSetting().getExtruderSettings()) {
-            collectorMap.put(setting.getMaterial().getName(), new EdgeAndCsgsCollector());
+        for (final MaterialSetting material : configuration.getMaterials()) {
+            collectorMap.put(material.getName(), new EdgeAndCsgsCollector());
         }
 
         // Generate all the edges for STLObject i at this z

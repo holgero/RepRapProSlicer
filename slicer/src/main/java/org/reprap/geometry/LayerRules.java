@@ -334,10 +334,10 @@ public class LayerRules {
     }
 
     private void fillFoundationRectangle(final SimulationPlotter simulationPlot) {
-        final ExtruderSetting extruder = configuration.getPrinterSetting().getExtruderSettings()
-                .get(configuration.getPrintSetting().getSupportExtruder());
-        final BooleanGrid bg = new BooleanGrid(CSG2D.RrCSGFromBox(bBox), bBox.scale(1.1),
-                new Attributes(extruder.getMaterial()));
+        final int supportExtruderNo = configuration.getPrintSetting().getSupportExtruder();
+        final ExtruderSetting extruder = configuration.getPrinterSetting().getExtruderSettings().get(supportExtruderNo);
+        final BooleanGrid bg = new BooleanGrid(CSG2D.RrCSGFromBox(bBox), bBox.scale(1.1), new Attributes(configuration
+                .getMaterials().get(supportExtruderNo)));
         final PolygonList foundationPolygon = bg.hatch(getHatchDirection(false, extruder.getExtrusionSize()),
                 extruder.getExtrusionSize(), bg.attribute());
         setFirstAndLast(new PolygonList[] { foundationPolygon });
