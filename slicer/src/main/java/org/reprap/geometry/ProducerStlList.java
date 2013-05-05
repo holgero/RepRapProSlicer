@@ -39,9 +39,9 @@ import javax.vecmath.Vector3d;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.configuration.Constants;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSettings;
+import org.reprap.configuration.MathRoutines;
 import org.reprap.configuration.PrintSettings;
 import org.reprap.gcode.Purge;
 import org.reprap.geometry.polygons.BooleanGrid;
@@ -58,13 +58,13 @@ import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.geometry.polyhedra.Attributes;
-import org.reprap.geometry.polyhedra.BoundingBox;
 import org.reprap.geometry.polyhedra.CSG3D;
 import org.reprap.geometry.polyhedra.LineSegment;
 import org.reprap.geometry.polyhedra.STLObject;
 
 class ProducerStlList {
     private static final Logger LOGGER = LogManager.getLogger(Producer.class);
+    private static final double GRID_RESOLUTION = 0.01;
 
     static BoundingBox calculateBoundingBox(final AllSTLsToBuild allStls, final Purge purge) {
         final List<STLObject> stlList = new ArrayList<>();
@@ -227,7 +227,7 @@ class ProducerStlList {
         temp = edges.get(0);
         edges.set(0, edges.get(swap));
         edges.set(swap, temp);
-        if (Math.sqrt(d) < Constants.GRID_RESOLUTION) {
+        if (Math.sqrt(d) < GRID_RESOLUTION) {
             LOGGER.debug("startLong(): edge length: " + Math.sqrt(d) + " is the longest.");
         }
     }
@@ -524,7 +524,7 @@ class ProducerStlList {
                 PolygonList pgl = simpleCull(collector.edges);
 
                 if (pgl.size() > 0) {
-                    pgl = pgl.simplify(Constants.GRID_RESOLUTION * 1.5);
+                    pgl = pgl.simplify(GRID_RESOLUTION * 1.5);
                     pgl = arcCompensate(pgl);
 
                     final CSG2D csgp = pgl.toCSG();
@@ -538,7 +538,7 @@ class ProducerStlList {
     }
 
     private Map<String, EdgeAndCsgsCollector> collectEdgeLinesAndCsgs(final int stlIndex, final double currentZ) {
-        final Map<String, EdgeAndCsgsCollector> collectorMap = new HashMap<String, ProducerStlList.EdgeAndCsgsCollector>();
+        final Map<String, EdgeAndCsgsCollector> collectorMap = new HashMap<String, EdgeAndCsgsCollector>();
         for (final ExtruderSettings settings : configuration.getPrinterSettings().getExtruderSettings()) {
             collectorMap.put(settings.getMaterial().getName(), new EdgeAndCsgsCollector());
         }
@@ -788,7 +788,7 @@ class ProducerStlList {
         // Multiply the geometrically correct result by factor
         final PrintSettings printSettings = configuration.getPrintSettings();
         final double factor = printSettings.getArcCompensation();
-        if (factor < Constants.TINY_VALUE) {
+        if (factor < MathRoutines.TINY_VALUE) {
             return polygon;
         }
 

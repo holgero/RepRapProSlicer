@@ -13,8 +13,8 @@ import javax.swing.JOptionPane;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.configuration.Constants;
 import org.reprap.configuration.CurrentConfiguration;
+import org.reprap.configuration.MathRoutines;
 import org.reprap.configuration.PrintSettings;
 import org.reprap.configuration.PrinterSettings;
 import org.reprap.geometry.polygons.Point2D;
@@ -100,7 +100,7 @@ public class GCodePrinter {
         }
 
         final double xyFeedrate = round(extruder.getFastXYFeedrate(), 1);
-        if (xyFeedrate < feedrate && Math.abs(extrudeLength) > Constants.TINY_VALUE) {
+        if (feedrate > xyFeedrate && Math.abs(extrudeLength) > MathRoutines.TINY_VALUE) {
             LOGGER.debug("GCodeRepRap().qXYMove: extruding feedrate (" + feedrate + ") exceeds maximum (" + xyFeedrate + ").");
             feedrate = xyFeedrate;
         }

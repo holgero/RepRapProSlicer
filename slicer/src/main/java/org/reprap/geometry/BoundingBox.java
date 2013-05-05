@@ -1,4 +1,4 @@
-package org.reprap.geometry.polyhedra;
+package org.reprap.geometry;
 
 import javax.vecmath.Point3d;
 

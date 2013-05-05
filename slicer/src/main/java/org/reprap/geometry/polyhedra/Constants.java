@@ -16,13 +16,10 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.configuration;
+package org.reprap.geometry.polyhedra;
 
 import javax.vecmath.Color3f;
 
 public final class Constants {
-    public static final double TINY_VALUE = 1.0e-12;
-    public static final double INCH_TO_MM = 25.4;
     public static final Color3f BLACK = new Color3f(0, 0, 0);
-    public static final double GRID_RESOLUTION = 0.01;
 }

@@ -14,7 +14,6 @@ import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
-import org.reprap.geometry.polyhedra.BoundingBox;
 
 public class Producer {
     private static final Logger LOGGER = LogManager.getLogger(Producer.class);

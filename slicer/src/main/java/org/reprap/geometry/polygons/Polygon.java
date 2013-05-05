@@ -74,7 +74,7 @@ import java.util.Random;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.configuration.Constants;
+import org.reprap.configuration.MathRoutines;
 import org.reprap.geometry.polyhedra.Attributes;
 
 /**
@@ -556,7 +556,7 @@ public class Polygon {
      * Remove all the points in a list that are within or on the hull
      */
     private void outsideHull(final List<Integer> inConsideration, final CSG2D hull) {
-        final double small = Math.sqrt(Constants.TINY_VALUE);
+        final double small = Math.sqrt(MathRoutines.TINY_VALUE);
         for (int i = inConsideration.size() - 1; i >= 0; i--) {
             final Point2D p = listPoint(i, inConsideration);
             if (hull.value(p) <= small) {

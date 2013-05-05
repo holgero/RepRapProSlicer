@@ -19,9 +19,9 @@
 package org.reprap.configuration;
 
 public class MathRoutines {
+    public static final double TINY_VALUE = 1.0e-12;
 
     public static double circleAreaForDiameter(final double diameter) {
         return diameter * diameter * Math.PI / 4;
     }
-
 }

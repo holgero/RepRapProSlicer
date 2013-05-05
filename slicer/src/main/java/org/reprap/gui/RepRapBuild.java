@@ -121,14 +121,14 @@ import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
-import org.reprap.configuration.Constants;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.PrinterSettings;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.geometry.polyhedra.Attributes;
+import org.reprap.geometry.polyhedra.Constants;
 import org.reprap.geometry.polyhedra.STLObject;
-import org.reprap.graphicio.RFO;
+import org.reprap.io.rfo.RFO;
 
 import com.sun.j3d.utils.picking.PickCanvas;
 import com.sun.j3d.utils.picking.PickResult;

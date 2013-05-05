@@ -1,4 +1,4 @@
-package org.reprap.graphicio;
+package org.reprap.io.rfo;
 
 import javax.vecmath.AxisAngle4d;
 import javax.vecmath.Matrix4d;

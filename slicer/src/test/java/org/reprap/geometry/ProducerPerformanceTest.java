@@ -26,7 +26,7 @@ import org.junit.Test;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.BooleanGridWalkerTest;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
-import org.reprap.graphicio.RFO;
+import org.reprap.io.rfo.RFO;
 
 public class ProducerPerformanceTest {
 

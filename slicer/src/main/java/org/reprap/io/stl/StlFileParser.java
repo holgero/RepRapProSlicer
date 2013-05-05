@@ -1,4 +1,4 @@
-package org.reprap.graphicio;
+package org.reprap.io.stl;
 
 import java.io.IOException;
 import java.io.Reader;

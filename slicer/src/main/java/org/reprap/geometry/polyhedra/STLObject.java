@@ -86,10 +86,9 @@ import javax.vecmath.Vector3d;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.configuration.Constants;
-import org.reprap.graphicio.CSGReader;
-import org.reprap.graphicio.StlFile;
 import org.reprap.gui.MouseObject;
+import org.reprap.io.rfo.CSGReader;
+import org.reprap.io.stl.StlFile;
 
 import com.sun.j3d.loaders.IncorrectFormatException;
 import com.sun.j3d.loaders.ParsingErrorException;
@@ -106,6 +105,7 @@ import com.sun.j3d.utils.picking.PickTool;
  */
 public class STLObject {
     private static final Logger LOGGER = LogManager.getLogger(STLObject.class);
+    private static final double INCH_TO_MM = 25.4;
 
     private final BranchGroup top = new BranchGroup(); // The thing that links us to the world
     private final BranchGroup handle = new BranchGroup(); // Internal handle for the mouse to grab
@@ -823,7 +823,7 @@ public class STLObject {
         if (mouse == null) {
             return;
         }
-        rScale(Constants.INCH_TO_MM, false);
+        rScale(INCH_TO_MM, false);
     }
 
     /**

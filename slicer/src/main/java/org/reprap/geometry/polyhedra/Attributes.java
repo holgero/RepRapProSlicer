@@ -8,7 +8,6 @@ import javax.vecmath.Color3f;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.configuration.Constants;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSettings;
 import org.reprap.configuration.MaterialSettings;

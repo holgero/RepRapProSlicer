@@ -1,6 +1,6 @@
 package org.reprap.geometry.polygons;
 
-import org.reprap.configuration.Constants;
+import org.reprap.configuration.MathRoutines;
 
 /**
  * A circle (centre and squared radius)
@@ -17,7 +17,7 @@ public class Circle {
         final Point2D lk = Point2D.sub(l, k);
         final Point2D mk = Point2D.sub(m, k);
         final double det = Point2D.op(lk, mk);
-        if (Math.abs(det) < Constants.TINY_VALUE) {
+        if (Math.abs(det) < MathRoutines.TINY_VALUE) {
             throw new ParallelException("RrCircle: colinear points.");
         }
         final double lk2 = Point2D.mul(lk, lk);
