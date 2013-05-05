@@ -41,6 +41,9 @@ public class Configuration {
     }
 
     @XmlElementWrapper
+    @XmlElement(name = "material")
+    private List<MaterialSetting> materials;
+    @XmlElementWrapper
     @XmlElement(name = "printSetting")
     private List<PrintSetting> printSettings;
     @XmlElementWrapper
@@ -74,5 +77,13 @@ public class Configuration {
 
     void setCurrentConfiguration(final CurrentConfiguration currentConfiguration) {
         this.currentConfiguration = currentConfiguration;
+    }
+
+    public List<MaterialSetting> getMaterials() {
+        return materials;
+    }
+
+    void setMaterials(final List<MaterialSetting> materials) {
+        this.materials = materials;
     }
 }

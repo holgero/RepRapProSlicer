@@ -4,7 +4,7 @@ import static org.reprap.configuration.MathRoutines.circleAreaForDiameter;
 
 import org.reprap.configuration.Configuration;
 import org.reprap.configuration.ExtruderSetting;
-import org.reprap.configuration.MaterialSettings;
+import org.reprap.configuration.MaterialSetting;
 
 public class GCodeExtruder {
     private final GCodeWriter gcode;
@@ -45,7 +45,7 @@ public class GCodeExtruder {
     private double retractionDistance;
     private double extraExtrusionForLayer;
     private double extraExtrusionForPolygon;
-    private MaterialSettings materialSettings;
+    private MaterialSetting materialSettings;
 
     GCodeExtruder(final GCodeWriter writer, final int extruderId, final GCodePrinter p) {
         gcode = writer;
@@ -120,7 +120,7 @@ public class GCodeExtruder {
     /**
      * What stuff are we working with?
      */
-    public MaterialSettings getMaterial() {
+    public MaterialSetting getMaterial() {
         return materialSettings;
     }
 

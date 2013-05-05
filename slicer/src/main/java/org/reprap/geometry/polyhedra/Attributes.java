@@ -10,7 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Configuration;
 import org.reprap.configuration.ExtruderSetting;
-import org.reprap.configuration.MaterialSettings;
+import org.reprap.configuration.MaterialSetting;
 
 /**
  * Holds RepRap attributes that are attached to Java3D shapes as user data,
@@ -20,11 +20,11 @@ import org.reprap.configuration.MaterialSettings;
  */
 public class Attributes {
     private static final Logger LOGGER = LogManager.getLogger(Attributes.class);
-    private MaterialSettings material;
+    private MaterialSetting material;
     private final STLObject parent;
     private Appearance appearance;
 
-    public Attributes(final MaterialSettings material) {
+    public Attributes(final MaterialSetting material) {
         this(material, null, createAppearance(material));
     }
 
@@ -32,7 +32,7 @@ public class Attributes {
         this(null, parent, appearance);
     }
 
-    private Attributes(final MaterialSettings material, final STLObject parent, final Appearance appearance) {
+    private Attributes(final MaterialSetting material, final STLObject parent, final Appearance appearance) {
         this.material = material;
         this.parent = parent;
         this.appearance = appearance;
@@ -66,23 +66,23 @@ public class Attributes {
         }
     }
 
-    private static Appearance createAppearance(final MaterialSettings material) {
+    private static Appearance createAppearance(final MaterialSetting material) {
         final Color3f color = material.getColor();
         final Appearance appearance = new Appearance();
         appearance.setMaterial(new Material(color, Constants.BLACK, color, Constants.BLACK, 101f));
         return appearance;
     }
 
-    private static MaterialSettings getMaterialSettings(final String material) {
+    private static MaterialSetting getMaterialSettings(final String material) {
         final List<ExtruderSetting> extruderSettings = Configuration.getInstance().getCurrentConfiguration().getPrinterSetting()
                 .getExtruderSettings();
         for (final ExtruderSetting setting : extruderSettings) {
-            final MaterialSettings materialSettings = setting.getMaterial();
+            final MaterialSetting materialSettings = setting.getMaterial();
             if (materialSettings.getName().equals(material)) {
                 return materialSettings;
             }
         }
-        final MaterialSettings substitute = extruderSettings.get(0).getMaterial();
+        final MaterialSetting substitute = extruderSettings.get(0).getMaterial();
         LOGGER.warn("Requested material " + material + " not found, substituting with " + substitute.getName() + ".");
         return substitute;
     }

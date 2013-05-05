@@ -21,10 +21,12 @@ package org.reprap.configuration;
 import javax.vecmath.Color3f;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-public class MaterialSettings {
+public class MaterialSetting {
     @XmlAttribute
+    @XmlID
     private String name; // text
     @XmlElement
     private double diameter; // mm 1.75

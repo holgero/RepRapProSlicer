@@ -51,8 +51,9 @@ final class PropertyPreferencesConverter {
     private Properties properties;
     private String machineName;
     private File propertiesFile;
-    private final List<PrinterSetting> printerSettings = new ArrayList<>();
-    private final List<PrintSetting> printSettings = new ArrayList<>();
+    private final Map<String, PrinterSetting> printerSettings = new HashMap<>();
+    private final Map<String, PrintSetting> printSettings = new HashMap<>();
+    private final Map<String, MaterialSetting> materialSettings = new HashMap<>();
 
     PropertyPreferencesConverter(final File reprapDirectory) {
         this.reprapDirectory = reprapDirectory;
@@ -62,8 +63,9 @@ final class PropertyPreferencesConverter {
         final CurrentConfiguration currentConfiguration = collectPropertiesOfAllMachines();
         final Configuration configuration = new Configuration();
         configuration.setCurrentConfiguration(currentConfiguration);
-        configuration.setPrinterSettings(printerSettings);
-        configuration.setPrintSettings(printSettings);
+        configuration.setPrinterSettings(new ArrayList<>(printerSettings.values()));
+        configuration.setPrintSettings(new ArrayList<>(printSettings.values()));
+        configuration.setMaterials(new ArrayList<>(materialSettings.values()));
         return configuration;
     }
 
@@ -71,6 +73,7 @@ final class PropertyPreferencesConverter {
         CurrentConfiguration currentConfiguration = null;
         printSettings.clear();
         printerSettings.clear();
+        materialSettings.clear();
         final List<Machine> machines = Machine.getMachines();
         for (final Machine machine : machines) {
             machineName = machine.getName();
@@ -80,16 +83,25 @@ final class PropertyPreferencesConverter {
                 continue;
             }
             final PrintSetting printSetting = createPrintSetting();
-            printSettings.add(printSetting);
+            printSettings.put(printSetting.getName(), printSetting);
             final int remaining = removeUnusedExtruders();
             final PrinterSetting printerSetting = createPrinterSetting();
-            printerSetting.setExtruderSettings(createAllExtruderSettings(remaining, printSetting.getLayerHeight()));
-            printerSettings.add(printerSetting);
+            final ExtruderSetting[] extruders = createAllExtruderSettings(remaining, printSetting.getLayerHeight());
+            collectMaterials(extruders);
+            printerSetting.setExtruderSettings(extruders);
+            printerSettings.put(printerSetting.getName(), printerSetting);
             if (machine.isActive()) {
                 currentConfiguration = new CurrentConfiguration(printSetting, printerSetting);
             }
         }
         return currentConfiguration;
+    }
+
+    private void collectMaterials(final ExtruderSetting[] extruders) {
+        for (final ExtruderSetting extruderSetting : extruders) {
+            final MaterialSetting material = extruderSetting.getMaterial();
+            materialSettings.put(material.getName(), material);
+        }
     }
 
     private Properties loadProperties() {
@@ -138,8 +150,8 @@ final class PropertyPreferencesConverter {
         return setting;
     }
 
-    private MaterialSettings createMaterialSettings(final String prefix) {
-        final MaterialSettings material = new MaterialSettings();
+    private MaterialSetting createMaterialSettings(final String prefix) {
+        final MaterialSetting material = new MaterialSetting();
         material.setName(properties.getProperty(prefix + "MaterialType(name)"));
         material.setDiameter(getDoubleProperty(prefix + "FeedDiameter(mm)"));
         material.setColor(new Color3f(loadColorComponent(prefix, "R"), loadColorComponent(prefix, "G"), loadColorComponent(
