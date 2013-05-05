@@ -31,7 +31,7 @@ public class BooleanGridWalkerTest {
     private final BooleanGrid testGrid = makeRectangleGrid(-0.4, -0.4, 0.4, 0.4);
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         assertEquals(34, testGrid.getRec().size.x);
         assertEquals(34, testGrid.getRec().size.y);
     }

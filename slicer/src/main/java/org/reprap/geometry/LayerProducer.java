@@ -1,7 +1,5 @@
 package org.reprap.geometry;
 
-import java.io.IOException;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.CurrentConfiguration;
@@ -20,7 +18,7 @@ class LayerProducer {
     private final CurrentConfiguration configuration = CurrentConfiguration.getCurrentConfiguration();
     boolean firstOneInLayer = true;
 
-    LayerProducer(final LayerRules lc, final SimulationPlotter simPlot) throws IOException {
+    LayerProducer(final LayerRules lc, final SimulationPlotter simPlot) {
         layerRules = lc;
         simulationPlot = simPlot;
 
@@ -41,7 +39,7 @@ class LayerProducer {
         }
     }
 
-    private void plot(final Polygon polygon) throws IOException {
+    private void plot(final Polygon polygon) {
         if (polygon.size() <= 1) {
             return;
         }
@@ -91,7 +89,7 @@ class LayerProducer {
         }
     }
 
-    private void plotExtrusionPath(final ExtrusionPath extrusionPath, final ExtruderSettings extruder) throws IOException {
+    private void plotExtrusionPath(final ExtrusionPath extrusionPath, final ExtruderSettings extruder) {
         final double extrudeBackLength = extruder.getExtrusionOverrun();
         extrusionPath.backStepExtrude(extrudeBackLength);
 
@@ -133,7 +131,7 @@ class LayerProducer {
         }
     }
 
-    void plot(final PolygonList pl) throws IOException {
+    void plot(final PolygonList pl) {
         for (int j = 0; j < pl.size(); j++) {
             plot(pl.polygon(j));
         }

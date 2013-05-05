@@ -37,7 +37,7 @@ public class BooleanGridTest {
     }
 
     @Test
-    public void testAminusAisEmpty() throws Exception {
+    public void testAminusAisEmpty() {
         final BooleanGrid gridA = makeRectangleGrid(0, 0, 0.3, 0.3);
         final BooleanGrid gridAminusA = BooleanGrid.difference(gridA, gridA);
         if (VISUALIZE) {
@@ -50,7 +50,7 @@ public class BooleanGridTest {
     }
 
     @Test
-    public void testAminusEmptyisA() throws Exception {
+    public void testAminusEmptyisA() {
         final BooleanGrid gridA = makeRectangleGrid(0, 0, 0.3, 0.3);
         final BooleanGrid gridEmptyminusA = BooleanGrid.difference(gridA, EMPTY);
         if (VISUALIZE) {
@@ -85,7 +85,7 @@ public class BooleanGridTest {
     }
 
     @Test
-    public void testRectangleDifference() throws Exception {
+    public void testRectangleDifference() {
         final BooleanGrid gridA = makeRectangleGrid(0, 0, 0.3, 0.3);
         final BooleanGrid gridB = makeRectangleGrid(0.2, 0, 0.3, 0.3);
         final BooleanGrid gridAminusB = BooleanGrid.difference(gridA, gridB);

@@ -161,7 +161,7 @@ public class RepRapBuild extends JPanel implements MouseListener {
     private STLObject workingVolume;
     private BranchGroup sceneBranchGroup;
 
-    public RepRapBuild() throws IOException {
+    public RepRapBuild() {
         initialise();
         stls = new AllSTLsToBuild();
         reordering = false;
@@ -475,7 +475,7 @@ public class RepRapBuild extends JPanel implements MouseListener {
         }
     }
 
-    private void initialise() throws IOException {
+    private void initialise() {
         final PrinterSettings printerSettings = CurrentConfiguration.getCurrentConfiguration().getPrinterSettings();
         xwv = printerSettings.getBedSizeX();
         ywv = printerSettings.getBedSizeY();

@@ -47,7 +47,7 @@ public class ProducerPerformanceTest {
     }
 
     @Test
-    public void testGridWalkerPerformance() throws Exception {
+    public void testGridWalkerPerformance() {
         final int iterations = 100;
         final long start = System.currentTimeMillis();
         for (int i = 0; i < iterations; i++) {

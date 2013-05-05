@@ -283,10 +283,8 @@ public class StlFile implements Loader {
      *            The ByteBuffer with the data of the object.
      * @param index
      *            The facet index
-     * 
-     * @throws IOException
      */
-    private void readFacetB(final ByteBuffer in, final int index) throws IOException {
+    private void readFacetB(final ByteBuffer in, final int index) {
         // Read the Normal
         normArray[index] = new Vector3f();
         normArray[index].x = in.getFloat();

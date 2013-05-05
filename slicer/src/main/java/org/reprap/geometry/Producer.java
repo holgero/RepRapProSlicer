@@ -66,7 +66,7 @@ public class Producer {
         layerRules.reverseLayers();
     }
 
-    private void produceLayer() throws IOException {
+    private void produceLayer() {
         LOGGER.debug("Commencing model layer " + layerRules.getModelLayer() + " at " + layerRules.getMachineZ());
         layerRules.setLayerFileName(printer.startingLayer(layerRules.getZStep(), layerRules.getMachineZ(),
                 layerRules.getMachineLayer(), layerRules.getMachineLayerMax(), false));

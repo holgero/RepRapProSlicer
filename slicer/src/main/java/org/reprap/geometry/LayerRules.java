@@ -320,7 +320,7 @@ public class LayerRules {
         }
     }
 
-    void layFoundationTopDown(final SimulationPlotter simulationPlot) throws IOException {
+    void layFoundationTopDown(final SimulationPlotter simulationPlot) {
         if (getFoundationLayers() <= 0) {
             return;
         }
@@ -333,7 +333,7 @@ public class LayerRules {
         }
     }
 
-    private void fillFoundationRectangle(final SimulationPlotter simulationPlot) throws IOException {
+    private void fillFoundationRectangle(final SimulationPlotter simulationPlot) {
         final ExtruderSettings extruder = configuration.getPrinterSettings().getExtruderSettings()
                 .get(configuration.getPrintSettings().getSupportExtruder());
         final BooleanGrid bg = new BooleanGrid(CSG2D.RrCSGFromBox(bBox), bBox.scale(1.1),
