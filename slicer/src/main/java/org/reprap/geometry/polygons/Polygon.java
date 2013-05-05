@@ -655,7 +655,7 @@ public class Polygon {
     /**
      * Set all the flag values in a list the same
      */
-    private void flagSet(final int f, final List<Integer> a, final int[] flags) {
+    private static void flagSet(final int f, final List<Integer> a, final int[] flags) {
         for (int i = 0; i < a.size(); i++) {
             flags[(a.get(i)).intValue()] = f;
         }
@@ -666,7 +666,7 @@ public class Polygon {
      * 
      * @return the section (null for none left)
      */
-    private List<Integer> polSection(final List<Integer> a, final int level, final int[] flags) {
+    private static List<Integer> polSection(final List<Integer> a, final int level, final int[] flags) {
         int flag, oldi;
         oldi = a.size() - 1;
         int oldFlag = flags[a.get(oldi).intValue()];

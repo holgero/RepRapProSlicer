@@ -80,7 +80,7 @@ public class StlFile implements Loader {
      *            The file parser. An instance of StlFileParser.
      * @throws IOException
      */
-    private void readEOL(final StlFileParser parser) throws IOException {
+    private static void readEOL(final StlFileParser parser) throws IOException {
         do {
             parser.nextToken();
         } while (parser.ttype != StreamTokenizer.TT_EOL);
@@ -196,7 +196,7 @@ public class StlFile implements Loader {
      *            The file parser. An instance of StlFileParser.
      * @throws IOException
      */
-    private void readLoop(final StlFileParser parser) throws IOException {
+    private static void readLoop(final StlFileParser parser) throws IOException {
         if (!(parser.ttype == StreamTokenizer.TT_WORD && parser.sval.equals("outer"))) {
             System.err.println("Format Error:expecting 'outer' on line " + parser.lineno());
         } else {
@@ -216,7 +216,7 @@ public class StlFile implements Loader {
      *            The file parser. An instance of StlFileParser.
      * @throws IOException
      */
-    private void readEndLoop(final StlFileParser parser) throws IOException {
+    private static void readEndLoop(final StlFileParser parser) throws IOException {
         if (!(parser.ttype == StreamTokenizer.TT_WORD && parser.sval.equals("endloop"))) {
             System.err.println("Format Error:expecting 'endloop' on line " + parser.lineno());
         } else {
@@ -231,7 +231,7 @@ public class StlFile implements Loader {
      *            The file parser. An instance of StlFileParser.
      * @throws IOException
      */
-    private void readEndFacet(final StlFileParser parser) throws IOException {
+    private static void readEndFacet(final StlFileParser parser) throws IOException {
         if (!(parser.ttype == StreamTokenizer.TT_WORD && parser.sval.equals("endfacet"))) {
             System.err.println("Format Error:expecting 'endfacet' on line " + parser.lineno());
         } else {

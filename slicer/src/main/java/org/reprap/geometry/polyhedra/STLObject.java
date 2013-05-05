@@ -139,7 +139,7 @@ public class STLObject {
         stl.setUserData(nullAtt);
     }
 
-    private void setCommonCapabilities(final SceneGraphObject... objects) {
+    private static void setCommonCapabilities(final SceneGraphObject... objects) {
         for (final SceneGraphObject object : objects) {
             object.setCapability(Group.ALLOW_CHILDREN_EXTEND);
             object.setCapability(Group.ALLOW_CHILDREN_WRITE);
@@ -485,7 +485,7 @@ public class STLObject {
     }
 
     // Shift a Shape3D permanently by p
-    private void s3dOffset(final Shape3D shape, final Tuple3d p) {
+    private static void s3dOffset(final Shape3D shape, final Tuple3d p) {
         final GeometryArray g = (GeometryArray) shape.getGeometry();
         final Point3d p3d = new Point3d();
         if (g != null) {
@@ -521,7 +521,7 @@ public class STLObject {
 
     // Scale a Shape3D permanently by s
 
-    private void s3dScale(final Shape3D shape, final double s, final boolean zOnly) {
+    private static void s3dScale(final Shape3D shape, final double s, final boolean zOnly) {
         final GeometryArray g = (GeometryArray) shape.getGeometry();
         final Point3d p3d = new Point3d();
         if (g != null) {
@@ -672,7 +672,7 @@ public class STLObject {
     }
 
     // Put a vector in the positive octant (sort of abs for vectors)
-    private Vector3d posOct(final Vector3d v) {
+    private static Vector3d posOct(final Vector3d v) {
         final Vector3d result = new Vector3d();
         result.x = Math.abs(v.x);
         result.y = Math.abs(v.y);
@@ -842,7 +842,7 @@ public class STLObject {
     /**
      * Compute the volume of a Shape3D
      */
-    private double s3dVolume(final Shape3D shape) {
+    private static double s3dVolume(final Shape3D shape) {
         double total = 0;
         final GeometryArray g = (GeometryArray) shape.getGeometry();
         final Point3d a = new Point3d();
@@ -862,7 +862,7 @@ public class STLObject {
     /**
      * Compute the signed volume of a tetrahedron
      */
-    private double tetVolume(final Point3d a, final Point3d b, final Point3d c, final Point3d d) {
+    private static double tetVolume(final Point3d a, final Point3d b, final Point3d c, final Point3d d) {
         final Matrix3d m = new Matrix3d(b.x - a.x, c.x - a.x, d.x - a.x, b.y - a.y, c.y - a.y, d.y - a.y, b.z - a.z, c.z - a.z,
                 d.z - a.z);
         return m.determinant() / 6.0;
@@ -872,7 +872,7 @@ public class STLObject {
      * Compute the signed volume of the prism between the XY plane and the space
      * triangle {a, b, c}
      */
-    private double prismVolume(final Point3d a, final Point3d b, final Point3d c) {
+    private static double prismVolume(final Point3d a, final Point3d b, final Point3d c) {
         final Point3d d = new Point3d(a.x, a.y, 0);
         final Point3d e = new Point3d(b.x, b.y, 0);
         final Point3d f = new Point3d(c.x, c.y, 0);

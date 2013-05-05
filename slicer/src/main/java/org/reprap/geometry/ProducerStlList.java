@@ -200,7 +200,7 @@ class ProducerStlList {
      * Make sure the list starts with and edge longer than 1.5mm (or the longest
      * if not)
      */
-    private void startLong(final List<LineSegment> edges) {
+    private static void startLong(final List<LineSegment> edges) {
         if (edges.size() <= 0) {
             return;
         }
@@ -235,7 +235,7 @@ class ProducerStlList {
     /**
      * Stitch together the some of the edges to form a polygon.
      */
-    private Polygon getNextPolygon(final List<LineSegment> edges) {
+    private static Polygon getNextPolygon(final List<LineSegment> edges) {
         if (edges.size() <= 0) {
             return null;
         }
@@ -298,7 +298,7 @@ class ProducerStlList {
     /**
      * Get all the polygons represented by the edges.
      */
-    private PolygonList simpleCull(final List<LineSegment> edges) {
+    private static PolygonList simpleCull(final List<LineSegment> edges) {
         final PolygonList result = new PolygonList();
         Polygon next = getNextPolygon(edges);
         while (next != null) {
@@ -361,7 +361,7 @@ class ProducerStlList {
         return hatch(support, layerRules, false, true);
     }
 
-    private BooleanGrid union(final BooleanGridList slice) {
+    private static BooleanGrid union(final BooleanGridList slice) {
         if (slice.size() == 0) {
             return BooleanGrid.nullBooleanGrid();
         }
@@ -569,9 +569,11 @@ class ProducerStlList {
      * Also update the triangulation of the object below the current slice used
      * for the simulation window.
      */
-    private void addEdge(final Point3d p, final Point3d q, final Point3d r, final double z, final Attributes att,
+    private static void addEdge(final Point3d p, final Point3d q, final Point3d r, final double z, final Attributes att,
             final List<LineSegment> edges) {
-        Point3d odd = null, even1 = null, even2 = null;
+        Point3d odd;
+        Point3d even1;
+        Point3d even2;
         int pat = 0;
 
         if (p.z < z) {
@@ -619,7 +621,7 @@ class ProducerStlList {
             even2 = q;
             break;
         default:
-            LOGGER.error("addEdge(): the | function doesn't seem to work...");
+            throw new RuntimeException("addEdge(): the | function doesn't seem to work...");
         }
 
         // Work out the intersection line segment (e1 -> e2) between the z plane and the triangle
@@ -640,7 +642,7 @@ class ProducerStlList {
      * Run through a Shape3D and set edges from it at plane z Apply the
      * transform first
      */
-    private void addAllEdges(final Shape3D shape, final Transform3D trans, final double z, final Attributes att,
+    private static void addAllEdges(final Shape3D shape, final Transform3D trans, final double z, final Attributes att,
             final List<LineSegment> edges) {
         final GeometryArray g = (GeometryArray) shape.getGeometry();
         final Point3d p1 = new Point3d();

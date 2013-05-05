@@ -90,7 +90,7 @@ class ConfigurationInitializer {
             final CurrentConfiguration currentConfiguration = converter.loadCurrentConfigurationFromPropertiesFile();
             if (currentConfiguration != null) {
                 LOGGER.info("Current configuration loaded from: " + converter.getPropertiesFile());
-                marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+                marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
                 marshaller.marshal(currentConfiguration, xmlFile);
                 LOGGER.info("A new configuration file has been written to: " + xmlFile);
                 return true;

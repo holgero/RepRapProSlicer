@@ -224,13 +224,14 @@ public class GCodePrinter {
         currentZ = z;
     }
 
-    private void checkCoordinates(final double x, final double y, final double z) {
+    private static void checkCoordinates(final double x, final double y, final double z) {
         checkCoordinate("x", x, 0, getMaximumXvalue());
         checkCoordinate("y", y, 0, getMaximumYvalue());
         checkCoordinate("z", z, 0, getMaximumZvalue());
     }
 
-    private double checkCoordinate(final String name, final double value, final double minimumValue, final double maximumValue) {
+    private static double checkCoordinate(final String name, final double value, final double minimumValue,
+            final double maximumValue) {
         if (value > maximumValue || value < minimumValue) {
             LOGGER.error("Attempt to move " + name + " to " + value + " which is outside [" + minimumValue + ", "
                     + maximumValue + "]");
@@ -557,7 +558,7 @@ public class GCodePrinter {
      * Display a message indicating a layer is about to be printed and wait for
      * the user to acknowledge
      */
-    private void layerPause() {
+    private static void layerPause() {
         JOptionPane.showMessageDialog(null, "A new layer is about to be produced");
     }
 
@@ -596,27 +597,27 @@ public class GCodePrinter {
         this.purge = purge;
     }
 
-    private double getMaximumXvalue() {
+    private static double getMaximumXvalue() {
         return getPrinterSettings().getBedSizeX();
     }
 
-    private double getMaximumYvalue() {
+    private static double getMaximumYvalue() {
         return getPrinterSettings().getBedSizeY();
     }
 
-    private double getMaximumZvalue() {
+    private static double getMaximumZvalue() {
         return getPrinterSettings().getMaximumZ();
     }
 
-    private boolean useRelativeExtrusion() {
+    private static boolean useRelativeExtrusion() {
         return getPrinterSettings().useRelativeDistanceE();
     }
 
-    private PrintSettings getPrintSettings() {
+    private static PrintSettings getPrintSettings() {
         return CurrentConfiguration.getCurrentConfiguration().getPrintSettings();
     }
 
-    private PrinterSettings getPrinterSettings() {
+    private static PrinterSettings getPrinterSettings() {
         return CurrentConfiguration.getCurrentConfiguration().getPrinterSettings();
     }
 }

@@ -354,7 +354,7 @@ public class PrintTabFrame extends JInternalFrame {
         sliceButton.setBackground(Color.gray);
     }
 
-    private boolean worthSaving() {
+    private static boolean worthSaving() {
         return true;
     }
 
@@ -376,12 +376,12 @@ public class PrintTabFrame extends JInternalFrame {
         }
     }
 
-    private String stripExtension(final File file) {
+    private static String stripExtension(final File file) {
         final String path = file.getAbsolutePath();
         return path.substring(0, path.length() - ".rfo".length());
     }
 
-    private boolean isStlOrRfoFile(final File file) {
+    private static boolean isStlOrRfoFile(final File file) {
         final String lowerName = file.getName().toLowerCase();
         return lowerName.endsWith(".stl") || lowerName.endsWith(".rfo");
     }
@@ -411,7 +411,7 @@ public class PrintTabFrame extends JInternalFrame {
         mainFrame.setLayerPause(p);
     }
 
-    private void getWebPageActionPerformed() {
+    private static void getWebPageActionPerformed() {
         try {
             final URI url = new URI("http://reprappro.com");
             Desktop.getDesktop().browse(url);
@@ -464,7 +464,7 @@ public class PrintTabFrame extends JInternalFrame {
         gcodeLoaded = false;
     }
 
-    private void help() {
+    private static void help() {
         try {
             final URI url = new URI("http://reprap.org/wiki/RepRapPro_Slicer");
             Desktop.getDesktop().browse(url);

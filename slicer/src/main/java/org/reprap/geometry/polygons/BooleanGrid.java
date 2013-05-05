@@ -83,7 +83,6 @@ public class BooleanGrid {
      * The attributes
      */
     private Attributes att;
-    private Boolean isThin = false;
 
     /**
      * Back and forth from real to pixel/integer coordinates
@@ -101,7 +100,6 @@ public class BooleanGrid {
      */
     public BooleanGrid(final CSG2D csgExp, final Rectangle rectangle, final Attributes a) {
         att = a;
-        isThin = false;
         final Rectangle ri = rectangle.offset(rSwell);
         rec = new Integer2DRectangle(new Integer2DPoint(0, 0), new Integer2DPoint(1, 1)); // Set the origin to (0, 0)...
         rec.swCorner = rec.convertToInteger2DPoint(ri.sw()); // That then gets subtracted by the iPoint constructor to give the true origin
@@ -118,7 +116,6 @@ public class BooleanGrid {
     private BooleanGrid(final BooleanGrid bg) {
         att = bg.att;
         visited = null;
-        isThin = bg.isThin;
         rec = new Integer2DRectangle(bg.rec);
         bits = (BitSet) bg.bits.clone();
     }
@@ -129,7 +126,6 @@ public class BooleanGrid {
     private BooleanGrid(final BooleanGrid bg, final Integer2DRectangle newRec) {
         att = bg.att;
         visited = null;
-        isThin = bg.isThin;
         rec = new Integer2DRectangle(newRec);
         bits = new BitSet(rec.size.x * rec.size.y);
         final Integer2DRectangle recScan = rec.intersection(bg.rec);
@@ -151,7 +147,6 @@ public class BooleanGrid {
         att = new Attributes(null, null);
         rec = new Integer2DRectangle();
         bits = new BitSet(1);
-        isThin = false;
         visited = null;
     }
 
@@ -188,10 +183,6 @@ public class BooleanGrid {
      */
     public Attributes attribute() {
         return att;
-    }
-
-    public void setThin(final Boolean t) {
-        isThin = t;
     }
 
     /**
@@ -257,14 +248,14 @@ public class BooleanGrid {
     /**
      * Fill a rectangle with centreline running from p0 to p1 of width 2r with v
      */
-    private void rectangle(final Integer2DPoint p0, final Integer2DPoint p1, int r, final boolean v) {
-        r = Math.abs(r);
+    private void rectangle(final Integer2DPoint p0, final Integer2DPoint p1, final int r, final boolean v) {
+        final int halfFillWidth = Math.abs(r);
         final Point2D rp0 = new Point2D(p0.x, p0.y);
         final Point2D rp1 = new Point2D(p1.x, p1.y);
         final HalfPlane[] h = new HalfPlane[4];
         h[0] = new HalfPlane(rp0, rp1);
-        h[2] = h[0].offset(r);
-        h[0] = h[0].offset(-r).complement();
+        h[2] = h[0].offset(halfFillWidth);
+        h[0] = h[0].offset(-halfFillWidth).complement();
         h[1] = new HalfPlane(rp0, Point2D.add(rp0, h[2].normal()));
         h[3] = new HalfPlane(rp1, Point2D.add(rp1, h[0].normal()));
         double xMin = Double.MAX_VALUE;
@@ -588,7 +579,7 @@ public class BooleanGrid {
     /**
      * Look-up table to find the index of a neighbour point, n, from the point.
      */
-    private int neighbourIndex(final Integer2DPoint n) {
+    private static int neighbourIndex(final Integer2DPoint n) {
         switch ((n.y + 1) * 3 + n.x + 1) {
         case 0:
             return 0;

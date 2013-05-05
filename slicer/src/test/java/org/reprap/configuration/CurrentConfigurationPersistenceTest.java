@@ -140,7 +140,7 @@ public class CurrentConfigurationPersistenceTest {
     private void marshallTo(final CurrentConfiguration configuration, final File xmlFile) throws JAXBException,
             PropertyException {
         final Marshaller marshaller = context.createMarshaller();
-        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
         marshaller.marshal(configuration, xmlFile);
     }
 }

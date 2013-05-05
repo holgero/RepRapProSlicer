@@ -178,7 +178,7 @@ public class RepRapBuild extends JPanel implements MouseListener {
         return background;
     }
 
-    private BranchGroup createViewBranchGroup(final TransformGroup[] tgArray, final ViewPlatform vp) {
+    private static BranchGroup createViewBranchGroup(final TransformGroup[] tgArray, final ViewPlatform vp) {
         final BranchGroup vpBranchGroup = new BranchGroup();
 
         if (tgArray != null && tgArray.length > 0) {
@@ -514,7 +514,7 @@ public class RepRapBuild extends JPanel implements MouseListener {
         addCanvas3D(canvas3d);
     }
 
-    private Canvas3D createCanvas3D() {
+    private static Canvas3D createCanvas3D() {
         final GraphicsConfigTemplate3D gc3D = new GraphicsConfigTemplate3D();
         gc3D.setSceneAntialiasing(GraphicsConfigTemplate.PREFERRED);
         final GraphicsDevice gd[] = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();

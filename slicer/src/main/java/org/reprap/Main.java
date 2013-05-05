@@ -16,7 +16,10 @@ public class Main {
             @Override
             public void run() {
                 try {
-                    new MainFrame(args);
+                    final MainFrame main = new MainFrame();
+                    if (args.length == 1) {
+                        main.autoRun(args[0]);
+                    }
                 } catch (final IOException e) {
                     throw new RuntimeException(e);
                 }

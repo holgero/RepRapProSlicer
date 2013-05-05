@@ -214,7 +214,7 @@ public class BooleanGridWalkerTest {
         assertEquals(0, simpleMarch.size());
     }
 
-    private String printPolygonList(final Integer2DPolygonList simpleMarch) {
+    private static String printPolygonList(final Integer2DPolygonList simpleMarch) {
         final BooleanGrid grid = emptyGrid();
 
         for (int i = 0; i < simpleMarch.size(); i++) {
@@ -227,7 +227,7 @@ public class BooleanGridWalkerTest {
         return printGrid(grid);
     }
 
-    private String printGrid(final BooleanGrid grid) {
+    private static String printGrid(final BooleanGrid grid) {
         final StringBuilder output = new StringBuilder();
         final Integer2DPoint size = grid.getRec().size;
         for (int y = size.y - 1; y >= 0; y--) {

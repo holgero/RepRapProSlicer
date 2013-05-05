@@ -131,7 +131,7 @@ public final class InFillPatterns {
     /**
      * This finds an individual land in landPattern
      */
-    private BooleanGrid findLand(final BooleanGrid landPattern) {
+    private static BooleanGrid findLand(final BooleanGrid landPattern) {
         final Point2D seed = landPattern.findSeed();
         if (seed == null) {
             return null;
@@ -144,7 +144,7 @@ public final class InFillPatterns {
      * This finds the bridge that cover cen. It assumes that there is only one
      * material at one point in space...
      */
-    private int findBridge(final BooleanGridList unSupported, final Point2D cen) {
+    private static int findBridge(final BooleanGridList unSupported, final Point2D cen) {
         for (int i = 0; i < unSupported.size(); i++) {
             final BooleanGrid bridge = unSupported.get(i);
             if (bridge.get(cen)) {

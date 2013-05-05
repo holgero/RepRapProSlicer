@@ -103,7 +103,7 @@ public class Producer {
         printer.finishedLayer(false);
     }
 
-    private int usedPhysicalExtruders(final PolygonList[] allPolygons) {
+    private static int usedPhysicalExtruders(final PolygonList[] allPolygons) {
         int count = 0;
         for (final PolygonList polygonList : allPolygons) {
             if (polygonList.size() > 0) {

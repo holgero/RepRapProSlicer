@@ -251,7 +251,7 @@ public class SimulationPlotter extends JComponent {
     /**
      * Set the colour from a RepRap attribute
      */
-    private void setColour(final Graphics2D g2d, final Attributes at) {
+    private static void setColour(final Graphics2D g2d, final Attributes at) {
         final Appearance ap = at.getAppearance();
         final Material mt = ap.getMaterial();
         final Color3f col = new Color3f();

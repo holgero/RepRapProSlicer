@@ -188,7 +188,7 @@ public class LayerRules {
                 }
             }
         }
-        if (first == null) {
+        if (lastList == null || first == null) {
             return;
         }
         firstPoint[machineLayer] = first;
@@ -281,7 +281,7 @@ public class LayerRules {
         stepMachine();
     }
 
-    private void copyFile(final PrintStream ps, final String ip) throws IOException {
+    private static void copyFile(final PrintStream ps, final String ip) throws IOException {
         final File f = new File(ip);
         final FileReader fr = new FileReader(f);
         try {

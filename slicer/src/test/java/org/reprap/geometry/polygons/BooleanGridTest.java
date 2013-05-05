@@ -96,7 +96,7 @@ public class BooleanGridTest {
         }
     }
 
-    private String printGrid(final BooleanGrid grid) {
+    private static String printGrid(final BooleanGrid grid) {
         final StringBuilder output = new StringBuilder();
         final Integer2DPoint size = grid.getRec().size;
         for (int y = size.y - 1; y >= 0; y--) {

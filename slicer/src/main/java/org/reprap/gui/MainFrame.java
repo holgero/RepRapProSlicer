@@ -59,7 +59,7 @@ public class MainFrame extends JFrame {
     private final SlicerFrame slicerFrame;
     private final GCodePrinter printer;
 
-    public MainFrame(final String[] args) throws HeadlessException, IOException {
+    public MainFrame() throws HeadlessException {
         super("RepRap build bed    |     mouse:  left - rotate   middle - zoom   right - translate     |    grid: 20 mm");
         JFrame.setDefaultLookAndFeelDecorated(false);
         JPopupMenu.setDefaultLightWeightPopupEnabled(false);
@@ -92,12 +92,9 @@ public class MainFrame extends JFrame {
         requestFocus();
 
         slicerFrame = new SlicerFrame(this);
-        if (args.length == 1) {
-            autoRun(args[0]);
-        }
     }
 
-    private void autoRun(final String fileName) throws FileNotFoundException {
+    public void autoRun(final String fileName) throws FileNotFoundException {
         final File rfoFile = new File(fileName);
         builder.addRFOFile(rfoFile);
         final String rfoFileName = rfoFile.getAbsolutePath();

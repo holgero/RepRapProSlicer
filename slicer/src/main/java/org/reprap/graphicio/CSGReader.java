@@ -178,7 +178,7 @@ public class CSGReader {
         }
         final String i = model.substring(0, c);
         subString(c + 1);
-        return Integer.valueOf(i);
+        return Integer.parseInt(i);
     }
 
     /**
@@ -192,7 +192,7 @@ public class CSGReader {
         }
         final String d = model.substring(0, c);
         subString(c + 1);
-        return Double.valueOf(d);
+        return Double.parseDouble(d);
     }
 
     /**
@@ -206,7 +206,7 @@ public class CSGReader {
         }
         final String d = model.substring(0, c);
         subString(c + 1);
-        return Double.valueOf(d);
+        return Double.parseDouble(d);
     }
 
     /**
@@ -220,7 +220,7 @@ public class CSGReader {
         }
         final String d = model.substring(0, c);
         subString(c + 1);
-        return Double.valueOf(d);
+        return Double.parseDouble(d);
     }
 
     /**
