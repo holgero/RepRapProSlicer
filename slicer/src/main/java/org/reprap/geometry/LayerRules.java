@@ -8,6 +8,7 @@ import java.io.PrintStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.configuration.Configuration;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSettings;
 import org.reprap.configuration.FillPattern;
@@ -87,7 +88,7 @@ public class LayerRules {
      */
     private final int maxSurfaceLayers;
 
-    private final CurrentConfiguration configuration = CurrentConfiguration.getCurrentConfiguration();
+    private final CurrentConfiguration configuration = Configuration.getInstance().getCurrentConfiguration();
 
     /**
      * How far up the model we are in mm

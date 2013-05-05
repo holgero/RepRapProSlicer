@@ -8,7 +8,7 @@ import javax.vecmath.Color3f;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.configuration.CurrentConfiguration;
+import org.reprap.configuration.Configuration;
 import org.reprap.configuration.ExtruderSettings;
 import org.reprap.configuration.MaterialSettings;
 
@@ -74,7 +74,7 @@ public class Attributes {
     }
 
     private static MaterialSettings getMaterialSettings(final String material) {
-        final List<ExtruderSettings> extruderSettings = CurrentConfiguration.getCurrentConfiguration().getPrinterSettings()
+        final List<ExtruderSettings> extruderSettings = Configuration.getInstance().getCurrentConfiguration().getPrinterSettings()
                 .getExtruderSettings();
         for (final ExtruderSettings settings : extruderSettings) {
             final MaterialSettings materialSettings = settings.getMaterial();

@@ -42,6 +42,7 @@ import org.apache.logging.log4j.Logger;
 class ConfigurationInitializer {
     private static final Logger LOGGER = LogManager.getLogger(ConfigurationInitializer.class);
     private static final String DISTRIBUTION_PROPERTIES_DIR_ = "reprap-configurations";
+    private static final String REPRAP_FILE = "reprap.xml";
     private final File reprapDirectory;
     private final JAXBContext context;
     private final Marshaller marshaller;
@@ -50,7 +51,7 @@ class ConfigurationInitializer {
     ConfigurationInitializer(final File reprapDirectory) {
         this.reprapDirectory = reprapDirectory;
         try {
-            context = JAXBContext.newInstance(CurrentConfiguration.class);
+            context = JAXBContext.newInstance(Configuration.class);
             marshaller = context.createMarshaller();
             unmarshaller = context.createUnmarshaller();
         } catch (final JAXBException e) {
@@ -58,7 +59,7 @@ class ConfigurationInitializer {
         }
     }
 
-    CurrentConfiguration loadCurrentConfiguration() {
+    Configuration loadConfiguration() {
         try {
             return loadCurrentConfigurationUnsafe();
         } catch (final JAXBException e) {
@@ -68,11 +69,11 @@ class ConfigurationInitializer {
         }
     }
 
-    private CurrentConfiguration loadCurrentConfigurationUnsafe() throws PropertyException, JAXBException, IOException {
-        final File xmlFile = new File(reprapDirectory, "current.xml");
+    private Configuration loadCurrentConfigurationUnsafe() throws PropertyException, JAXBException, IOException {
+        final File xmlFile = new File(reprapDirectory, REPRAP_FILE);
         if (!xmlFile.exists()) {
             LOGGER.info("No current configuration found " + xmlFile);
-            if (!provideConfigurationFromOldPropertyFile(xmlFile)) {
+            if (!provideConfigurationFromOldPropertyFiles(xmlFile)) {
                 reprapDirectory.mkdirs();
                 LOGGER.info("Creating new current configuration from distribution files");
                 provideDefaultConfiguration();
@@ -80,23 +81,21 @@ class ConfigurationInitializer {
         } else {
             LOGGER.info("Reading configuration from " + xmlFile);
         }
-        return (CurrentConfiguration) unmarshaller.unmarshal(xmlFile);
+        return (Configuration) unmarshaller.unmarshal(xmlFile);
     }
 
-    private boolean provideConfigurationFromOldPropertyFile(final File xmlFile) throws PropertyException, JAXBException {
+    private boolean provideConfigurationFromOldPropertyFiles(final File xmlFile) throws PropertyException, JAXBException {
         if (reprapDirectory.isDirectory()) {
             LOGGER.info(reprapDirectory + " exists, trying to read property file from there.");
             final PropertyPreferencesConverter converter = new PropertyPreferencesConverter(reprapDirectory);
-            final CurrentConfiguration currentConfiguration = converter.loadCurrentConfigurationFromPropertiesFile();
-            if (currentConfiguration != null) {
-                LOGGER.info("Current configuration loaded from: " + converter.getPropertiesFile());
+            final Configuration configuration = converter.loadConfigurationFromPropertiesFiles();
+            if (configuration.getCurrentConfiguration() != null) {
                 marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-                marshaller.marshal(currentConfiguration, xmlFile);
+                marshaller.marshal(configuration, xmlFile);
                 LOGGER.info("A new configuration file has been written to: " + xmlFile);
                 return true;
             }
-            LOGGER.warn("Failed to read old properties file from " + reprapDirectory);
-
+            LOGGER.warn("Failed to read old properties files from " + reprapDirectory);
         }
         return false;
     }

@@ -25,10 +25,13 @@ import java.util.List;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlID;
 
 public class PrinterSettings {
     private static final double MACHINE_RESOLUTION = 0.05; // mm
+
     @XmlAttribute
+    @XmlID
     private String name; // text
     // dimensions
     @XmlElement
@@ -130,7 +133,7 @@ public class PrinterSettings {
     }
 
     public File getBuildPlatformStl() {
-        return new File(CurrentConfiguration.getReprapDirectory(), buildPlatformStl);
+        return new File(Configuration.getReprapDirectory(), buildPlatformStl);
     }
 
     void setBuildPlatformStl(final String buildPlatformStl) {

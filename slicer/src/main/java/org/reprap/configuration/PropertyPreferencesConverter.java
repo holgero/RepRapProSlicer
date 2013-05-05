@@ -26,8 +26,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -45,28 +47,52 @@ final class PropertyPreferencesConverter {
     private static final String EPILOGUE_FILE = "epilogue.gcode";
     private static final String BASE_FILE = "base.stl";
 
-    final Properties properties = new Properties();
     private final File reprapDirectory;
+    private Properties properties;
+    private String machineName;
     private File propertiesFile;
-    private String activeMachine;
 
     PropertyPreferencesConverter(final File reprapDirectory) {
         this.reprapDirectory = reprapDirectory;
     }
 
-    CurrentConfiguration loadCurrentConfigurationFromPropertiesFile() {
-        try {
-            activeMachine = Machine.getActiveMachine();
-        } catch (final Exception e) {
-            LOGGER.catching(Level.DEBUG, e);
-            LOGGER.info("Failed to obtain current machine. Cannot read current configuration");
-            return null;
+    Configuration loadConfigurationFromPropertiesFiles() {
+        CurrentConfiguration currentConfiguration = null;
+        final List<PrinterSettings> printerSettings = new ArrayList<>();
+        final List<PrintSettings> printSettings = new ArrayList<>();
+        final List<Machine> machines = Machine.getMachines();
+        for (final Machine machine : machines) {
+            machineName = machine.getName();
+            propertiesFile = new File(new File(reprapDirectory, machineName), "reprap.properties");
+            properties = loadProperties();
+            if (properties == null) {
+                continue;
+            }
+            final PrintSettings printSetting = createPrintSetting();
+            printSettings.add(printSetting);
+            final int remaining = removeUnusedExtruders();
+            final PrinterSettings printerSetting = createPrinterSetting();
+            printerSetting.setExtruderSettings(createAllExtruderSettings(remaining, printSetting.getLayerHeight()));
+            printerSettings.add(printerSetting);
+            if (machine.isActive()) {
+                currentConfiguration = new CurrentConfiguration(printSetting, printerSetting);
+            }
         }
-        propertiesFile = new File(new File(reprapDirectory, activeMachine), "reprap.properties");
+        final Configuration configuration = new Configuration();
+        configuration.setCurrentConfiguration(currentConfiguration);
+        configuration.setPrinterSettings(printerSettings);
+        configuration.setPrintSettings(printSettings);
+        return configuration;
+    }
+
+    private Properties loadProperties() {
         try {
-            final InputStream fileStream = new FileInputStream(getPropertiesFile());
+            final InputStream fileStream = new FileInputStream(propertiesFile);
             try {
-                properties.load(fileStream);
+                final Properties result = new Properties();
+                result.load(fileStream);
+                LOGGER.info("Configuration loaded from: " + propertiesFile);
+                return result;
             } finally {
                 fileStream.close();
             }
@@ -75,19 +101,6 @@ final class PropertyPreferencesConverter {
             LOGGER.info("Failed to read current configuration: " + e);
             return null;
         }
-        return parseCurrentConfiguration();
-    }
-
-    File getPropertiesFile() {
-        return propertiesFile;
-    }
-
-    private CurrentConfiguration parseCurrentConfiguration() {
-        final PrintSettings printSettings = createPrintSettings();
-        final int remaining = removeUnusedExtruders();
-        final PrinterSettings printerSettings = createPrinterSettings();
-        printerSettings.setExtruderSettings(createAllExtruderSettings(remaining, printSettings.getLayerHeight()));
-        return new CurrentConfiguration(printSettings, printerSettings);
     }
 
     private ExtruderSettings[] createAllExtruderSettings(final int extruderCount, final double layerHeight) {
@@ -139,9 +152,9 @@ final class PropertyPreferencesConverter {
         return extrusionSpeed * delay / 60000 * layerHeight * extrusionSize / circleAreaForDiameter(feedDiameter);
     }
 
-    private PrinterSettings createPrinterSettings() {
+    private PrinterSettings createPrinterSetting() {
         final PrinterSettings result = new PrinterSettings();
-        result.setName(activeMachine);
+        result.setName(machineName);
         result.setBedSizeX(getDoubleProperty("WorkingX(mm)"));
         result.setBedSizeY(getDoubleProperty("WorkingY(mm)"));
         result.setMaximumZ(getDoubleProperty("WorkingZ(mm)"));
@@ -169,11 +182,12 @@ final class PropertyPreferencesConverter {
     }
 
     private String machineDirFileName(final String fileName) {
-        return new File(activeMachine, fileName).getPath();
+        return new File(machineName, fileName).getPath();
     }
 
-    private PrintSettings createPrintSettings() {
+    private PrintSettings createPrintSetting() {
         final PrintSettings result = new PrintSettings();
+        result.setName("Setting for " + machineName);
         result.setLayerHeight(getDoubleProperty("Extruder0_ExtrusionHeight(mm)"));
         result.setVerticalShells(getIntegerProperty("Extruder0_NumberOfShells(0..N)"));
         result.setHorizontalShells(getIntegerProperty("Extruder0_SurfaceLayers(0..N)"));
@@ -233,7 +247,7 @@ final class PropertyPreferencesConverter {
         if (shieldStlFile.canRead()) {
             return;
         }
-        final File legacyStlFile = new File(new File(reprapDirectory, Machine.getActiveMachine()), SHIELD_STL_FILENAME);
+        final File legacyStlFile = new File(new File(reprapDirectory, machineName), SHIELD_STL_FILENAME);
         if (legacyStlFile.exists()) {
             if (!legacyStlFile.renameTo(shieldStlFile)) {
                 throw new RuntimeException("File " + legacyStlFile.getAbsolutePath()

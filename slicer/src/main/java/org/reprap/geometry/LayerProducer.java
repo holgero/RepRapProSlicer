@@ -2,6 +2,7 @@ package org.reprap.geometry;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.configuration.Configuration;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSettings;
 import org.reprap.gcode.GCodePrinter;
@@ -15,7 +16,7 @@ class LayerProducer {
     private static final Logger LOGGER = LogManager.getLogger(LayerProducer.class);
     private final SimulationPlotter simulationPlot;
     private final LayerRules layerRules;
-    private final CurrentConfiguration configuration = CurrentConfiguration.getCurrentConfiguration();
+    private final CurrentConfiguration configuration = Configuration.getInstance().getCurrentConfiguration();
     boolean firstOneInLayer = true;
 
     LayerProducer(final LayerRules lc, final SimulationPlotter simPlot) {

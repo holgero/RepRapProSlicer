@@ -13,7 +13,7 @@ import javax.swing.JOptionPane;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.configuration.CurrentConfiguration;
+import org.reprap.configuration.Configuration;
 import org.reprap.configuration.MathRoutines;
 import org.reprap.configuration.PrintSettings;
 import org.reprap.configuration.PrinterSettings;
@@ -614,10 +614,10 @@ public class GCodePrinter {
     }
 
     private static PrintSettings getPrintSettings() {
-        return CurrentConfiguration.getCurrentConfiguration().getPrintSettings();
+        return Configuration.getInstance().getCurrentConfiguration().getPrintSettings();
     }
 
     private static PrinterSettings getPrinterSettings() {
-        return CurrentConfiguration.getCurrentConfiguration().getPrinterSettings();
+        return Configuration.getInstance().getCurrentConfiguration().getPrinterSettings();
     }
 }

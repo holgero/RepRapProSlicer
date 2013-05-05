@@ -2,7 +2,7 @@ package org.reprap.gcode;
 
 import static org.reprap.configuration.MathRoutines.circleAreaForDiameter;
 
-import org.reprap.configuration.CurrentConfiguration;
+import org.reprap.configuration.Configuration;
 import org.reprap.configuration.ExtruderSettings;
 import org.reprap.configuration.MaterialSettings;
 
@@ -51,7 +51,7 @@ public class GCodeExtruder {
         gcode = writer;
         myExtruderID = extruderId;
         printer = p;
-        loadPreferences(CurrentConfiguration.getCurrentConfiguration().getPrinterSettings().getExtruderSettings()
+        loadPreferences(Configuration.getInstance().getCurrentConfiguration().getPrinterSettings().getExtruderSettings()
                 .get(extruderId));
         extruderState = new ExtruderState();
         // when we are first called (top down calculation means at our top
@@ -142,7 +142,7 @@ public class GCodeExtruder {
             return extrudeRatio * distance;
         }
 
-        final double layerHeight = CurrentConfiguration.getCurrentConfiguration().getPrintSettings().getLayerHeight();
+        final double layerHeight = Configuration.getInstance().getCurrentConfiguration().getPrintSettings().getLayerHeight();
         return extrudeRatio * distance * layerHeight * extrusionSize / circleAreaForDiameter(feedDiameter);
     }
 

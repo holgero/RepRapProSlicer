@@ -27,32 +27,11 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 
-public final class Machine {
+final class Machine {
     private static final String PROPERTIES_FOLDER = ".reprap";
     private static final String MACHINE_FILE = "Machine";
-    private static Machine activeMachine = null;
 
-    static synchronized String getActiveMachine() {
-        if (activeMachine == null) {
-            findActiveMachine();
-        }
-        if (activeMachine == null) {
-            throw new RuntimeException("No active RepRap set (add '*' to the start of a line in the file: " + getMachineFile()
-                    + ").");
-        }
-        return activeMachine.getName();
-    }
-
-    private static void findActiveMachine() {
-        for (final Machine machine : loadMachines()) {
-            if (machine.isActive()) {
-                activeMachine = machine;
-                break;
-            }
-        }
-    }
-
-    private static List<Machine> loadMachines() {
+    static List<Machine> getMachines() {
         final ArrayList<Machine> list = new ArrayList<Machine>();
         final File machineFile = getMachineFile();
         try {
@@ -94,11 +73,11 @@ public final class Machine {
         this.isActive = isActive;
     }
 
-    private String getName() {
+    String getName() {
         return name;
     }
 
-    private boolean isActive() {
+    boolean isActive() {
         return isActive;
     }
 }

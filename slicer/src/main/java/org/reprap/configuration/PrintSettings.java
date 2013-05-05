@@ -20,10 +20,15 @@ package org.reprap.configuration;
 
 import java.io.File;
 
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 public class PrintSettings {
+    @XmlAttribute
+    @XmlID
+    private String name;
     // layers
     @XmlElement
     private double layerHeight; // mm 0.24
@@ -278,10 +283,18 @@ public class PrintSettings {
     }
 
     public File getShieldStlFile() {
-        return new File(CurrentConfiguration.getReprapDirectory(), shieldStlFile);
+        return new File(Configuration.getReprapDirectory(), shieldStlFile);
     }
 
     void setShieldStlFile(final String shieldStlFile) {
         this.shieldStlFile = shieldStlFile;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    void setName(final String name) {
+        this.name = name;
     }
 }

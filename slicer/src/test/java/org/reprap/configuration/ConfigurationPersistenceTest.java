@@ -26,9 +26,7 @@ import java.io.File;
 import java.lang.reflect.Field;
 
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-import javax.xml.bind.PropertyException;
 import javax.xml.bind.Unmarshaller;
 
 import org.hamcrest.BaseMatcher;
@@ -39,27 +37,30 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-public class CurrentConfigurationPersistenceTest {
+public class ConfigurationPersistenceTest {
     @Rule
     public final TemporaryFolder folder = new TemporaryFolder();
-    private final CurrentConfiguration currentConfiguration = CurrentConfiguration.getCurrentConfiguration();
+    private final Configuration configuration = Configuration.getInstance();
     private JAXBContext context;
+    private Unmarshaller unmarshaller;
+    private Marshaller marshaller;
 
     @Before
     public void setup() throws Exception {
-        context = JAXBContext.newInstance(CurrentConfiguration.class);
+        context = JAXBContext.newInstance(Configuration.class);
+        marshaller = context.createMarshaller();
+        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+        unmarshaller = context.createUnmarshaller();
     }
 
     @Test
     public void testWriteReadCycleOfCurrentConfiguration() throws Exception {
         final File xmlFile = folder.newFile("test.xml");
-        marshallTo(currentConfiguration, xmlFile);
-        final CurrentConfiguration result = unmarshallFrom(xmlFile);
-        assertThat(result.getPrintSettings(), is(notNullValue()));
-        assertThat(result.getPrinterSettings(), is(notNullValue()));
+        marshaller.marshal(configuration, xmlFile);
+        final Configuration result = (Configuration) unmarshaller.unmarshal(xmlFile);
+        assertThat(result.getCurrentConfiguration(), is(notNullValue()));
 
-        compareFieldByField(result.getPrintSettings(), currentConfiguration.getPrintSettings());
-        compareFieldByField(result.getPrinterSettings(), currentConfiguration.getPrinterSettings());
+        compareFieldByField(result.getCurrentConfiguration(), configuration.getCurrentConfiguration());
     }
 
     private static void compareFieldByField(final Object actual, final Object expected) {
@@ -129,18 +130,5 @@ public class CurrentConfigurationPersistenceTest {
 
     private static MatcherCreator containsInField(final Field field) {
         return new MatcherCreator(field);
-    }
-
-    private CurrentConfiguration unmarshallFrom(final File xmlFile) throws JAXBException {
-        final Unmarshaller unmarshaller = context.createUnmarshaller();
-        final CurrentConfiguration result = (CurrentConfiguration) unmarshaller.unmarshal(xmlFile);
-        return result;
-    }
-
-    private void marshallTo(final CurrentConfiguration configuration, final File xmlFile) throws JAXBException,
-            PropertyException {
-        final Marshaller marshaller = context.createMarshaller();
-        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-        marshaller.marshal(configuration, xmlFile);
     }
 }
