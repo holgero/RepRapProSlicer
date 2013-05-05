@@ -122,7 +122,7 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 import org.reprap.configuration.Configuration;
-import org.reprap.configuration.PrinterSettings;
+import org.reprap.configuration.PrinterSetting;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.geometry.polyhedra.Attributes;
@@ -476,12 +476,12 @@ public class RepRapBuild extends JPanel implements MouseListener {
     }
 
     private void initialise() {
-        final PrinterSettings printerSettings = Configuration.getInstance().getCurrentConfiguration().getPrinterSettings();
-        xwv = printerSettings.getBedSizeX();
-        ywv = printerSettings.getBedSizeY();
-        zwv = printerSettings.getMaximumZ();
+        final PrinterSetting printerSetting = Configuration.getInstance().getCurrentConfiguration().getPrinterSetting();
+        xwv = printerSetting.getBedSizeX();
+        ywv = printerSetting.getBedSizeY();
+        zwv = printerSetting.getMaximumZ();
         pickedAppearance.setMaterial(new Material(SELECTED_COLOR, Constants.BLACK, SELECTED_COLOR, Constants.BLACK, 0f));
-        sceneBranchGroup = createSceneBranchGroup(printerSettings.getBuildPlatformStl());
+        sceneBranchGroup = createSceneBranchGroup(printerSetting.getBuildPlatformStl());
         final ViewPlatform viewPlatform = createViewPlatform();
         final BranchGroup viewBranchGroup = createViewBranchGroup(getViewTransformGroupArray(), viewPlatform);
         createView(viewPlatform);

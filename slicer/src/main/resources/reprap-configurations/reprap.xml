@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <configuration>
     <printSettings>
-        <printSettings name="Setting for Huxley-0.3mm">
+        <printSetting name="Setting for Huxley-0.3mm">
             <layerHeight>0.25</layerHeight>
             <verticalShells>2</verticalShells>
             <horizontalShells>2</horizontalShells>
@@ -27,8 +27,8 @@
             <raftLayers>0</raftLayers>
             <verboseGCode>false</verboseGCode>
             <pathOptimize>true</pathOptimize>
-        </printSettings>
-        <printSettings name="Setting for Mendel-0.5mm">
+        </printSetting>
+        <printSetting name="Setting for Mendel-0.5mm">
             <layerHeight>0.24</layerHeight>
             <verticalShells>2</verticalShells>
             <horizontalShells>3</horizontalShells>
@@ -54,10 +54,10 @@
             <raftLayers>0</raftLayers>
             <verboseGCode>false</verboseGCode>
             <pathOptimize>true</pathOptimize>
-        </printSettings>
+        </printSetting>
     </printSettings>
     <printerSettings>
-        <printerSettings name="Huxley-0.3mm">
+        <printerSetting name="Huxley-0.3mm">
             <bedSizeX>200.0</bedSizeX>
             <bedSizeY>200.0</bedSizeY>
             <maximumZ>150.0</maximumZ>
@@ -81,22 +81,24 @@ T0
 M0
 </gCodeEpilogue>
             <extruderSettings>
-                <nozzleDiameter>0.3</nozzleDiameter>
-                <extrudeRatio>1.0</extrudeRatio>
-                <airExtrusionFeedRate>180000.0</airExtrusionFeedRate>
-                <printExtrusionRate>2500.0</printExtrusionRate>
-                <retraction>3.118137660575909</retraction>
-                <extraLengthPerLayer>0.0649612012619981</extraLengthPerLayer>
-                <extraLengthPerPolygon>0.0649612012619981</extraLengthPerPolygon>
-                <extrusionOverrun>-1.0</extrusionOverrun>
-                <lift>0.0</lift>
-                <material name="PLA">
-                    <diameter>1.75</diameter>
-                    <color blue="0.6" green="0.3" red="0.6"/>
-                </material>
+                <extruderSetting>
+                    <nozzleDiameter>0.3</nozzleDiameter>
+                    <extrudeRatio>1.0</extrudeRatio>
+                    <airExtrusionFeedRate>180000.0</airExtrusionFeedRate>
+                    <printExtrusionRate>2500.0</printExtrusionRate>
+                    <retraction>3.118137660575909</retraction>
+                    <extraLengthPerLayer>0.0649612012619981</extraLengthPerLayer>
+                    <extraLengthPerPolygon>0.0649612012619981</extraLengthPerPolygon>
+                    <extrusionOverrun>-1.0</extrusionOverrun>
+                    <lift>0.0</lift>
+                    <material name="PLA">
+                        <diameter>1.75</diameter>
+                        <color blue="0.6" green="0.3" red="0.6"/>
+                    </material>
+                </extruderSetting>
             </extruderSettings>
-        </printerSettings>
-        <printerSettings name="Mendel-0.5mm">
+        </printerSetting>
+        <printerSetting name="Mendel-0.5mm">
             <bedSizeX>200.0</bedSizeX>
             <bedSizeY>200.0</bedSizeY>
             <maximumZ>125.0</maximumZ>
@@ -110,7 +112,7 @@ G21
 G91
 G1 Z5 F200
 G90
-T0
+T0 
 M83
 G92 E0
 G28 X0
@@ -123,54 +125,56 @@ G1 X5.0 Y120.0 F2000.0
 M0
 </gCodeEpilogue>
             <extruderSettings>
-                <nozzleDiameter>0.5</nozzleDiameter>
-                <extrudeRatio>1.0</extrudeRatio>
-                <airExtrusionFeedRate>40000.0</airExtrusionFeedRate>
-                <printExtrusionRate>2000.0</printExtrusionRate>
-                <retraction>2.0787584403839388</retraction>
-                <extraLengthPerLayer>0.10393792201919697</extraLengthPerLayer>
-                <extraLengthPerPolygon>0.10393792201919697</extraLengthPerPolygon>
-                <extrusionOverrun>-1.0</extrusionOverrun>
-                <lift>0.0</lift>
-                <material name="PLA">
-                    <diameter>1.75</diameter>
-                    <color blue="0.5" green="0.5" red="0.5"/>
-                </material>
+                <extruderSetting>
+                    <nozzleDiameter>0.5</nozzleDiameter>
+                    <extrudeRatio>1.0</extrudeRatio>
+                    <airExtrusionFeedRate>40000.0</airExtrusionFeedRate>
+                    <printExtrusionRate>2000.0</printExtrusionRate>
+                    <retraction>2.0787584403839388</retraction>
+                    <extraLengthPerLayer>0.10393792201919697</extraLengthPerLayer>
+                    <extraLengthPerPolygon>0.10393792201919697</extraLengthPerPolygon>
+                    <extrusionOverrun>-1.0</extrusionOverrun>
+                    <lift>0.0</lift>
+                    <material name="PLA">
+                        <diameter>1.75</diameter>
+                        <color blue="0.5" green="0.5" red="0.5"/>
+                    </material>
+                </extruderSetting>
+                <extruderSetting>
+                    <nozzleDiameter>0.5</nozzleDiameter>
+                    <extrudeRatio>1.0</extrudeRatio>
+                    <airExtrusionFeedRate>40000.0</airExtrusionFeedRate>
+                    <printExtrusionRate>2000.0</printExtrusionRate>
+                    <retraction>2.0787584403839388</retraction>
+                    <extraLengthPerLayer>0.10393792201919697</extraLengthPerLayer>
+                    <extraLengthPerPolygon>0.0</extraLengthPerPolygon>
+                    <extrusionOverrun>-1.0</extrusionOverrun>
+                    <lift>0.0</lift>
+                    <material name="PLA-green">
+                        <diameter>1.75</diameter>
+                        <color blue="0.1" green="0.7" red="0.1"/>
+                    </material>
+                </extruderSetting>
+                <extruderSetting>
+                    <nozzleDiameter>0.5</nozzleDiameter>
+                    <extrudeRatio>1.0</extrudeRatio>
+                    <airExtrusionFeedRate>40000.0</airExtrusionFeedRate>
+                    <printExtrusionRate>2000.0</printExtrusionRate>
+                    <retraction>2.0787584403839388</retraction>
+                    <extraLengthPerLayer>0.10393792201919697</extraLengthPerLayer>
+                    <extraLengthPerPolygon>0.0</extraLengthPerPolygon>
+                    <extrusionOverrun>-1.0</extrusionOverrun>
+                    <lift>0.0</lift>
+                    <material name="PLA-red">
+                        <diameter>1.75</diameter>
+                        <color blue="0.1" green="0.1" red="0.7"/>
+                    </material>
+                </extruderSetting>
             </extruderSettings>
-            <extruderSettings>
-                <nozzleDiameter>0.5</nozzleDiameter>
-                <extrudeRatio>1.0</extrudeRatio>
-                <airExtrusionFeedRate>40000.0</airExtrusionFeedRate>
-                <printExtrusionRate>2000.0</printExtrusionRate>
-                <retraction>2.0787584403839388</retraction>
-                <extraLengthPerLayer>0.10393792201919697</extraLengthPerLayer>
-                <extraLengthPerPolygon>0.0</extraLengthPerPolygon>
-                <extrusionOverrun>-1.0</extrusionOverrun>
-                <lift>0.0</lift>
-                <material name="PLA-green">
-                    <diameter>1.75</diameter>
-                    <color blue="0.1" green="0.7" red="0.1"/>
-                </material>
-            </extruderSettings>
-            <extruderSettings>
-                <nozzleDiameter>0.5</nozzleDiameter>
-                <extrudeRatio>1.0</extrudeRatio>
-                <airExtrusionFeedRate>40000.0</airExtrusionFeedRate>
-                <printExtrusionRate>2000.0</printExtrusionRate>
-                <retraction>2.0787584403839388</retraction>
-                <extraLengthPerLayer>0.10393792201919697</extraLengthPerLayer>
-                <extraLengthPerPolygon>0.0</extraLengthPerPolygon>
-                <extrusionOverrun>-1.0</extrusionOverrun>
-                <lift>0.0</lift>
-                <material name="PLA-red">
-                    <diameter>1.75</diameter>
-                    <color blue="0.1" green="0.1" red="0.7"/>
-                </material>
-            </extruderSettings>
-        </printerSettings>
+        </printerSetting>
     </printerSettings>
     <currentConfiguration>
-        <printSettings>Setting for Mendel-0.5mm</printSettings>
-        <printerSettings>Mendel-0.5mm</printerSettings>
+        <printSetting>Setting for Mendel-0.5mm</printSetting>
+        <printerSetting>Mendel-0.5mm</printerSetting>
     </currentConfiguration>
 </configuration>

@@ -4,7 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Configuration;
 import org.reprap.configuration.CurrentConfiguration;
-import org.reprap.configuration.ExtruderSettings;
+import org.reprap.configuration.ExtruderSetting;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
@@ -55,7 +55,7 @@ class LayerProducer {
             lastPoint = n;
         }
 
-        if (plotDist < configuration.getPrinterSettings().getMachineResolution() * 0.5) {
+        if (plotDist < configuration.getPrinterSetting().getMachineResolution() * 0.5) {
             LOGGER.info("Rejected line with " + polygon.size() + " points, length: " + plotDist);
             return;
         }
@@ -76,7 +76,7 @@ class LayerProducer {
             simulationPlot.add(pgl);
         }
 
-        final ExtruderSettings extruder = configuration.getExtruderSettings(attributes.getMaterial());
+        final ExtruderSetting extruder = configuration.getExtruderSetting(attributes.getMaterial());
         final ExtrusionPath extrusionPath = new ExtrusionPath(polygon, calculateFeedrate(polygon,
                 extruder.getPrintExtrusionRate()));
         plotExtrusionPath(extrusionPath, extruder);
@@ -84,13 +84,13 @@ class LayerProducer {
 
     private double calculateFeedrate(final Polygon polygon, final double extrusionRate) {
         if (polygon.isClosed()) {
-            return configuration.getPrintSettings().getPerimeterSpeed() * extrusionRate;
+            return configuration.getPrintSetting().getPerimeterSpeed() * extrusionRate;
         } else {
-            return configuration.getPrintSettings().getInfillSpeed() * extrusionRate;
+            return configuration.getPrintSetting().getInfillSpeed() * extrusionRate;
         }
     }
 
-    private void plotExtrusionPath(final ExtrusionPath extrusionPath, final ExtruderSettings extruder) {
+    private void plotExtrusionPath(final ExtrusionPath extrusionPath, final ExtruderSetting extruder) {
         final double extrudeBackLength = extruder.getExtrusionOverrun();
         extrusionPath.backStepExtrude(extrudeBackLength);
 

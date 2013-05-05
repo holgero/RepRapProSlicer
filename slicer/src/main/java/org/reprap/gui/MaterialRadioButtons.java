@@ -21,7 +21,7 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
 import org.reprap.configuration.Configuration;
-import org.reprap.configuration.ExtruderSettings;
+import org.reprap.configuration.ExtruderSetting;
 import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.geometry.polyhedra.STLObject;
 
@@ -63,7 +63,7 @@ class MaterialRadioButtons extends JPanel {
         jLabel1.setHorizontalAlignment(SwingConstants.CENTER);
         radioPanel.add(jLabel1);
 
-        final List<ExtruderSettings> extruders = Configuration.getInstance().getCurrentConfiguration().getPrinterSettings()
+        final List<ExtruderSetting> extruders = Configuration.getInstance().getCurrentConfiguration().getPrinterSetting()
                 .getExtruderSettings();
         String matname = att.getMaterial();
         if (matname == null) {
@@ -72,8 +72,8 @@ class MaterialRadioButtons extends JPanel {
 
         final ButtonGroup bGroup = new ButtonGroup();
         boolean foundMaterial = false;
-        for (final ExtruderSettings extruderSettings : extruders) {
-            final String material = extruderSettings.getMaterial().getName();
+        for (final ExtruderSetting extruderSetting : extruders) {
+            final String material = extruderSetting.getMaterial().getName();
             final JRadioButton b = new JRadioButton(material);
             b.setActionCommand(material);
             b.addActionListener(new ActionListener() {

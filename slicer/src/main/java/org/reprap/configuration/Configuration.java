@@ -41,30 +41,30 @@ public class Configuration {
     }
 
     @XmlElementWrapper
-    @XmlElement
-    private List<PrintSettings> printSettings;
+    @XmlElement(name = "printSetting")
+    private List<PrintSetting> printSettings;
     @XmlElementWrapper
-    @XmlElement
-    private List<PrinterSettings> printerSettings;
+    @XmlElement(name = "printerSetting")
+    private List<PrinterSetting> printerSettings;
     @XmlElement
     private CurrentConfiguration currentConfiguration;
 
     Configuration() {
     }
 
-    public List<PrintSettings> getPrintSettings() {
+    public List<PrintSetting> getPrintSettings() {
         return printSettings;
     }
 
-    void setPrintSettings(final List<PrintSettings> printSettings) {
+    void setPrintSettings(final List<PrintSetting> printSettings) {
         this.printSettings = printSettings;
     }
 
-    public List<PrinterSettings> getPrinterSettings() {
+    public List<PrinterSetting> getPrinterSettings() {
         return printerSettings;
     }
 
-    void setPrinterSettings(final List<PrinterSettings> printerSettings) {
+    void setPrinterSettings(final List<PrinterSetting> printerSettings) {
         this.printerSettings = printerSettings;
     }
 

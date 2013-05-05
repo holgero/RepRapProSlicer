@@ -15,8 +15,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Configuration;
 import org.reprap.configuration.MathRoutines;
-import org.reprap.configuration.PrintSettings;
-import org.reprap.configuration.PrinterSettings;
+import org.reprap.configuration.PrintSetting;
+import org.reprap.configuration.PrinterSetting;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.Attributes;
@@ -62,7 +62,7 @@ public class GCodePrinter {
     }
 
     private void loadExtruders() {
-        final int extruderCount = getPrinterSettings().getExtruderSettings().size();
+        final int extruderCount = getPrinterSetting().getExtruderSettings().size();
         if (extruderCount < 1) {
             throw new IllegalStateException("A Reprap printer must contain at least one extruder.");
         }
@@ -288,14 +288,14 @@ public class GCodePrinter {
         final String myDateString = sdf.format(myDate);
         gcode.writeComment(" Created: " + myDateString);
         gcode.writeComment("#!RECTANGLE: " + rectangle + ", height: " + machineMaxZ);
-        gcode.writeBlock(getPrinterSettings().getGcodePrologue(), "Prologue:", "------");
+        gcode.writeBlock(getPrinterSetting().getGcodePrologue(), "Prologue:", "------");
         currentX = 0;
         currentY = 0;
         currentZ = 0;
         currentFeedrate = -100; // Force it to set the feedrate at the start
         forceSelection = true; // Force it to set the extruder to use at the start
 
-        if (getPrintSettings().printSkirt()) {
+        if (getPrintSetting().printSkirt()) {
             // plot the outline
             plotOutlines(rectangle, machineZ);
         }
@@ -310,7 +310,7 @@ public class GCodePrinter {
         for (int e = extruders.length - 1; e >= 0; e--) { // Count down so we end with the one most likely to start the rest
             if (extruderUsed[e]) {
                 if (!zRight) {
-                    singleMove(currentX, currentY, getPrintSettings().getLayerHeight(), getFastFeedrateZ(), true);
+                    singleMove(currentX, currentY, getPrintSetting().getLayerHeight(), getFastFeedrateZ(), true);
                     currentZ = machineZ;
                 }
                 zRight = true;
@@ -366,7 +366,7 @@ public class GCodePrinter {
         currentY = round(lastPoint.y(), 2);
         currentZ = round(lastZ, 1);
 
-        gcode.writeBlock(getPrinterSettings().getGcodeEpilogue(), "Epilogue:", "------");
+        gcode.writeBlock(getPrinterSetting().getGcodeEpilogue(), "Epilogue:", "------");
     }
 
     private static double round(final double c, final double d) {
@@ -380,7 +380,7 @@ public class GCodePrinter {
 
         final double scaledFeedRate;
         if (extruder.getFeedDiameter() > 0) {
-            scaledFeedRate = feedRate * getPrintSettings().getLayerHeight() * extruder.getExtrusionSize()
+            scaledFeedRate = feedRate * getPrintSetting().getLayerHeight() * extruder.getExtrusionSize()
                     / circleAreaForDiameter(extruder.getFeedDiameter());
         } else {
             scaledFeedRate = feedRate;
@@ -407,7 +407,7 @@ public class GCodePrinter {
     private void selectExtruder(final int materialIndex, final boolean really, final boolean update) {
         final GCodeExtruder oldExtruder = extruders[currentExtruder];
         final GCodeExtruder newExtruder = extruders[materialIndex];
-        final boolean shield = getPrintSettings().printShield();
+        final boolean shield = getPrintSetting().printShield();
 
         if (newExtruder != oldExtruder || forceSelection) {
             if (really) {
@@ -551,7 +551,7 @@ public class GCodePrinter {
     }
 
     public double getFastFeedrateZ() {
-        return round(getPrinterSettings().getMaximumFeedrateZ(), 1);
+        return round(getPrinterSetting().getMaximumFeedrateZ(), 1);
     }
 
     /**
@@ -579,7 +579,7 @@ public class GCodePrinter {
      * @return fast XY movement feedrate in mm/minute
      */
     public double getFastXYFeedrate() {
-        return Math.min(getPrinterSettings().getMaximumFeedrateX(), getPrinterSettings().getMaximumFeedrateY());
+        return Math.min(getPrinterSetting().getMaximumFeedrateX(), getPrinterSetting().getMaximumFeedrateY());
     }
 
     public void forceNextExtruder() {
@@ -598,26 +598,26 @@ public class GCodePrinter {
     }
 
     private static double getMaximumXvalue() {
-        return getPrinterSettings().getBedSizeX();
+        return getPrinterSetting().getBedSizeX();
     }
 
     private static double getMaximumYvalue() {
-        return getPrinterSettings().getBedSizeY();
+        return getPrinterSetting().getBedSizeY();
     }
 
     private static double getMaximumZvalue() {
-        return getPrinterSettings().getMaximumZ();
+        return getPrinterSetting().getMaximumZ();
     }
 
     private static boolean useRelativeExtrusion() {
-        return getPrinterSettings().useRelativeDistanceE();
+        return getPrinterSetting().useRelativeDistanceE();
     }
 
-    private static PrintSettings getPrintSettings() {
-        return Configuration.getInstance().getCurrentConfiguration().getPrintSettings();
+    private static PrintSetting getPrintSetting() {
+        return Configuration.getInstance().getCurrentConfiguration().getPrintSetting();
     }
 
-    private static PrinterSettings getPrinterSettings() {
-        return Configuration.getInstance().getCurrentConfiguration().getPrinterSettings();
+    private static PrinterSetting getPrinterSetting() {
+        return Configuration.getInstance().getCurrentConfiguration().getPrinterSetting();
     }
 }

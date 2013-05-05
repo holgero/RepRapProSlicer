@@ -24,38 +24,38 @@ import javax.xml.bind.annotation.XmlIDREF;
 public class CurrentConfiguration {
     @XmlElement
     @XmlIDREF
-    private PrintSettings printSettings;
+    private PrintSetting printSetting;
     @XmlElement
     @XmlIDREF
-    private PrinterSettings printerSettings;
+    private PrinterSetting printerSetting;
 
     CurrentConfiguration() {
         this(null, null);
     }
 
-    CurrentConfiguration(final PrintSettings printSettings, final PrinterSettings printerSettings) {
-        setPrintSettings(printSettings);
-        setPrinterSettings(printerSettings);
+    CurrentConfiguration(final PrintSetting printSetting, final PrinterSetting printerSetting) {
+        setPrintSettings(printSetting);
+        setPrinterSetting(printerSetting);
     }
 
-    public PrintSettings getPrintSettings() {
-        return printSettings;
+    public PrintSetting getPrintSetting() {
+        return printSetting;
     }
 
-    void setPrintSettings(final PrintSettings printSettings) {
-        this.printSettings = printSettings;
+    void setPrintSettings(final PrintSetting printSetting) {
+        this.printSetting = printSetting;
     }
 
-    public PrinterSettings getPrinterSettings() {
-        return printerSettings;
+    public PrinterSetting getPrinterSetting() {
+        return printerSetting;
     }
 
-    void setPrinterSettings(final PrinterSettings printerSettings) {
-        this.printerSettings = printerSettings;
+    void setPrinterSetting(final PrinterSetting printerSetting) {
+        this.printerSetting = printerSetting;
     }
 
-    public ExtruderSettings getExtruderSettings(final String materialName) {
-        for (final ExtruderSettings extruderSettings : printerSettings.getExtruderSettings()) {
+    public ExtruderSetting getExtruderSetting(final String materialName) {
+        for (final ExtruderSetting extruderSettings : printerSetting.getExtruderSettings()) {
             if (extruderSettings.getMaterial().getName().equals(materialName)) {
                 return extruderSettings;
             }

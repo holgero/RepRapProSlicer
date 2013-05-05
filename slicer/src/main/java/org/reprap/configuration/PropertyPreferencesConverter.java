@@ -51,15 +51,26 @@ final class PropertyPreferencesConverter {
     private Properties properties;
     private String machineName;
     private File propertiesFile;
+    private final List<PrinterSetting> printerSettings = new ArrayList<>();
+    private final List<PrintSetting> printSettings = new ArrayList<>();
 
     PropertyPreferencesConverter(final File reprapDirectory) {
         this.reprapDirectory = reprapDirectory;
     }
 
     Configuration loadConfigurationFromPropertiesFiles() {
+        final CurrentConfiguration currentConfiguration = collectPropertiesOfAllMachines();
+        final Configuration configuration = new Configuration();
+        configuration.setCurrentConfiguration(currentConfiguration);
+        configuration.setPrinterSettings(printerSettings);
+        configuration.setPrintSettings(printSettings);
+        return configuration;
+    }
+
+    private CurrentConfiguration collectPropertiesOfAllMachines() {
         CurrentConfiguration currentConfiguration = null;
-        final List<PrinterSettings> printerSettings = new ArrayList<>();
-        final List<PrintSettings> printSettings = new ArrayList<>();
+        printSettings.clear();
+        printerSettings.clear();
         final List<Machine> machines = Machine.getMachines();
         for (final Machine machine : machines) {
             machineName = machine.getName();
@@ -68,21 +79,17 @@ final class PropertyPreferencesConverter {
             if (properties == null) {
                 continue;
             }
-            final PrintSettings printSetting = createPrintSetting();
+            final PrintSetting printSetting = createPrintSetting();
             printSettings.add(printSetting);
             final int remaining = removeUnusedExtruders();
-            final PrinterSettings printerSetting = createPrinterSetting();
+            final PrinterSetting printerSetting = createPrinterSetting();
             printerSetting.setExtruderSettings(createAllExtruderSettings(remaining, printSetting.getLayerHeight()));
             printerSettings.add(printerSetting);
             if (machine.isActive()) {
                 currentConfiguration = new CurrentConfiguration(printSetting, printerSetting);
             }
         }
-        final Configuration configuration = new Configuration();
-        configuration.setCurrentConfiguration(currentConfiguration);
-        configuration.setPrinterSettings(printerSettings);
-        configuration.setPrintSettings(printSettings);
-        return configuration;
+        return currentConfiguration;
     }
 
     private Properties loadProperties() {
@@ -103,32 +110,32 @@ final class PropertyPreferencesConverter {
         }
     }
 
-    private ExtruderSettings[] createAllExtruderSettings(final int extruderCount, final double layerHeight) {
-        final ExtruderSettings[] extruderSettings = new ExtruderSettings[extruderCount];
+    private ExtruderSetting[] createAllExtruderSettings(final int extruderCount, final double layerHeight) {
+        final ExtruderSetting[] extruderSettings = new ExtruderSetting[extruderCount];
         for (int i = 0; i < extruderSettings.length; i++) {
-            final ExtruderSettings settings = createExtruderSettings(i, layerHeight);
-            extruderSettings[i] = settings;
+            final ExtruderSetting setting = createExtruderSetting(i, layerHeight);
+            extruderSettings[i] = setting;
         }
         return extruderSettings;
     }
 
-    private ExtruderSettings createExtruderSettings(final int number, final double layerHeight) {
-        final ExtruderSettings settings = new ExtruderSettings();
+    private ExtruderSetting createExtruderSetting(final int number, final double layerHeight) {
+        final ExtruderSetting setting = new ExtruderSetting();
         // this is wrong, but the migration from the properties must somehow guess the nozzle diameter
         final String prefix = "Extruder" + number + "_";
-        settings.setNozzleDiameter(getDoubleProperty(prefix + "ExtrusionSize(mm)"));
-        settings.setRetraction(toFilamentLength(getDoubleProperty(prefix + "Reverse(ms)"), number, layerHeight));
-        settings.setExtraLengthPerLayer(toFilamentLength(getDoubleProperty(prefix + "ExtrusionDelayForLayer(ms)"), number,
+        setting.setNozzleDiameter(getDoubleProperty(prefix + "ExtrusionSize(mm)"));
+        setting.setRetraction(toFilamentLength(getDoubleProperty(prefix + "Reverse(ms)"), number, layerHeight));
+        setting.setExtraLengthPerLayer(toFilamentLength(getDoubleProperty(prefix + "ExtrusionDelayForLayer(ms)"), number,
                 layerHeight));
-        settings.setExtraLengthPerPolygon(toFilamentLength(getDoubleProperty(prefix + "ExtrusionDelayForPolygon(ms)"), number,
+        setting.setExtraLengthPerPolygon(toFilamentLength(getDoubleProperty(prefix + "ExtrusionDelayForPolygon(ms)"), number,
                 layerHeight));
-        settings.setExtrudeRatio(getDoubleProperty(prefix + "ExtrudeRatio(0..)"));
-        settings.setExtrusionOverrun(getDoubleProperty(prefix + "ExtrusionOverRun(mm)"));
-        settings.setAirExtrusionFeedRate(getDoubleProperty(prefix + "FastEFeedrate(mm/minute)"));
-        settings.setPrintExtrusionRate(getDoubleProperty(prefix + "FastXYFeedrate(mm/minute)"));
-        settings.setLift(getDoubleProperty(prefix + "Lift(mm)"));
-        settings.setMaterial(createMaterialSettings(prefix));
-        return settings;
+        setting.setExtrudeRatio(getDoubleProperty(prefix + "ExtrudeRatio(0..)"));
+        setting.setExtrusionOverrun(getDoubleProperty(prefix + "ExtrusionOverRun(mm)"));
+        setting.setAirExtrusionFeedRate(getDoubleProperty(prefix + "FastEFeedrate(mm/minute)"));
+        setting.setPrintExtrusionRate(getDoubleProperty(prefix + "FastXYFeedrate(mm/minute)"));
+        setting.setLift(getDoubleProperty(prefix + "Lift(mm)"));
+        setting.setMaterial(createMaterialSettings(prefix));
+        return setting;
     }
 
     private MaterialSettings createMaterialSettings(final String prefix) {
@@ -152,8 +159,8 @@ final class PropertyPreferencesConverter {
         return extrusionSpeed * delay / 60000 * layerHeight * extrusionSize / circleAreaForDiameter(feedDiameter);
     }
 
-    private PrinterSettings createPrinterSetting() {
-        final PrinterSettings result = new PrinterSettings();
+    private PrinterSetting createPrinterSetting() {
+        final PrinterSetting result = new PrinterSetting();
         result.setName(machineName);
         result.setBedSizeX(getDoubleProperty("WorkingX(mm)"));
         result.setBedSizeY(getDoubleProperty("WorkingY(mm)"));
@@ -185,8 +192,8 @@ final class PropertyPreferencesConverter {
         return new File(machineName, fileName).getPath();
     }
 
-    private PrintSettings createPrintSetting() {
-        final PrintSettings result = new PrintSettings();
+    private PrintSetting createPrintSetting() {
+        final PrintSetting result = new PrintSetting();
         result.setName("Setting for " + machineName);
         result.setLayerHeight(getDoubleProperty("Extruder0_ExtrusionHeight(mm)"));
         result.setVerticalShells(getIntegerProperty("Extruder0_NumberOfShells(0..N)"));

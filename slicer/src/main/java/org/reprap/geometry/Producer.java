@@ -7,8 +7,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Configuration;
 import org.reprap.configuration.CurrentConfiguration;
-import org.reprap.configuration.ExtruderSettings;
-import org.reprap.configuration.PrintSettings;
+import org.reprap.configuration.ExtruderSetting;
+import org.reprap.configuration.PrintSetting;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.gcode.Purge;
 import org.reprap.geometry.polygons.Point2D;
@@ -45,16 +45,16 @@ public class Producer {
         layerRules = new LayerRules(printer, buildVolume);
         stlList = new ProducerStlList(allStls, purge, layerRules);
         configuration = Configuration.getInstance().getCurrentConfiguration();
-        totalExtruders = configuration.getPrinterSettings().getExtruderSettings().size();
+        totalExtruders = configuration.getPrinterSetting().getExtruderSettings().size();
         if (displayPaths) {
             simulationPlot = new SimulationPlotter("RepRap building simulation");
         } else {
             simulationPlot = null;
         }
-        final PrintSettings printSettings = configuration.getPrintSettings();
-        omitShield = printSettings.printShield();
-        brimLines = printSettings.getBrimLines();
-        printSupport = printSettings.printSupport();
+        final PrintSetting printSetting = configuration.getPrintSetting();
+        omitShield = printSetting.printShield();
+        brimLines = printSetting.getBrimLines();
+        printSupport = printSetting.printSupport();
     }
 
     public void produce() throws IOException {
@@ -132,7 +132,7 @@ public class Producer {
         }
         for (int pol = 0; pol < fills.size(); pol++) {
             final Polygon polygon = fills.polygon(pol);
-            final double minLength = 3 * configuration.getExtruderSettings(polygon.getAttributes().getMaterial())
+            final double minLength = 3 * configuration.getExtruderSetting(polygon.getAttributes().getMaterial())
                     .getExtrusionSize();
             if (polygon.getLength() > minLength) {
                 tempFillPolygons[getExtruderId(polygon)].add(polygon);
@@ -147,7 +147,7 @@ public class Producer {
         }
         for (int extruder = 0; extruder < totalExtruders; extruder++) {
             if (tempBorderPolygons[extruder].size() > 0) {
-                double linkUp = configuration.getExtruderSettings(
+                double linkUp = configuration.getExtruderSetting(
                         tempBorderPolygons[extruder].polygon(0).getAttributes().getMaterial()).getExtrusionSize();
                 linkUp = (4 * linkUp * linkUp);
                 tempBorderPolygons[extruder].radicalReOrder(linkUp);
@@ -160,7 +160,7 @@ public class Producer {
             }
             if (tempFillPolygons[extruder].size() > 0) {
                 tempFillPolygons[extruder].polygon(0).getAttributes();
-                double linkUp = configuration.getExtruderSettings(
+                double linkUp = configuration.getExtruderSetting(
                         tempFillPolygons[extruder].polygon(0).getAttributes().getMaterial()).getExtrusionSize();
                 linkUp = (4 * linkUp * linkUp);
                 tempFillPolygons[extruder].radicalReOrder(linkUp);
@@ -176,10 +176,10 @@ public class Producer {
     }
 
     private int getExtruderId(final Polygon polygon) {
-        final List<ExtruderSettings> extruderSettings = configuration.getPrinterSettings().getExtruderSettings();
+        final List<ExtruderSetting> extruderSettings = configuration.getPrinterSetting().getExtruderSettings();
         for (int i = 0; i < extruderSettings.size(); i++) {
-            final ExtruderSettings settings = extruderSettings.get(i);
-            if (settings.getMaterial().getName().equals(polygon.getAttributes().getMaterial())) {
+            final ExtruderSetting setting = extruderSettings.get(i);
+            if (setting.getMaterial().getName().equals(polygon.getAttributes().getMaterial())) {
                 return i;
             }
         }

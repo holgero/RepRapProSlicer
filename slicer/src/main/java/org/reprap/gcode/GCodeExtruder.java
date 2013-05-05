@@ -3,7 +3,7 @@ package org.reprap.gcode;
 import static org.reprap.configuration.MathRoutines.circleAreaForDiameter;
 
 import org.reprap.configuration.Configuration;
-import org.reprap.configuration.ExtruderSettings;
+import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.MaterialSettings;
 
 public class GCodeExtruder {
@@ -51,7 +51,7 @@ public class GCodeExtruder {
         gcode = writer;
         myExtruderID = extruderId;
         printer = p;
-        loadPreferences(Configuration.getInstance().getCurrentConfiguration().getPrinterSettings().getExtruderSettings()
+        loadPreferences(Configuration.getInstance().getCurrentConfiguration().getPrinterSetting().getExtruderSettings()
                 .get(extruderId));
         extruderState = new ExtruderState();
         // when we are first called (top down calculation means at our top
@@ -70,17 +70,17 @@ public class GCodeExtruder {
         }
     }
 
-    private void loadPreferences(final ExtruderSettings extruderSettings) {
-        extrusionSize = extruderSettings.getNozzleDiameter();
-        retractionDistance = extruderSettings.getRetraction();
-        extraExtrusionForLayer = extruderSettings.getExtraLengthPerLayer();
-        extraExtrusionForPolygon = extruderSettings.getExtraLengthPerPolygon();
-        extrudeRatio = extruderSettings.getExtrudeRatio();
-        extrusionOverRun = extruderSettings.getExtrusionOverrun();
-        fastEFeedrate = extruderSettings.getAirExtrusionFeedRate();
-        fastXYFeedrate = Math.min(printer.getFastXYFeedrate(), extruderSettings.getPrintExtrusionRate());
-        lift = extruderSettings.getLift();
-        materialSettings = extruderSettings.getMaterial();
+    private void loadPreferences(final ExtruderSetting extruderSetting) {
+        extrusionSize = extruderSetting.getNozzleDiameter();
+        retractionDistance = extruderSetting.getRetraction();
+        extraExtrusionForLayer = extruderSetting.getExtraLengthPerLayer();
+        extraExtrusionForPolygon = extruderSetting.getExtraLengthPerPolygon();
+        extrudeRatio = extruderSetting.getExtrudeRatio();
+        extrusionOverRun = extruderSetting.getExtrusionOverrun();
+        fastEFeedrate = extruderSetting.getAirExtrusionFeedRate();
+        fastXYFeedrate = Math.min(printer.getFastXYFeedrate(), extruderSetting.getPrintExtrusionRate());
+        lift = extruderSetting.getLift();
+        materialSettings = extruderSetting.getMaterial();
         feedDiameter = materialSettings.getDiameter();
     }
 
@@ -142,7 +142,7 @@ public class GCodeExtruder {
             return extrudeRatio * distance;
         }
 
-        final double layerHeight = Configuration.getInstance().getCurrentConfiguration().getPrintSettings().getLayerHeight();
+        final double layerHeight = Configuration.getInstance().getCurrentConfiguration().getPrintSetting().getLayerHeight();
         return extrudeRatio * distance * layerHeight * extrusionSize / circleAreaForDiameter(feedDiameter);
     }
 

@@ -25,7 +25,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-public class PrintSettings {
+public class PrintSetting {
     @XmlAttribute
     @XmlID
     private String name;

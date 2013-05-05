@@ -3,7 +3,7 @@ package org.reprap.geometry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Configuration;
-import org.reprap.configuration.ExtruderSettings;
+import org.reprap.configuration.ExtruderSetting;
 import org.reprap.geometry.polygons.BooleanGrid;
 import org.reprap.geometry.polygons.BooleanGridList;
 import org.reprap.geometry.polygons.HalfPlane;
@@ -29,7 +29,7 @@ public final class InFillPatterns {
         final int layer = layerRules.getModelLayer();
         BooleanGridList slice = slicer.slice(stl, layer);
 
-        final int surfaceLayers = Configuration.getInstance().getCurrentConfiguration().getPrintSettings().getHorizontalShells();
+        final int surfaceLayers = Configuration.getInstance().getCurrentConfiguration().getPrintSetting().getHorizontalShells();
 
         // Get the bottom out of the way - no fancy calculations needed.
         if (layer <= surfaceLayers) {
@@ -118,7 +118,7 @@ public final class InFillPatterns {
     public static BooleanGridList cullNoSupport(final BooleanGridList list) {
         final BooleanGridList result = new BooleanGridList();
 
-        if (!Configuration.getInstance().getCurrentConfiguration().getPrintSettings().printSupport()) {
+        if (!Configuration.getInstance().getCurrentConfiguration().getPrintSetting().printSupport()) {
             for (int i = 0; i < list.size(); i++) {
                 final BooleanGrid grid = list.get(i);
                 result.add(grid);
@@ -195,7 +195,7 @@ public final class InFillPatterns {
                 // Find the middle of this land
                 final Point2D cen2 = land2.findCentroid();
                 final Attributes attribute = bridge.attribute();
-                final ExtruderSettings extruder = Configuration.getInstance().getCurrentConfiguration().getExtruderSettings(
+                final ExtruderSetting extruder = Configuration.getInstance().getCurrentConfiguration().getExtruderSetting(
                         attribute.getMaterial());
                 final double extrusionWidth = extruder.getExtrusionSize();
                 if (cen2 == null) {

@@ -25,9 +25,10 @@ import java.util.List;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlID;
 
-public class PrinterSettings {
+public class PrinterSetting {
     private static final double MACHINE_RESOLUTION = 0.05; // mm
 
     @XmlAttribute
@@ -58,10 +59,11 @@ public class PrinterSettings {
     @XmlElement
     private String gCodeEpilogue; // text
     // Extruders
-    @XmlElement
-    private ExtruderSettings[] extruderSettings;
+    @XmlElementWrapper
+    @XmlElement(name = "extruderSetting")
+    private ExtruderSetting[] extruderSettings;
 
-    PrinterSettings() {
+    PrinterSetting() {
     }
 
     public double getBedSizeX() {
@@ -120,11 +122,11 @@ public class PrinterSettings {
         this.maximumFeedrateZ = maximumFeedrateZ;
     }
 
-    public List<ExtruderSettings> getExtruderSettings() {
+    public List<ExtruderSetting> getExtruderSettings() {
         return Collections.unmodifiableList(Arrays.asList(extruderSettings));
     }
 
-    void setExtruderSettings(final ExtruderSettings[] extruderSettings) {
+    void setExtruderSettings(final ExtruderSetting[] extruderSettings) {
         this.extruderSettings = extruderSettings;
     }
 

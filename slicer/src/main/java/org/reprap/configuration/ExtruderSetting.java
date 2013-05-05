@@ -20,7 +20,7 @@ package org.reprap.configuration;
 
 import javax.xml.bind.annotation.XmlElement;
 
-public class ExtruderSettings {
+public class ExtruderSetting {
     @XmlElement
     private double nozzleDiameter; // mm 0.5
     @XmlElement

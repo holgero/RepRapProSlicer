@@ -36,7 +36,7 @@ public class GCodeWriter {
     private PrintStream fileOutStream = null;
 
     public GCodeWriter() {
-        debugGcode = Configuration.getInstance().getCurrentConfiguration().getPrintSettings().isVerboseGCode();
+        debugGcode = Configuration.getInstance().getCurrentConfiguration().getPrintSetting().isVerboseGCode();
     }
 
     /**
