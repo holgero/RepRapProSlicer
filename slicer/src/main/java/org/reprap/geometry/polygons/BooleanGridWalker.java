@@ -26,6 +26,58 @@ import org.apache.logging.log4j.Logger;
 public class BooleanGridWalker {
     private static final Logger LOGGER = LogManager.getLogger(BooleanGridWalker.class);
 
+    private final class DebugPrinter {
+        @Override
+        public String toString() {
+            return printNearby(here, 4);
+        }
+
+        private String printNearby(final Integer2DPoint point, final int delta) {
+            final StringBuilder output = new StringBuilder();
+            for (int y = Math.min(point.y + delta, size.y - 1); y >= Math.max(0, point.y - delta); y--) {
+                for (int x = Math.max(0, point.x - delta); x <= Math.min(point.x + delta, size.x - 1); x++) {
+                    output.append(" ");
+                    final Integer2DPoint printPoint = new Integer2DPoint(x, y);
+                    if (printPoint.coincidesWith(point)) {
+                        if (grid.get(point)) {
+                            output.append("+");
+                        } else {
+                            output.append("o");
+                        }
+                    } else if (printPoint.coincidesWith(start)) {
+                        if (grid.get(start)) {
+                            output.append("S");
+                        } else {
+                            output.append("s");
+                        }
+                    } else if (last != null && printPoint.coincidesWith(last)) {
+                        if (grid.get(last)) {
+                            output.append("L");
+                        } else {
+                            output.append("l");
+                        }
+                    } else if (grid.get(printPoint)) {
+                        if (isVisited(printPoint.x, printPoint.y)) {
+                            output.append("V");
+                        } else {
+                            output.append("*");
+                        }
+                    } else {
+                        if (isVisited(printPoint.x, printPoint.y)) {
+                            output.append("v");
+                        } else {
+                            output.append(".");
+                        }
+                    }
+                }
+                output.append("\n");
+            }
+            return output.toString();
+        }
+    }
+
+    private final DebugPrinter debugPrinter = new DebugPrinter();
+
     /**
      * Run round the eight neighbours of a pixel anti clockwise from bottom left
      * 
@@ -86,6 +138,9 @@ public class BooleanGridWalker {
     private final BooleanGrid grid;
     private final Integer2DPoint size;
     private final BitSet visited;
+    private Integer2DPoint start;
+    private Integer2DPoint here;
+    private Integer2DPoint last;
 
     BooleanGridWalker(final BooleanGrid booleanGrid) {
         grid = booleanGrid;
@@ -108,8 +163,8 @@ public class BooleanGridWalker {
                 final int m = marchPattern(x, y);
                 if (m != 0 && m != 15) {
                     if (canMarch(x, y)) {
-                        final Integer2DPoint start = new Integer2DPoint(x, y);
-                        final Integer2DPolygon p = marchRound(start);
+                        start = new Integer2DPoint(x, y);
+                        final Integer2DPolygon p = marchRound();
                         if (p.size() > 2) {
                             result.add(p);
                         }
@@ -120,7 +175,7 @@ public class BooleanGridWalker {
         return result;
     }
 
-    private boolean canMarch(int x, int y) {
+    private boolean canMarch(final int x, final int y) {
         return !isVisited(x, y) && !isVisited(Neighbour.S.fromX(x), Neighbour.S.fromY(y))
                 && !isVisited(Neighbour.SE.fromX(x), Neighbour.SE.fromY(y))
                 && !isVisited(Neighbour.E.fromX(x), Neighbour.E.fromY(y));
@@ -130,13 +185,14 @@ public class BooleanGridWalker {
      * Run marching squares round the polygon starting with the 2x2 march
      * pattern at start
      */
-    private Integer2DPolygon marchRound(final Integer2DPoint start) {
+    private Integer2DPolygon marchRound() {
         final Integer2DPolygon result = new Integer2DPolygon(true);
-        Integer2DPoint here = new Integer2DPoint(start);
-        Integer2DPoint last = null;
+        here = new Integer2DPoint(start);
+        last = null;
 
         do {
             final int m = marchPattern(here.x, here.y);
+            LOGGER.trace("walking ({})\n{}", here, debugPrinter);
             switch (m) {
             case 1:
                 addToResult(result, here);
@@ -157,14 +213,19 @@ public class BooleanGridWalker {
                 break;
             case 6:
                 if (last == null) {
-                    LOGGER.error("dud 2x2 grid: " + m + " at " + here.toString() + "\n" + printNearby(here, 4));
+                    LOGGER.error("dud 2x2 grid: {} at {}\n{}", m, here, debugPrinter);
                     return result;
                 }
+                LOGGER.debug("dud 2x2 grid: {} at {}\n{}", m, here, debugPrinter);
                 setVisited(here.x, here.y, false);
-                delete(Neighbour.E.from(here));
+                if (last.x + last.y > here.x + here.y) {
+                    delete(Neighbour.S.from(here));
+                } else {
+                    delete(Neighbour.E.from(here));
+                }
                 here = last;
                 last = null;
-                LOGGER.debug("changed grid (m=" + m + ") and backtracked to " + here.toString() + "\n" + printNearby(here, 4));
+                LOGGER.debug("changed grid (m={}), continue at {}\n{}", m, here, debugPrinter);
                 continue;
             case 7:
                 addToResult(result, Neighbour.S.fromX(here.x), Neighbour.S.fromY(here.y));
@@ -175,14 +236,19 @@ public class BooleanGridWalker {
                 break;
             case 9:
                 if (last == null) {
-                    LOGGER.error("dud 2x2 grid: " + m + " at " + here.toString() + "\n" + printNearby(here, 4));
+                    LOGGER.error("dud 2x2 grid: {} at {}\n{}", m, here, debugPrinter);
                     return result;
                 }
+                LOGGER.debug("dud 2x2 grid: {} at {}\n{}", m, here, debugPrinter);
                 setVisited(here.x, here.y, false);
-                delete(Neighbour.SE.from(here));
+                if (last.x + last.y > here.x + here.y) {
+                    delete(here);
+                } else {
+                    delete(Neighbour.SE.from(here));
+                }
                 here = last;
                 last = null;
-                LOGGER.debug("changed grid (m=" + m + ") and backtracked to " + here.toString() + "\n" + printNearby(here, 4));
+                LOGGER.debug("changed grid (m={}) and backtracked to {}\n{}", m, here, debugPrinter);
                 continue;
             case 10:
                 addToResult(result, Neighbour.E.fromX(here.x), Neighbour.E.fromY(here.y));
@@ -206,7 +272,7 @@ public class BooleanGridWalker {
                 break;
 
             default:
-                LOGGER.error("dud 2x2 grid: " + m + " at " + here.toString() + "\n" + printNearby(here, 4));
+                LOGGER.error("dud 2x2 grid: {} at {}\n{}", m, here, debugPrinter);
                 return result;
             }
             last = here;
@@ -285,39 +351,5 @@ public class BooleanGridWalker {
             return false;
         }
         return true;
-    }
-
-    /**
-     * Useful debugging function
-     */
-    private String printNearby(final Integer2DPoint point, final int delta) {
-        final StringBuilder output = new StringBuilder();
-        for (int y = Math.min(point.y + delta, size.y - 1); y >= Math.max(0, point.y - delta); y--) {
-            for (int x = Math.max(0, point.x - delta); x <= Math.min(point.x + delta, size.x - 1); x++) {
-                output.append(" ");
-                final Integer2DPoint printPoint = new Integer2DPoint(x, y);
-                if (printPoint.coincidesWith(point)) {
-                    if (grid.get(point)) {
-                        output.append("+");
-                    } else {
-                        output.append("o");
-                    }
-                } else if (grid.get(printPoint)) {
-                    if (isVisited(printPoint.x, printPoint.y)) {
-                        output.append("V");
-                    } else {
-                        output.append("*");
-                    }
-                } else {
-                    if (isVisited(printPoint.x, printPoint.y)) {
-                        output.append("v");
-                    } else {
-                        output.append(".");
-                    }
-                }
-            }
-            output.append("\n");
-        }
-        return output.toString();
     }
 }

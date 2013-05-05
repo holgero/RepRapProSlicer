@@ -214,6 +214,71 @@ public class BooleanGridWalkerTest {
         assertEquals(0, simpleMarch.size());
     }
 
+    @Test
+    public void testCapturePattern() throws Exception {
+        // a pattern that lead to a capture of the walker
+        // it deleted the two middle points in the line
+        // correcting a dud 6 and a dud 9 march pattern.
+        // afterwards it was trapped on the now unconnected
+        // point in the middle
+        final String[] textGrid = { //
+        //
+                "..............",//
+                "..............",//
+                ".........**...",//
+                ".........**...",//
+                ".........**...",//
+                "......*..**...",// <- (circle point)
+                "...**.**.**...",// <- (correction to "...**....**...")  
+                "..*.**.****...",//
+                "..*.*******...",//
+                "..*********...",//
+                "..*********...",//
+                "..*********...",//
+                "..*********...",//
+                "..............",//
+                ".............." };
+
+        assertEquals(1, walkTextGridPattern(textGrid).size());
+    }
+
+    private static Integer2DPolygonList walkTextGridPattern(final String[] textGrid) {
+        final BooleanGrid grid = emptyGrid();
+        for (int i = 0; i < textGrid.length; i++) {
+            for (int j = 0; j < textGrid[i].length(); j++) {
+                grid.set(new Integer2DPoint(j + 10, textGrid.length - i + 10), textGrid[i].charAt(j) == '*');
+            }
+        }
+        if (VISUALIZE) {
+            System.out.println(printGrid(grid));
+        }
+        final Integer2DPolygonList march = new BooleanGridWalker(grid).marchAll();
+        if (VISUALIZE) {
+            System.out.println(printPolygonList(march));
+        }
+        return march;
+    }
+
+    @Test
+    public void testCapturePattern2() throws Exception {
+        final String[] textGrid = { //
+        //
+                "............",//
+                "............",//
+                "..***.......",//
+                "..***.......",//
+                "..**.*......",//
+                "..***.*.....",//
+                "..***..*....",//
+                "...***..*...",//
+                "....***.*...",//
+                ".....**.....",//
+                "............",//
+                "............"//
+        };
+        assertEquals(1, walkTextGridPattern(textGrid).size());
+    }
+
     private static String printPolygonList(final Integer2DPolygonList simpleMarch) {
         final BooleanGrid grid = emptyGrid();
 
