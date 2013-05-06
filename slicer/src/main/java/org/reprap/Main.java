@@ -1,7 +1,5 @@
 package org.reprap;
 
-import java.io.IOException;
-
 import javax.swing.SwingUtilities;
 
 import org.reprap.gui.MainFrame;
@@ -15,13 +13,9 @@ public class Main {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                try {
-                    final MainFrame main = new MainFrame();
-                    if (args.length == 1) {
-                        main.autoRun(args[0]);
-                    }
-                } catch (final IOException e) {
-                    throw new RuntimeException(e);
+                final MainFrame main = new MainFrame();
+                if (args.length == 1) {
+                    main.autoRun(args[0]);
                 }
             }
         });

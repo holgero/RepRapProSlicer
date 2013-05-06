@@ -1,5 +1,6 @@
 package org.reprap.geometry;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class Producer {
      */
     private final ProducerStlList stlList;
     private final ProductionProgressListener progressListener;
-    private final GCodePrinter printer;
+    private final GCodePrinter printer = new GCodePrinter();
     private final int totalExtruders;
     private final int brimLines;
     private final boolean printSupport;
@@ -35,9 +36,11 @@ public class Producer {
      */
     private boolean omitShield;
 
-    public Producer(final GCodePrinter printer, final AllSTLsToBuild allStls, final ProductionProgressListener listener,
+    public Producer(final File gcodeFile, final AllSTLsToBuild allStls, final ProductionProgressListener listener,
             final boolean displayPaths) {
-        this.printer = printer;
+        if (gcodeFile != null) {
+            printer.setGCodeFileForOutput(gcodeFile);
+        }
         progressListener = listener;
         final Purge purge = new Purge();
         printer.setPurge(purge);

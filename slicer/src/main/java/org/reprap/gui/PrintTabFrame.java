@@ -66,11 +66,7 @@ public class PrintTabFrame extends JInternalFrame {
         sliceButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(final java.awt.event.ActionEvent evt) {
-                try {
-                    sliceButtonActionPerformed();
-                } catch (final IOException e) {
-                    throw new RuntimeException(e);
-                }
+                sliceButtonActionPerformed();
             }
         });
 
@@ -341,7 +337,7 @@ public class PrintTabFrame extends JInternalFrame {
         return true;
     }
 
-    private void sliceButtonActionPerformed() throws IOException {
+    private void sliceButtonActionPerformed() {
         if (slicing) {
             return;
         }
@@ -354,7 +350,7 @@ public class PrintTabFrame extends JInternalFrame {
             return;
         }
         if (mainFrame.slice(stripExtension(loadedFile), new ProgressBarUpdater(currentLayerOutOfN, progressBar,
-                expectedBuildTime, expectedBuildTime, System.currentTimeMillis()), false, displayPathsCheck.isSelected())) {
+                expectedBuildTime, expectedFinishTime, System.currentTimeMillis()), false, displayPathsCheck.isSelected())) {
             printLive();
         }
     }

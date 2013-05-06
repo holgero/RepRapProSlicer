@@ -27,7 +27,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import javax.swing.Box;
@@ -45,7 +44,6 @@ import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.Producer;
 import org.reprap.geometry.ProductionProgressListener;
 
@@ -55,16 +53,12 @@ public class MainFrame extends JFrame {
     private final RepRapBuild builder;
     private final JFileChooser chooser = new JFileChooser();
     private final SlicerFrame slicerFrame;
-    private final GCodePrinter printer;
 
     public MainFrame() throws HeadlessException {
         super("RepRap build bed    |     mouse:  left - rotate   middle - zoom   right - translate     |    grid: 20 mm");
         JFrame.setDefaultLookAndFeelDecorated(false);
         JPopupMenu.setDefaultLightWeightPopupEnabled(false);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-
-        printer = new GCodePrinter();
-
         final JMenuBar menubar = new JMenuBar();
         menubar.add(createMenu());
 
@@ -91,7 +85,7 @@ public class MainFrame extends JFrame {
         slicerFrame = new SlicerFrame(this);
     }
 
-    public void autoRun(final String fileName) throws FileNotFoundException {
+    public void autoRun(final String fileName) {
         final File rfoFile = new File(fileName);
         builder.addRFOFile(rfoFile);
         final String rfoFileName = rfoFile.getAbsolutePath();
@@ -305,7 +299,7 @@ public class MainFrame extends JFrame {
     }
 
     boolean slice(final String gcodeFileName, final ProductionProgressListener listener, final boolean autoExit,
-            final boolean displayPaths) throws FileNotFoundException {
+            final boolean displayPaths) {
         final File defaultFile = new File(gcodeFileName + ".gcode");
         final File gcodeFile;
         if (autoExit) {
@@ -315,15 +309,15 @@ public class MainFrame extends JFrame {
             if (gcodeFile == null) {
                 return false;
             }
+
         }
-        printer.setGCodeFileForOutput(gcodeFile);
         producing(true);
         final Thread t = new Thread() {
             @Override
             public void run() {
                 Thread.currentThread().setName("Producer");
                 builder.mouseToWorld();
-                final Producer producer = new Producer(printer, builder.getSTLs(), listener, displayPaths);
+                final Producer producer = new Producer(gcodeFile, builder.getSTLs(), listener, displayPaths);
                 try {
                     producer.produce();
                     if (autoExit) {

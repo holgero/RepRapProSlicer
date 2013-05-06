@@ -23,7 +23,6 @@ import java.io.IOException;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import org.reprap.gcode.GCodePrinter;
 import org.reprap.geometry.polygons.BooleanGridWalkerTest;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.io.rfo.RFO;
@@ -34,7 +33,7 @@ public class ProducerPerformanceTest {
     @Ignore("needs javax.media.j3d")
     public void testSlicingPerformance() throws IOException {
         final AllSTLsToBuild stls = RFO.load(getClass().getClassLoader().getResource("euro_chip.rfo").getPath());
-        final Producer producer = new Producer(new GCodePrinter(), stls, new ProductionProgressListener() {
+        final Producer producer = new Producer(null, stls, new ProductionProgressListener() {
             @Override
             public void productionProgress(final int layer, final int totalLayers) {
             }

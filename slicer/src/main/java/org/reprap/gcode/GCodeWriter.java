@@ -92,7 +92,7 @@ public class GCodeWriter {
         queue(COMMENT_CHAR + comment);
     }
 
-    public void setGCodeFileForOutput(final File gcodeFile) throws FileNotFoundException {
+    public void setGCodeFileForOutput(final File gcodeFile) {
         opFileName = gcodeFile.getAbsolutePath();
         if (opFileName.endsWith(GCODE_EXTENSION)) {
             opFileName = opFileName.substring(0, opFileName.length() - 6);
@@ -102,7 +102,12 @@ public class GCodeWriter {
         LOGGER.debug("opening: " + fn);
         final File fl = new File(fn);
         fl.deleteOnExit();
-        final FileOutputStream fileStream = new FileOutputStream(fl);
+        final FileOutputStream fileStream;
+        try {
+            fileStream = new FileOutputStream(fl);
+        } catch (final FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
         fileOutStream = new PrintStream(fileStream);
         String shortName = gcodeFile.getName();
         if (!shortName.endsWith(GCODE_EXTENSION)) {

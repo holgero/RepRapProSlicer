@@ -3,7 +3,6 @@ package org.reprap.gcode;
 import static org.reprap.configuration.MathRoutines.circleAreaForDiameter;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -390,7 +389,7 @@ public class GCodePrinter {
         qFeedrate(extruder.getFastXYFeedrate());
     }
 
-    public void setGCodeFileForOutput(final File gcodeFile) throws FileNotFoundException {
+    public void setGCodeFileForOutput(final File gcodeFile) {
         gcode.setGCodeFileForOutput(gcodeFile);
     }
 
