@@ -139,7 +139,7 @@ final class RfoXmlHandler extends DefaultHandler {
         } else if (element.equalsIgnoreCase("files")) {
 
         } else if (element.equalsIgnoreCase("file")) {
-            final org.reprap.geometry.polyhedra.Attributes att = stl.addSTL(new File(rfoDir, location), null, firstSTL);
+            final org.reprap.geometry.polyhedra.Attributes att = stl.addSTL(new File(rfoDir, location), firstSTL);
             if (firstSTL == null) {
                 firstSTL = stl;
             }

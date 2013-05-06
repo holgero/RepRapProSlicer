@@ -24,16 +24,8 @@ public class Attributes {
     private final STLObject parent;
     private Appearance appearance;
 
-    public Attributes(final MaterialSetting material) {
-        this(material, null, createAppearance(material));
-    }
-
     public Attributes(final STLObject parent, final Appearance appearance) {
-        this(null, parent, appearance);
-    }
-
-    private Attributes(final MaterialSetting material, final STLObject parent, final Appearance appearance) {
-        this.material = material;
+        material = null;
         this.parent = parent;
         this.appearance = appearance;
     }

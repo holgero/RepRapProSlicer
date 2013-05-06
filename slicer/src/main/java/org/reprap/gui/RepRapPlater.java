@@ -224,7 +224,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
         final Appearance workingVolumeAppearance = new Appearance();
         workingVolumeAppearance.setMaterial(new Material(MACHINE_COLOR, Constants.BLACK, MACHINE_COLOR, Constants.BLACK, 0f));
         workingVolume = new STLObject();
-        workingVolume.addSTL(baseFile, workingVolumeAppearance, null);
+        workingVolume.loadIndependentSTL(baseFile, workingVolumeAppearance);
         workingVolumeAndStls.addChild(workingVolume.top());
 
         // Set the mouse to move everything
@@ -302,7 +302,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
         offset.z = 0;
         for (int i = 0; i < number; i++) {
             final STLObject stl = new STLObject();
-            final Attributes newAtt = stl.addSTL(file, original.getAppearance(), null);
+            final Attributes newAtt = stl.addSTL(file, null);
             newAtt.setMaterial(originalAttributes.getMaterial());
             stl.translate(offset);
             if (stl.numChildren() > 0) {
@@ -318,7 +318,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
             return;
         }
         final STLObject stl = new STLObject();
-        final Attributes att = stl.addSTL(file, null, lastPicked);
+        final Attributes att = stl.addSTL(file, lastPicked);
         if (lastPicked == null && centre) {
 
             final Point2D middle = Point2D.mul(0.5, new Point2D(200, 200));

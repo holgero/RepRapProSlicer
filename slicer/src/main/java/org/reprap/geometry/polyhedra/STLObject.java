@@ -139,6 +139,19 @@ public class STLObject {
         stl.setUserData(nullAtt);
     }
 
+    /**
+     * Make an STL object from an existing BranchGroup
+     */
+    public STLObject(final BranchGroup s) {
+        this();
+
+        stl.addChild(s);
+        extent = new Vector3d(1, 1, 1); // Should never be needed.
+
+        final Transform3D temp_t = new Transform3D();
+        trans.setTransform(temp_t);
+    }
+
     private static void setCommonCapabilities(final SceneGraphObject... objects) {
         for (final SceneGraphObject object : objects) {
             object.setCapability(Group.ALLOW_CHILDREN_EXTEND);
@@ -155,18 +168,11 @@ public class STLObject {
     }
 
     /**
-     * Load an STL object from a file with a known offset (set that null to put
-     * the object in the middle of the bed) and set its appearance
+     * Load an STL object from a file
      */
-    public Attributes addSTL(final File location, final Appearance app, final STLObject lastPicked) {
-        final Attributes att;
-        if (app == null) {
-            att = new Attributes(this, unselectedApp());
-        } else {
-            att = new Attributes(this, app);
-        }
-
+    public Attributes addSTL(final File location, final STLObject lastPicked) {
         try {
+            final Attributes att = new Attributes(this, unselectedApp());
             final STLFileContents child = loadSingleSTL(location, att, lastPicked);
             if (lastPicked == null) {
                 contents.add(child);
@@ -174,6 +180,21 @@ public class STLObject {
                 lastPicked.contents.add(child);
             }
             return att;
+        } catch (final FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (final IncorrectFormatException e) {
+            throw new RuntimeException(e);
+        } catch (final ParsingErrorException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Load an STL object from a file and set its appearance
+     */
+    public void loadIndependentSTL(final File location, final Appearance app) {
+        try {
+            contents.add(loadSingleSTL(location, new Attributes(this, app), null));
         } catch (final FileNotFoundException e) {
             throw new RuntimeException(e);
         } catch (final IncorrectFormatException e) {
@@ -382,19 +403,6 @@ public class STLObject {
 
     public int getUnique(final int i) {
         return contents.get(i).getUnique();
-    }
-
-    /**
-     * Make an STL object from an existing BranchGroup
-     */
-    public STLObject(final BranchGroup s) {
-        this();
-
-        stl.addChild(s);
-        extent = new Vector3d(1, 1, 1); // Should never be needed.
-
-        final Transform3D temp_t = new Transform3D();
-        trans.setTransform(temp_t);
     }
 
     /**

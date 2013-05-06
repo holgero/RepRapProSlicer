@@ -244,7 +244,7 @@ class ProducerStlList {
         startLong(edges);
         LineSegment next = edges.get(0);
         edges.remove(0);
-        final Polygon result = new Polygon(next.getAttribute().getMaterial(), true);
+        final Polygon result = new Polygon(next.getMaterial(), true);
         result.add(next.getA());
         result.add(next.getB());
         final Point2D start = next.getA();
@@ -403,7 +403,7 @@ class ProducerStlList {
             return;
         }
         final STLObject shield = new STLObject();
-        final Attributes attribute = shield.addSTL(printSetting.getShieldStlFile(), null, null);
+        final Attributes attribute = shield.addSTL(printSetting.getShieldStlFile(), null);
         attribute.setMaterial(currentConfiguration.getMaterials().get(0).getName());
 
         final BoundingBox boxWithoutShield = getBoundingBox(stls);
@@ -481,7 +481,7 @@ class ProducerStlList {
     private static final class EdgeAndCsgsCollector {
         private final List<LineSegment> edges = new ArrayList<>();
         private final List<CSG3D> csgs = new ArrayList<>();
-        private Attributes attributes = null;
+        private String material = null;
     }
 
     /**
@@ -512,8 +512,7 @@ class ProducerStlList {
             // Deal with CSG shapes (much simpler and faster).
             for (int i = 0; i < collector.csgs.size(); i++) {
                 final CSG2D csgp = CSG3D.slice(collector.csgs.get(i), currentZ);
-                result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), collector.attributes
-                        .getMaterial()));
+                result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), collector.material));
             }
 
             // Deal with STL-generated edges
@@ -525,8 +524,7 @@ class ProducerStlList {
                     pgl = arcCompensate(pgl);
 
                     final CSG2D csgp = pgl.toCSG();
-                    result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), collector.attributes
-                            .getMaterial()));
+                    result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), collector.material));
                 }
             }
         }
@@ -549,14 +547,14 @@ class ProducerStlList {
 
         for (int i = 0; i < stlObject.getCount(); i++) {
             final BranchGroup group = stlObject.getSTL(i);
-            final Attributes attributes = (Attributes) (group.getUserData());
-            final EdgeAndCsgsCollector collector = collectorMap.get(attributes.getMaterial());
-            collector.attributes = attributes;
+            final String material = ((Attributes) (group.getUserData())).getMaterial();
+            final EdgeAndCsgsCollector collector = collectorMap.get(material);
+            collector.material = material;
             final CSG3D csg = stlObject.getCSG(i);
             if (csg != null) {
                 collector.csgs.add(csg.transform(m4));
             } else {
-                recursiveSetEdges(group, trans, currentZ, attributes, collector.edges);
+                recursiveSetEdges(group, trans, currentZ, material, collector.edges);
             }
         }
         return collectorMap;
@@ -567,7 +565,7 @@ class ProducerStlList {
      * Also update the triangulation of the object below the current slice used
      * for the simulation window.
      */
-    private static void addEdge(final Point3d p, final Point3d q, final Point3d r, final double z, final Attributes att,
+    private static void addEdge(final Point3d p, final Point3d q, final Point3d r, final double z, final String material,
             final List<LineSegment> edges) {
         Point3d odd;
         Point3d even1;
@@ -633,14 +631,14 @@ class ProducerStlList {
         e2 = new Point2D(e2.x(), e2.y());
 
         // Too short?
-        edges.add(new LineSegment(e1, e2, att));
+        edges.add(new LineSegment(e1, e2, material));
     }
 
     /**
      * Run through a Shape3D and set edges from it at plane z Apply the
      * transform first
      */
-    private static void addAllEdges(final Shape3D shape, final Transform3D trans, final double z, final Attributes att,
+    private static void addAllEdges(final Shape3D shape, final Transform3D trans, final double z, final String material,
             final List<LineSegment> edges) {
         final GeometryArray g = (GeometryArray) shape.getGeometry();
         final Point3d p1 = new Point3d();
@@ -660,14 +658,14 @@ class ProducerStlList {
             trans.transform(p1, q1);
             trans.transform(p2, q2);
             trans.transform(p3, q3);
-            addEdge(q1, q2, q3, z, att, edges);
+            addEdge(q1, q2, q3, z, material, edges);
         }
     }
 
     /**
      * Unpack the Shape3D(s) from value and set edges from them
      */
-    private void recursiveSetEdges(final Object value, final Transform3D trans, final double z, final Attributes att,
+    private void recursiveSetEdges(final Object value, final Transform3D trans, final double z, final String material,
             final List<LineSegment> edges) {
         if (value instanceof SceneGraphObject) {
             final SceneGraphObject sg = (SceneGraphObject) value;
@@ -675,10 +673,10 @@ class ProducerStlList {
                 final Group g = (Group) sg;
                 final java.util.Enumeration<?> enumKids = g.getAllChildren();
                 while (enumKids.hasMoreElements()) {
-                    recursiveSetEdges(enumKids.nextElement(), trans, z, att, edges);
+                    recursiveSetEdges(enumKids.nextElement(), trans, z, material, edges);
                 }
             } else if (sg instanceof Shape3D) {
-                addAllEdges((Shape3D) sg, trans, z, att, edges);
+                addAllEdges((Shape3D) sg, trans, z, material, edges);
             }
         }
     }
