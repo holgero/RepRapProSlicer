@@ -50,7 +50,7 @@ public class Producer {
         configuration = Configuration.getInstance().getCurrentConfiguration();
         totalExtruders = configuration.getPrinterSetting().getExtruderSettings().size();
         if (displayPaths) {
-            simulationPlot = new SimulationPlotter("RepRap building simulation");
+            simulationPlot = new SimulationPlotter("RepRap building simulation", configuration);
         } else {
             simulationPlot = null;
         }

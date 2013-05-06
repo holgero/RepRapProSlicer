@@ -64,20 +64,18 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.HashMap;
+import java.util.Map;
 
-import javax.media.j3d.Appearance;
-import javax.media.j3d.Material;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.vecmath.Color3f;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.reprap.configuration.CurrentConfiguration;
+import org.reprap.configuration.MaterialSetting;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
-import org.reprap.geometry.polyhedra.Attributes;
 
 /**
  * Class to plot images of geometrical structures for debugging.
@@ -85,10 +83,9 @@ import org.reprap.geometry.polyhedra.Attributes;
  * @author ensab
  */
 public class SimulationPlotter extends JComponent {
-    private static final Logger LOGGER = LogManager.getLogger(SimulationPlotter.class);
-
     private static final Color BOX_COLOR = Color.blue;
 
+    private final Map<String, Color> colorMap = new HashMap<String, Color>();
     /**
      * Pixels
      */
@@ -117,11 +114,14 @@ public class SimulationPlotter extends JComponent {
     /**
      * Constructor for nothing - add stuff later
      */
-    public SimulationPlotter(final String t) {
+    public SimulationPlotter(final String t, final CurrentConfiguration configuration) {
         p_list = null;
         title = t;
         initialised = false;
         layerNumber = "0";
+        for (final MaterialSetting material : configuration.getMaterials()) {
+            colorMap.put(material.getName(), material.getColor().get());
+        }
     }
 
     public void cleanPolygons(final String ln) {
@@ -249,17 +249,6 @@ public class SimulationPlotter extends JComponent {
     }
 
     /**
-     * Set the colour from a RepRap attribute
-     */
-    private static void setColour(final Graphics2D g2d, final Attributes at) {
-        final Appearance ap = at.getAppearance();
-        final Material mt = ap.getMaterial();
-        final Color3f col = new Color3f();
-        mt.getDiffuseColor(col);
-        g2d.setColor(col.get());
-    }
-
-    /**
      * Plot a polygon
      */
     private void plot(final Graphics2D g2d, final Polygon p) {
@@ -269,12 +258,7 @@ public class SimulationPlotter extends JComponent {
         if (Rectangle.intersection(p.getBox(), scaledBox).isEmpty()) {
             return;
         }
-        if (p.getAttributes().getAppearance() == null) {
-            LOGGER.error("SimulationPlotter: polygon with size > 0 has null appearance.");
-            return;
-        }
-
-        setColour(g2d, p.getAttributes());
+        g2d.setColor(colorMap.get(p.getAttributes().getMaterial()));
         move(p.point(0));
         for (int i = 1; i < p.size(); i++) {
             plot(g2d, p.point(i));
