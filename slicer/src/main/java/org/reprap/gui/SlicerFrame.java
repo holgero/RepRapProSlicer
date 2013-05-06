@@ -3,6 +3,8 @@ package org.reprap.gui;
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
+import org.reprap.configuration.CurrentConfiguration;
+
 /**
  * @author Ed Sells, March 2008
  */
@@ -10,9 +12,9 @@ public class SlicerFrame extends JFrame {
     private final JTabbedPane jTabbedPane1;
     private final PrintTabFrame printTabFrame1;
 
-    public SlicerFrame(final MainFrame mainFrame) {
+    public SlicerFrame(final MainFrame mainFrame, final CurrentConfiguration currentConfiguration) {
         jTabbedPane1 = new javax.swing.JTabbedPane();
-        printTabFrame1 = new PrintTabFrame(mainFrame);
+        printTabFrame1 = new PrintTabFrame(mainFrame, currentConfiguration);
         setTitle("RepRapPro Slicer");
         initComponents();
         setVisible(true);

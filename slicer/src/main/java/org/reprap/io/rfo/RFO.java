@@ -56,7 +56,7 @@ public class RFO {
     /**
      * The collection of objects being written out or read in.
      */
-    private AllSTLsToBuild astl;
+    private final AllSTLsToBuild astl;
     /**
      * The XML output for the legend file.
      */
@@ -287,8 +287,7 @@ public class RFO {
         if (!fn.endsWith(".rfo")) {
             fn += ".rfo";
         }
-        final RFO rfo = new RFO(fn, null);
-        rfo.astl = new AllSTLsToBuild();
+        final RFO rfo = new RFO(fn, new AllSTLsToBuild());
         rfo.unCompress();
         rfo.interpretLegend();
         Runtime.getRuntime().addShutdownHook(new Thread() {

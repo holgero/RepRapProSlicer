@@ -158,7 +158,7 @@ public class STLObject {
      * Load an STL object from a file with a known offset (set that null to put
      * the object in the middle of the bed) and set its appearance
      */
-    public Attributes addSTL(final File location, final Vector3d offset, final Appearance app, final STLObject lastPicked) {
+    public Attributes addSTL(final File location, final Appearance app, final STLObject lastPicked) {
         final Attributes att;
         if (app == null) {
             att = new Attributes(this, unselectedApp());
@@ -167,10 +167,7 @@ public class STLObject {
         }
 
         try {
-            final STLFileContents child = loadSingleSTL(location, att, offset, lastPicked);
-            if (child == null) {
-                return null;
-            }
+            final STLFileContents child = loadSingleSTL(location, att, lastPicked);
             if (lastPicked == null) {
                 contents.add(child);
             } else {
@@ -193,8 +190,8 @@ public class STLObject {
      * and subsequently is subjected to all the same transforms, so they retain
      * their relative positions. This is how multi-material objects are loaded.
      */
-    private STLFileContents loadSingleSTL(final File location, final Attributes att, final Vector3d offset,
-            final STLObject lastPicked) throws FileNotFoundException, IncorrectFormatException, ParsingErrorException {
+    private STLFileContents loadSingleSTL(final File location, final Attributes att, final STLObject lastPicked)
+            throws FileNotFoundException, IncorrectFormatException, ParsingErrorException {
         final CSGReader csgr = new CSGReader(location);
         CSG3D csgResult = null;
         if (csgr.csgAvailable()) {
@@ -245,13 +242,7 @@ public class STLObject {
                 final javax.vecmath.Point3d p1 = new javax.vecmath.Point3d();
                 bbox.getLower(p0);
                 bbox.getUpper(p1);
-
-                if (offset != null) {
-                    rootOffset = new Vector3d(offset);
-                } else {
-                    // If no offset requested, set it to bottom-left-at-origin
-                    rootOffset = new Vector3d(-p0.x, -p0.y, -p0.z);
-                }
+                rootOffset = new Vector3d(-p0.x, -p0.y, -p0.z);
 
                 // How big?
                 extent = new Vector3d(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z);

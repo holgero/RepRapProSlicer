@@ -44,10 +44,12 @@ import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import org.reprap.configuration.Configuration;
 import org.reprap.geometry.Producer;
 import org.reprap.geometry.ProductionProgressListener;
 
 public class MainFrame extends JFrame {
+    private final Configuration configuration = Configuration.create();
     private final JMenuItem produceProduceB;
     private final JMenuItem cancelMenuItem;
     private final RepRapPlater plater;
@@ -68,7 +70,7 @@ public class MainFrame extends JFrame {
 
         final Box builderFrame = new Box(BoxLayout.Y_AXIS);
         builderFrame.add(new JLabel("Arrange items to print on the build bed"));
-        plater = new RepRapPlater();
+        plater = new RepRapPlater(configuration.getCurrentConfiguration());
         builderFrame.setMinimumSize(new Dimension(0, 0));
         builderFrame.add(plater);
         builderFrame.setPreferredSize(new Dimension(1000, 800));
@@ -82,7 +84,7 @@ public class MainFrame extends JFrame {
         setFocusable(true);
         requestFocus();
 
-        slicerFrame = new SlicerFrame(this);
+        slicerFrame = new SlicerFrame(this, configuration.getCurrentConfiguration());
     }
 
     public void autoRun(final String fileName) {

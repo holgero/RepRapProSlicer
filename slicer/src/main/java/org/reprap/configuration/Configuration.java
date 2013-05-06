@@ -30,13 +30,24 @@ import org.apache.commons.io.FileUtils;
 @XmlRootElement
 public class Configuration {
     private static final File REPRAP_DIRECTORY = new File(FileUtils.getUserDirectory(), ".reprap");
-    private static final Configuration instance = new ConfigurationInitializer(REPRAP_DIRECTORY).loadConfiguration();
+    private static Configuration instance;
+
+    public static Configuration create() {
+        if (instance != null) {
+            throw new RuntimeException("Too late, instance has already been created!");
+        }
+        instance = new ConfigurationInitializer(REPRAP_DIRECTORY).loadConfiguration();
+        return instance;
+    }
 
     static File getReprapDirectory() {
         return REPRAP_DIRECTORY;
     }
 
     public static Configuration getInstance() {
+        if (instance == null) {
+            throw new RuntimeException("Too soon, instance has not yet been created!");
+        }
         return instance;
     }
 

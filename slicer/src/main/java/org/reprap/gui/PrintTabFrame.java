@@ -17,7 +17,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.SwingConstants;
 
-import org.reprap.configuration.Configuration;
+import org.reprap.configuration.CurrentConfiguration;
 
 /**
  * @author ensab
@@ -43,12 +43,12 @@ public class PrintTabFrame extends JInternalFrame {
     /**
      * Creates new form PrintTabFrame
      */
-    PrintTabFrame(final MainFrame mainFrame) {
+    PrintTabFrame(final MainFrame mainFrame, final CurrentConfiguration currentConfiguration) {
         this.mainFrame = mainFrame;
-        initComponents();
+        initComponents(currentConfiguration);
     }
 
-    private void initComponents() {
+    private void initComponents(final CurrentConfiguration currentConfiguration) {
         final JButton helpButton = new JButton();
         helpButton.setActionCommand("Help");
         helpButton.setBackground(new java.awt.Color(255, 102, 255));
@@ -162,8 +162,7 @@ public class PrintTabFrame extends JInternalFrame {
 
         final JLabel changeMachineLabel = new JLabel();
         changeMachineLabel.setFont(new java.awt.Font("Tahoma", 0, 15));
-        changeMachineLabel.setText("RepRap in use: "
-                + Configuration.getInstance().getCurrentConfiguration().getPrinterSetting().getName());
+        changeMachineLabel.setText("RepRap in use: " + currentConfiguration.getPrinterSetting().getName());
 
         final JLabel progressLabel = new JLabel();
         progressLabel.setFont(new java.awt.Font("Tahoma", 0, 12));

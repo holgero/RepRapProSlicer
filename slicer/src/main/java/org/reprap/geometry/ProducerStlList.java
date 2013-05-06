@@ -408,7 +408,7 @@ class ProducerStlList {
             return;
         }
         final STLObject shield = new STLObject();
-        final Attributes attribute = shield.addSTL(printSetting.getShieldStlFile(), null, null, null);
+        final Attributes attribute = shield.addSTL(printSetting.getShieldStlFile(), null, null);
         attribute.setMaterial(currentConfiguration.getMaterials().get(0).getName());
 
         final BoundingBox boxWithoutShield = getBoundingBox(stls);
