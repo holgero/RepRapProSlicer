@@ -50,7 +50,7 @@ import org.reprap.geometry.ProductionProgressListener;
 public class MainFrame extends JFrame {
     private final JMenuItem produceProduceB;
     private final JMenuItem cancelMenuItem;
-    private final RepRapBuild builder;
+    private final RepRapPlater plater;
     private final JFileChooser chooser = new JFileChooser();
     private final SlicerFrame slicerFrame;
 
@@ -68,9 +68,9 @@ public class MainFrame extends JFrame {
 
         final Box builderFrame = new Box(BoxLayout.Y_AXIS);
         builderFrame.add(new JLabel("Arrange items to print on the build bed"));
-        builder = new RepRapBuild();
+        plater = new RepRapPlater();
         builderFrame.setMinimumSize(new Dimension(0, 0));
-        builderFrame.add(builder);
+        builderFrame.add(plater);
         builderFrame.setPreferredSize(new Dimension(1000, 800));
         getContentPane().add(builderFrame);
 
@@ -87,7 +87,7 @@ public class MainFrame extends JFrame {
 
     public void autoRun(final String fileName) {
         final File rfoFile = new File(fileName);
-        builder.addRFOFile(rfoFile);
+        plater.addRFOFile(rfoFile);
         final String rfoFileName = rfoFile.getAbsolutePath();
         slice(rfoFileName.substring(0, rfoFileName.length() - ".rfo".length()), new ProductionProgressListener() {
             @Override
@@ -106,7 +106,7 @@ public class MainFrame extends JFrame {
         manipX.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent arg0) {
-                builder.xRotate();
+                plater.xRotate();
             }
         });
         manipMenu.add(manipX);
@@ -116,7 +116,7 @@ public class MainFrame extends JFrame {
         manipY.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent arg0) {
-                builder.yRotate();
+                plater.yRotate();
             }
         });
         manipMenu.add(manipY);
@@ -156,7 +156,7 @@ public class MainFrame extends JFrame {
         inToMM.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent arg0) {
-                builder.inToMM();
+                plater.inToMM();
             }
         });
         manipMenu.add(inToMM);
@@ -166,7 +166,7 @@ public class MainFrame extends JFrame {
         changeMaterial.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent arg0) {
-                builder.changeMaterial();
+                plater.changeMaterial();
             }
         });
         manipMenu.add(changeMaterial);
@@ -176,7 +176,7 @@ public class MainFrame extends JFrame {
         nextP.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent arg0) {
-                builder.nextPicked();
+                plater.nextPicked();
             }
         });
         manipMenu.add(nextP);
@@ -186,7 +186,7 @@ public class MainFrame extends JFrame {
         reorder.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent arg0) {
-                builder.doReorder();
+                plater.doReorder();
             }
         });
         manipMenu.add(reorder);
@@ -196,7 +196,7 @@ public class MainFrame extends JFrame {
         deleteSTL.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent arg0) {
-                builder.deleteSTL();
+                plater.deleteSTL();
             }
         });
         manipMenu.add(deleteSTL);
@@ -209,7 +209,7 @@ public class MainFrame extends JFrame {
     }
 
     private void onRotateZ(final double angle) {
-        builder.zRotate(angle);
+        plater.zRotate(angle);
     }
 
     private void producing(final boolean state) {
@@ -230,10 +230,10 @@ public class MainFrame extends JFrame {
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             final File result = chooser.getSelectedFile();
             if (extensions[0].toUpperCase().contentEquals("RFO")) {
-                builder.addRFOFile(result);
+                plater.addRFOFile(result);
             }
             if (extensions[0].toUpperCase().contentEquals("STL")) {
-                builder.anotherSTLFile(result, true);
+                plater.anotherSTLFile(result, true);
             }
             return result;
         }
@@ -259,7 +259,7 @@ public class MainFrame extends JFrame {
             f = rfoChooser.getSelectedFile();
             result = "file:" + f.getAbsolutePath();
 
-            builder.saveRFOFile(result);
+            plater.saveRFOFile(result);
             return f.getName();
         }
         return "";
@@ -275,7 +275,7 @@ public class MainFrame extends JFrame {
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             final File selectedFile = scadChooser.getSelectedFile();
             try {
-                builder.saveSCADFile(selectedFile);
+                plater.saveSCADFile(selectedFile);
             } catch (final IOException e) {
                 throw new RuntimeException(e);
             }
@@ -312,27 +312,28 @@ public class MainFrame extends JFrame {
 
         }
         producing(true);
-        final Thread t = new Thread() {
+        new Thread() {
             @Override
             public void run() {
                 Thread.currentThread().setName("Producer");
-                builder.mouseToWorld();
-                final Producer producer = new Producer(gcodeFile, builder.getSTLs(), listener, displayPaths);
+                plater.mouseToWorld();
+                final Producer producer = new Producer(gcodeFile, plater.getSTLs(), listener, displayPaths);
                 try {
                     producer.produce();
                     if (autoExit) {
                         System.exit(0);
                     }
                     JOptionPane.showMessageDialog(MainFrame.this, "Slicing complete");
-                } catch (final IOException e) {
+                } catch (final RuntimeException e) {
                     JOptionPane.showMessageDialog(MainFrame.this, "Production exception: " + e);
+                    throw e;
+                } finally {
+                    producing(false);
+                    slicerFrame.slicingFinished();
+                    producer.dispose();
                 }
-                producing(false);
-                slicerFrame.slicingFinished();
-                producer.dispose();
             }
-        };
-        t.start();
+        }.start();
         return true;
     }
 }

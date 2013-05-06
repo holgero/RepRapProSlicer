@@ -35,7 +35,7 @@ class MaterialRadioButtons extends JPanel {
     private static Attributes att;
     private static JDialog dialog;
     private static JTextField copies;
-    private static RepRapBuild rrb;
+    private static RepRapPlater rrb;
     private static int stlIndex;
 
     private MaterialRadioButtons(final double volume) {
@@ -116,7 +116,7 @@ class MaterialRadioButtons extends JPanel {
         dialog.dispose();
     }
 
-    static void createAndShowGUI(final Attributes a, final RepRapBuild r, final int index, final double volume) {
+    static void createAndShowGUI(final Attributes a, final RepRapPlater r, final int index, final double volume) {
         att = a;
         rrb = r;
         stlIndex = index;
@@ -137,7 +137,7 @@ class MaterialRadioButtons extends JPanel {
         dialog.setVisible(true);
     }
 
-    static void createAndShowGUI(final Attributes a, final RepRapBuild r, final STLObject lastPicked) {
+    static void createAndShowGUI(final Attributes a, final RepRapPlater r, final STLObject lastPicked) {
         if (lastPicked == null) {
             return;
         }

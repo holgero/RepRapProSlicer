@@ -60,13 +60,17 @@ public class Producer {
         printSupport = printSetting.printSupport();
     }
 
-    public void produce() throws IOException {
+    public void produce() {
         while (layerRules.getModelLayer() > 0) {
             produceLayer();
             layerRules.step();
         }
         layerRules.layFoundationTopDown(simulationPlot);
-        layerRules.reverseLayers();
+        try {
+            layerRules.reverseLayers();
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void produceLayer() {

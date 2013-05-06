@@ -135,11 +135,11 @@ import com.sun.j3d.utils.picking.PickResult;
 import com.sun.j3d.utils.picking.PickTool;
 
 /**
- * This is the main private class that creates a virtual world of the RepRap
- * working volume, allows you to put STL-file objects in it, move them about to
- * arrange them, and build them in the machine.
+ * This class creates a virtual world of the RepRap working volume. It allows
+ * you to put STL-file objects in it, move them about to arrange them, and build
+ * them in the machine.
  */
-public class RepRapBuild extends JPanel implements MouseListener {
+public class RepRapPlater extends JPanel implements MouseListener {
     private MouseObject mouse;
     private PickCanvas pickCanvas; // The thing picked by a mouse click
     private STLObject lastPicked; // The last thing picked
@@ -161,7 +161,7 @@ public class RepRapBuild extends JPanel implements MouseListener {
     private STLObject workingVolume;
     private BranchGroup sceneBranchGroup;
 
-    public RepRapBuild() {
+    public RepRapPlater() {
         initialise();
         stls = new AllSTLsToBuild();
         reordering = false;
