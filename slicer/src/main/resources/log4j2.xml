@@ -11,7 +11,7 @@
 			level="info" additivity="false">
 			<appender-ref ref="Console" />
 		</logger>
-		<root level="debug">
+		<root level="info">
 			<filters> <!-- comment the following line to allow logging of gcode output -->
 				<MarkerFilter marker="GCODE" onMatch="DENY" onMismatch="ACCEPT" />
 			</filters>
