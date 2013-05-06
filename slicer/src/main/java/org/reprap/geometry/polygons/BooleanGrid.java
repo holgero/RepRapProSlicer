@@ -8,7 +8,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Configuration;
-import org.reprap.geometry.polyhedra.Attributes;
 
 /**
  * This class stores a rectangular grid at the same grid resolution as the
@@ -78,11 +77,7 @@ public class BooleanGrid {
      * The rectangle the pixelmap covers
      */
     private Integer2DRectangle rec;
-
-    /**
-     * The attributes
-     */
-    private Attributes att;
+    private String material;
 
     /**
      * Back and forth from real to pixel/integer coordinates
@@ -98,8 +93,8 @@ public class BooleanGrid {
     /**
      * Build the grid from a CSG expression
      */
-    public BooleanGrid(final CSG2D csgExp, final Rectangle rectangle, final Attributes a) {
-        att = a;
+    public BooleanGrid(final CSG2D csgExp, final Rectangle rectangle, final String material) {
+        this.material = material;
         final Rectangle ri = rectangle.offset(rSwell);
         rec = new Integer2DRectangle(new Integer2DPoint(0, 0), new Integer2DPoint(1, 1)); // Set the origin to (0, 0)...
         rec.swCorner = rec.convertToInteger2DPoint(ri.sw()); // That then gets subtracted by the iPoint constructor to give the true origin
@@ -114,7 +109,7 @@ public class BooleanGrid {
      * Copy constructor N.B. attributes are _not_ deep copied
      */
     private BooleanGrid(final BooleanGrid bg) {
-        att = bg.att;
+        material = bg.material;
         visited = null;
         rec = new Integer2DRectangle(bg.rec);
         bits = (BitSet) bg.bits.clone();
@@ -124,7 +119,7 @@ public class BooleanGrid {
      * Copy constructor with new rectangle N.B. attributes are _not_ deep copied
      */
     private BooleanGrid(final BooleanGrid bg, final Integer2DRectangle newRec) {
-        att = bg.att;
+        material = bg.material;
         visited = null;
         rec = new Integer2DRectangle(newRec);
         bits = new BitSet(rec.size.x * rec.size.y);
@@ -144,7 +139,7 @@ public class BooleanGrid {
      * The empty grid
      */
     private BooleanGrid() {
-        att = new Attributes(null, null);
+        material = null;
         rec = new Integer2DRectangle();
         bits = new BitSet(1);
         visited = null;
@@ -157,11 +152,8 @@ public class BooleanGrid {
         return nothingThere;
     }
 
-    /**
-     * Overwrite the attributes Only to be used if you know what you're doing...
-     */
-    public void forceAttribute(final Attributes a) {
-        att = a;
+    public void setMaterial(final String material) {
+        this.material = material;
     }
 
     /**
@@ -178,11 +170,8 @@ public class BooleanGrid {
         return pixI(p.x, p.y);
     }
 
-    /**
-     * Return the attributes
-     */
-    public Attributes attribute() {
-        return att;
+    public String getMaterial() {
+        return material;
     }
 
     /**
@@ -700,7 +689,7 @@ public class BooleanGrid {
             return nothingThere;
         }
         final BooleanGrid result = new BooleanGrid();
-        result.att = att;
+        result.material = material;
         result.visited = null;
         result.rec = new Integer2DRectangle(rec);
         result.bits = new BitSet(result.rec.size.x * result.rec.size.y);
@@ -753,11 +742,10 @@ public class BooleanGrid {
     }
 
     /**
-     * Return all the outlines of all the solid areas as real-world polygons
-     * with attributes a
+     * Return all the outlines of all the solid areas as real-world polygons.
      */
-    public PolygonList allPerimiters(final Attributes a) {
-        PolygonList r = iAllPerimiters().realPolygons(a.getMaterial(), rec);
+    public PolygonList allPerimiters() {
+        PolygonList r = iAllPerimiters().realPolygons(getMaterial(), rec);
         r = r.simplify(realResolution);
         return r;
     }
@@ -1080,9 +1068,9 @@ public class BooleanGrid {
     /**
      * Hatch all the polygons parallel to line hp with increment gap
      * 
-     * @return a polygon list of hatch lines as the result with attributes a
+     * @return a polygon list of hatch lines
      */
-    public PolygonList hatch(final HalfPlane hp, final double gap, final Attributes a) {
+    public PolygonList hatch(final HalfPlane hp, final double gap) {
         if (gap <= 0) {
             return new PolygonList();
         }
@@ -1156,7 +1144,7 @@ public class BooleanGrid {
 
         resetVisited();
 
-        return snakes.realPolygons(a.getMaterial(), rec).simplify(realResolution);
+        return snakes.realPolygons(getMaterial(), rec).simplify(realResolution);
     }
 
     /**
@@ -1219,29 +1207,29 @@ public class BooleanGrid {
     }
 
     /**
-     * Compute the union of two bit patterns, forcing attribute a on the result.
+     * Compute the union of two bit patterns, forcing material on the result.
      */
-    public static BooleanGrid union(final BooleanGrid d, final BooleanGrid e, final Attributes a) {
+    public static BooleanGrid union(final BooleanGrid d, final BooleanGrid e, final String resultMaterial) {
         BooleanGrid result;
 
         if (d == nothingThere) {
             if (e == nothingThere) {
                 return nothingThere;
             }
-            if (e.att == a) {
+            if (e.material == resultMaterial) { // TODO: string comparison by identity
                 return e;
             }
             result = new BooleanGrid(e);
-            result.forceAttribute(a);
+            result.material = resultMaterial;
             return result;
         }
 
         if (e == nothingThere) {
-            if (d.att == a) {
+            if (d.material == resultMaterial) {
                 return d;
             }
             result = new BooleanGrid(d);
-            result.forceAttribute(a);
+            result.material = resultMaterial;
             return result;
         }
 
@@ -1254,7 +1242,7 @@ public class BooleanGrid {
             final BooleanGrid temp = new BooleanGrid(e, u);
             result.bits.or(temp.bits);
         }
-        result.forceAttribute(a);
+        result.material = resultMaterial;
         return result;
     }
 
@@ -1262,10 +1250,10 @@ public class BooleanGrid {
      * Compute the union of two bit patterns
      */
     static BooleanGrid union(final BooleanGrid d, final BooleanGrid e) {
-        final BooleanGrid result = union(d, e, d.att);
-        if (result != nothingThere && d.att != e.att) {
-            LOGGER.error("BooleanGrid.union(): attempt to union two bitmaps of different materials: "
-                    + d.attribute().getMaterial() + " and " + e.attribute().getMaterial());
+        final BooleanGrid result = union(d, e, d.material);
+        if (result != nothingThere && d.material != e.material) {
+            LOGGER.error("BooleanGrid.union(): attempt to union two bitmaps of different materials: " + d.getMaterial()
+                    + " and " + e.getMaterial());
         }
         return result;
     }
@@ -1273,7 +1261,7 @@ public class BooleanGrid {
     /**
      * Compute the intersection of two bit patterns
      */
-    private static BooleanGrid intersection(final BooleanGrid d, final BooleanGrid e, final Attributes a) {
+    private static BooleanGrid intersection(final BooleanGrid d, final BooleanGrid e, final String resultMaterial) {
         if (d == nothingThere || e == nothingThere) {
             return nothingThere;
         }
@@ -1295,7 +1283,7 @@ public class BooleanGrid {
             return nothingThere;
         }
         result.deWhisker();
-        result.forceAttribute(a);
+        result.material = resultMaterial;
         return result;
     }
 
@@ -1303,10 +1291,10 @@ public class BooleanGrid {
      * Compute the intersection of two bit patterns
      */
     public static BooleanGrid intersection(final BooleanGrid d, final BooleanGrid e) {
-        final BooleanGrid result = intersection(d, e, d.att);
-        if (result != nothingThere && d.att != e.att) {
+        final BooleanGrid result = intersection(d, e, d.material);
+        if (result != nothingThere && d.material != e.material) {
             LOGGER.error("BooleanGrid.intersection(): attempt to intersect two bitmaps of different materials: "
-                    + d.attribute().getMaterial() + " and " + e.attribute().getMaterial());
+                    + d.getMaterial() + " and " + e.getMaterial());
         }
         return result;
     }
@@ -1316,7 +1304,7 @@ public class BooleanGrid {
      * presumed to contain the result. TODO: write a function to compute the
      * rectangle from the bitmap
      */
-    public static BooleanGrid difference(final BooleanGrid d, final BooleanGrid e, final Attributes a) {
+    public static BooleanGrid difference(final BooleanGrid d, final BooleanGrid e, final String resultMaterial) {
         if (d == nothingThere) {
             return nothingThere;
         }
@@ -1324,11 +1312,11 @@ public class BooleanGrid {
         BooleanGrid result;
 
         if (e == nothingThere) {
-            if (d.att == a) {
+            if (d.material == resultMaterial) {
                 return d;
             }
             result = new BooleanGrid(d);
-            result.forceAttribute(a);
+            result.material = resultMaterial;
             return result;
         }
 
@@ -1344,7 +1332,7 @@ public class BooleanGrid {
             return nothingThere;
         }
         result.deWhisker();
-        result.forceAttribute(a);
+        result.material = resultMaterial;
         return result;
     }
 
@@ -1353,10 +1341,10 @@ public class BooleanGrid {
      * write a function to compute the rectangle from the bitmap
      */
     public static BooleanGrid difference(final BooleanGrid d, final BooleanGrid e) {
-        final BooleanGrid result = difference(d, e, d.att);
-        if (result != nothingThere && d.att != e.att) {
-            LOGGER.error("BooleanGrid.difference(): attempt to subtract two bitmaps of different materials: "
-                    + d.attribute().getMaterial() + " and " + e.attribute().getMaterial());
+        final BooleanGrid result = difference(d, e, d.material);
+        if (result != nothingThere && d.material != e.material) {
+            LOGGER.error("BooleanGrid.difference(): attempt to subtract two bitmaps of different materials: " + d.getMaterial()
+                    + " and " + e.getMaterial());
         }
         return result;
     }

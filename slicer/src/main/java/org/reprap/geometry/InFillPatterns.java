@@ -10,7 +10,6 @@ import org.reprap.geometry.polygons.HalfPlane;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
-import org.reprap.geometry.polyhedra.Attributes;
 
 /**
  * Class to hold infill patterns
@@ -194,15 +193,13 @@ public final class InFillPatterns {
 
                 // Find the middle of this land
                 final Point2D cen2 = land2.findCentroid();
-                final Attributes attribute = bridge.attribute();
-                final ExtruderSetting extruder = Configuration.getInstance().getCurrentConfiguration().getExtruderSetting(
-                        attribute.getMaterial());
+                final ExtruderSetting extruder = Configuration.getInstance().getCurrentConfiguration()
+                        .getExtruderSetting(bridge.getMaterial());
                 final double extrusionWidth = extruder.getExtrusionSize();
                 if (cen2 == null) {
                     LOGGER.debug("Second land found with no centroid.");
                     // No second land implies a ring of support - just infill it.
-                    hatchedPolygons.add(bridge.hatch(layerConditions.getHatchDirection(false, extrusionWidth), extrusionWidth,
-                            attribute));
+                    hatchedPolygons.add(bridge.hatch(layerConditions.getHatchDirection(false, extrusionWidth), extrusionWidth));
 
                     // Remove this bridge (in fact, just its lands) from the other infill patterns.
                     final BooleanGridList b = new BooleanGridList();
@@ -220,7 +217,7 @@ public final class InFillPatterns {
                     // Fine the edge of the bridge that is nearest parallel to that, and use that as the fill direction
                     double spMax = Double.NEGATIVE_INFINITY;
                     double sp;
-                    final PolygonList bridgeOutline = bridge.allPerimiters(attribute);
+                    final PolygonList bridgeOutline = bridge.allPerimiters();
                     for (int pol = 0; pol < bridgeOutline.size(); pol++) {
                         final Polygon polygon = bridgeOutline.polygon(pol);
 
@@ -240,8 +237,7 @@ public final class InFillPatterns {
                     }
 
                     // Build the bridge
-                    hatchedPolygons.add(bridge.hatch(new HalfPlane(new Point2D(0, 0), bridgeDirection), extrusionWidth,
-                            attribute));
+                    hatchedPolygons.add(bridge.hatch(new HalfPlane(new Point2D(0, 0), bridgeDirection), extrusionWidth));
 
                     // Remove this bridge (in fact, just its lands) from the other infill patterns. 
                     final BooleanGridList b = new BooleanGridList();

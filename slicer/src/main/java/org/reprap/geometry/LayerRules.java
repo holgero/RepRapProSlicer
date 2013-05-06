@@ -21,7 +21,6 @@ import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
-import org.reprap.geometry.polyhedra.Attributes;
 
 /**
  * This stores a set of facts about the layer currently being made, and the
@@ -335,14 +334,13 @@ public class LayerRules {
 
     private void fillFoundationRectangle(final SimulationPlotter simulationPlot) {
         final int supportExtruderNo = configuration.getPrintSetting().getSupportExtruder();
-        final ExtruderSetting extruder = configuration.getPrinterSetting().getExtruderSettings().get(supportExtruderNo);
-        final BooleanGrid bg = new BooleanGrid(CSG2D.RrCSGFromBox(bBox), bBox.scale(1.1), new Attributes(configuration
-                .getMaterials().get(supportExtruderNo)));
-        final PolygonList foundationPolygon = bg.hatch(getHatchDirection(false, extruder.getExtrusionSize()),
-                extruder.getExtrusionSize(), bg.attribute());
+        final ExtruderSetting supportExtruder = configuration.getPrinterSetting().getExtruderSettings().get(supportExtruderNo);
+        final double extrusionSize = supportExtruder.getExtrusionSize();
+        final String supportMaterial = configuration.getMaterials().get(supportExtruderNo).getName();
+        final BooleanGrid bg = new BooleanGrid(CSG2D.RrCSGFromBox(bBox), bBox.scale(1.1), supportMaterial);
+        final PolygonList foundationPolygon = bg.hatch(getHatchDirection(false, extrusionSize), extrusionSize);
         setFirstAndLast(new PolygonList[] { foundationPolygon });
-        final LayerProducer lp = new LayerProducer(this, simulationPlot);
-        lp.plot(foundationPolygon);
+        new LayerProducer(this, simulationPlot).plot(foundationPolygon);
     }
 
 }

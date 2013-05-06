@@ -69,7 +69,7 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
         final PolygonList result = new PolygonList();
         for (int i = 0; i < size(); i++) {
             final BooleanGrid grid = get(i);
-            result.add(grid.allPerimiters(grid.attribute()));
+            result.add(grid.allPerimiters());
         }
         return result;
     }
@@ -97,12 +97,11 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
         for (int i = 0; i < size() - 1; i++) {
             if (!usedUp[i]) {
                 BooleanGrid union = get(i);
-                final String material = union.attribute().getMaterial();
+                final String material = union.getMaterial();
                 for (int j = i + 1; j < size(); j++) {
                     if (!usedUp[j]) {
                         final BooleanGrid jg = get(j);
-                        jg.attribute();
-                        if (material.equals(jg.attribute().getMaterial())) {
+                        if (material.equals(jg.getMaterial())) {
                             union = BooleanGrid.union(union, jg);
                             usedUp[j] = true;
                         }
@@ -154,7 +153,7 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
             boolean aMatched = false;
             for (int j = 0; j < b.size(); j++) {
                 final BooleanGrid grid = b.get(j);
-                if (abg.attribute().getMaterial().equals(grid.attribute().getMaterial())) {
+                if (abg.getMaterial().equals(grid.getMaterial())) {
                     result.add(BooleanGrid.union(abg, grid));
                     bMatched[j] = true;
                     aMatched = true;
@@ -197,7 +196,7 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
             final BooleanGrid abg = a.get(i);
             for (int j = 0; j < b.size(); j++) {
                 final BooleanGrid grid = b.get(j);
-                if (abg.attribute().getMaterial().equals(grid.attribute().getMaterial())) {
+                if (abg.getMaterial().equals(grid.getMaterial())) {
                     result.add(BooleanGrid.intersection(abg, grid));
                 }
             }
@@ -236,8 +235,8 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
             boolean aMatched = false;
             for (int j = 0; j < b.size(); j++) {
                 final BooleanGrid grid = b.get(j);
-                if (ignoreMaterial || (abg.attribute().getMaterial().equals(grid.attribute().getMaterial()))) {
-                    result.add(BooleanGrid.difference(abg, grid, abg.attribute()));
+                if (ignoreMaterial || (abg.getMaterial().equals(grid.getMaterial()))) {
+                    result.add(BooleanGrid.difference(abg, grid, abg.getMaterial()));
                     if (!ignoreMaterial) {
                         aMatched = true;
                         break;

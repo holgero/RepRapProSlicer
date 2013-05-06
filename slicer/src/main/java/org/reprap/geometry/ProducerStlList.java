@@ -322,9 +322,9 @@ class ProducerStlList {
         final int layer = layerRules.getModelLayer();
         BooleanGrid unionOfThisLayer = union(slice(stl, layer));
 
-        final Attributes attribute;
+        final String material;
         if (!unionOfThisLayer.isEmpty()) {
-            attribute = unionOfThisLayer.attribute();
+            material = unionOfThisLayer.getMaterial();
             // Expand the union of this layer a bit, so that any support is a little clear of 
             // this layer's boundaries.
             final BooleanGridList allThis = offsetOutline(unionOfThisLayer, 2);
@@ -332,7 +332,7 @@ class ProducerStlList {
             unionOfThisLayer = allThis.get(0);
         } else {
             // default to the stl to build
-            attribute = stlsToBuild.get(stl).attributes(0);
+            material = stlsToBuild.get(stl).attributes(0).getMaterial();
         }
         // Get the layer above and union it with this layer.  That's what needs
         // support on the next layer down.
@@ -345,7 +345,7 @@ class ProducerStlList {
         if (previousSupport != null) {
             for (int i = 0; i < previousSupport.size(); i++) {
                 final BooleanGrid above = previousSupport.get(i);
-                support.add(BooleanGrid.difference(above, unionOfThisLayer, attribute));
+                support.add(BooleanGrid.difference(above, unionOfThisLayer, material));
             }
             support = support.unionDuplicates();
         }
@@ -356,7 +356,7 @@ class ProducerStlList {
         // for all the materials in it.
         for (int i = 0; i < support.size(); i++) {
             final BooleanGrid grid = support.get(i);
-            grid.forceAttribute(new Attributes(supportMaterial));
+            grid.setMaterial(supportMaterial.getName());
         }
 
         return hatch(support, layerRules, false, true);
@@ -367,13 +367,8 @@ class ProducerStlList {
             return BooleanGrid.nullBooleanGrid();
         }
         BooleanGrid unionOfThisLayer = slice.get(0);
-        // We give the union the attribute of the first thing found, though
-        // clearly it will - in general - represent many different substances.
-        // But it's only going to be subtracted from other shapes, so what it's made
-        // from doesn't matter.
-        final Attributes attributes = unionOfThisLayer.attribute();
         for (int i = 1; i < slice.size(); i++) {
-            unionOfThisLayer = BooleanGrid.union(unionOfThisLayer, slice.get(i), attributes);
+            unionOfThisLayer = BooleanGrid.union(unionOfThisLayer, slice.get(i), unionOfThisLayer.getMaterial());
         }
         return unionOfThisLayer;
     }
@@ -385,9 +380,9 @@ class ProducerStlList {
     BooleanGridList neededThisLayer(final BooleanGridList allLayer) {
         final BooleanGridList neededSlice = new BooleanGridList();
         for (int i = 0; i < allLayer.size(); i++) {
-            final Attributes attribute = allLayer.get(i).attribute();
-            final ExtruderSetting extruder = configuration.getExtruderSetting(attribute.getMaterial());
+            final ExtruderSetting extruder = configuration.getExtruderSetting(allLayer.get(i).getMaterial());
             if (extruder != null) {
+                // TODO can extruder be null here?
                 neededSlice.add(allLayer.get(i));
             }
         }
@@ -517,7 +512,8 @@ class ProducerStlList {
             // Deal with CSG shapes (much simpler and faster).
             for (int i = 0; i < collector.csgs.size(); i++) {
                 final CSG2D csgp = CSG3D.slice(collector.csgs.get(i), currentZ);
-                result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), collector.attributes));
+                result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), collector.attributes
+                        .getMaterial()));
             }
 
             // Deal with STL-generated edges
@@ -529,7 +525,8 @@ class ProducerStlList {
                     pgl = arcCompensate(pgl);
 
                     final CSG2D csgp = pgl.toCSG();
-                    result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), collector.attributes));
+                    result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), collector.attributes
+                            .getMaterial()));
                 }
             }
         }
@@ -848,12 +845,12 @@ class ProducerStlList {
         final PolygonList result = new PolygonList();
         for (int i = 0; i < list.size(); i++) {
             final BooleanGrid grid = list.get(i);
-            final Attributes att = grid.attribute();
+            final String material = grid.getMaterial();
             final double infillWidth;
             if (support) {
                 infillWidth = printSetting.getSupportSpacing();
             } else {
-                final double extrusionSize = currentConfiguration.getExtruderSetting(att.getMaterial()).getExtrusionSize();
+                final double extrusionSize = currentConfiguration.getExtruderSetting(material).getExtrusionSize();
                 if (surface) {
                     infillWidth = extrusionSize;
                 } else {
@@ -861,7 +858,7 @@ class ProducerStlList {
                 }
             }
             final HalfPlane hatchLine = layerConditions.getHatchDirection(support, infillWidth);
-            result.add(grid.hatch(hatchLine, infillWidth, att));
+            result.add(grid.hatch(hatchLine, infillWidth));
         }
         return result;
     }
@@ -882,12 +879,8 @@ class ProducerStlList {
     }
 
     private static BooleanGridList offsetOutline(final BooleanGrid grid, final double multiplier) {
-        final Attributes att = grid.attribute();
-        if (att == null) {
-            throw new RuntimeException("grid attribute is null");
-        }
         final ExtruderSetting extruder = Configuration.getInstance().getCurrentConfiguration()
-                .getExtruderSetting(att.getMaterial());
+                .getExtruderSetting(grid.getMaterial());
         final BooleanGridList result = new BooleanGridList();
         final int shells = Configuration.getInstance().getCurrentConfiguration().getPrintSetting().getVerticalShells();
         for (int shell = 0; shell < shells; shell++) {
@@ -907,12 +900,8 @@ class ProducerStlList {
         final BooleanGridList result = new BooleanGridList();
         for (int i = 0; i < gridList.size(); i++) {
             final BooleanGrid grid = gridList.get(i);
-            final Attributes att = grid.attribute();
-            if (att == null) {
-                throw new RuntimeException("grid attribute is null");
-            }
             final ExtruderSetting extruder = Configuration.getInstance().getCurrentConfiguration()
-                    .getExtruderSetting(att.getMaterial());
+                    .getExtruderSetting(grid.getMaterial());
             final double extrusionSize = extruder.getExtrusionSize();
             final PrintSetting printSetting = Configuration.getInstance().getCurrentConfiguration().getPrintSetting();
             final int shells = printSetting.getVerticalShells();
