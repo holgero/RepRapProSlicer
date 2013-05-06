@@ -75,7 +75,6 @@ import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.MathRoutines;
-import org.reprap.geometry.polyhedra.Attributes;
 
 /**
  * The main boundary-representation polygon class
@@ -98,10 +97,7 @@ public class Polygon {
      */
     private final List<Point2D> points = new ArrayList<Point2D>();
 
-    /**
-     * The atributes of the STL object that this polygon represents
-     */
-    private final Attributes attributes;
+    private final String material;
 
     /**
      * The minimum enclosing X-Y box round the polygon
@@ -111,11 +107,11 @@ public class Polygon {
     /**
      * Make an empty polygon
      */
-    public Polygon(final Attributes attributes, final boolean closed) {
-        if (attributes == null) {
-            throw new IllegalArgumentException("Polygon(): attributes must not be null");
+    public Polygon(final String material, final boolean closed) {
+        if (material == null) {
+            throw new IllegalArgumentException("Polygon(): material must not be null");
         }
-        this.attributes = attributes;
+        this.material = material;
         this.closed = closed;
     }
 
@@ -123,11 +119,15 @@ public class Polygon {
      * Deep copy - NB: Attributes _not_ deep copied.
      */
     Polygon(final Polygon p) {
-        this(p.attributes, p.closed);
+        this(p.material, p.closed);
         for (int i = 0; i < p.size(); i++) {
             add(new Point2D(p.point(i)));
         }
         closed = p.closed;
+    }
+
+    public String getMaterial() {
+        return material;
     }
 
     /**
@@ -200,10 +200,6 @@ public class Polygon {
 
     }
 
-    public Attributes getAttributes() {
-        return attributes;
-    }
-
     /**
      * @return the current surrounding box
      */
@@ -273,7 +269,7 @@ public class Polygon {
      * @return reversed polygon object
      */
     Polygon negate() {
-        final Polygon result = new Polygon(attributes, closed);
+        final Polygon result = new Polygon(material, closed);
         for (int i = size() - 1; i >= 0; i--) {
             result.add(point(i));
         }
@@ -298,7 +294,7 @@ public class Polygon {
         if (i < 0 || i >= size()) {
             throw new ArrayIndexOutOfBoundsException("polygon size " + size() + ", invalid index: " + i);
         }
-        final Polygon result = new Polygon(attributes, closed);
+        final Polygon result = new Polygon(material, closed);
         for (int j = 0; j < size(); j++) {
             result.add(point(i));
             i++;
@@ -432,7 +428,7 @@ public class Polygon {
         if (leng <= 3) {
             return new Polygon(this);
         }
-        final Polygon r = new Polygon(attributes, closed);
+        final Polygon r = new Polygon(material, closed);
         final double d2 = d * d;
 
         final int v1 = findAngleStart(0, d2);

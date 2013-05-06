@@ -15,7 +15,6 @@ import org.reprap.configuration.PrintSetting;
 import org.reprap.configuration.PrinterSetting;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Rectangle;
-import org.reprap.geometry.polyhedra.Attributes;
 
 public class GCodePrinter {
     private static final Logger LOGGER = LogManager.getLogger(GCodePrinter.class);
@@ -476,14 +475,14 @@ public class GCodePrinter {
         return gcode.getOutputFilename();
     }
 
-    public void selectExtruder(final Attributes att) {
+    public void selectExtruder(final String material) {
         for (int i = 0; i < extruders.length; i++) {
-            if (att.getMaterial().equals(extruders[i].getMaterial().getName())) {
+            if (material.equals(extruders[i].getMaterial().getName())) {
                 selectExtruder(i, true, true);
                 return;
             }
         }
-        LOGGER.error("selectExtruder() - extruder not found for: " + att.getMaterial());
+        LOGGER.error("selectExtruder() - extruder not found for: " + material);
     }
 
     public double getX() {

@@ -3,8 +3,6 @@ package org.reprap.geometry.polygons;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.reprap.geometry.polyhedra.Attributes;
-
 /**
  * A list of polygons
  */
@@ -63,14 +61,11 @@ final class Integer2DPolygonList {
 
     /**
      * Turn all the polygons into real-world polygons
-     * 
-     * @param rec
-     *            TODO
      */
-    PolygonList realPolygons(final Attributes a, final Integer2DRectangle rec) {
+    PolygonList realPolygons(final String material, final Integer2DRectangle rec) {
         final PolygonList result = new PolygonList();
         for (int i = 0; i < size(); i++) {
-            result.add(polygon(i).realPolygon(a, rec));
+            result.add(polygon(i).realPolygon(material, rec));
         }
         return result;
     }

@@ -258,7 +258,7 @@ public class SimulationPlotter extends JComponent {
         if (Rectangle.intersection(p.getBox(), scaledBox).isEmpty()) {
             return;
         }
-        g2d.setColor(colorMap.get(p.getAttributes().getMaterial()));
+        g2d.setColor(colorMap.get(p.getMaterial()));
         move(p.point(0));
         for (int i = 1; i < p.size(); i++) {
             plot(g2d, p.point(i));

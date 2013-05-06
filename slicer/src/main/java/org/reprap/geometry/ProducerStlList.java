@@ -244,7 +244,7 @@ class ProducerStlList {
         startLong(edges);
         LineSegment next = edges.get(0);
         edges.remove(0);
-        final Polygon result = new Polygon(next.getAttribute(), true);
+        final Polygon result = new Polygon(next.getAttribute().getMaterial(), true);
         result.add(next.getA());
         result.add(next.getB());
         final Point2D start = next.getA();
@@ -529,7 +529,7 @@ class ProducerStlList {
                     pgl = arcCompensate(pgl);
 
                     final CSG2D csgp = pgl.toCSG();
-                    result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), pgl.polygon(0).getAttributes()));
+                    result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), collector.attributes));
                 }
             }
         }
@@ -703,7 +703,7 @@ class ProducerStlList {
             final BooleanGridList slice) {
         for (int i = 0; i < list.size(); i++) {
             Polygon outline = list.polygon(i);
-            final String material = outline.getAttributes().getMaterial();
+            final String material = outline.getMaterial();
             final ExtruderSetting extruder = Configuration.getInstance().getCurrentConfiguration().getExtruderSetting(material);
             Line l = lc.getHatchDirection(false, extruder.getExtrusionSize()).pLine();
             if (i % 2 != 0 ^ lc.getMachineLayer() % 4 > 1) {
@@ -784,7 +784,7 @@ class ProducerStlList {
      * @param es
      */
     private Polygon arcCompensate(final Polygon polygon) {
-        final Attributes attributes = polygon.getAttributes();
+        final String material = polygon.getMaterial();
 
         // Multiply the geometrically correct result by factor
         final PrintSetting printSetting = configuration.getPrintSetting();
@@ -795,8 +795,8 @@ class ProducerStlList {
 
         // The points making the arc must be closer than this together
         final double shortSides = printSetting.getArcShortSides();
-        final double thickness = configuration.getExtruderSetting(attributes.getMaterial()).getExtrusionSize();
-        final Polygon result = new Polygon(attributes, polygon.isClosed());
+        final double thickness = configuration.getExtruderSetting(material).getExtrusionSize();
+        final Polygon result = new Polygon(material, polygon.isClosed());
         Point2D previous = polygon.point(polygon.size() - 1);
         Point2D current = polygon.point(0);
 

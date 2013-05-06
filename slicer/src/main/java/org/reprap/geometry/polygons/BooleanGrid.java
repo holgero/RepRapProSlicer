@@ -757,7 +757,7 @@ public class BooleanGrid {
      * with attributes a
      */
     public PolygonList allPerimiters(final Attributes a) {
-        PolygonList r = iAllPerimiters().realPolygons(a, rec);
+        PolygonList r = iAllPerimiters().realPolygons(a.getMaterial(), rec);
         r = r.simplify(realResolution);
         return r;
     }
@@ -1156,7 +1156,7 @@ public class BooleanGrid {
 
         resetVisited();
 
-        return snakes.realPolygons(a, rec).simplify(realResolution);
+        return snakes.realPolygons(a.getMaterial(), rec).simplify(realResolution);
     }
 
     /**

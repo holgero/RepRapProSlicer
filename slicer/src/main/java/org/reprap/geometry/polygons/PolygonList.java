@@ -321,10 +321,9 @@ public class PolygonList {
         }
 
         // First check that we all have the same material
-        final String material = polygon(0).getAttributes().getMaterial();
+        final String material = polygon(0).getMaterial();
         for (int i = 1; i < size(); i++) {
-            polygon(i).getAttributes();
-            if (!material.equals(polygon(i).getAttributes().getMaterial())) {
+            if (!material.equals(polygon(i).getMaterial())) {
                 throw new RuntimeException("RrPolygonList.radicalReOrder(): more than one material in the list!");
             }
         }
@@ -457,8 +456,8 @@ public class PolygonList {
      */
     public void cutPolygon(final int pol, int st, int en) {
         final Polygon old = polygon(pol);
-        final Polygon p1 = new Polygon(old.getAttributes(), old.isClosed());
-        final Polygon p2 = new Polygon(old.getAttributes(), old.isClosed());
+        final Polygon p1 = new Polygon(old.getMaterial(), old.isClosed());
+        final Polygon p2 = new Polygon(old.getMaterial(), old.isClosed());
         if (st > en) {
             final int temp = st;
             st = en;
@@ -497,8 +496,7 @@ public class PolygonList {
         PolygonIndexedPoint result = null;
         for (int i = 0; i < size(); i++) {
             final Polygon pgon = polygon(i);
-            pgon.getAttributes();
-            if (material.equals(pgon.getAttributes().getMaterial())) {
+            if (material.equals(pgon.getMaterial())) {
                 final int n = pgon.nearestVertex(p);
                 final double distance = Point2D.dSquared(p, pgon.point(n));
                 if (distance < minDistance) {

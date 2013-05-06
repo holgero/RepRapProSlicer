@@ -139,8 +139,7 @@ public class Producer {
         }
         for (int pol = 0; pol < fills.size(); pol++) {
             final Polygon polygon = fills.polygon(pol);
-            final double minLength = 3 * configuration.getExtruderSetting(polygon.getAttributes().getMaterial())
-                    .getExtrusionSize();
+            final double minLength = 3 * configuration.getExtruderSetting(polygon.getMaterial()).getExtrusionSize();
             if (polygon.getLength() > minLength) {
                 tempFillPolygons[getExtruderId(polygon)].add(polygon);
             }
@@ -154,8 +153,8 @@ public class Producer {
         }
         for (int extruder = 0; extruder < totalExtruders; extruder++) {
             if (tempBorderPolygons[extruder].size() > 0) {
-                double linkUp = configuration.getExtruderSetting(
-                        tempBorderPolygons[extruder].polygon(0).getAttributes().getMaterial()).getExtrusionSize();
+                double linkUp = configuration.getExtruderSetting(tempBorderPolygons[extruder].polygon(0).getMaterial())
+                        .getExtrusionSize();
                 linkUp = (4 * linkUp * linkUp);
                 tempBorderPolygons[extruder].radicalReOrder(linkUp);
                 tempBorderPolygons[extruder] = tempBorderPolygons[extruder].nearEnds(startNearHere);
@@ -166,9 +165,8 @@ public class Producer {
                 allPolygons[extruder].add(tempBorderPolygons[extruder]);
             }
             if (tempFillPolygons[extruder].size() > 0) {
-                tempFillPolygons[extruder].polygon(0).getAttributes();
-                double linkUp = configuration.getExtruderSetting(
-                        tempFillPolygons[extruder].polygon(0).getAttributes().getMaterial()).getExtrusionSize();
+                double linkUp = configuration.getExtruderSetting(tempFillPolygons[extruder].polygon(0).getMaterial())
+                        .getExtrusionSize();
                 linkUp = (4 * linkUp * linkUp);
                 tempFillPolygons[extruder].radicalReOrder(linkUp);
                 tempFillPolygons[extruder] = tempFillPolygons[extruder].nearEnds(startNearHere);
@@ -186,7 +184,7 @@ public class Producer {
         final List<MaterialSetting> materials = configuration.getMaterials();
         for (int i = 0; i < materials.size(); i++) {
             final MaterialSetting material = materials.get(i);
-            if (material.getName().equals(polygon.getAttributes().getMaterial())) {
+            if (material.getName().equals(polygon.getMaterial())) {
                 return i;
             }
         }

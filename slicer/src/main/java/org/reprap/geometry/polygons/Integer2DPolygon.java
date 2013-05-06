@@ -3,8 +3,6 @@ package org.reprap.geometry.polygons;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.reprap.geometry.polyhedra.Attributes;
-
 /**
  * Integer-point polygon
  */
@@ -160,8 +158,8 @@ final class Integer2DPolygon {
     /**
      * Convert the polygon into a polygon in the real world.
      */
-    Polygon realPolygon(final Attributes a, final Integer2DRectangle rec) {
-        final Polygon result = new Polygon(a, closed);
+    Polygon realPolygon(final String material, final Integer2DRectangle rec) {
+        final Polygon result = new Polygon(material, closed);
         for (int i = 0; i < size(); i++) {
             final Integer2DPoint r = point(i);
             result.add(rec.realPoint(r));

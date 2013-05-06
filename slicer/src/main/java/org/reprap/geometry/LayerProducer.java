@@ -10,7 +10,6 @@ import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
-import org.reprap.geometry.polyhedra.Attributes;
 
 class LayerProducer {
     private static final Logger LOGGER = LogManager.getLogger(LayerProducer.class);
@@ -67,8 +66,8 @@ class LayerProducer {
             printer.singleMove(polygon.point(0).x(), polygon.point(0).y(), currentZ, printer.getFastXYFeedrate(), false);
             printer.forceNextExtruder();
         }
-        final Attributes attributes = polygon.getAttributes();
-        printer.selectExtruder(attributes);
+        final String material = polygon.getMaterial();
+        printer.selectExtruder(material);
 
         if (simulationPlot != null) {
             final PolygonList pgl = new PolygonList();
@@ -76,7 +75,7 @@ class LayerProducer {
             simulationPlot.add(pgl);
         }
 
-        final ExtruderSetting extruder = configuration.getExtruderSetting(attributes.getMaterial());
+        final ExtruderSetting extruder = configuration.getExtruderSetting(material);
         final ExtrusionPath extrusionPath = new ExtrusionPath(polygon, calculateFeedrate(polygon,
                 extruder.getPrintExtrusionRate()));
         plotExtrusionPath(extrusionPath, extruder);
