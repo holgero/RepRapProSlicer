@@ -52,6 +52,7 @@ import org.reprap.geometry.polygons.CSG2D;
 import org.reprap.geometry.polygons.Circle;
 import org.reprap.geometry.polygons.HalfPlane;
 import org.reprap.geometry.polygons.Line;
+import org.reprap.geometry.polygons.LineSegment;
 import org.reprap.geometry.polygons.ParallelException;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
@@ -61,7 +62,6 @@ import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.geometry.polyhedra.CSG3D;
-import org.reprap.geometry.polyhedra.LineSegment;
 import org.reprap.geometry.polyhedra.STLObject;
 
 class ProducerStlList {

@@ -1,6 +1,4 @@
-package org.reprap.geometry.polyhedra;
-
-import org.reprap.geometry.polygons.Point2D;
+package org.reprap.geometry.polygons;
 
 /**
  * Line segment consisting of two points.
