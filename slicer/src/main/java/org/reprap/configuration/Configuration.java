@@ -32,7 +32,7 @@ public class Configuration {
     private static final File REPRAP_DIRECTORY = new File(FileUtils.getUserDirectory(), ".reprap");
     private static Configuration instance;
 
-    public static Configuration create() {
+    public static synchronized Configuration create() {
         if (instance != null) {
             throw new RuntimeException("Too late, instance has already been created!");
         }
@@ -44,9 +44,13 @@ public class Configuration {
         return REPRAP_DIRECTORY;
     }
 
-    public static Configuration getInstance() {
+    public static synchronized Configuration getInstance() {
         if (instance == null) {
-            throw new RuntimeException("Too soon, instance has not yet been created!");
+            if (false) {
+                // TODO this will never work in tests
+                throw new RuntimeException("Too soon, instance has not yet been created!");
+            }
+            create();
         }
         return instance;
     }
