@@ -32,7 +32,6 @@ import java.io.IOException;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -53,7 +52,6 @@ import org.reprap.geometry.ProductionProgressListener;
 public class MainFrame extends JFrame {
     private final JMenuItem produceProduceB;
     private final JMenuItem cancelMenuItem;
-    private final JCheckBoxMenuItem layerPause;
     private final RepRapBuild builder;
     private final JFileChooser chooser = new JFileChooser();
     private final SlicerFrame slicerFrame;
@@ -73,7 +71,6 @@ public class MainFrame extends JFrame {
         produceProduceB = new JMenuItem("Start build...", KeyEvent.VK_B);
         cancelMenuItem = new JMenuItem("Cancel", KeyEvent.VK_P);
         cancelMenuItem.setEnabled(false);
-        layerPause = new JCheckBoxMenuItem("Pause before layer");
 
         final Box builderFrame = new Box(BoxLayout.Y_AXIS);
         builderFrame.add(new JLabel("Arrange items to print on the build bed"));
@@ -221,10 +218,6 @@ public class MainFrame extends JFrame {
         builder.zRotate(angle);
     }
 
-    void setLayerPause(final boolean state) {
-        layerPause.setState(state);
-    }
-
     private void producing(final boolean state) {
         cancelMenuItem.setEnabled(state);
         produceProduceB.setEnabled(!state);
@@ -331,7 +324,6 @@ public class MainFrame extends JFrame {
                 Thread.currentThread().setName("Producer");
                 builder.mouseToWorld();
                 final Producer producer = new Producer(printer, builder.getSTLs(), listener, displayPaths);
-                printer.setLayerPause(layerPause);
                 try {
                     producer.produce();
                     if (autoExit) {

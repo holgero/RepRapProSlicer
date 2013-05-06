@@ -31,7 +31,6 @@ public class PrintTabFrame extends JInternalFrame {
     private JLabel expectedBuildTime;
     private JLabel expectedFinishTime;
     private AbstractButton sliceButton;
-    private AbstractButton layerPauseCheck;
     private JLabel fileNameBox;
     private JButton loadSTL;
     private JButton loadRFO;
@@ -136,16 +135,6 @@ public class PrintTabFrame extends JInternalFrame {
             }
         });
 
-        layerPause(false);
-        layerPauseCheck = new JCheckBox();
-        layerPauseCheck.setText("Pause between layers");
-        layerPauseCheck.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(final java.awt.event.ActionEvent evt) {
-                layerPause(layerPauseCheck.isSelected());
-            }
-        });
-
         final JButton getWebPage = new JButton();
         getWebPage.setIcon(new ImageIcon(ClassLoader.getSystemResource("reprappro_logo-0.5.png")));
         getWebPage.addActionListener(new java.awt.event.ActionListener() {
@@ -232,7 +221,6 @@ public class PrintTabFrame extends JInternalFrame {
                                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                         .add(layout
                                                 .createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                                .add(layerPauseCheck)
                                                 .add(displayPathsCheck)
                                                 .add(changeMachineLabel)
                                                 .add(layout
@@ -302,12 +290,7 @@ public class PrintTabFrame extends JInternalFrame {
                                                                 .createParallelGroup()
                                                                 .add(loadSTL, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
                                                                         41, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                                                .add(layout
-                                                                        .createSequentialGroup()
-                                                                        .add(layerPauseCheck)
-                                                                        .addPreferredGap(
-                                                                                org.jdesktop.layout.LayoutStyle.RELATED)
-                                                                        .add(displayPathsCheck)))
+                                                                .add(layout.createSequentialGroup().add(displayPathsCheck)))
                                                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                                         .add(saveSCAD, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 41,
                                                                 org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -405,10 +388,6 @@ public class PrintTabFrame extends JInternalFrame {
             }
         }
         System.exit(0);
-    }
-
-    private void layerPause(final boolean p) {
-        mainFrame.setLayerPause(p);
     }
 
     private static void getWebPageActionPerformed() {

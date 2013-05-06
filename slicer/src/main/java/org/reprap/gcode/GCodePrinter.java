@@ -8,9 +8,6 @@ import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JOptionPane;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Configuration;
@@ -32,7 +29,6 @@ public class GCodePrinter {
      * Have we actually used this extruder?
      */
     private boolean extruderUsed[];
-    private JCheckBoxMenuItem layerPauseCheckbox = null;
     /**
      * Current X position of the extruder
      */
@@ -342,13 +338,7 @@ public class GCodePrinter {
             final File temporaryFile = gcode.openTemporaryOutFile(machineLayer);
             result = temporaryFile.getPath();
         }
-
         extruders[currentExtruder].zeroExtrudedLength(really);
-
-        if (layerPauseCheckbox != null && layerPauseCheckbox.isSelected()) {
-            layerPause();
-        }
-
         currentZ = round(machineZ - zStep, 4);
         singleMove(getX(), getY(), machineZ, getFastFeedrateZ(), really);
 
@@ -552,27 +542,6 @@ public class GCodePrinter {
 
     public double getFastFeedrateZ() {
         return round(getPrinterSetting().getMaximumFeedrateZ(), 1);
-    }
-
-    /**
-     * Display a message indicating a layer is about to be printed and wait for
-     * the user to acknowledge
-     */
-    private static void layerPause() {
-        JOptionPane.showMessageDialog(null, "A new layer is about to be produced");
-    }
-
-    /**
-     * Set the source checkbox used to determine if there should be a pause
-     * between layers.
-     * 
-     * @param layerPause
-     *            The source checkbox used to determine if there should be a
-     *            pause. This is a checkbox rather than a boolean so it can be
-     *            changed on the fly.
-     */
-    public void setLayerPause(final JCheckBoxMenuItem layerPause) {
-        layerPauseCheckbox = layerPause;
     }
 
     /**
