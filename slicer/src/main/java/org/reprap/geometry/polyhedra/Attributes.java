@@ -1,16 +1,9 @@
 package org.reprap.geometry.polyhedra;
 
-import java.util.List;
-
 import javax.media.j3d.Appearance;
-import javax.media.j3d.Material;
-import javax.vecmath.Color3f;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.configuration.Configuration;
-import org.reprap.configuration.CurrentConfiguration;
-import org.reprap.configuration.MaterialSetting;
 
 /**
  * Holds RepRap attributes that are attached to Java3D shapes as user data,
@@ -19,13 +12,13 @@ import org.reprap.configuration.MaterialSetting;
  * @author adrian
  */
 public class Attributes {
-    private static final Logger LOGGER = LogManager.getLogger(Attributes.class);
-    private MaterialSetting material;
+    static final Logger LOGGER = LogManager.getLogger(Attributes.class);
+    private String material;
     private final STLObject parent;
     private Appearance appearance;
 
-    public Attributes(final STLObject parent, final Appearance appearance) {
-        material = null;
+    public Attributes(final STLObject parent, final Appearance appearance, final String material) {
+        this.material = material;
         this.parent = parent;
         this.appearance = appearance;
     }
@@ -36,10 +29,11 @@ public class Attributes {
     }
 
     public String getMaterial() {
-        if (material == null) {
-            return null;
-        }
-        return material.getName();
+        return material;
+    }
+
+    public void setMaterial(final String material) {
+        this.material = material;
     }
 
     public STLObject getParent() {
@@ -50,31 +44,10 @@ public class Attributes {
         return appearance;
     }
 
-    public void setMaterial(final String newMaterial) {
-        material = getMaterialSettings(newMaterial);
-        appearance = createAppearance(material);
+    public void setAppearance(final Appearance appearance) {
+        this.appearance = appearance;
         if (parent != null) {
             parent.restoreAppearance();
         }
-    }
-
-    private static Appearance createAppearance(final MaterialSetting material) {
-        final Color3f color = material.getColor();
-        final Appearance appearance = new Appearance();
-        appearance.setMaterial(new Material(color, Constants.BLACK, color, Constants.BLACK, 101f));
-        return appearance;
-    }
-
-    private static MaterialSetting getMaterialSettings(final String materialName) {
-        final CurrentConfiguration configuration = Configuration.getInstance().getCurrentConfiguration();
-        final List<MaterialSetting> materials = configuration.getMaterials();
-        for (final MaterialSetting material : materials) {
-            if (material.getName().equals(materialName)) {
-                return material;
-            }
-        }
-        final MaterialSetting substitute = materials.get(0);
-        LOGGER.warn("Requested material " + materialName + " not found, substituting with " + substitute.getName() + ".");
-        return substitute;
     }
 }

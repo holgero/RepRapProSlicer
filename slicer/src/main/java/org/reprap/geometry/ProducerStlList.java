@@ -402,9 +402,8 @@ class ProducerStlList {
         if (!printSetting.printShield()) {
             return;
         }
-        final STLObject shield = new STLObject();
-        final Attributes attribute = shield.addSTL(printSetting.getShieldStlFile(), null);
-        attribute.setMaterial(currentConfiguration.getMaterials().get(0).getName());
+        final String shieldMaterial = currentConfiguration.getMaterials().get(0).getName();
+        final STLObject shield = STLObject.createStlObjectFromFile(printSetting.getShieldStlFile(), shieldMaterial);
 
         final BoundingBox boxWithoutShield = getBoundingBox(stls);
         final double modelZMax = boxWithoutShield.getZint().high();
@@ -479,9 +478,9 @@ class ProducerStlList {
     }
 
     private static final class EdgeAndCsgsCollector {
-        private final List<LineSegment> edges = new ArrayList<>();
-        private final List<CSG3D> csgs = new ArrayList<>();
-        private String material = null;
+        final List<LineSegment> edges = new ArrayList<>();
+        final List<CSG3D> csgs = new ArrayList<>();
+        String material = null;
     }
 
     /**
@@ -545,7 +544,7 @@ class ProducerStlList {
         final Matrix4d m4 = new Matrix4d();
         trans.get(m4);
 
-        for (int i = 0; i < stlObject.getCount(); i++) {
+        for (int i = 0; i < stlObject.size(); i++) {
             final BranchGroup group = stlObject.getSTL(i);
             final String material = ((Attributes) (group.getUserData())).getMaterial();
             final EdgeAndCsgsCollector collector = collectorMap.get(material);

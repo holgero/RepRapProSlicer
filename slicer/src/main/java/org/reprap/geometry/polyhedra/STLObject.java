@@ -86,12 +86,13 @@ import javax.vecmath.Vector3d;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.configuration.Configuration;
+import org.reprap.configuration.CurrentConfiguration;
+import org.reprap.configuration.MaterialSetting;
 import org.reprap.gui.MouseObject;
 import org.reprap.io.rfo.CSGReader;
 import org.reprap.io.stl.StlFile;
 
-import com.sun.j3d.loaders.IncorrectFormatException;
-import com.sun.j3d.loaders.ParsingErrorException;
 import com.sun.j3d.loaders.Scene;
 import com.sun.j3d.utils.picking.PickTool;
 
@@ -132,7 +133,7 @@ public class STLObject {
         handle.addChild(trans);
         top.addChild(handle);
 
-        final Attributes nullAtt = new Attributes(this, null);
+        final Attributes nullAtt = new Attributes(this, null, null);
         top.setUserData(nullAtt);
         handle.setUserData(nullAtt);
         trans.setUserData(nullAtt);
@@ -160,69 +161,63 @@ public class STLObject {
         }
     }
 
-    private static Appearance unselectedApp() {
-        final Color3f unselectedColour = new Color3f((float) 0.3, (float) 0.3, (float) 0.3);
-        final Appearance unselectedApp = new Appearance();
-        unselectedApp.setMaterial(new Material(unselectedColour, Constants.BLACK, unselectedColour, Constants.BLACK, 0f));
-        return unselectedApp;
+    /**
+     * Create an STL object from a file with a given appearance and without a
+     * material.
+     */
+    public static STLObject loadIndependentSTL(final File location, final Appearance appearance) {
+        return load(location, appearance, null);
     }
 
     /**
-     * Load an STL object from a file
+     * Create an STL object from a file with the appearance determined by its
+     * material.
      */
-    public Attributes addSTL(final File location, final STLObject lastPicked) {
-        try {
-            final Attributes att = new Attributes(this, unselectedApp());
-            final STLFileContents child = loadSingleSTL(location, att, lastPicked);
-            if (lastPicked == null) {
-                contents.add(child);
-            } else {
-                lastPicked.contents.add(child);
-            }
-            return att;
-        } catch (final FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (final IncorrectFormatException e) {
-            throw new RuntimeException(e);
-        } catch (final ParsingErrorException e) {
-            throw new RuntimeException(e);
-        }
+    public static STLObject createStlObjectFromFile(final File location, final String material) {
+        final MaterialSetting materialSettings = getMaterialSettings(material);
+        final Appearance appearance = STLObject.createAppearance(materialSettings);
+        return load(location, appearance, materialSettings.getName());
+    }
+
+    private static STLObject load(final File location, final Appearance appearance, final String material) {
+        final STLObject object = new STLObject();
+        final Attributes attribute = new Attributes(object, appearance, material);
+        object.loadSingleSTL(location, attribute, false);
+        return object;
     }
 
     /**
-     * Load an STL object from a file and set its appearance
+     * Add the contents of an STL file to this STL object.
      */
-    public void loadIndependentSTL(final File location, final Appearance app) {
-        try {
-            contents.add(loadSingleSTL(location, new Attributes(this, app), null));
-        } catch (final FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (final IncorrectFormatException e) {
-            throw new RuntimeException(e);
-        } catch (final ParsingErrorException e) {
-            throw new RuntimeException(e);
-        }
+    public void addSTL(final File location, final String material) {
+        final MaterialSetting materialSettings = getMaterialSettings(material);
+        final Attributes attribute = new Attributes(this, createAppearance(materialSettings), materialSettings.getName());
+        loadSingleSTL(location, attribute, true);
     }
 
     /**
-     * Actually load the stl file and set its attributes. Offset decides where
-     * to put it relative to the origin. If lastPicked is null, the file is
-     * loaded as a new independent STLObject; if not it is added to lastPicked
-     * and subsequently is subjected to all the same transforms, so they retain
-     * their relative positions. This is how multi-material objects are loaded.
+     * Actually load the stl file and set its attributes. If add is false, the
+     * file is loaded as a new independent STLObject; if not it is added to this
+     * STLObject and subsequently is subjected to all the same transforms, so it
+     * retains the same relative position. This is how multi-material objects
+     * are loaded.
      */
-    private STLFileContents loadSingleSTL(final File location, final Attributes att, final STLObject lastPicked)
-            throws FileNotFoundException, IncorrectFormatException, ParsingErrorException {
+    private void loadSingleSTL(final File location, final Attributes att, final boolean add) {
         final CSGReader csgr = new CSGReader(location);
         CSG3D csgResult = null;
         if (csgr.csgAvailable()) {
             csgResult = csgr.csg();
         }
 
-        final StlFile loader = new StlFile();
-        final Scene scene = loader.load(location.getAbsolutePath());
-        if (scene == null) {
-            return new STLFileContents(location, null, csgResult, att, 0);
+        final Scene scene;
+        try {
+            scene = new StlFile().load(location.getAbsolutePath());
+            if (scene == null) {
+                contents.add(new STLFileContents(location, null, csgResult, att, 0));
+                return;
+            }
+        } catch (final FileNotFoundException e) {
+            throw new RuntimeException(e);
         }
 
         final BranchGroup bgResult = scene.getSceneGroup();
@@ -246,16 +241,14 @@ public class STLObject {
         }
 
         bgResult.setUserData(att);
-        if (lastPicked != null) {
-            // Add this object to lastPicked
-            csgResult = setOffset(bgResult, csgResult, lastPicked.rootOffset);
-            lastPicked.stl.addChild(bgResult);
-            lastPicked.setAppearance(lastPicked.getAppearance());
-            lastPicked.updateBox(bbox);
+        stl.addChild(bgResult);
+        if (add) {
+            // Add the loaded stuff to us
+            csgResult = setOffset(bgResult, csgResult, rootOffset);
+            setAppearance(getAppearance());
+            updateBox(bbox);
         } else {
             // New independent object.
-            stl.addChild(bgResult);
-
             Vector3d bottomLeftShift;
 
             if (bbox != null) {
@@ -285,7 +278,7 @@ public class STLObject {
             restoreAppearance();
         }
 
-        return new STLFileContents(location, bgResult, csgResult, att, volume);
+        contents.add(new STLFileContents(location, bgResult, csgResult, att, volume));
     }
 
     private void updateBox(final BoundingBox bb) {
@@ -409,11 +402,8 @@ public class STLObject {
      * method to recursively set the user data for objects in the scenegraph
      * tree we also set the capabilites on Shape3D objects required by the
      * PickTool
-     * 
-     * @param value
-     * @param me
      */
-    private void recursiveSetUserData(final Object value, final Object me) {
+    private static void recursiveSetUserData(final Object value, final Object me) {
         if (value instanceof SceneGraphObject) {
             // set the user data for the item
             final SceneGraphObject sg = (SceneGraphObject) value;
@@ -438,7 +428,7 @@ public class STLObject {
 
     // Move the object by p permanently (i.e. don't just apply a transform).
 
-    private void recursiveSetOffset(final Object value, final Vector3d p) {
+    private static void recursiveSetOffset(final Object value, final Vector3d p) {
         if (value instanceof SceneGraphObject != false) {
             // set the user data for the item
             final SceneGraphObject sg = (SceneGraphObject) value;
@@ -459,7 +449,7 @@ public class STLObject {
         }
     }
 
-    private CSG3D setOffset(final BranchGroup bg, final CSG3D c, final Vector3d p) {
+    private static CSG3D setOffset(final BranchGroup bg, final CSG3D c, final Vector3d p) {
         recursiveSetOffset(bg, p);
         if (c == null) {
             return null;
@@ -555,10 +545,6 @@ public class STLObject {
 
     public BranchGroup getSTL(final int i) {
         return contents.get(i).getStl();
-    }
-
-    public int getCount() {
-        return contents.size();
     }
 
     public CSG3D getCSG(final int i) {
@@ -836,6 +822,26 @@ public class STLObject {
             return 0;
         }
         return contents.get(contents.size() - 1).getVolume();
+    }
+
+    public static Appearance createAppearance(final MaterialSetting material) {
+        final Color3f color = material.getColor();
+        final Appearance appearance = new Appearance();
+        appearance.setMaterial(new Material(color, Constants.BLACK, color, Constants.BLACK, 101f));
+        return appearance;
+    }
+
+    private static MaterialSetting getMaterialSettings(final String materialName) {
+        final CurrentConfiguration configuration = Configuration.getInstance().getCurrentConfiguration();
+        final List<MaterialSetting> materials = configuration.getMaterials();
+        for (final MaterialSetting material : materials) {
+            if (material.getName().equals(materialName)) {
+                return material;
+            }
+        }
+        final MaterialSetting substitute = materials.get(0);
+        LOGGER.warn("Requested material " + materialName + " not found, substituting with " + substitute.getName() + ".");
+        return substitute;
     }
 
     /**

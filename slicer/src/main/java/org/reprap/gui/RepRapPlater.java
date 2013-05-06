@@ -223,8 +223,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
 
         final Appearance workingVolumeAppearance = new Appearance();
         workingVolumeAppearance.setMaterial(new Material(MACHINE_COLOR, Constants.BLACK, MACHINE_COLOR, Constants.BLACK, 0f));
-        workingVolume = new STLObject();
-        workingVolume.loadIndependentSTL(baseFile, workingVolumeAppearance);
+        workingVolume = STLObject.loadIndependentSTL(baseFile, workingVolumeAppearance);
         workingVolumeAndStls.addChild(workingVolume.top());
 
         // Set the mouse to move everything
@@ -301,9 +300,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
         offset.y = 0;
         offset.z = 0;
         for (int i = 0; i < number; i++) {
-            final STLObject stl = new STLObject();
-            final Attributes newAtt = stl.addSTL(file, null);
-            newAtt.setMaterial(originalAttributes.getMaterial());
+            final STLObject stl = STLObject.createStlObjectFromFile(file, originalAttributes.getMaterial());
             stl.translate(offset);
             if (stl.numChildren() > 0) {
                 workingVolumeAndStls.addChild(stl.top());
@@ -313,14 +310,15 @@ public class RepRapPlater extends JPanel implements MouseListener {
         }
     }
 
-    public void anotherSTLFile(final File file, final boolean centre) {
+    public void anotherSTLFile(final File file) {
         if (file == null) {
             return;
         }
-        final STLObject stl = new STLObject();
-        final Attributes att = stl.addSTL(file, lastPicked);
-        if (lastPicked == null && centre) {
 
+        final STLObject stl;
+        final String defaultMaterial = currentConfiguration.getMaterials().get(0).getName();
+        if (lastPicked == null) {
+            stl = STLObject.createStlObjectFromFile(file, defaultMaterial);
             final Point2D middle = Point2D.mul(0.5, new Point2D(200, 200));
             final Vector3d v = new Vector3d(middle.x(), middle.y(), 0);
             final Vector3d e = stl.extent();
@@ -329,14 +327,14 @@ public class RepRapPlater extends JPanel implements MouseListener {
             e.y = -0.5 * e.y;
             v.add(e);
             stl.translate(v);
+        } else {
+            stl = lastPicked;
+            stl.addSTL(file, defaultMaterial);
         }
-        // New separate object, or just appended to lastPicked?
-        if (stl.numChildren() > 0) {
-            workingVolumeAndStls.addChild(stl.top());
-            stls.add(stl);
-        }
+        workingVolumeAndStls.addChild(stl.top());
+        stls.add(stl);
 
-        MaterialRadioButtons.createAndShowGUI(att, this, stls.size() - 1, stl.volume());
+        MaterialRadioButtons.createAndShowGUI(stl.attributes(stl.size() - 1), this, stls.size() - 1, stl.volume());
     }
 
     // Callback for when the user has a pre-loaded STL and attribute

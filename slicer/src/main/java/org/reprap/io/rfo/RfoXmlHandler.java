@@ -21,28 +21,9 @@ final class RfoXmlHandler extends DefaultHandler {
     private STLObject stl;
 
     /**
-     * The first of a list of STLs being read.
-     */
-    private STLObject firstSTL;
-    /**
      * The current XML item
      */
     private String element = "";
-
-    /**
-     * File location for reading (eg for an input STL file).
-     */
-    private String location = "";
-
-    /**
-     * What type of file (Only STLs supported at the moment).
-     */
-    private String filetype = "";
-
-    /**
-     * The name of the material (i.e. extruder) that this item is made from.
-     */
-    private String material = "";
 
     /**
      * Transfom matrix to get an item in the right place.
@@ -102,16 +83,16 @@ final class RfoXmlHandler extends DefaultHandler {
 
         if (element.equalsIgnoreCase("reprap-fab-at-home-build")) {
         } else if (element.equalsIgnoreCase("object")) {
-            stl = new STLObject();
-            firstSTL = null;
+            stl = null;
         } else if (element.equalsIgnoreCase("files")) {
         } else if (element.equalsIgnoreCase("file")) {
-            location = atts.getValue("location");
-            filetype = atts.getValue("filetype");
-            material = atts.getValue("material");
-            if (!filetype.equalsIgnoreCase("application/sla")) {
-                throw new RuntimeException(
-                        "XMLIn.startElement(): unreconised object file type (should be \"application/sla\"): " + filetype);
+            validateFiletype(atts);
+            final String location = atts.getValue("location");
+            final String material = atts.getValue("material");
+            if (stl == null) {
+                stl = STLObject.createStlObjectFromFile(new File(rfoDir, location), material);
+            } else {
+                stl.addSTL(new File(rfoDir, location), material);
             }
         } else if (element.equalsIgnoreCase("transform3D")) {
             setMToIdentity();
@@ -120,7 +101,14 @@ final class RfoXmlHandler extends DefaultHandler {
                 mElements[rowNumber * 4 + column] = Double.parseDouble(atts.getValue("m" + rowNumber + column));
             }
         } else {
-            throw new RuntimeException("XMLIn.startElement(): unreconised RFO element: " + element);
+            throw new RuntimeException("XMLIn.startElement(): unrecognised RFO element: " + element);
+        }
+    }
+
+    private static void validateFiletype(final org.xml.sax.Attributes atts) {
+        final String filetype = atts.getValue("filetype");
+        if (!filetype.equalsIgnoreCase("application/sla")) {
+            throw new RuntimeException("unrecognised object file type (should be \"application/sla\"): " + filetype);
         }
     }
 
@@ -137,17 +125,7 @@ final class RfoXmlHandler extends DefaultHandler {
             stl.setTransform(transform);
             stls.add(stl);
         } else if (element.equalsIgnoreCase("files")) {
-
         } else if (element.equalsIgnoreCase("file")) {
-            final org.reprap.geometry.polyhedra.Attributes att = stl.addSTL(new File(rfoDir, location), firstSTL);
-            if (firstSTL == null) {
-                firstSTL = stl;
-            }
-            att.setMaterial(material);
-            location = "";
-            filetype = "";
-            material = "";
-
         } else if (element.equalsIgnoreCase("transform3D")) {
             if (rowNumber != 4) {
                 throw new RuntimeException("XMLIn.endElement(): incomplete Transform3D matrix - last row number is not 4: "
@@ -157,7 +135,7 @@ final class RfoXmlHandler extends DefaultHandler {
         } else if (element.equalsIgnoreCase("row")) {
             rowNumber++;
         } else {
-            throw new RuntimeException("XMLIn.endElement(): unreconised RFO element: " + element);
+            throw new RuntimeException("XMLIn.endElement(): unrecognised RFO element: " + element);
         }
     }
 }

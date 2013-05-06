@@ -64,35 +64,25 @@ class MaterialRadioButtons extends JPanel {
         radioPanel.add(jLabel1);
 
         final List<MaterialSetting> materials = Configuration.getInstance().getCurrentConfiguration().getMaterials();
-        String matname = att.getMaterial();
-        if (matname == null) {
-            matname = "";
-        }
+        final String matname = att.getMaterial();
 
         final ButtonGroup bGroup = new ButtonGroup();
-        boolean foundMaterial = false;
         for (final MaterialSetting material : materials) {
             final JRadioButton b = new JRadioButton(material.getName());
             b.setActionCommand(material.getName());
             b.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(final ActionEvent e) {
-                    att.setMaterial(e.getActionCommand());
+                    final String materialName = e.getActionCommand();
+                    att.setMaterial(materialName);
+                    att.setAppearance(STLObject.createAppearance(material));
                 }
             });
             if (matname.contentEquals(material.getName())) {
                 b.setSelected(true);
-                foundMaterial = true;
             }
             bGroup.add(b);
             radioPanel.add(b);
-        }
-        if (!foundMaterial) {
-            att.setMaterial(materials.get(0).getName());
-            final JRadioButton b = (JRadioButton) bGroup.getElements().nextElement();
-            b.setSelected(true);
-        } else {
-            copies.setEnabled(false); // If it's already loaded, don't make multiple copies (FUTURE: why not...?)
         }
 
         final JButton okButton = new JButton();

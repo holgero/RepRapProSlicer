@@ -235,7 +235,7 @@ public class MainFrame extends JFrame {
                 plater.addRFOFile(result);
             }
             if (extensions[0].toUpperCase().contentEquals("STL")) {
-                plater.anotherSTLFile(result, true);
+                plater.anotherSTLFile(result);
             }
             return result;
         }
