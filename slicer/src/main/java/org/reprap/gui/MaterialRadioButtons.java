@@ -20,7 +20,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
-import org.reprap.configuration.Configuration;
+import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.MaterialSetting;
 import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.geometry.polyhedra.STLObject;
@@ -38,7 +38,7 @@ class MaterialRadioButtons extends JPanel {
     private static RepRapPlater rrb;
     private static int stlIndex;
 
-    private MaterialRadioButtons(final double volume) {
+    private MaterialRadioButtons(final CurrentConfiguration currentConfiguration, final double volume) {
         super(new BorderLayout());
         final JPanel radioPanel = new JPanel(new GridLayout(0, 1));
         radioPanel.setSize(300, 200);
@@ -63,7 +63,7 @@ class MaterialRadioButtons extends JPanel {
         jLabel1.setHorizontalAlignment(SwingConstants.CENTER);
         radioPanel.add(jLabel1);
 
-        final List<MaterialSetting> materials = Configuration.getInstance().getCurrentConfiguration().getMaterials();
+        final List<MaterialSetting> materials = currentConfiguration.getMaterials();
         final String matname = att.getMaterial();
 
         final ButtonGroup bGroup = new ButtonGroup();
@@ -106,7 +106,8 @@ class MaterialRadioButtons extends JPanel {
         dialog.dispose();
     }
 
-    static void createAndShowGUI(final Attributes a, final RepRapPlater r, final int index, final double volume) {
+    static void createAndShowGUI(final Attributes a, final RepRapPlater r, final int index, final double volume,
+            final CurrentConfiguration currentConfiguration) {
         att = a;
         rrb = r;
         stlIndex = index;
@@ -117,7 +118,7 @@ class MaterialRadioButtons extends JPanel {
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         //Create and set up the content pane.
-        final JComponent newContentPane = new MaterialRadioButtons(volume);
+        final JComponent newContentPane = new MaterialRadioButtons(currentConfiguration, volume);
         newContentPane.setOpaque(true); //content panes must be opaque
         dialog.setContentPane(newContentPane);
 
@@ -127,7 +128,8 @@ class MaterialRadioButtons extends JPanel {
         dialog.setVisible(true);
     }
 
-    static void createAndShowGUI(final Attributes a, final RepRapPlater r, final STLObject lastPicked) {
+    static void createAndShowGUI(final Attributes a, final RepRapPlater r, final STLObject lastPicked,
+            final CurrentConfiguration currentConfiguration) {
         if (lastPicked == null) {
             return;
         }
@@ -139,7 +141,7 @@ class MaterialRadioButtons extends JPanel {
             }
         }
         if (index >= 0) {
-            createAndShowGUI(a, r, index, r.getSTLs().get(index).volume());
+            createAndShowGUI(a, r, index, r.getSTLs().get(index).volume(), currentConfiguration);
         }
     }
 }

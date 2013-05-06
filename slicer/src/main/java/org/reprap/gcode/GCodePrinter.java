@@ -9,7 +9,7 @@ import java.util.Date;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.configuration.Configuration;
+import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.MathRoutines;
 import org.reprap.configuration.PrintSetting;
 import org.reprap.configuration.PrinterSetting;
@@ -18,57 +18,43 @@ import org.reprap.geometry.polygons.Rectangle;
 
 public class GCodePrinter {
     private static final Logger LOGGER = LogManager.getLogger(GCodePrinter.class);
-    private final GCodeWriter gcode = new GCodeWriter();
+    private final CurrentConfiguration currentConfiguration;
+    private final GCodeWriter gcode;
+    private final GCodeExtruder extruders[];
+    private final boolean extruderUsed[];
+    private final Purge purge;
     /**
      * Force an extruder to be selected on startup
      */
     private boolean forceSelection = true;
-    /**
-     * Have we actually used this extruder?
-     */
-    private boolean extruderUsed[];
-    /**
-     * Current X position of the extruder
-     */
     private double currentX = 0;
-    /**
-     * Current Y position of the extruder
-     */
     private double currentY = 0;
-    /**
-     * Current Z position of the extruder
-     */
     private double currentZ = 0;
-    /**
-     * Current feedrate for the machine.
-     */
     private double currentFeedrate = 0;
-    /**
-     * Array containing the extruders on the 3D printer
-     */
-    private GCodeExtruder extruders[];
     private int currentExtruder;
-    private Purge purge;
 
-    public GCodePrinter() {
-        loadExtruders();
+    public GCodePrinter(final CurrentConfiguration currentConfiguration, final Purge purge) {
+        this.currentConfiguration = currentConfiguration;
+        this.purge = purge;
+        gcode = new GCodeWriter(getPrintSetting().isVerboseGCode());
         gcode.writeCommand("M110", "reset the line numbers");
-    }
-
-    private void loadExtruders() {
         final int extruderCount = getPrinterSetting().getExtruderSettings().size();
         if (extruderCount < 1) {
             throw new IllegalStateException("A Reprap printer must contain at least one extruder.");
         }
         extruders = new GCodeExtruder[extruderCount];
-        for (int i = 0; i < extruders.length; i++) {
-            extruders[i] = new GCodeExtruder(gcode, i, this);
-        }
         extruderUsed = new boolean[extruderCount];
+        currentExtruder = 0;
+        createExtruders();
+    }
+
+    private void createExtruders() {
+        for (int i = 0; i < extruders.length; i++) {
+            extruders[i] = new GCodeExtruder(gcode, i, currentConfiguration);
+        }
         for (int i = 0; i < extruderUsed.length; i++) {
             extruderUsed[i] = false;
         }
-        currentExtruder = 0;
     }
 
     private void qFeedrate(final double feedrate) {
@@ -218,7 +204,7 @@ public class GCodePrinter {
         currentZ = z;
     }
 
-    private static void checkCoordinates(final double x, final double y, final double z) {
+    private void checkCoordinates(final double x, final double y, final double z) {
         checkCoordinate("x", x, 0, getMaximumXvalue());
         checkCoordinate("y", y, 0, getMaximumYvalue());
         checkCoordinate("z", z, 0, getMaximumZvalue());
@@ -560,31 +546,27 @@ public class GCodePrinter {
         return new Point2D(getMaximumXvalue(), getMaximumYvalue());
     }
 
-    public void setPurge(final Purge purge) {
-        this.purge = purge;
-    }
-
-    private static double getMaximumXvalue() {
+    private double getMaximumXvalue() {
         return getPrinterSetting().getBedSizeX();
     }
 
-    private static double getMaximumYvalue() {
+    private double getMaximumYvalue() {
         return getPrinterSetting().getBedSizeY();
     }
 
-    private static double getMaximumZvalue() {
+    private double getMaximumZvalue() {
         return getPrinterSetting().getMaximumZ();
     }
 
-    private static boolean useRelativeExtrusion() {
+    private boolean useRelativeExtrusion() {
         return getPrinterSetting().useRelativeDistanceE();
     }
 
-    private static PrintSetting getPrintSetting() {
-        return Configuration.getInstance().getCurrentConfiguration().getPrintSetting();
+    private PrintSetting getPrintSetting() {
+        return currentConfiguration.getPrintSetting();
     }
 
-    private static PrinterSetting getPrinterSetting() {
-        return Configuration.getInstance().getCurrentConfiguration().getPrinterSetting();
+    private PrinterSetting getPrinterSetting() {
+        return currentConfiguration.getPrinterSetting();
     }
 }

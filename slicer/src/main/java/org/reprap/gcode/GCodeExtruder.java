@@ -6,6 +6,7 @@ import org.reprap.configuration.Configuration;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.MaterialSetting;
+import org.reprap.configuration.PrinterSetting;
 
 public class GCodeExtruder {
     private final GCodeWriter gcode;
@@ -42,18 +43,16 @@ public class GCodeExtruder {
      */
     private double extrusionOverRun;
     private double extrudeRatio = 1;
-    private final GCodePrinter printer;
     private double retractionDistance;
     private double extraExtrusionForLayer;
     private double extraExtrusionForPolygon;
     private MaterialSetting materialSettings;
 
-    GCodeExtruder(final GCodeWriter writer, final int extruderId, final GCodePrinter p) {
+    GCodeExtruder(final GCodeWriter writer, final int extruderId, final CurrentConfiguration currentConfiguration) {
         gcode = writer;
         myExtruderID = extruderId;
-        printer = p;
-        final CurrentConfiguration currentConfiguration = Configuration.getInstance().getCurrentConfiguration();
-        loadPreferences(currentConfiguration.getPrinterSetting().getExtruderSettings().get(extruderId), currentConfiguration
+        final PrinterSetting printerSetting = currentConfiguration.getPrinterSetting();
+        loadPreferences(printerSetting, printerSetting.getExtruderSettings().get(extruderId), currentConfiguration
                 .getMaterials().get(extruderId));
         extruderState = new ExtruderState();
         // when we are first called (top down calculation means at our top
@@ -72,7 +71,8 @@ public class GCodeExtruder {
         }
     }
 
-    private void loadPreferences(final ExtruderSetting extruderSetting, final MaterialSetting material) {
+    private void loadPreferences(final PrinterSetting printerSetting, final ExtruderSetting extruderSetting,
+            final MaterialSetting material) {
         extrusionSize = extruderSetting.getNozzleDiameter();
         retractionDistance = extruderSetting.getRetraction();
         extraExtrusionForLayer = extruderSetting.getExtraLengthPerLayer();
@@ -80,7 +80,8 @@ public class GCodeExtruder {
         extrudeRatio = extruderSetting.getExtrudeRatio();
         extrusionOverRun = extruderSetting.getExtrusionOverrun();
         fastEFeedrate = extruderSetting.getAirExtrusionFeedRate();
-        fastXYFeedrate = Math.min(printer.getFastXYFeedrate(), extruderSetting.getPrintExtrusionRate());
+        final double maxXYFeedrate = Math.min(printerSetting.getMaximumFeedrateX(), printerSetting.getMaximumFeedrateY());
+        fastXYFeedrate = Math.min(maxXYFeedrate, extruderSetting.getPrintExtrusionRate());
         lift = extruderSetting.getLift();
         materialSettings = material;
         feedDiameter = materialSettings.getDiameter();

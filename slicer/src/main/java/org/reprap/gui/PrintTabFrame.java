@@ -99,11 +99,7 @@ public class PrintTabFrame extends JInternalFrame {
         saveRFO.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(final java.awt.event.ActionEvent evt) {
-                try {
-                    saveRFO();
-                } catch (final IOException e) {
-                    throw new RuntimeException(e);
-                }
+                saveRFO();
             }
         });
 
@@ -123,11 +119,7 @@ public class PrintTabFrame extends JInternalFrame {
         exitButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(final java.awt.event.ActionEvent evt) {
-                try {
-                    exitButtonActionPerformed();
-                } catch (final IOException e) {
-                    throw new RuntimeException(e);
-                }
+                exitButtonActionPerformed();
             }
         });
 
@@ -364,7 +356,7 @@ public class PrintTabFrame extends JInternalFrame {
         return lowerName.endsWith(".stl") || lowerName.endsWith(".rfo");
     }
 
-    private void exitButtonActionPerformed() throws IOException {
+    private void exitButtonActionPerformed() {
         if (worthSaving()) {
             final int toDo = JOptionPane.showConfirmDialog(null, "First save the build as an RFO file?");
             switch (toDo) {
@@ -449,7 +441,7 @@ public class PrintTabFrame extends JInternalFrame {
         }
     }
 
-    private void saveRFO() throws IOException {
+    private void saveRFO() {
         if (loadedFile == null) {
             JOptionPane.showMessageDialog(null, "There's nothing to save...");
             return;

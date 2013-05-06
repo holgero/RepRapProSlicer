@@ -9,34 +9,22 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
-import org.reprap.configuration.Configuration;
 
 public class GCodeWriter {
     private static final Logger LOGGER = LogManager.getLogger(GCodeWriter.class);
     private static final Marker GCODE_MARKER = MarkerManager.getMarker("GCODE");
     private static final String COMMENT_CHAR = ";";
     private static final String GCODE_EXTENSION = ".gcode";
-    /**
-     * How does the first file name in a multiple set end?
-     */
     private static final String FIRST_ENDING = "_prologue";
-    /**
-     * Flag for temporary files
-     */
-
-    /**
-     * The root file name for output (without ".gcode" on the end)
-     */
-    private String opFileName;
-    private String layerFileNames;
-    private final boolean debugGcode;
-
     private static final String TMP_STRING = "_TeMpOrArY_";
 
+    private final boolean debugGcode;
+    private String opFileName;
+    private String layerFileNames;
     private PrintStream fileOutStream = null;
 
-    public GCodeWriter() {
-        debugGcode = Configuration.getInstance().getCurrentConfiguration().getPrintSetting().isVerboseGCode();
+    public GCodeWriter(final boolean debugGcode) {
+        this.debugGcode = debugGcode;
     }
 
     /**

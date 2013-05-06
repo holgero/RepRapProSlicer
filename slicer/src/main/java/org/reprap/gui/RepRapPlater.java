@@ -94,7 +94,6 @@ import java.awt.GraphicsEnvironment;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
-import java.io.IOException;
 
 import javax.media.j3d.AmbientLight;
 import javax.media.j3d.Appearance;
@@ -116,6 +115,7 @@ import javax.media.j3d.TransformGroup;
 import javax.media.j3d.View;
 import javax.media.j3d.ViewPlatform;
 import javax.media.j3d.VirtualUniverse;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
@@ -300,7 +300,8 @@ public class RepRapPlater extends JPanel implements MouseListener {
         offset.y = 0;
         offset.z = 0;
         for (int i = 0; i < number; i++) {
-            final STLObject stl = STLObject.createStlObjectFromFile(file, originalAttributes.getMaterial());
+            final STLObject stl = STLObject.createStlObjectFromFile(file, originalAttributes.getMaterial(),
+                    currentConfiguration);
             stl.translate(offset);
             if (stl.numChildren() > 0) {
                 workingVolumeAndStls.addChild(stl.top());
@@ -318,7 +319,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
         final STLObject stl;
         final String defaultMaterial = currentConfiguration.getMaterials().get(0).getName();
         if (lastPicked == null) {
-            stl = STLObject.createStlObjectFromFile(file, defaultMaterial);
+            stl = STLObject.createStlObjectFromFile(file, defaultMaterial, currentConfiguration);
             final Point2D middle = Point2D.mul(0.5, new Point2D(200, 200));
             final Vector3d v = new Vector3d(middle.x(), middle.y(), 0);
             final Vector3d e = stl.extent();
@@ -327,14 +328,15 @@ public class RepRapPlater extends JPanel implements MouseListener {
             e.y = -0.5 * e.y;
             v.add(e);
             stl.translate(v);
+            workingVolumeAndStls.addChild(stl.top());
+            stls.add(stl);
         } else {
             stl = lastPicked;
-            stl.addSTL(file, defaultMaterial);
+            stl.addSTL(file, defaultMaterial, currentConfiguration);
         }
-        workingVolumeAndStls.addChild(stl.top());
-        stls.add(stl);
 
-        MaterialRadioButtons.createAndShowGUI(stl.attributes(stl.size() - 1), this, stls.size() - 1, stl.volume());
+        MaterialRadioButtons.createAndShowGUI(stl.attributes(stl.size() - 1), this, stls.size() - 1, stl.volume(),
+                currentConfiguration);
     }
 
     // Callback for when the user has a pre-loaded STL and attribute
@@ -354,7 +356,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
         if (lastPicked == null) {
             return;
         }
-        MaterialRadioButtons.createAndShowGUI(lastPicked.attributes(0), this, lastPicked);
+        MaterialRadioButtons.createAndShowGUI(lastPicked.attributes(0), this, lastPicked, currentConfiguration);
     }
 
     // Callback for when the user selects an RFO file to load
@@ -362,24 +364,25 @@ public class RepRapPlater extends JPanel implements MouseListener {
         if (file == null) {
             return;
         }
-        AllSTLsToBuild newStls;
-        try {
-            newStls = RFO.load(file.getAbsolutePath());
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
-        }
+        final AllSTLsToBuild newStls = RFO.load(file, currentConfiguration).getAllStls();
         for (int i = 0; i < newStls.size(); i++) {
             workingVolumeAndStls.addChild(newStls.get(i).top());
         }
         stls.add(newStls);
     }
 
-    public void saveRFOFile(final String s) throws IOException {
-        RFO.save(s, stls);
+    public void saveRFOFile(final File file) {
+        if (!checkFile(file)) {
+            return;
+        }
+        RFO.save(file, stls);
     }
 
-    public void saveSCADFile(final File selectedFile) throws IOException {
-        stls.saveSCAD(selectedFile);
+    public void saveSCADFile(final File file) {
+        if (!checkFile(file)) {
+            return;
+        }
+        stls.saveSCAD(file);
     }
 
     private void addCanvas3D(final Canvas3D canvas3d) {
@@ -553,5 +556,17 @@ public class RepRapPlater extends JPanel implements MouseListener {
         tgArray[0].setTransform(viewTrans);
 
         return tgArray;
+    }
+
+    /**
+     * Warn the user of an overwrite
+     */
+    public static boolean checkFile(final File file) {
+        if (file.exists()) {
+            final String[] options = { "OK", "Cancel" };
+            return JOptionPane.showOptionDialog(null, "The file " + file.getName() + " exists.  Overwrite it?", "Warning",
+                    JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]) == 0;
+        }
+        return true;
     }
 }

@@ -15,11 +15,12 @@ import java.util.zip.ZipOutputStream;
 
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
-import javax.swing.JOptionPane;
 import javax.vecmath.Matrix4d;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.reprap.configuration.Configuration;
+import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.geometry.polyhedra.STLObject;
 import org.xml.sax.SAXException;
@@ -36,56 +37,6 @@ import org.xml.sax.SAXException;
  */
 public class RFO {
     private static final String legendName = "legend.xml";
-
-    /**
-     * The name of the RFO file.
-     */
-    private final String fileName;
-    /**
-     * The unique file names;
-     */
-    private List<String> uNames;
-    /**
-     * The directory in which it is.
-     */
-    private String path;
-    /**
-     * The temporary directory
-     */
-    private final File tempDir;
-    /**
-     * The collection of objects being written out or read in.
-     */
-    private final AllSTLsToBuild astl;
-    /**
-     * The XML output for the legend file.
-     */
-    private RfoXmlRenderer xml;
-
-    /**
-     * The constructor is the same whether we're reading or writing. fn is where
-     * to put or get the rfo file from. as is all the things to write; set that
-     * null when reading.
-     */
-    private RFO(final String fn, final AllSTLsToBuild as) throws IOException {
-        astl = as;
-        uNames = null;
-        final int sepIndex = fn.lastIndexOf(File.separator);
-        final int fIndex = fn.indexOf("file:");
-        fileName = fn.substring(sepIndex + 1, fn.length());
-        if (sepIndex >= 0) {
-            if (fIndex >= 0) {
-                path = fn.substring(fIndex + 5, sepIndex + 1);
-            } else {
-                path = fn.substring(0, sepIndex + 1);
-            }
-        } else {
-            path = "";
-        }
-        tempDir = File.createTempFile("rfo", null);
-        tempDir.delete();
-        tempDir.mkdir();
-    }
 
     /**
      * Copy each unique STL file to a directory. Files used more than once are
@@ -123,6 +74,74 @@ public class RFO {
             }
         }
         return uniqueNames;
+    }
+
+    public static RFO load(final File file, final CurrentConfiguration currentConfiguration) {
+        try {
+            final RFO rfo = new RFO(file, new AllSTLsToBuild(), currentConfiguration);
+            rfo.load();
+            return rfo;
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void load() throws IOException {
+        unCompress();
+        interpretLegend();
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                try {
+                    FileUtils.deleteDirectory(tempDir);
+                } catch (final IOException e) {
+                }
+            }
+        });
+    }
+
+    public static void save(final File file, final AllSTLsToBuild allSTL) {
+        try {
+            final RFO rfo = new RFO(file, allSTL, Configuration.getInstance().getCurrentConfiguration());
+            final File rfoDir = new File(rfo.tempDir, "rfo");
+            rfoDir.mkdir();
+            rfo.uNames = copySTLs(allSTL, rfoDir);
+            rfo.createLegend(rfoDir);
+            rfo.compress();
+            FileUtils.deleteDirectory(rfo.tempDir);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * The unique file names;
+     */
+    private List<String> uNames;
+    /**
+     * The temporary directory
+     */
+    private final File tempDir;
+    /**
+     * The collection of objects being written out or read in.
+     */
+    private final AllSTLsToBuild astl;
+    /**
+     * The XML output for the legend file.
+     */
+    private RfoXmlRenderer xml;
+
+    private final File file;
+    private final CurrentConfiguration currentConfiguration;
+
+    private RFO(final File file, final AllSTLsToBuild as, final CurrentConfiguration currentConfiguration) throws IOException {
+        this.file = file;
+        astl = as;
+        this.currentConfiguration = currentConfiguration;
+        uNames = null;
+        tempDir = File.createTempFile("rfo", null);
+        tempDir.delete();
+        tempDir.mkdir();
     }
 
     /**
@@ -174,7 +193,7 @@ public class RFO {
      * directory containing them.
      */
     private void compress() throws IOException {
-        final ZipOutputStream rfoFile = new ZipOutputStream(new FileOutputStream(path + fileName));
+        final ZipOutputStream rfoFile = new ZipOutputStream(new FileOutputStream(file));
         try {
             final File dirToZip = new File(tempDir, "rfo");
             final String[] fileList = dirToZip.list();
@@ -202,46 +221,13 @@ public class RFO {
     }
 
     /**
-     * Warn the user of an overwrite
-     */
-    public static boolean checkFile(final File file) {
-        if (file.exists()) {
-            final String[] options = { "OK", "Cancel" };
-            final int r = JOptionPane.showOptionDialog(null, "The file " + file.getName() + " exists.  Overwrite it?",
-                    "Warning", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
-            return r == 0;
-        }
-        return true;
-    }
-
-    /**
-     * This is what gets called to write an rfo file. It saves all the parts of
-     * allSTL in rfo file fn.
-     */
-    public static void save(String fn, final AllSTLsToBuild allSTL) throws IOException {
-        if (!fn.endsWith(".rfo")) {
-            fn += ".rfo";
-        }
-        final RFO rfo = new RFO(fn, allSTL);
-        if (!RFO.checkFile(new File(rfo.path, rfo.fileName))) {
-            return;
-        }
-        final File rfoDir = new File(rfo.tempDir, "rfo");
-        rfoDir.mkdir();
-        rfo.uNames = copySTLs(allSTL, rfoDir);
-        rfo.createLegend(rfoDir);
-        rfo.compress();
-        FileUtils.deleteDirectory(rfo.tempDir);
-    }
-
-    /**
      * This uncompresses the zip that is the rfo file into the temporary
      * directory.
      * 
      * @throws IOException
      */
     private void unCompress() throws IOException {
-        final ZipFile rfoFile = new ZipFile(path + fileName);
+        final ZipFile rfoFile = new ZipFile(file);
         final Enumeration<? extends ZipEntry> allFiles = rfoFile.entries();
         while (allFiles.hasMoreElements()) {
             final ZipEntry entry = allFiles.nextElement();
@@ -266,7 +252,7 @@ public class RFO {
      * This reads the legend file and does what it says.
      */
     private void interpretLegend() throws IOException {
-        final RfoXmlHandler xi = new RfoXmlHandler(getRfoDir());
+        final RfoXmlHandler xi = new RfoXmlHandler(getRfoDir(), currentConfiguration);
         final String legendFilename = new File(tempDir, "rfo") + "/" + legendName;
         try {
             final List<STLObject> stls = xi.parse(legendFilename);
@@ -278,31 +264,11 @@ public class RFO {
         }
     }
 
-    /**
-     * This is what gets called to read an rfo file from filename fn.
-     * 
-     * @throws IOException
-     */
-    public static AllSTLsToBuild load(String fn) throws IOException {
-        if (!fn.endsWith(".rfo")) {
-            fn += ".rfo";
-        }
-        final RFO rfo = new RFO(fn, new AllSTLsToBuild());
-        rfo.unCompress();
-        rfo.interpretLegend();
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                try {
-                    FileUtils.deleteDirectory(rfo.tempDir);
-                } catch (final IOException e) {
-                }
-            }
-        });
-        return rfo.astl;
-    }
-
     File getRfoDir() {
         return new File(tempDir, "rfo");
+    }
+
+    public AllSTLsToBuild getAllStls() {
+        return astl;
     }
 }

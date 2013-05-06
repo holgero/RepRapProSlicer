@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.media.j3d.Transform3D;
 
+import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.geometry.polyhedra.STLObject;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -38,8 +39,11 @@ final class RfoXmlHandler extends DefaultHandler {
 
     private final File rfoDir;
 
-    RfoXmlHandler(final File rfoDir) {
+    private final CurrentConfiguration currentConfiguration;
+
+    RfoXmlHandler(final File rfoDir, final CurrentConfiguration currentConfiguration) {
         this.rfoDir = rfoDir;
+        this.currentConfiguration = currentConfiguration;
         setMToIdentity();
         stls.clear();
     }
@@ -90,9 +94,9 @@ final class RfoXmlHandler extends DefaultHandler {
             final String location = atts.getValue("location");
             final String material = atts.getValue("material");
             if (stl == null) {
-                stl = STLObject.createStlObjectFromFile(new File(rfoDir, location), material);
+                stl = STLObject.createStlObjectFromFile(new File(rfoDir, location), material, currentConfiguration);
             } else {
-                stl.addSTL(new File(rfoDir, location), material);
+                stl.addSTL(new File(rfoDir, location), material, currentConfiguration);
             }
         } else if (element.equalsIgnoreCase("transform3D")) {
             setMToIdentity();

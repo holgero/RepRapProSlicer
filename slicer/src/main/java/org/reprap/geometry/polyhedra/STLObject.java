@@ -86,7 +86,6 @@ import javax.vecmath.Vector3d;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.configuration.Configuration;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.MaterialSetting;
 import org.reprap.gui.MouseObject;
@@ -173,8 +172,9 @@ public class STLObject {
      * Create an STL object from a file with the appearance determined by its
      * material.
      */
-    public static STLObject createStlObjectFromFile(final File location, final String material) {
-        final MaterialSetting materialSettings = getMaterialSettings(material);
+    public static STLObject createStlObjectFromFile(final File location, final String material,
+            final CurrentConfiguration currentConfiguration) {
+        final MaterialSetting materialSettings = getMaterialSettings(material, currentConfiguration);
         final Appearance appearance = STLObject.createAppearance(materialSettings);
         return load(location, appearance, materialSettings.getName());
     }
@@ -189,8 +189,8 @@ public class STLObject {
     /**
      * Add the contents of an STL file to this STL object.
      */
-    public void addSTL(final File location, final String material) {
-        final MaterialSetting materialSettings = getMaterialSettings(material);
+    public void addSTL(final File location, final String material, final CurrentConfiguration currentConfiguration) {
+        final MaterialSetting materialSettings = getMaterialSettings(material, currentConfiguration);
         final Attributes attribute = new Attributes(this, createAppearance(materialSettings), materialSettings.getName());
         loadSingleSTL(location, attribute, true);
     }
@@ -831,8 +831,7 @@ public class STLObject {
         return appearance;
     }
 
-    private static MaterialSetting getMaterialSettings(final String materialName) {
-        final CurrentConfiguration configuration = Configuration.getInstance().getCurrentConfiguration();
+    private static MaterialSetting getMaterialSettings(final String materialName, final CurrentConfiguration configuration) {
         final List<MaterialSetting> materials = configuration.getMaterials();
         for (final MaterialSetting material : materials) {
             if (material.getName().equals(materialName)) {

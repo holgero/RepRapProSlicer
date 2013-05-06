@@ -27,7 +27,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.IOException;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -242,48 +241,26 @@ public class MainFrame extends JFrame {
         return null;
     }
 
-    String saveRFO(final String fileRoot) throws IOException {
-        String result = null;
-        File f;
-        FileFilter filter;
-
+    void saveRFO(final String fileRoot) {
         final File defaultFile = new File(fileRoot + ".rfo");
         final JFileChooser rfoChooser = new JFileChooser();
         rfoChooser.setSelectedFile(defaultFile);
-        filter = new FileNameExtensionFilter("RFO file to write to", "rfo");
-        rfoChooser.setFileFilter(filter);
+        rfoChooser.setFileFilter(new FileNameExtensionFilter("RFO files", "rfo"));
         rfoChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-
-        rfoChooser.setFileFilter(filter);
-
-        final int returnVal = rfoChooser.showSaveDialog(null);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            f = rfoChooser.getSelectedFile();
-            result = "file:" + f.getAbsolutePath();
-
-            plater.saveRFOFile(result);
-            return f.getName();
+        if (rfoChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+            plater.saveRFOFile(rfoChooser.getSelectedFile());
         }
-        return "";
     }
 
-    String saveSCAD(final String fileRoot) {
+    void saveSCAD(final String fileRoot) {
         final File defaultFile = new File(fileRoot + ".scad");
         final JFileChooser scadChooser = new JFileChooser();
         scadChooser.setSelectedFile(defaultFile);
         scadChooser.setFileFilter(new FileNameExtensionFilter("OpenSCAD files", "scad"));
         scadChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        final int returnVal = scadChooser.showSaveDialog(null);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            final File selectedFile = scadChooser.getSelectedFile();
-            try {
-                plater.saveSCADFile(selectedFile);
-            } catch (final IOException e) {
-                throw new RuntimeException(e);
-            }
-            return selectedFile.getName();
+        if (scadChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+            plater.saveSCADFile(scadChooser.getSelectedFile());
         }
-        return "";
     }
 
     private File gcodeFileDialog(final File defaultFile) {
@@ -319,7 +296,8 @@ public class MainFrame extends JFrame {
             public void run() {
                 Thread.currentThread().setName("Producer");
                 plater.mouseToWorld();
-                final Producer producer = new Producer(gcodeFile, plater.getSTLs(), listener, displayPaths);
+                final Producer producer = new Producer(gcodeFile, plater.getSTLs(), listener, displayPaths,
+                        configuration.getCurrentConfiguration());
                 try {
                     producer.produce();
                     if (autoExit) {

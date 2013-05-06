@@ -403,7 +403,8 @@ class ProducerStlList {
             return;
         }
         final String shieldMaterial = currentConfiguration.getMaterials().get(0).getName();
-        final STLObject shield = STLObject.createStlObjectFromFile(printSetting.getShieldStlFile(), shieldMaterial);
+        final STLObject shield = STLObject.createStlObjectFromFile(printSetting.getShieldStlFile(), shieldMaterial,
+                currentConfiguration);
 
         final BoundingBox boxWithoutShield = getBoundingBox(stls);
         final double modelZMax = boxWithoutShield.getZint().high();

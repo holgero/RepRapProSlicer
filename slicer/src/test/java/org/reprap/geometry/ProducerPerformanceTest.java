@@ -19,25 +19,28 @@
 package org.reprap.geometry;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.junit.Ignore;
 import org.junit.Test;
+import org.reprap.configuration.Configuration;
+import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.geometry.polygons.BooleanGridWalkerTest;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.io.rfo.RFO;
 
 public class ProducerPerformanceTest {
+    private final File testFile = new File(getClass().getClassLoader().getResource("euro_chip.rfo").getPath());
 
     @Test
     @Ignore("needs javax.media.j3d")
-    public void testSlicingPerformance() throws IOException {
-        final AllSTLsToBuild stls = RFO.load(getClass().getClassLoader().getResource("euro_chip.rfo").getPath());
+    public void testSlicingPerformance() {
+        final CurrentConfiguration currentConfiguration = Configuration.create().getCurrentConfiguration();
+        final AllSTLsToBuild stls = RFO.load(testFile, currentConfiguration).getAllStls();
         final Producer producer = new Producer(null, stls, new ProductionProgressListener() {
             @Override
             public void productionProgress(final int layer, final int totalLayers) {
             }
-        }, false);
+        }, false, currentConfiguration);
         final long start = System.currentTimeMillis();
         producer.produce();
         final long end = System.currentTimeMillis();

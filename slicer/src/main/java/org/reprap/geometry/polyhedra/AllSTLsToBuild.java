@@ -127,23 +127,22 @@ public class AllSTLsToBuild {
 
     /**
      * Write everything to an OpenSCAD program.
-     * 
-     * @throws IOException
      */
-    public void saveSCAD(final File file) throws IOException {
-        if (!RFO.checkFile(file)) {
-            return;
-        }
-        final File directory = file.getParentFile();
-        if (!directory.exists()) {
-            directory.mkdir();
-        }
-        RFO.copySTLs(this, directory);
-        final PrintWriter out = new PrintWriter(new FileWriter(file));
+    public void saveSCAD(final File file) {
         try {
-            out.println(toSCAD());
-        } finally {
-            out.close();
+            final File directory = file.getParentFile();
+            if (!directory.exists()) {
+                directory.mkdir();
+            }
+            RFO.copySTLs(this, directory);
+            final PrintWriter out = new PrintWriter(new FileWriter(file));
+            try {
+                out.println(toSCAD());
+            } finally {
+                out.close();
+            }
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
