@@ -22,6 +22,7 @@ import org.apache.commons.io.IOUtils;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.geometry.polyhedra.STLObject;
+import org.reprap.io.csg.CSGReader;
 import org.xml.sax.SAXException;
 
 /**

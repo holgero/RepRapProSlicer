@@ -1,4 +1,4 @@
-package org.reprap.io.rfo;
+package org.reprap.io.csg;
 
 import java.io.BufferedReader;
 import java.io.File;

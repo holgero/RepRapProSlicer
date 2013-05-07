@@ -89,7 +89,7 @@ import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.MaterialSetting;
 import org.reprap.gui.MouseObject;
-import org.reprap.io.rfo.CSGReader;
+import org.reprap.io.csg.CSGReader;
 import org.reprap.io.stl.StlFile;
 
 import com.sun.j3d.loaders.Scene;
