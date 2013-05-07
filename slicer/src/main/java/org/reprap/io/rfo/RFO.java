@@ -19,7 +19,6 @@ import javax.vecmath.Matrix4d;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.reprap.configuration.Configuration;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.geometry.polyhedra.STLObject;
@@ -100,9 +99,9 @@ public class RFO {
         });
     }
 
-    public static void save(final File file, final AllSTLsToBuild allSTL) {
+    public static void save(final File file, final AllSTLsToBuild allSTL, final CurrentConfiguration currentConfiguration) {
         try {
-            final RFO rfo = new RFO(file, allSTL, Configuration.getInstance().getCurrentConfiguration());
+            final RFO rfo = new RFO(file, allSTL, currentConfiguration);
             final File rfoDir = new File(rfo.tempDir, "rfo");
             rfoDir.mkdir();
             rfo.uNames = copySTLs(allSTL, rfoDir);

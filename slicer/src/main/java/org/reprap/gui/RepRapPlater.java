@@ -375,7 +375,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
         if (!checkFile(file)) {
             return;
         }
-        RFO.save(file, stls);
+        RFO.save(file, stls, currentConfiguration);
     }
 
     public void saveSCADFile(final File file) {

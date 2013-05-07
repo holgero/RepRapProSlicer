@@ -62,10 +62,10 @@ final class Integer2DPolygonList {
     /**
      * Turn all the polygons into real-world polygons
      */
-    PolygonList realPolygons(final String material, final Integer2DRectangle rec) {
+    PolygonList realPolygons(final String material, final Integer2DRectangle rec, final double pixelSize) {
         final PolygonList result = new PolygonList();
         for (int i = 0; i < size(); i++) {
-            result.add(polygon(i).realPolygon(material, rec));
+            result.add(polygon(i).realPolygon(material, rec, pixelSize));
         }
         return result;
     }

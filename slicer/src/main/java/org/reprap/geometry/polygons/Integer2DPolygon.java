@@ -158,11 +158,11 @@ final class Integer2DPolygon {
     /**
      * Convert the polygon into a polygon in the real world.
      */
-    Polygon realPolygon(final String material, final Integer2DRectangle rec) {
+    Polygon realPolygon(final String material, final Integer2DRectangle rec, final double pixelSize) {
         final Polygon result = new Polygon(material, closed);
         for (int i = 0; i < size(); i++) {
             final Integer2DPoint r = point(i);
-            result.add(rec.realPoint(r));
+            result.add(rec.realPoint(r, pixelSize));
         }
         return result;
     }

@@ -19,7 +19,6 @@
  */
 package org.reprap.gcode;
 
-import org.reprap.configuration.Configuration;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.PrintSetting;
 import org.reprap.configuration.PrinterSetting;
@@ -36,10 +35,9 @@ public final class Purge {
     private final double purgeL = 25;
     private final boolean purgeXOriented;
 
-    public Purge() {
-        final CurrentConfiguration configuration = Configuration.getInstance().getCurrentConfiguration();
-        final PrintSetting printSetting = configuration.getPrintSetting();
-        final PrinterSetting printerSetting = configuration.getPrinterSetting();
+    public Purge(final CurrentConfiguration currentConfiguration) {
+        final PrintSetting printSetting = currentConfiguration.getPrintSetting();
+        final PrinterSetting printerSetting = currentConfiguration.getPrinterSetting();
         purgePoint = new Point2D(printSetting.getDumpX(), printSetting.getDumpY());
         final double maximumXvalue = printerSetting.getBedSizeX();
         final double maximumYvalue = printerSetting.getBedSizeY();

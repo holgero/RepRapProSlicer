@@ -7,8 +7,6 @@ import java.util.List;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.configuration.Configuration;
-import org.reprap.configuration.CurrentConfiguration;
 
 /**
  * This class stores a rectangular grid at the same grid resolution as the
@@ -36,7 +34,7 @@ public class BooleanGrid {
      * further?
      */
     private static final int SIMPLE_ENOUGH = 3;
-    private static final BooleanGrid NOTHING_THERE = new BooleanGrid();
+    private static final BooleanGrid NOTHING_THERE = new BooleanGrid(0.0);
 
     /**
      * Run round the eight neighbours of a pixel anticlockwise from bottom left
@@ -73,17 +71,18 @@ public class BooleanGrid {
     private Integer2DRectangle rec;
     private String material;
 
-    private final CurrentConfiguration currentConfiguration = Configuration.getInstance().getCurrentConfiguration();
+    private final double pixelSize;
 
     /**
      * Build the grid from a CSG expression
      */
-    public BooleanGrid(final CSG2D csgExp, final Rectangle rectangle, final String material) {
+    public BooleanGrid(final CSG2D csgExp, final Rectangle rectangle, final String material, final double pixelSize) {
         this.material = material;
+        this.pixelSize = pixelSize;
         final Rectangle ri = rectangle.offset(SWELL_AMOUNT);
         rec = new Integer2DRectangle(new Integer2DPoint(0, 0), new Integer2DPoint(1, 1)); // Set the origin to (0, 0)...
-        rec.swCorner = rec.convertToInteger2DPoint(ri.sw()); // That then gets subtracted by the iPoint constructor to give the true origin
-        rec.size = rec.convertToInteger2DPoint(ri.ne()); // The true origin is now automatically subtracted.
+        rec.swCorner = rec.convertToInteger2DPoint(ri.sw(), pixelSize); // That then gets subtracted by the iPoint constructor to give the true origin
+        rec.size = rec.convertToInteger2DPoint(ri.ne(), pixelSize); // The true origin is now automatically subtracted.
         bits = new BitSet(rec.size.x * rec.size.y);
         visited = null;
         generateQuadTree(new Integer2DPoint(0, 0), new Integer2DPoint(rec.size.x - 1, rec.size.y - 1), csgExp);
@@ -93,7 +92,8 @@ public class BooleanGrid {
     /**
      * Copy constructor N.B. attributes are _not_ deep copied
      */
-    private BooleanGrid(final BooleanGrid bg) {
+    private BooleanGrid(final BooleanGrid bg, final double pixelSize) {
+        this.pixelSize = pixelSize;
         material = bg.material;
         visited = null;
         rec = new Integer2DRectangle(bg.rec);
@@ -103,7 +103,8 @@ public class BooleanGrid {
     /**
      * Copy constructor with new rectangle N.B. attributes are _not_ deep copied
      */
-    private BooleanGrid(final BooleanGrid bg, final Integer2DRectangle newRec) {
+    private BooleanGrid(final BooleanGrid bg, final Integer2DRectangle newRec, final double pixelSize) {
+        this.pixelSize = pixelSize;
         material = bg.material;
         visited = null;
         rec = new Integer2DRectangle(newRec);
@@ -123,7 +124,8 @@ public class BooleanGrid {
     /**
      * The empty grid
      */
-    private BooleanGrid() {
+    private BooleanGrid(final double pixelSize) {
+        this.pixelSize = pixelSize;
         material = null;
         rec = new Integer2DRectangle();
         bits = new BitSet(1);
@@ -281,7 +283,7 @@ public class BooleanGrid {
         for (int x = ipsw.x; x <= ipne.x; x++) {
             for (int y = ipsw.y; y <= ipne.y; y++) {
                 final Integer2DPoint r = new Integer2DPoint(x, y);
-                bits.set(pixI(x, y), csgExpression.value(rec.realPoint(r)) <= 0);
+                bits.set(pixI(x, y), csgExpression.value(rec.realPoint(r, pixelSize)) <= 0);
             }
         }
     }
@@ -292,7 +294,7 @@ public class BooleanGrid {
     private Rectangle box() {
         final Integer2DPoint r = new Integer2DPoint(0, 0);
         final Integer2DPoint r1 = new Integer2DPoint(rec.size.x - 1, rec.size.y - 1);
-        return new Rectangle(rec.realPoint(r), rec.realPoint(r1));
+        return new Rectangle(rec.realPoint(r, pixelSize), rec.realPoint(r1, pixelSize));
     }
 
     /**
@@ -320,7 +322,7 @@ public class BooleanGrid {
      * That is, membership test.
      */
     public boolean get(final Point2D p) {
-        return get(rec.convertToInteger2DPoint(p));
+        return get(rec.convertToInteger2DPoint(p, pixelSize));
     }
 
     /**
@@ -372,7 +374,7 @@ public class BooleanGrid {
         if (p == null) {
             return null;
         } else {
-            return rec.realPoint(p);
+            return rec.realPoint(p, pixelSize);
         }
     }
 
@@ -404,7 +406,7 @@ public class BooleanGrid {
         if (p == null) {
             return null;
         } else {
-            return rec.realPoint(p);
+            return rec.realPoint(p, pixelSize);
         }
     }
 
@@ -413,9 +415,8 @@ public class BooleanGrid {
      * tree.
      */
     private void generateQuadTree(final Integer2DPoint ipsw, final Integer2DPoint ipne, final CSG2D csgExpression) {
-        final Point2D inc = new Point2D(currentConfiguration.getPrinterSetting().getMachineResolution() * 0.3,
-                currentConfiguration.getPrinterSetting().getMachineResolution() * 0.3);
-        final Point2D p0 = rec.realPoint(ipsw);
+        final Point2D inc = new Point2D(pixelSize / 2, pixelSize / 2);
+        final Point2D p0 = rec.realPoint(ipsw, pixelSize);
 
         // Single pixel?
         if (ipsw.coincidesWith(ipne)) {
@@ -424,7 +425,7 @@ public class BooleanGrid {
         }
 
         // Uniform rectangle?
-        final Point2D p1 = rec.realPoint(ipne);
+        final Point2D p1 = rec.realPoint(ipne, pixelSize);
         final Interval i = csgExpression.value(new Rectangle(Point2D.sub(p0, inc), Point2D.add(p1, inc)));
         if (!i.zero()) {
             homogeneous(ipsw, ipne, i.high() <= 0);
@@ -463,13 +464,13 @@ public class BooleanGrid {
             }
             sw = new Integer2DPoint(x0, y0);
             ne = new Integer2DPoint(x0, ym);
-            generateQuadTree(sw, ne, csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw), inc), Point2D.add(
-                    rec.realPoint(ne), inc))));
+            generateQuadTree(sw, ne, csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
+                    rec.realPoint(ne, pixelSize), inc))));
 
             sw = new Integer2DPoint(x0, ym + 1);
             ne = new Integer2DPoint(x0, y1);
-            generateQuadTree(sw, ne, csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw), inc), Point2D.add(
-                    rec.realPoint(ne), inc))));
+            generateQuadTree(sw, ne, csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
+                    rec.realPoint(ne, pixelSize), inc))));
 
             return;
         }
@@ -478,13 +479,13 @@ public class BooleanGrid {
         if (yd <= 1) {
             sw = new Integer2DPoint(x0, y0);
             ne = new Integer2DPoint(xm, y0);
-            generateQuadTree(sw, ne, csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw), inc), Point2D.add(
-                    rec.realPoint(ne), inc))));
+            generateQuadTree(sw, ne, csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
+                    rec.realPoint(ne, pixelSize), inc))));
 
             sw = new Integer2DPoint(xm + 1, y0);
             ne = new Integer2DPoint(x1, y0);
-            generateQuadTree(sw, ne, csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw), inc), Point2D.add(
-                    rec.realPoint(ne), inc))));
+            generateQuadTree(sw, ne, csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
+                    rec.realPoint(ne, pixelSize), inc))));
 
             return;
         }
@@ -493,22 +494,22 @@ public class BooleanGrid {
         sw = new Integer2DPoint(x0, y0);
         ne = new Integer2DPoint(xm, ym);
         generateQuadTree(sw, ne,
-                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw), inc), Point2D.add(rec.realPoint(ne), inc))));
+                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(rec.realPoint(ne, pixelSize), inc))));
 
         sw = new Integer2DPoint(x0, ym + 1);
         ne = new Integer2DPoint(xm, y1);
         generateQuadTree(sw, ne,
-                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw), inc), Point2D.add(rec.realPoint(ne), inc))));
+                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(rec.realPoint(ne, pixelSize), inc))));
 
         sw = new Integer2DPoint(xm + 1, ym + 1);
         ne = new Integer2DPoint(x1, y1);
         generateQuadTree(sw, ne,
-                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw), inc), Point2D.add(rec.realPoint(ne), inc))));
+                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(rec.realPoint(ne, pixelSize), inc))));
 
         sw = new Integer2DPoint(xm + 1, y0);
         ne = new Integer2DPoint(x1, ym);
         generateQuadTree(sw, ne,
-                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw), inc), Point2D.add(rec.realPoint(ne), inc))));
+                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(rec.realPoint(ne, pixelSize), inc))));
 
     }
 
@@ -670,11 +671,11 @@ public class BooleanGrid {
      * @return
      */
     public BooleanGrid floodCopy(final Point2D pp) {
-        Integer2DPoint p = rec.convertToInteger2DPoint(pp);
+        Integer2DPoint p = rec.convertToInteger2DPoint(pp, pixelSize);
         if (!inside(p) || !this.get(p)) {
             return NOTHING_THERE;
         }
-        final BooleanGrid result = new BooleanGrid();
+        final BooleanGrid result = new BooleanGrid(pixelSize);
         result.material = material;
         result.visited = null;
         result.rec = new Integer2DRectangle(rec);
@@ -731,8 +732,8 @@ public class BooleanGrid {
      * Return all the outlines of all the solid areas as real-world polygons.
      */
     public PolygonList allPerimiters() {
-        PolygonList r = iAllPerimiters().realPolygons(getMaterial(), rec);
-        r = r.simplify(currentConfiguration.getPrinterSetting().getMachineResolution() * 0.9);
+        PolygonList r = iAllPerimiters().realPolygons(getMaterial(), rec, pixelSize);
+        r = r.simplify(1.5 * pixelSize);
         return r;
     }
 
@@ -750,8 +751,8 @@ public class BooleanGrid {
             return result;
         }
 
-        final Integer2DPoint s = rec.convertToInteger2DPoint(h.pLine().point(se.low()));
-        final Integer2DPoint e = rec.convertToInteger2DPoint(h.pLine().point(se.high()));
+        final Integer2DPoint s = rec.convertToInteger2DPoint(h.pLine().point(se.low()), pixelSize);
+        final Integer2DPoint e = rec.convertToInteger2DPoint(h.pLine().point(se.high()), pixelSize);
         if (get(s)) {
             LOGGER.error("BooleanGrid.hatch(): start point is in solid!");
         }
@@ -809,7 +810,7 @@ public class BooleanGrid {
             return null;
         }
 
-        final double vTarget = targetPlane.value(rec.realPoint(start));
+        final double vTarget = targetPlane.value(rec.realPoint(start, pixelSize));
 
         vSet(start, true);
 
@@ -819,9 +820,9 @@ public class BooleanGrid {
         }
 
         Integer2DPoint pNew;
-        final double vOrigin = originPlane.value(rec.realPoint(p));
-        boolean notCrossedOriginPlane = originPlane.value(rec.realPoint(p)) * vOrigin >= 0;
-        boolean notCrossedTargetPlane = targetPlane.value(rec.realPoint(p)) * vTarget >= 0;
+        final double vOrigin = originPlane.value(rec.realPoint(p, pixelSize));
+        boolean notCrossedOriginPlane = originPlane.value(rec.realPoint(p, pixelSize)) * vOrigin >= 0;
+        boolean notCrossedTargetPlane = targetPlane.value(rec.realPoint(p, pixelSize)) * vTarget >= 0;
         while (notCrossedOriginPlane && notCrossedTargetPlane) {
             track.add(p);
             vSet(p, true);
@@ -834,8 +835,8 @@ public class BooleanGrid {
             }
             dir = neighbourIndex(pNew.sub(p));
             p = pNew;
-            notCrossedOriginPlane = originPlane.value(rec.realPoint(p)) * vOrigin >= 0;
-            notCrossedTargetPlane = targetPlane.value(rec.realPoint(p)) * vTarget >= 0;
+            notCrossedOriginPlane = originPlane.value(rec.realPoint(p, pixelSize)) * vOrigin >= 0;
+            notCrossedTargetPlane = targetPlane.value(rec.realPoint(p, pixelSize)) * vTarget >= 0;
         }
 
         if (notCrossedOriginPlane) {
@@ -884,7 +885,7 @@ public class BooleanGrid {
             p = findUnvisitedNeighbourOnEdgeInDirection(p, dir);
             boolean lost = p == null;
             if (!lost) {
-                lost = Math.abs(hatch.value(rec.realPoint(p))) > tooFar;
+                lost = Math.abs(hatch.value(rec.realPoint(p, pixelSize))) > tooFar;
             }
             if (lost) {
                 for (int i = 0; i < track.size(); i++) {
@@ -943,7 +944,7 @@ public class BooleanGrid {
     private HalfPlane hPlane(final Integer2DPoint p, final List<HalfPlane> hatches) {
         int bot = 0;
         int top = hatches.size() - 1;
-        final Point2D rp = rec.realPoint(p);
+        final Point2D rp = rec.realPoint(p, pixelSize);
         double dbot = Math.abs(hatches.get(bot).value(rp));
         double dtop = Math.abs(hatches.get(top).value(rp));
         while (top - bot > 1) {
@@ -984,7 +985,7 @@ public class BooleanGrid {
                 final Integer2DPoint jEnd = snakes.polygon(j).point(snakes.polygon(j).size() - 1);
                 incrementI = true;
 
-                Point2D diff = Point2D.sub(rec.realPoint(jStart), rec.realPoint(iStart));
+                Point2D diff = Point2D.sub(rec.realPoint(jStart, pixelSize), rec.realPoint(iStart, pixelSize));
                 d = Point2D.mul(diff, n);
                 if (Math.abs(d) < 1.5 * gap) {
                     track = goToPoint(iStart, jStart, hPlane(iStart, hatches), gap);
@@ -999,7 +1000,7 @@ public class BooleanGrid {
                     }
                 }
 
-                diff = Point2D.sub(rec.realPoint(jEnd), rec.realPoint(iStart));
+                diff = Point2D.sub(rec.realPoint(jEnd, pixelSize), rec.realPoint(iStart, pixelSize));
                 d = Point2D.mul(diff, n);
                 if (Math.abs(d) < 1.5 * gap) {
                     track = goToPoint(iStart, jEnd, hPlane(iStart, hatches), gap);
@@ -1014,7 +1015,7 @@ public class BooleanGrid {
                     }
                 }
 
-                diff = Point2D.sub(rec.realPoint(jStart), rec.realPoint(iEnd));
+                diff = Point2D.sub(rec.realPoint(jStart, pixelSize), rec.realPoint(iEnd, pixelSize));
                 d = Point2D.mul(diff, n);
                 if (Math.abs(d) < 1.5 * gap) {
                     track = goToPoint(iEnd, jStart, hPlane(iEnd, hatches), gap);
@@ -1029,7 +1030,7 @@ public class BooleanGrid {
                     }
                 }
 
-                diff = Point2D.sub(rec.realPoint(jEnd), rec.realPoint(iEnd));
+                diff = Point2D.sub(rec.realPoint(jEnd, pixelSize), rec.realPoint(iEnd, pixelSize));
                 d = Point2D.mul(diff, n);
                 if (Math.abs(d) < 1.5 * gap) {
                     track = goToPoint(iEnd, jEnd, hPlane(iEnd, hatches), gap);
@@ -1054,9 +1055,12 @@ public class BooleanGrid {
     /**
      * Hatch all the polygons parallel to line hp with increment gap
      * 
+     * @param pathOptimize
+     *            TODO
+     * 
      * @return a polygon list of hatch lines
      */
-    public PolygonList hatch(final HalfPlane hp, final double gap) {
+    public PolygonList hatch(final HalfPlane hp, final double gap, final boolean pathOptimize) {
         if (gap <= 0) {
             return new PolygonList();
         }
@@ -1124,14 +1128,11 @@ public class BooleanGrid {
             }
         } while (segment >= 0);
 
-        if (currentConfiguration.getPrintSetting().isPathOptimize()) {
+        if (pathOptimize) {
             joinUpSnakes(snakes, hatches, gap);
         }
-
         resetVisited();
-
-        return snakes.realPolygons(getMaterial(), rec).simplify(
-                currentConfiguration.getPrinterSetting().getMachineResolution() * 0.9);
+        return snakes.realPolygons(getMaterial(), rec, pixelSize).simplify(1.5 * pixelSize);
     }
 
     /**
@@ -1139,9 +1140,9 @@ public class BooleanGrid {
      * negative the pattern is shrunk; if it is positive it is grown;
      */
     public BooleanGrid createOffsetGrid(final double dist) {
-        final int r = (int) Math.round(dist / (currentConfiguration.getPrinterSetting().getMachineResolution() * 0.6));
+        final int r = (int) Math.round(dist / pixelSize);
 
-        final BooleanGrid result = new BooleanGrid(this);
+        final BooleanGrid result = new BooleanGrid(this, pixelSize);
         if (r == 0) {
             return result;
         }
@@ -1157,7 +1158,7 @@ public class BooleanGrid {
      * negative the pattern is shrunk; if it is positive it is grown;
      */
     public void offset(final double dist) {
-        final int r = (int) Math.round(dist / (currentConfiguration.getPrinterSetting().getMachineResolution() * 0.6));
+        final int r = (int) Math.round(dist / pixelSize);
         if (r == 0) {
             return;
         }
@@ -1206,7 +1207,7 @@ public class BooleanGrid {
             if (e.material == resultMaterial) { // TODO: string comparison by identity
                 return e;
             }
-            result = new BooleanGrid(e);
+            result = new BooleanGrid(e, e.pixelSize);
             result.material = resultMaterial;
             return result;
         }
@@ -1215,18 +1216,18 @@ public class BooleanGrid {
             if (d.material == resultMaterial) {
                 return d;
             }
-            result = new BooleanGrid(d);
+            result = new BooleanGrid(d, e.pixelSize);
             result.material = resultMaterial;
             return result;
         }
 
         if (d.rec.coincidesWith(e.rec)) {
-            result = new BooleanGrid(d);
+            result = new BooleanGrid(d, e.pixelSize);
             result.bits.or(e.bits);
         } else {
             final Integer2DRectangle u = d.rec.union(e.rec);
-            result = new BooleanGrid(d, u);
-            final BooleanGrid temp = new BooleanGrid(e, u);
+            result = new BooleanGrid(d, u, d.pixelSize);
+            final BooleanGrid temp = new BooleanGrid(e, u, e.pixelSize);
             result.bits.or(temp.bits);
         }
         result.material = resultMaterial;
@@ -1255,15 +1256,15 @@ public class BooleanGrid {
 
         BooleanGrid result;
         if (d.rec.coincidesWith(e.rec)) {
-            result = new BooleanGrid(d);
+            result = new BooleanGrid(d, e.pixelSize);
             result.bits.and(e.bits);
         } else {
             final Integer2DRectangle u = d.rec.intersection(e.rec);
             if (u.isEmpty()) {
                 return NOTHING_THERE;
             }
-            result = new BooleanGrid(d, u);
-            final BooleanGrid temp = new BooleanGrid(e, u);
+            result = new BooleanGrid(d, u, d.pixelSize);
+            final BooleanGrid temp = new BooleanGrid(e, u, d.pixelSize);
             result.bits.and(temp.bits);
         }
         if (result.isEmpty()) {
@@ -1302,17 +1303,17 @@ public class BooleanGrid {
             if (d.material == resultMaterial) {
                 return d;
             }
-            result = new BooleanGrid(d);
+            result = new BooleanGrid(d, e.pixelSize);
             result.material = resultMaterial;
             return result;
         }
 
-        result = new BooleanGrid(d);
+        result = new BooleanGrid(d, e.pixelSize);
         BooleanGrid temp;
         if (d.rec.coincidesWith(e.rec)) {
             temp = e;
         } else {
-            temp = new BooleanGrid(e, result.rec);
+            temp = new BooleanGrid(e, result.rec, e.pixelSize);
         }
         result.bits.andNot(temp.bits);
         if (result.isEmpty()) {

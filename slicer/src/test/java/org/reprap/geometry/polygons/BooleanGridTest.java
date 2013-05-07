@@ -23,17 +23,19 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 public class BooleanGridTest {
+    private static final double PIXELSIZE = 0.03;
+
     private static final boolean VISUALIZE = false;
 
     static final BooleanGrid EMPTY = emptyGrid();
 
     static BooleanGrid makeRectangleGrid(final double minX, final double minY, final double maxX, final double maxY) {
         return new BooleanGrid(CSG2D.RrCSGFromBox(new Rectangle(new Point2D(minX, minY), new Point2D(maxX, maxY))),
-                new Rectangle(new Point2D(0, 0), new Point2D(.01, .01)), null);
+                new Rectangle(new Point2D(0, 0), new Point2D(.01, .01)), null, PIXELSIZE);
     }
 
     static BooleanGrid emptyGrid() {
-        return new BooleanGrid(CSG2D.nothing(), new Rectangle(new Point2D(0, 0), new Point2D(.01, .01)), null);
+        return new BooleanGrid(CSG2D.nothing(), new Rectangle(new Point2D(0, 0), new Point2D(.01, .01)), null, PIXELSIZE);
     }
 
     @Test

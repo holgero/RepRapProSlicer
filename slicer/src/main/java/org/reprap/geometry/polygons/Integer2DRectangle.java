@@ -1,7 +1,5 @@
 package org.reprap.geometry.polygons;
 
-import org.reprap.configuration.Configuration;
-
 /**
  * Holds rectangles represented by the sw point and the size.
  * 
@@ -46,9 +44,9 @@ final class Integer2DRectangle {
     /**
      * This rectangle in the real world
      */
-    Rectangle realRectangle() {
+    Rectangle realRectangle(final double pixelSize) {
         final Integer2DPoint r = new Integer2DPoint(swCorner.x + size.x - 1, swCorner.y + size.y - 1);
-        return new Rectangle(realPoint(swCorner), realPoint(r));
+        return new Rectangle(realPoint(swCorner, pixelSize), realPoint(r, pixelSize));
     }
 
     /**
@@ -100,30 +98,29 @@ final class Integer2DRectangle {
         return size.x < 0 | size.y < 0;
     }
 
-    Point2D realPoint(final Integer2DPoint point) {
-        return new Point2D(scale(swCorner.x + point.x), scale(swCorner.y + point.y));
+    Point2D realPoint(final Integer2DPoint point, final double pixelSize) {
+        return new Point2D(scale(swCorner.x + point.x, pixelSize), scale(swCorner.y + point.y, pixelSize));
     }
 
     /**
      * Convert real-world point to integer relative to this rectangle
      */
-    Integer2DPoint convertToInteger2DPoint(final Point2D a) {
-        return new Integer2DPoint(iScale(a.x()) - swCorner.x, iScale(a.y()) - swCorner.y);
+    Integer2DPoint convertToInteger2DPoint(final Point2D a, final double pixelSize) {
+        return new Integer2DPoint(iScale(a.x(), pixelSize) - swCorner.x, iScale(a.y(), pixelSize) - swCorner.y);
     }
 
     /**
      * Convert from real to pixel coordinates
      */
-    static int iScale(final double d) {
-        return (int) Math.round(d
-                / (Configuration.getInstance().getCurrentConfiguration().getPrinterSetting().getMachineResolution() * 0.6));
+    static int iScale(final double d, final double pixelSize) {
+        return (int) Math.round(d / pixelSize);
     }
 
     /**
      * Convert integer coordinates to pixel coordinates
      */
-    static double scale(final int i) {
-        return i * (Configuration.getInstance().getCurrentConfiguration().getPrinterSetting().getMachineResolution() * 0.6);
+    static double scale(final int i, final double pixelSize) {
+        return i * pixelSize;
     }
 
 }

@@ -39,7 +39,6 @@ import javax.vecmath.Vector3d;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.configuration.Configuration;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.MaterialSetting;
@@ -362,7 +361,7 @@ class ProducerStlList {
             grid.setMaterial(supportMaterial.getName());
         }
 
-        return hatch(support, layerRules, false, true);
+        return hatch(support, layerRules, false, true, currentConfiguration);
     }
 
     private static BooleanGrid union(final BooleanGridList slice) {
@@ -396,7 +395,7 @@ class ProducerStlList {
      * Compute the infill hatching polygons for this set of patterns
      */
     PolygonList computeInfill(final int stl) {
-        return new InFillPatterns().computeHatchedPolygons(stl, layerRules, this);
+        return new InFillPatterns().computeHatchedPolygons(stl, layerRules, this, currentConfiguration);
     }
 
     private static void setUpShield(final Purge purge, final List<STLObject> stls,
@@ -514,7 +513,8 @@ class ProducerStlList {
             // Deal with CSG shapes (much simpler and faster).
             for (int i = 0; i < collector.csgs.size(); i++) {
                 final CSG2D csgp = CSG3D.slice(collector.csgs.get(i), currentZ);
-                result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), collector.material));
+                result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), collector.material, currentConfiguration
+                        .getPrinterSetting().getMachineResolution() * 0.6));
             }
 
             // Deal with STL-generated edges
@@ -526,7 +526,8 @@ class ProducerStlList {
                     pgl = arcCompensate(pgl);
 
                     final CSG2D csgp = pgl.toCSG();
-                    result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), collector.material));
+                    result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), collector.material, currentConfiguration
+                            .getPrinterSetting().getMachineResolution() * 0.6));
                 }
             }
         }
@@ -696,12 +697,12 @@ class ProducerStlList {
      * 
      * Only hatches and outlines whose physical extruders match are altered.
      */
-    private static void middleStarts(final PolygonList list, final PolygonList hatching, final LayerRules lc,
+    private void middleStarts(final PolygonList list, final PolygonList hatching, final LayerRules lc,
             final BooleanGridList slice) {
         for (int i = 0; i < list.size(); i++) {
             Polygon outline = list.polygon(i);
             final String material = outline.getMaterial();
-            final ExtruderSetting extruder = Configuration.getInstance().getCurrentConfiguration().getExtruderSetting(material);
+            final ExtruderSetting extruder = currentConfiguration.getExtruderSetting(material);
             Line l = lc.getHatchDirection(false, extruder.getExtrusionSize()).pLine();
             if (i % 2 != 0 ^ lc.getMachineLayer() % 4 > 1) {
                 l = l.neg();
@@ -839,8 +840,7 @@ class ProducerStlList {
      * layerConditions.
      */
     static PolygonList hatch(final BooleanGridList list, final LayerRules layerConditions, final boolean surface,
-            final boolean support) {
-        final CurrentConfiguration currentConfiguration = Configuration.getInstance().getCurrentConfiguration();
+            final boolean support, final CurrentConfiguration currentConfiguration) {
         final PrintSetting printSetting = currentConfiguration.getPrintSetting();
         final PolygonList result = new PolygonList();
         for (int i = 0; i < list.size(); i++) {
@@ -858,17 +858,17 @@ class ProducerStlList {
                 }
             }
             final HalfPlane hatchLine = layerConditions.getHatchDirection(support, infillWidth);
-            result.add(grid.hatch(hatchLine, infillWidth));
+            result.add(grid.hatch(hatchLine, infillWidth, currentConfiguration.getPrintSetting().isPathOptimize()));
         }
         return result;
     }
 
-    private static BooleanGridList offsetOutline(final BooleanGridList gridList, final double multiplier) {
+    private BooleanGridList offsetOutline(final BooleanGridList gridList, final double multiplier) {
         final BooleanGridList result = new BooleanGridList();
         for (int i = 0; i < gridList.size(); i++) {
             final BooleanGrid grid = gridList.get(i);
             final BooleanGridList offset = offsetOutline(grid, multiplier);
-            if (Configuration.getInstance().getCurrentConfiguration().getPrintSetting().isInsideOut()) {
+            if (currentConfiguration.getPrintSetting().isInsideOut()) {
                 offset.reverse();
             }
             for (int j = 0; j < offset.size(); j++) {
@@ -878,11 +878,10 @@ class ProducerStlList {
         return result;
     }
 
-    private static BooleanGridList offsetOutline(final BooleanGrid grid, final double multiplier) {
-        final ExtruderSetting extruder = Configuration.getInstance().getCurrentConfiguration()
-                .getExtruderSetting(grid.getMaterial());
+    private BooleanGridList offsetOutline(final BooleanGrid grid, final double multiplier) {
+        final ExtruderSetting extruder = currentConfiguration.getExtruderSetting(grid.getMaterial());
         final BooleanGridList result = new BooleanGridList();
-        final int shells = Configuration.getInstance().getCurrentConfiguration().getPrintSetting().getVerticalShells();
+        final int shells = currentConfiguration.getPrintSetting().getVerticalShells();
         for (int shell = 0; shell < shells; shell++) {
             final double extrusionSize = extruder.getExtrusionSize();
             final double offset = multiplier * (shell + 0.5) * extrusionSize;
@@ -896,14 +895,14 @@ class ProducerStlList {
         return result;
     }
 
-    static BooleanGridList offset(final BooleanGridList gridList, final double multiplier) {
+    static BooleanGridList offset(final BooleanGridList gridList, final double multiplier,
+            final CurrentConfiguration currentConfiguration) {
         final BooleanGridList result = new BooleanGridList();
         for (int i = 0; i < gridList.size(); i++) {
             final BooleanGrid grid = gridList.get(i);
-            final ExtruderSetting extruder = Configuration.getInstance().getCurrentConfiguration()
-                    .getExtruderSetting(grid.getMaterial());
+            final ExtruderSetting extruder = currentConfiguration.getExtruderSetting(grid.getMaterial());
             final double extrusionSize = extruder.getExtrusionSize();
-            final PrintSetting printSetting = Configuration.getInstance().getCurrentConfiguration().getPrintSetting();
+            final PrintSetting printSetting = currentConfiguration.getPrintSetting();
             final int shells = printSetting.getVerticalShells();
             // Must be a hatch.  Only do it if the gap is +ve or we're building the foundation
             final double offSize;

@@ -44,7 +44,7 @@ public class Producer {
             simulationPlot = null;
         }
         this.currentConfiguration = currentConfiguration;
-        final Purge purge = new Purge();
+        final Purge purge = new Purge(currentConfiguration);
         printer = new GCodePrinter(currentConfiguration, purge);
         if (gcodeFile != null) {
             printer.setGCodeFileForOutput(gcodeFile);
