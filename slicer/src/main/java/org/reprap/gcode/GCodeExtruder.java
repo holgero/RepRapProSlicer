@@ -2,7 +2,6 @@ package org.reprap.gcode;
 
 import static org.reprap.configuration.MathRoutines.circleAreaForDiameter;
 
-import org.reprap.configuration.Configuration;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.MaterialSetting;
@@ -13,23 +12,24 @@ public class GCodeExtruder {
     /**
      * How far we have extruded plus other things like temperature
      */
-    private final ExtruderState extruderState;
+    private final ExtruderState extruderState = new ExtruderState();
     /**
      * The extrusion width in XY
      */
-    private double extrusionSize;
+    private final double extrusionSize;
     /**
      * The fastest speed of movement in XY when depositing
      */
-    private double fastXYFeedrate;
+    private final double fastXYFeedrate;
     /**
-     * The fastest the extruder can extrude
+     * The fastest the extruder can move the filament (without actually
+     * extruding)
      */
-    private double fastEFeedrate;
+    private final double fastEFeedrate;
     /**
      * The diameter of the feedstock (if any)
      */
-    private double feedDiameter;
+    private final double feedDiameter;
     /**
      * Identifier of the extruder
      */
@@ -37,42 +37,24 @@ public class GCodeExtruder {
     /**
      * How high to move above the surface for non-extruding movements
      */
-    private double lift;
+    private final double lift;
     /**
      * The number of mm to stop extruding before the end of a track
      */
-    private double extrusionOverRun;
-    private double extrudeRatio = 1;
-    private double retractionDistance;
-    private double extraExtrusionForLayer;
-    private double extraExtrusionForPolygon;
-    private MaterialSetting materialSettings;
+    private final double extrusionOverRun;
+    private final double extrudeRatio;
+    private final double retractionDistance;
+    private final double extraExtrusionForLayer;
+    private final double extraExtrusionForPolygon;
+    private final double layerHeight;
+    private final MaterialSetting materialSettings;
 
     GCodeExtruder(final GCodeWriter writer, final int extruderId, final CurrentConfiguration currentConfiguration) {
         gcode = writer;
         myExtruderID = extruderId;
+        layerHeight = currentConfiguration.getPrintSetting().getLayerHeight();
         final PrinterSetting printerSetting = currentConfiguration.getPrinterSetting();
-        loadPreferences(printerSetting, printerSetting.getExtruderSettings().get(extruderId), currentConfiguration
-                .getMaterials().get(extruderId));
-        extruderState = new ExtruderState();
-        // when we are first called (top down calculation means at our top
-        // layer) the layer below will have reversed us at its end on the way up
-        // in the actual build.
-        extruderState.setRetraction(getRetractionDistance() + extruderState.retraction());
-    }
-
-    /**
-     * Zero the extruded length
-     */
-    void zeroExtrudedLength(final boolean really) {
-        extruderState.zero();
-        if (really) {
-            gcode.writeCommand("G92 E0", "zero the extruded length");
-        }
-    }
-
-    private void loadPreferences(final PrinterSetting printerSetting, final ExtruderSetting extruderSetting,
-            final MaterialSetting material) {
+        final ExtruderSetting extruderSetting = printerSetting.getExtruderSettings().get(extruderId);
         extrusionSize = extruderSetting.getNozzleDiameter();
         retractionDistance = extruderSetting.getRetraction();
         extraExtrusionForLayer = extruderSetting.getExtraLengthPerLayer();
@@ -83,8 +65,23 @@ public class GCodeExtruder {
         final double maxXYFeedrate = Math.min(printerSetting.getMaximumFeedrateX(), printerSetting.getMaximumFeedrateY());
         fastXYFeedrate = Math.min(maxXYFeedrate, extruderSetting.getPrintExtrusionRate());
         lift = extruderSetting.getLift();
-        materialSettings = material;
+        materialSettings = currentConfiguration.getMaterials().get(extruderId);
         feedDiameter = materialSettings.getDiameter();
+
+        // when we are first called (top down calculation means at our top
+        // layer) the layer below will have reversed us at its end on the way up
+        // in the actual build.
+        extruderState.setRetraction(retractionDistance);
+    }
+
+    /**
+     * Zero the extruded length
+     */
+    void zeroExtrudedLength(final boolean really) {
+        extruderState.zero();
+        if (really) {
+            gcode.writeCommand("G92 E0", "zero the extruded length");
+        }
     }
 
     void startExtrusion(final boolean reverse) {
@@ -145,7 +142,6 @@ public class GCodeExtruder {
             return extrudeRatio * distance;
         }
 
-        final double layerHeight = Configuration.getInstance().getCurrentConfiguration().getPrintSetting().getLayerHeight();
         return extrudeRatio * distance * layerHeight * extrusionSize / circleAreaForDiameter(feedDiameter);
     }
 

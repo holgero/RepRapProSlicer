@@ -8,7 +8,6 @@ import java.io.PrintStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.configuration.Configuration;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.FillPattern;
@@ -87,7 +86,7 @@ public class LayerRules {
      */
     private final int maxSurfaceLayers;
 
-    private final CurrentConfiguration configuration = Configuration.getInstance().getCurrentConfiguration();
+    private final CurrentConfiguration currentConfiguration;
 
     /**
      * How far up the model we are in mm
@@ -109,9 +108,10 @@ public class LayerRules {
      */
     private int machineLayer;
 
-    LayerRules(final GCodePrinter printer, final BoundingBox box) {
+    LayerRules(final GCodePrinter printer, final BoundingBox box, final CurrentConfiguration currentConfiguration) {
         this.printer = printer;
-        final PrintSetting printSetting = configuration.getPrintSetting();
+        this.currentConfiguration = currentConfiguration;
+        final PrintSetting printSetting = currentConfiguration.getPrintSetting();
         zStep = printSetting.getLayerHeight();
         maxSurfaceLayers = printSetting.getHorizontalShells();
 
@@ -246,9 +246,9 @@ public class LayerRules {
         }
         final FillPattern fillPattern;
         if (support) {
-            fillPattern = configuration.getPrintSetting().getSupportPattern();
+            fillPattern = currentConfiguration.getPrintSetting().getSupportPattern();
         } else {
-            fillPattern = configuration.getPrintSetting().getFillPattern();
+            fillPattern = currentConfiguration.getPrintSetting().getFillPattern();
         }
         final double angle = Math.toRadians(fillPattern.angle(mylayer));
         HalfPlane result = new HalfPlane(new Point2D(0.0, 0.0), new Point2D(Math.sin(angle), Math.cos(angle)));
@@ -333,14 +333,15 @@ public class LayerRules {
     }
 
     private void fillFoundationRectangle(final SimulationPlotter simulationPlot) {
-        final int supportExtruderNo = configuration.getPrintSetting().getSupportExtruder();
-        final ExtruderSetting supportExtruder = configuration.getPrinterSetting().getExtruderSettings().get(supportExtruderNo);
+        final int supportExtruderNo = currentConfiguration.getPrintSetting().getSupportExtruder();
+        final ExtruderSetting supportExtruder = currentConfiguration.getPrinterSetting().getExtruderSettings()
+                .get(supportExtruderNo);
         final double extrusionSize = supportExtruder.getExtrusionSize();
-        final String supportMaterial = configuration.getMaterials().get(supportExtruderNo).getName();
+        final String supportMaterial = currentConfiguration.getMaterials().get(supportExtruderNo).getName();
         final BooleanGrid bg = new BooleanGrid(CSG2D.RrCSGFromBox(bBox), bBox.scale(1.1), supportMaterial);
         final PolygonList foundationPolygon = bg.hatch(getHatchDirection(false, extrusionSize), extrusionSize);
         setFirstAndLast(new PolygonList[] { foundationPolygon });
-        new LayerProducer(this, simulationPlot).plot(foundationPolygon);
+        new LayerProducer(this, simulationPlot, currentConfiguration).plot(foundationPolygon);
     }
 
 }

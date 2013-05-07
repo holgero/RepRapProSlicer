@@ -1,5 +1,7 @@
 package org.reprap.geometry.polygons;
 
+import org.reprap.configuration.Configuration;
+
 /**
  * Holds rectangles represented by the sw point and the size.
  * 
@@ -99,14 +101,29 @@ final class Integer2DRectangle {
     }
 
     Point2D realPoint(final Integer2DPoint point) {
-        return new Point2D(BooleanGrid.scale(swCorner.x + point.x), BooleanGrid.scale(swCorner.y + point.y));
+        return new Point2D(scale(swCorner.x + point.x), scale(swCorner.y + point.y));
     }
 
     /**
      * Convert real-world point to integer relative to this rectangle
      */
     Integer2DPoint convertToInteger2DPoint(final Point2D a) {
-        return new Integer2DPoint(BooleanGrid.iScale(a.x()) - swCorner.x, BooleanGrid.iScale(a.y()) - swCorner.y);
+        return new Integer2DPoint(iScale(a.x()) - swCorner.x, iScale(a.y()) - swCorner.y);
+    }
+
+    /**
+     * Convert from real to pixel coordinates
+     */
+    static int iScale(final double d) {
+        return (int) Math.round(d
+                / (Configuration.getInstance().getCurrentConfiguration().getPrinterSetting().getMachineResolution() * 0.6));
+    }
+
+    /**
+     * Convert integer coordinates to pixel coordinates
+     */
+    static double scale(final int i) {
+        return i * (Configuration.getInstance().getCurrentConfiguration().getPrinterSetting().getMachineResolution() * 0.6);
     }
 
 }

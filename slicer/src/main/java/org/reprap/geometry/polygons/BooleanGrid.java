@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.Configuration;
+import org.reprap.configuration.CurrentConfiguration;
 
 /**
  * This class stores a rectangular grid at the same grid resolution as the
@@ -28,26 +29,19 @@ import org.reprap.configuration.Configuration;
  */
 public class BooleanGrid {
     private static final Logger LOGGER = LogManager.getLogger(BooleanGrid.class);
-    /**
-     * The resolution of the RepRap machine
-     */
-    private static final double pixSize = Configuration.getInstance().getCurrentConfiguration().getPrinterSetting()
-            .getMachineResolution() * 0.6;
-    private static final double realResolution = pixSize * 1.5;
-    private static final double rSwell = 0.5; // mm by which to swell rectangles to give margins round stuff
+    private static final double SWELL_AMOUNT = 0.5; // mm by which to swell rectangles to give margins round stuff
 
     /**
      * How simple does a CSG expression have to be to not be worth pruning
      * further?
      */
-    private static final int simpleEnough = 3;
-
-    private static final BooleanGrid nothingThere = new BooleanGrid();
+    private static final int SIMPLE_ENOUGH = 3;
+    private static final BooleanGrid NOTHING_THERE = new BooleanGrid();
 
     /**
      * Run round the eight neighbours of a pixel anticlockwise from bottom left
      */
-    private final Integer2DPoint[] neighbour = { new Integer2DPoint(-1, -1), //0 /
+    private static final Integer2DPoint[] NEIGHBOUR = { new Integer2DPoint(-1, -1), //0 /
             new Integer2DPoint(0, -1), //1 V
             new Integer2DPoint(1, -1), //2 \
             new Integer2DPoint(1, 0), //3 ->
@@ -61,7 +55,7 @@ public class BooleanGrid {
      * Lookup table behaves like scalar product for two neighbours i and j; get
      * it by neighbourProduct[Math.abs(j - i)]
      */
-    private final int[] neighbourProduct = { 2, 1, 0, -1, -2, -1, 0, 1 };
+    private static final int[] NEIGHBOUR_PRODUCT = { 2, 1, 0, -1, -2, -1, 0, 1 };
 
     /**
      * The pixel map
@@ -79,23 +73,14 @@ public class BooleanGrid {
     private Integer2DRectangle rec;
     private String material;
 
-    /**
-     * Back and forth from real to pixel/integer coordinates
-     */
-    static double scale(final int i) {
-        return i * pixSize;
-    }
-
-    static int iScale(final double d) {
-        return (int) Math.round(d / pixSize);
-    }
+    private final CurrentConfiguration currentConfiguration = Configuration.getInstance().getCurrentConfiguration();
 
     /**
      * Build the grid from a CSG expression
      */
     public BooleanGrid(final CSG2D csgExp, final Rectangle rectangle, final String material) {
         this.material = material;
-        final Rectangle ri = rectangle.offset(rSwell);
+        final Rectangle ri = rectangle.offset(SWELL_AMOUNT);
         rec = new Integer2DRectangle(new Integer2DPoint(0, 0), new Integer2DPoint(1, 1)); // Set the origin to (0, 0)...
         rec.swCorner = rec.convertToInteger2DPoint(ri.sw()); // That then gets subtracted by the iPoint constructor to give the true origin
         rec.size = rec.convertToInteger2DPoint(ri.ne()); // The true origin is now automatically subtracted.
@@ -149,7 +134,7 @@ public class BooleanGrid {
      * The empty set
      */
     public static BooleanGrid nullBooleanGrid() {
-        return nothingThere;
+        return NOTHING_THERE;
     }
 
     public void setMaterial(final String material) {
@@ -428,7 +413,8 @@ public class BooleanGrid {
      * tree.
      */
     private void generateQuadTree(final Integer2DPoint ipsw, final Integer2DPoint ipne, final CSG2D csgExpression) {
-        final Point2D inc = new Point2D(pixSize * 0.5, pixSize * 0.5);
+        final Point2D inc = new Point2D(currentConfiguration.getPrinterSetting().getMachineResolution() * 0.3,
+                currentConfiguration.getPrinterSetting().getMachineResolution() * 0.3);
         final Point2D p0 = rec.realPoint(ipsw);
 
         // Single pixel?
@@ -446,7 +432,7 @@ public class BooleanGrid {
         }
 
         // Non-uniform, but simple, rectangle
-        if (csgExpression.complexity() <= simpleEnough) {
+        if (csgExpression.complexity() <= SIMPLE_ENOUGH) {
             heterogeneous(ipsw, ipne, csgExpression);
             return;
         }
@@ -545,7 +531,7 @@ public class BooleanGrid {
         }
 
         for (int i = 1; i < 8; i += 2) {
-            if (!get(a.add(neighbour[i]))) {
+            if (!get(a.add(NEIGHBOUR[i]))) {
                 return true;
             }
         }
@@ -613,7 +599,7 @@ public class BooleanGrid {
     private int neighbourCount(final Integer2DPoint p) {
         int result = 0;
         for (int i = 0; i < 8; i++) {
-            if (get(p.add(neighbour[i]))) {
+            if (get(p.add(NEIGHBOUR[i]))) {
                 result++;
             }
         }
@@ -624,14 +610,14 @@ public class BooleanGrid {
      * Find the index of the neighbouring point that's closest to a given real
      * direction.
      */
-    private int directionToNeighbour(final Point2D p) {
+    private static int directionToNeighbour(final Point2D p) {
         double score = Double.NEGATIVE_INFINITY;
         int result = -1;
 
         for (int i = 0; i < 8; i++) {
             // Can't use neighbour.realPoint as that adds swCorner...
             //  We have to normailze neighbour, to get answers proportional to cosines
-            final double s = Point2D.mul(p, new Point2D(neighbour[i].x, neighbour[i].y).norm());
+            final double s = Point2D.mul(p, new Point2D(NEIGHBOUR[i].x, NEIGHBOUR[i].y).norm());
             if (s > score) {
                 result = i;
                 score = s;
@@ -655,7 +641,7 @@ public class BooleanGrid {
         int directionScore = -5;
         int neighbourScore = 9;
         for (int i = 0; i < 8; i++) {
-            final Integer2DPoint b = a.add(neighbour[i]);
+            final Integer2DPoint b = a.add(NEIGHBOUR[i]);
             if (isEdgePixel(b)) {
                 if (!vGet(b)) {
                     if (nd < 0) {
@@ -664,7 +650,7 @@ public class BooleanGrid {
                     final int ns = neighbourCount(b);
                     if (ns <= neighbourScore) {
                         neighbourScore = ns;
-                        final int s = neighbourProduct[Math.abs(nd - i)];
+                        final int s = NEIGHBOUR_PRODUCT[Math.abs(nd - i)];
                         if (s > directionScore) {
                             directionScore = s;
                             result = b;
@@ -686,7 +672,7 @@ public class BooleanGrid {
     public BooleanGrid floodCopy(final Point2D pp) {
         Integer2DPoint p = rec.convertToInteger2DPoint(pp);
         if (!inside(p) || !this.get(p)) {
-            return nothingThere;
+            return NOTHING_THERE;
         }
         final BooleanGrid result = new BooleanGrid();
         result.material = material;
@@ -710,7 +696,7 @@ public class BooleanGrid {
             result.set(p, true);
 
             for (int i = 1; i < 8; i = i + 2) {
-                q = p.add(neighbour[i]);
+                q = p.add(NEIGHBOUR[i]);
                 if (this.get(q) && !result.get(q)) {
                     sp++;
                     if (sp >= top) {
@@ -746,7 +732,7 @@ public class BooleanGrid {
      */
     public PolygonList allPerimiters() {
         PolygonList r = iAllPerimiters().realPolygons(getMaterial(), rec);
-        r = r.simplify(realResolution);
+        r = r.simplify(currentConfiguration.getPrinterSetting().getMachineResolution() * 0.9);
         return r;
     }
 
@@ -815,7 +801,7 @@ public class BooleanGrid {
         int dir = directionToNeighbour(originPlane.normal());
 
         if (originPlane.value(targetPlane.pLine().origin()) < 0) {
-            dir = neighbourIndex(neighbour[dir].neg());
+            dir = neighbourIndex(NEIGHBOUR[dir].neg());
         }
 
         if (!get(start)) {
@@ -1138,13 +1124,14 @@ public class BooleanGrid {
             }
         } while (segment >= 0);
 
-        if (Configuration.getInstance().getCurrentConfiguration().getPrintSetting().isPathOptimize()) {
+        if (currentConfiguration.getPrintSetting().isPathOptimize()) {
             joinUpSnakes(snakes, hatches, gap);
         }
 
         resetVisited();
 
-        return snakes.realPolygons(getMaterial(), rec).simplify(realResolution);
+        return snakes.realPolygons(getMaterial(), rec).simplify(
+                currentConfiguration.getPrinterSetting().getMachineResolution() * 0.9);
     }
 
     /**
@@ -1152,7 +1139,7 @@ public class BooleanGrid {
      * negative the pattern is shrunk; if it is positive it is grown;
      */
     public BooleanGrid createOffsetGrid(final double dist) {
-        final int r = iScale(dist);
+        final int r = (int) Math.round(dist / (currentConfiguration.getPrinterSetting().getMachineResolution() * 0.6));
 
         final BooleanGrid result = new BooleanGrid(this);
         if (r == 0) {
@@ -1160,7 +1147,7 @@ public class BooleanGrid {
         }
         result.offset(dist);
         if (result.isEmpty()) {
-            return nothingThere;
+            return NOTHING_THERE;
         }
         return result;
     }
@@ -1170,7 +1157,7 @@ public class BooleanGrid {
      * negative the pattern is shrunk; if it is positive it is grown;
      */
     public void offset(final double dist) {
-        final int r = iScale(dist);
+        final int r = (int) Math.round(dist / (currentConfiguration.getPrinterSetting().getMachineResolution() * 0.6));
         if (r == 0) {
             return;
         }
@@ -1212,9 +1199,9 @@ public class BooleanGrid {
     public static BooleanGrid union(final BooleanGrid d, final BooleanGrid e, final String resultMaterial) {
         BooleanGrid result;
 
-        if (d == nothingThere) {
-            if (e == nothingThere) {
-                return nothingThere;
+        if (d == NOTHING_THERE) {
+            if (e == NOTHING_THERE) {
+                return NOTHING_THERE;
             }
             if (e.material == resultMaterial) { // TODO: string comparison by identity
                 return e;
@@ -1224,7 +1211,7 @@ public class BooleanGrid {
             return result;
         }
 
-        if (e == nothingThere) {
+        if (e == NOTHING_THERE) {
             if (d.material == resultMaterial) {
                 return d;
             }
@@ -1251,7 +1238,7 @@ public class BooleanGrid {
      */
     static BooleanGrid union(final BooleanGrid d, final BooleanGrid e) {
         final BooleanGrid result = union(d, e, d.material);
-        if (result != nothingThere && d.material != e.material) {
+        if (result != NOTHING_THERE && d.material != e.material) {
             LOGGER.error("BooleanGrid.union(): attempt to union two bitmaps of different materials: " + d.getMaterial()
                     + " and " + e.getMaterial());
         }
@@ -1262,8 +1249,8 @@ public class BooleanGrid {
      * Compute the intersection of two bit patterns
      */
     private static BooleanGrid intersection(final BooleanGrid d, final BooleanGrid e, final String resultMaterial) {
-        if (d == nothingThere || e == nothingThere) {
-            return nothingThere;
+        if (d == NOTHING_THERE || e == NOTHING_THERE) {
+            return NOTHING_THERE;
         }
 
         BooleanGrid result;
@@ -1273,14 +1260,14 @@ public class BooleanGrid {
         } else {
             final Integer2DRectangle u = d.rec.intersection(e.rec);
             if (u.isEmpty()) {
-                return nothingThere;
+                return NOTHING_THERE;
             }
             result = new BooleanGrid(d, u);
             final BooleanGrid temp = new BooleanGrid(e, u);
             result.bits.and(temp.bits);
         }
         if (result.isEmpty()) {
-            return nothingThere;
+            return NOTHING_THERE;
         }
         result.deWhisker();
         result.material = resultMaterial;
@@ -1292,7 +1279,7 @@ public class BooleanGrid {
      */
     public static BooleanGrid intersection(final BooleanGrid d, final BooleanGrid e) {
         final BooleanGrid result = intersection(d, e, d.material);
-        if (result != nothingThere && d.material != e.material) {
+        if (result != NOTHING_THERE && d.material != e.material) {
             LOGGER.error("BooleanGrid.intersection(): attempt to intersect two bitmaps of different materials: "
                     + d.getMaterial() + " and " + e.getMaterial());
         }
@@ -1305,13 +1292,13 @@ public class BooleanGrid {
      * rectangle from the bitmap
      */
     public static BooleanGrid difference(final BooleanGrid d, final BooleanGrid e, final String resultMaterial) {
-        if (d == nothingThere) {
-            return nothingThere;
+        if (d == NOTHING_THERE) {
+            return NOTHING_THERE;
         }
 
         BooleanGrid result;
 
-        if (e == nothingThere) {
+        if (e == NOTHING_THERE) {
             if (d.material == resultMaterial) {
                 return d;
             }
@@ -1329,7 +1316,7 @@ public class BooleanGrid {
         }
         result.bits.andNot(temp.bits);
         if (result.isEmpty()) {
-            return nothingThere;
+            return NOTHING_THERE;
         }
         result.deWhisker();
         result.material = resultMaterial;
@@ -1342,7 +1329,7 @@ public class BooleanGrid {
      */
     public static BooleanGrid difference(final BooleanGrid d, final BooleanGrid e) {
         final BooleanGrid result = difference(d, e, d.material);
-        if (result != nothingThere && d.material != e.material) {
+        if (result != NOTHING_THERE && d.material != e.material) {
             LOGGER.error("BooleanGrid.difference(): attempt to subtract two bitmaps of different materials: " + d.getMaterial()
                     + " and " + e.getMaterial());
         }

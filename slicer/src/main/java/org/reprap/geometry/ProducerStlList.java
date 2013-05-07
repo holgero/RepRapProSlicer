@@ -68,14 +68,15 @@ class ProducerStlList {
     private static final Logger LOGGER = LogManager.getLogger(Producer.class);
     private static final double GRID_RESOLUTION = 0.01;
 
-    static BoundingBox calculateBoundingBox(final AllSTLsToBuild allStls, final Purge purge) {
+    static BoundingBox calculateBoundingBox(final AllSTLsToBuild allStls, final Purge purge,
+            final CurrentConfiguration currentConfiguration) {
         final List<STLObject> stlList = new ArrayList<>();
         copyAllStls(allStls, stlList);
-        setUpShield(purge, stlList, Configuration.getInstance().getCurrentConfiguration());
+        setUpShield(purge, stlList, currentConfiguration);
         return getBoundingBox(stlList);
     }
 
-    private final CurrentConfiguration configuration = Configuration.getInstance().getCurrentConfiguration();
+    private final CurrentConfiguration currentConfiguration;
     private final List<STLObject> stlsToBuild = new ArrayList<STLObject>();
     /**
      * A plan box round each item
@@ -84,9 +85,11 @@ class ProducerStlList {
     private final LayerRules layerRules;
     private final SliceCache cache;
 
-    ProducerStlList(final AllSTLsToBuild allStls, final Purge purge, final LayerRules layerRules) {
+    ProducerStlList(final AllSTLsToBuild allStls, final Purge purge, final LayerRules layerRules,
+            final CurrentConfiguration currentConfiguration) {
+        this.currentConfiguration = currentConfiguration;
         copyAllStls(allStls, stlsToBuild);
-        setUpShield(purge, stlsToBuild, configuration);
+        setUpShield(purge, stlsToBuild, currentConfiguration);
         setRectangles(stlsToBuild, rectangles);
         this.layerRules = layerRules;
         cache = new SliceCache(layerRules, stlsToBuild);
@@ -350,8 +353,8 @@ class ProducerStlList {
             support = support.unionDuplicates();
         }
 
-        final int supportExtruderNo = configuration.getPrintSetting().getSupportExtruder();
-        final MaterialSetting supportMaterial = configuration.getMaterials().get(supportExtruderNo);
+        final int supportExtruderNo = currentConfiguration.getPrintSetting().getSupportExtruder();
+        final MaterialSetting supportMaterial = currentConfiguration.getMaterials().get(supportExtruderNo);
         // Now force the attributes of the support pattern to be the support extruders
         // for all the materials in it.
         for (int i = 0; i < support.size(); i++) {
@@ -380,7 +383,7 @@ class ProducerStlList {
     BooleanGridList neededThisLayer(final BooleanGridList allLayer) {
         final BooleanGridList neededSlice = new BooleanGridList();
         for (int i = 0; i < allLayer.size(); i++) {
-            final ExtruderSetting extruder = configuration.getExtruderSetting(allLayer.get(i).getMaterial());
+            final ExtruderSetting extruder = currentConfiguration.getExtruderSetting(allLayer.get(i).getMaterial());
             if (extruder != null) {
                 // TODO can extruder be null here?
                 neededSlice.add(allLayer.get(i));
@@ -449,7 +452,7 @@ class ProducerStlList {
         final BooleanGridList offBorder = offsetOutline(slice, -1);
         final PolygonList borderPolygons = offBorder.borders();
 
-        if (Configuration.getInstance().getCurrentConfiguration().getPrintSetting().isMiddleStart()) {
+        if (currentConfiguration.getPrintSetting().isMiddleStart()) {
             if (borderPolygons != null && borderPolygons.size() > 0) {
                 middleStarts(borderPolygons, hatchedPolygons, layerRules, slice);
             }
@@ -458,8 +461,7 @@ class ProducerStlList {
     }
 
     PolygonList computeBrim(final int stl, final int brimLines) {
-        final ExtruderSetting extruder = Configuration.getInstance().getCurrentConfiguration().getPrinterSetting()
-                .getExtruderSettings().get(0);
+        final ExtruderSetting extruder = currentConfiguration.getPrinterSetting().getExtruderSettings().get(0);
         final double extrusionSize = extruder.getExtrusionSize();
 
         BooleanGridList slice = neededThisLayer(slice(stl, 0));
@@ -535,7 +537,7 @@ class ProducerStlList {
 
     private Map<String, EdgeAndCsgsCollector> collectEdgeLinesAndCsgs(final int stlIndex, final double currentZ) {
         final Map<String, EdgeAndCsgsCollector> collectorMap = new HashMap<String, EdgeAndCsgsCollector>();
-        for (final MaterialSetting material : configuration.getMaterials()) {
+        for (final MaterialSetting material : currentConfiguration.getMaterials()) {
             collectorMap.put(material.getName(), new EdgeAndCsgsCollector());
         }
 
@@ -782,7 +784,7 @@ class ProducerStlList {
         final String material = polygon.getMaterial();
 
         // Multiply the geometrically correct result by factor
-        final PrintSetting printSetting = configuration.getPrintSetting();
+        final PrintSetting printSetting = currentConfiguration.getPrintSetting();
         final double factor = printSetting.getArcCompensation();
         if (factor < MathRoutines.TINY_VALUE) {
             return polygon;
@@ -790,7 +792,7 @@ class ProducerStlList {
 
         // The points making the arc must be closer than this together
         final double shortSides = printSetting.getArcShortSides();
-        final double thickness = configuration.getExtruderSetting(material).getExtrusionSize();
+        final double thickness = currentConfiguration.getExtruderSetting(material).getExtrusionSize();
         final Polygon result = new Polygon(material, polygon.isClosed());
         Point2D previous = polygon.point(polygon.size() - 1);
         Point2D current = polygon.point(0);

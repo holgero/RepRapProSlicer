@@ -41,7 +41,7 @@ import org.junit.rules.TemporaryFolder;
 public class ConfigurationPersistenceTest {
     @Rule
     public final TemporaryFolder folder = new TemporaryFolder();
-    private final Configuration configuration = Configuration.getInstance();
+    private final Configuration configuration = Configuration.create();
     private JAXBContext context;
     private Unmarshaller unmarshaller;
     private Marshaller marshaller;

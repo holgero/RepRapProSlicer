@@ -49,9 +49,9 @@ public class Producer {
         if (gcodeFile != null) {
             printer.setGCodeFileForOutput(gcodeFile);
         }
-        final BoundingBox buildVolume = ProducerStlList.calculateBoundingBox(allStls, purge);
-        layerRules = new LayerRules(printer, buildVolume);
-        stlList = new ProducerStlList(allStls, purge, layerRules);
+        final BoundingBox buildVolume = ProducerStlList.calculateBoundingBox(allStls, purge, currentConfiguration);
+        layerRules = new LayerRules(printer, buildVolume, currentConfiguration);
+        stlList = new ProducerStlList(allStls, purge, layerRules, currentConfiguration);
         totalExtruders = currentConfiguration.getPrinterSetting().getExtruderSettings().size();
         final PrintSetting printSetting = currentConfiguration.getPrintSetting();
         omitShield = printSetting.printShield();
@@ -102,7 +102,7 @@ public class Producer {
             }
         }
         layerRules.setFirstAndLast(allPolygons);
-        final LayerProducer lp = new LayerProducer(layerRules, simulationPlot);
+        final LayerProducer lp = new LayerProducer(layerRules, simulationPlot, currentConfiguration);
         for (final PolygonList pl : allPolygons) {
             lp.plot(pl);
         }

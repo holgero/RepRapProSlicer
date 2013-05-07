@@ -2,7 +2,6 @@ package org.reprap.geometry;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.configuration.Configuration;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSetting;
 import org.reprap.gcode.GCodePrinter;
@@ -15,12 +14,13 @@ class LayerProducer {
     private static final Logger LOGGER = LogManager.getLogger(LayerProducer.class);
     private final SimulationPlotter simulationPlot;
     private final LayerRules layerRules;
-    private final CurrentConfiguration configuration = Configuration.getInstance().getCurrentConfiguration();
+    private final CurrentConfiguration currentConfiguration;
     boolean firstOneInLayer = true;
 
-    LayerProducer(final LayerRules lc, final SimulationPlotter simPlot) {
+    LayerProducer(final LayerRules lc, final SimulationPlotter simPlot, final CurrentConfiguration currentConfiguration) {
         layerRules = lc;
         simulationPlot = simPlot;
+        this.currentConfiguration = currentConfiguration;
 
         if (simulationPlot != null) {
             if (!simulationPlot.isInitialised()) {
@@ -54,7 +54,7 @@ class LayerProducer {
             lastPoint = n;
         }
 
-        if (plotDist < configuration.getPrinterSetting().getMachineResolution() * 0.5) {
+        if (plotDist < currentConfiguration.getPrinterSetting().getMachineResolution() * 0.5) {
             LOGGER.info("Rejected line with " + polygon.size() + " points, length: " + plotDist);
             return;
         }
@@ -75,7 +75,7 @@ class LayerProducer {
             simulationPlot.add(pgl);
         }
 
-        final ExtruderSetting extruder = configuration.getExtruderSetting(material);
+        final ExtruderSetting extruder = currentConfiguration.getExtruderSetting(material);
         final ExtrusionPath extrusionPath = new ExtrusionPath(polygon, calculateFeedrate(polygon,
                 extruder.getPrintExtrusionRate()));
         plotExtrusionPath(extrusionPath, extruder);
@@ -83,9 +83,9 @@ class LayerProducer {
 
     private double calculateFeedrate(final Polygon polygon, final double extrusionRate) {
         if (polygon.isClosed()) {
-            return configuration.getPrintSetting().getPerimeterSpeed() * extrusionRate;
+            return currentConfiguration.getPrintSetting().getPerimeterSpeed() * extrusionRate;
         } else {
-            return configuration.getPrintSetting().getInfillSpeed() * extrusionRate;
+            return currentConfiguration.getPrintSetting().getInfillSpeed() * extrusionRate;
         }
     }
 
