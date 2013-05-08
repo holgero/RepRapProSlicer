@@ -267,12 +267,8 @@ public class STLObject {
         return new Vector3d(extent);
     }
 
-    public File fileAndDirectioryItCameFrom(final int i) {
+    public File getSourceFile(final int i) {
         return contents.get(i).getSourceFile();
-    }
-
-    public String fileItCameFrom(final int i) {
-        return fileAndDirectioryItCameFrom(i).getName();
     }
 
     String toSCAD() {
@@ -306,7 +302,7 @@ public class STLObject {
 
         for (int i = 0; i < contents.size(); i++) {
             result += "      import(\"";
-            result += fileItCameFrom(i) + "\", convexity = 10);\n";
+            result += getSourceFile(i).getName() + "\", convexity = 10);\n";
         }
         result += "   }\n";
 
@@ -771,25 +767,5 @@ public class STLObject {
         final MaterialSetting substitute = materials.get(0);
         LOGGER.warn("Requested material " + materialName + " not found, substituting with " + substitute.getName() + ".");
         return substitute;
-    }
-
-    /**
-     * Compute the signed volume of a tetrahedron
-     */
-    private static double tetVolume(final Point3d a, final Point3d b, final Point3d c, final Point3d d) {
-        final Matrix3d m = new Matrix3d(b.x - a.x, c.x - a.x, d.x - a.x, b.y - a.y, c.y - a.y, d.y - a.y, b.z - a.z, c.z - a.z,
-                d.z - a.z);
-        return m.determinant() / 6.0;
-    }
-
-    /**
-     * Compute the signed volume of the prism between the XY plane and the space
-     * triangle {a, b, c}
-     */
-    public static double prismVolume(final Point3d a, final Point3d b, final Point3d c) {
-        final Point3d d = new Point3d(a.x, a.y, 0);
-        final Point3d e = new Point3d(b.x, b.y, 0);
-        final Point3d f = new Point3d(c.x, c.y, 0);
-        return tetVolume(a, b, c, e) + tetVolume(a, e, c, d) + tetVolume(e, f, c, d);
     }
 }

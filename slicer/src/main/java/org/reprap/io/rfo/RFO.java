@@ -49,18 +49,18 @@ public class RFO {
         final List<String> uniqueNames = new ArrayList<String>();
         for (int i = 0; i < astltb.size(); i++) {
             for (int subMod1 = 0; subMod1 < astltb.get(i).size(); subMod1++) {
-                final File file = astltb.get(i).fileAndDirectioryItCameFrom(subMod1);
+                final File file = astltb.get(i).getSourceFile(subMod1);
                 astltb.get(i).setUnique(subMod1, u);
                 for (int j = 0; j < i; j++) {
                     for (int subMod2 = 0; subMod2 < astltb.get(j).size(); subMod2++) {
-                        if (file.equals(astltb.get(j).fileAndDirectioryItCameFrom(subMod2))) {
+                        if (file.equals(astltb.get(j).getSourceFile(subMod2))) {
                             astltb.get(i).setUnique(subMod1, astltb.get(j).getUnique(subMod2));
                             break;
                         }
                     }
                 }
                 if (astltb.get(i).getUnique(subMod1) == u) {
-                    final String un = astltb.get(i).fileItCameFrom(subMod1);
+                    final String un = astltb.get(i).getSourceFile(subMod1).getName();
                     FileUtils.copyFile(file, new File(rfod, un));
                     uniqueNames.add(un);
 

@@ -220,11 +220,11 @@ public class RepRapPlater extends JPanel implements MouseListener {
         workingVolumeAndStls.setCapability(Group.ALLOW_CHILDREN_WRITE);
         workingVolumeAndStls.setCapability(Group.ALLOW_CHILDREN_READ);
 
-        // Load the STL file for the working volume
         world = new STLObject(workingVolumeAndStls);
 
         final Appearance workingVolumeAppearance = new Appearance();
         workingVolumeAppearance.setMaterial(new Material(MACHINE_COLOR, Constants.BLACK, MACHINE_COLOR, Constants.BLACK, 0f));
+        // Load the STL file for the working volume
         final STLFileContents stlFileContents = StlFileLoader.loadSTLFileContents(baseFile);
         workingVolume = STLObject.loadIndependentSTL(stlFileContents, workingVolumeAppearance);
         workingVolumeAndStls.addChild(workingVolume.top());
@@ -296,7 +296,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
         if (number <= 0) {
             return;
         }
-        final File file = original.fileAndDirectioryItCameFrom(0);
+        final File file = original.getSourceFile(0);
         final double increment = original.extent().x + 5;
         final Vector3d offset = new Vector3d();
         offset.x = increment;

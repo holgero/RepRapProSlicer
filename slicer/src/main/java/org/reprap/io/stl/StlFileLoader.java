@@ -31,11 +31,11 @@ import javax.media.j3d.GeometryArray;
 import javax.media.j3d.Group;
 import javax.media.j3d.Node;
 import javax.media.j3d.Shape3D;
+import javax.vecmath.Matrix3d;
 import javax.vecmath.Point3d;
 
 import org.reprap.geometry.polyhedra.CSG3D;
 import org.reprap.geometry.polyhedra.STLFileContents;
-import org.reprap.geometry.polyhedra.STLObject;
 import org.reprap.io.csg.CSGReader;
 
 import com.sun.j3d.loaders.Scene;
@@ -94,10 +94,29 @@ public class StlFileLoader {
                 g.getCoordinate(i, a);
                 g.getCoordinate(i + 1, b);
                 g.getCoordinate(i + 2, c);
-                total += STLObject.prismVolume(a, b, c);
+                total += prismVolume(a, b, c);
             }
         }
         return Math.abs(total);
     }
 
+    /**
+     * Compute the signed volume of a tetrahedron
+     */
+    private static double tetVolume(final Point3d a, final Point3d b, final Point3d c, final Point3d d) {
+        final Matrix3d m = new Matrix3d(b.x - a.x, c.x - a.x, d.x - a.x, b.y - a.y, c.y - a.y, d.y - a.y, b.z - a.z, c.z - a.z,
+                d.z - a.z);
+        return m.determinant() / 6.0;
+    }
+
+    /**
+     * Compute the signed volume of the prism between the XY plane and the space
+     * triangle {a, b, c}
+     */
+    private static double prismVolume(final Point3d a, final Point3d b, final Point3d c) {
+        final Point3d d = new Point3d(a.x, a.y, 0);
+        final Point3d e = new Point3d(b.x, b.y, 0);
+        final Point3d f = new Point3d(c.x, c.y, 0);
+        return tetVolume(a, b, c, e) + tetVolume(a, e, c, d) + tetVolume(e, f, c, d);
+    }
 }
