@@ -2,23 +2,25 @@ package org.reprap.geometry.polyhedra;
 
 import java.io.File;
 
+import javax.media.j3d.BoundingBox;
 import javax.media.j3d.BranchGroup;
 
-
-final class STLFileContents {
+public final class STLFileContents {
     private final File sourceFile; // The STL file I was loaded from
     private final BranchGroup stl; // The actual STL geometry
-    private final CSG3D csg; // CSG if available
-    private final Attributes att; // The attributes associated with it
+    private CSG3D csg; // CSG if available
+    private Attributes attribute; // The attributes associated with it
     private final double volume; // Useful to know
     private int unique;
+    private final BoundingBox bbox;
 
-    STLFileContents(final File file, final BranchGroup st, final CSG3D c, final Attributes a, final double v) {
-        sourceFile = file;
-        stl = st;
-        csg = c;
-        att = a;
-        volume = v;
+    public STLFileContents(final File sourceFile, final BranchGroup stl, final CSG3D csg, final double volume,
+            final BoundingBox bbox) {
+        this.sourceFile = sourceFile;
+        this.stl = stl;
+        this.csg = csg;
+        this.volume = volume;
+        this.bbox = bbox;
         unique = 0;
     }
 
@@ -42,11 +44,23 @@ final class STLFileContents {
         return csg;
     }
 
-    Attributes getAtt() {
-        return att;
+    Attributes getAttribute() {
+        return attribute;
     }
 
     double getVolume() {
         return volume;
+    }
+
+    void setCsg(final CSG3D csgResult) {
+        csg = csgResult;
+    }
+
+    void setAttribute(final Attributes attribute) {
+        this.attribute = attribute;
+    }
+
+    public BoundingBox getBbox() {
+        return bbox;
     }
 }

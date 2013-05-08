@@ -127,8 +127,10 @@ import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.geometry.polyhedra.Constants;
+import org.reprap.geometry.polyhedra.STLFileContents;
 import org.reprap.geometry.polyhedra.STLObject;
 import org.reprap.io.rfo.RFO;
+import org.reprap.io.stl.StlFileLoader;
 
 import com.sun.j3d.utils.picking.PickCanvas;
 import com.sun.j3d.utils.picking.PickResult;
@@ -223,7 +225,8 @@ public class RepRapPlater extends JPanel implements MouseListener {
 
         final Appearance workingVolumeAppearance = new Appearance();
         workingVolumeAppearance.setMaterial(new Material(MACHINE_COLOR, Constants.BLACK, MACHINE_COLOR, Constants.BLACK, 0f));
-        workingVolume = STLObject.loadIndependentSTL(baseFile, workingVolumeAppearance);
+        final STLFileContents stlFileContents = StlFileLoader.loadSTLFileContents(baseFile);
+        workingVolume = STLObject.loadIndependentSTL(stlFileContents, workingVolumeAppearance);
         workingVolumeAndStls.addChild(workingVolume.top());
 
         // Set the mouse to move everything
@@ -300,7 +303,8 @@ public class RepRapPlater extends JPanel implements MouseListener {
         offset.y = 0;
         offset.z = 0;
         for (int i = 0; i < number; i++) {
-            final STLObject stl = STLObject.createStlObjectFromFile(file, originalAttributes.getMaterial(),
+            final STLFileContents stlFileContents = StlFileLoader.loadSTLFileContents(file);
+            final STLObject stl = STLObject.createStlObjectFromFile(stlFileContents, originalAttributes.getMaterial(),
                     currentConfiguration);
             stl.translate(offset);
             if (stl.numChildren() > 0) {
@@ -316,10 +320,11 @@ public class RepRapPlater extends JPanel implements MouseListener {
             return;
         }
 
+        final STLFileContents stlFileContents = StlFileLoader.loadSTLFileContents(file);
         final STLObject stl;
         final String defaultMaterial = currentConfiguration.getMaterials().get(0).getName();
         if (lastPicked == null) {
-            stl = STLObject.createStlObjectFromFile(file, defaultMaterial, currentConfiguration);
+            stl = STLObject.createStlObjectFromFile(stlFileContents, defaultMaterial, currentConfiguration);
             final Point2D middle = Point2D.mul(0.5, new Point2D(200, 200));
             final Vector3d v = new Vector3d(middle.x(), middle.y(), 0);
             final Vector3d e = stl.extent();
@@ -332,7 +337,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
             stls.add(stl);
         } else {
             stl = lastPicked;
-            stl.addSTL(file, defaultMaterial, currentConfiguration);
+            stl.addSTL(stlFileContents, defaultMaterial, currentConfiguration);
         }
 
         MaterialRadioButtons.createAndShowGUI(stl.attributes(stl.size() - 1), this, stls.size() - 1, stl.volume(),

@@ -61,7 +61,9 @@ import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.geometry.polyhedra.CSG3D;
+import org.reprap.geometry.polyhedra.STLFileContents;
 import org.reprap.geometry.polyhedra.STLObject;
+import org.reprap.io.stl.StlFileLoader;
 
 class ProducerStlList {
     private static final Logger LOGGER = LogManager.getLogger(Producer.class);
@@ -405,8 +407,8 @@ class ProducerStlList {
             return;
         }
         final String shieldMaterial = currentConfiguration.getMaterials().get(0).getName();
-        final STLObject shield = STLObject.createStlObjectFromFile(printSetting.getShieldStlFile(), shieldMaterial,
-                currentConfiguration);
+        final STLFileContents stlFileContents = StlFileLoader.loadSTLFileContents(printSetting.getShieldStlFile());
+        final STLObject shield = STLObject.createStlObjectFromFile(stlFileContents, shieldMaterial, currentConfiguration);
 
         final BoundingBox boxWithoutShield = getBoundingBox(stls);
         final double modelZMax = boxWithoutShield.getZint().high();

@@ -422,11 +422,9 @@ public class StlFile implements Loader {
      * @return Scene The scene with the object loaded.
      * 
      * @throws FileNotFoundException
-     * @throws IncorrectFormatException
-     * @throws ParsingErrorException
      */
     @Override
-    public Scene load(final String filename) throws FileNotFoundException, IncorrectFormatException, ParsingErrorException {
+    public Scene load(final String filename) throws FileNotFoundException {
         setBasePath(new File(filename).getParent());
         setFileName(filename); // For binary files
 

@@ -8,7 +8,9 @@ import java.util.List;
 import javax.media.j3d.Transform3D;
 
 import org.reprap.configuration.CurrentConfiguration;
+import org.reprap.geometry.polyhedra.STLFileContents;
 import org.reprap.geometry.polyhedra.STLObject;
+import org.reprap.io.stl.StlFileLoader;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
@@ -93,10 +95,11 @@ final class RfoXmlHandler extends DefaultHandler {
             validateFiletype(atts);
             final String location = atts.getValue("location");
             final String material = atts.getValue("material");
+            final STLFileContents stlFileContents = StlFileLoader.loadSTLFileContents(new File(rfoDir, location));
             if (stl == null) {
-                stl = STLObject.createStlObjectFromFile(new File(rfoDir, location), material, currentConfiguration);
+                stl = STLObject.createStlObjectFromFile(stlFileContents, material, currentConfiguration);
             } else {
-                stl.addSTL(new File(rfoDir, location), material, currentConfiguration);
+                stl.addSTL(stlFileContents, material, currentConfiguration);
             }
         } else if (element.equalsIgnoreCase("transform3D")) {
             setMToIdentity();

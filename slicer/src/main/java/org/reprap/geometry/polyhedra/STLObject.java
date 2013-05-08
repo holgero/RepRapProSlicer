@@ -57,12 +57,9 @@ This version: 14 April 2006
 package org.reprap.geometry.polyhedra;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
-import java.util.Hashtable;
 import java.util.List;
 
 import javax.media.j3d.Appearance;
@@ -89,10 +86,7 @@ import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.MaterialSetting;
 import org.reprap.gui.MouseObject;
-import org.reprap.io.csg.CSGReader;
-import org.reprap.io.stl.StlFile;
 
-import com.sun.j3d.loaders.Scene;
 import com.sun.j3d.utils.picking.PickTool;
 
 /**
@@ -164,160 +158,97 @@ public class STLObject {
      * Create an STL object from a file with a given appearance and without a
      * material.
      */
-    public static STLObject loadIndependentSTL(final File location, final Appearance appearance) {
-        return load(location, appearance, null);
+    public static STLObject loadIndependentSTL(final STLFileContents stlFileContents, final Appearance appearance) {
+        return load(stlFileContents, appearance, null);
     }
 
     /**
      * Create an STL object from a file with the appearance determined by its
      * material.
      */
-    public static STLObject createStlObjectFromFile(final File location, final String material,
+    public static STLObject createStlObjectFromFile(final STLFileContents stlFileContentents, final String material,
             final CurrentConfiguration currentConfiguration) {
         final MaterialSetting materialSettings = getMaterialSettings(material, currentConfiguration);
         final Appearance appearance = STLObject.createAppearance(materialSettings);
-        return load(location, appearance, materialSettings.getName());
+        return load(stlFileContentents, appearance, materialSettings.getName());
     }
 
-    private static STLObject load(final File location, final Appearance appearance, final String material) {
+    private static STLObject load(final STLFileContents stlFileContents, final Appearance appearance, final String material) {
         final STLObject object = new STLObject();
         final Attributes attribute = new Attributes(object, appearance, material);
-        object.loadSingleSTL(location, attribute, false);
+        object.addStlFileContents(stlFileContents, attribute, false);
         return object;
     }
 
     /**
      * Add the contents of an STL file to this STL object.
      */
-    public void addSTL(final File location, final String material, final CurrentConfiguration currentConfiguration) {
+    public void addSTL(final STLFileContents stlFileContents, final String material,
+            final CurrentConfiguration currentConfiguration) {
         final MaterialSetting materialSettings = getMaterialSettings(material, currentConfiguration);
         final Attributes attribute = new Attributes(this, createAppearance(materialSettings), materialSettings.getName());
-        loadSingleSTL(location, attribute, true);
+        addStlFileContents(stlFileContents, attribute, true);
     }
 
     /**
-     * Actually load the stl file and set its attributes. If add is false, the
-     * file is loaded as a new independent STLObject; if not it is added to this
-     * STLObject and subsequently is subjected to all the same transforms, so it
-     * retains the same relative position. This is how multi-material objects
-     * are loaded.
+     * Add the stl file contents and set its attributes. If add is false, the
+     * fileContents are used as a new independent STLObject; if not it they are
+     * added to this STLObject and subsequently are subjected to all the same
+     * transforms, so they retain the same relative position.
      */
-    private void loadSingleSTL(final File location, final Attributes att, final boolean add) {
-        final CSGReader csgr = new CSGReader(location);
-        CSG3D csgResult = null;
-        if (csgr.csgAvailable()) {
-            csgResult = csgr.csg();
-        }
-
-        final Scene scene;
-        try {
-            scene = new StlFile().load(location.getAbsolutePath());
-            if (scene == null) {
-                contents.add(new STLFileContents(location, null, csgResult, att, 0));
-                return;
-            }
-        } catch (final FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
-        final BranchGroup bgResult = scene.getSceneGroup();
-        bgResult.setCapability(Node.ALLOW_BOUNDS_READ);
-        bgResult.setCapability(Group.ALLOW_CHILDREN_READ);
-        bgResult.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
-
-        double volume = 0;
-        // Recursively add its attribute
-        final Hashtable<?, ?> namedObjects = scene.getNamedObjects();
-        for (final Object tt : Collections.list(namedObjects.elements())) {
-            if (tt instanceof Shape3D) {
-                final Shape3D value = (Shape3D) tt;
-                volume += s3dVolume(value);
-                bbox = (BoundingBox) value.getBounds();
-                value.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
-                final GeometryArray g = (GeometryArray) value.getGeometry();
-                g.setCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
-                recursiveSetUserData(value, att);
-            }
-        }
+    private void addStlFileContents(final STLFileContents stlFileContents, final Attributes att, final boolean add) {
+        final BranchGroup bgResult = stlFileContents.getStl();
+        CSG3D csgResult = stlFileContents.getCsg();
+        recursiveSetUserData(bgResult, att);
 
         bgResult.setUserData(att);
         stl.addChild(bgResult);
         if (add) {
             // Add the loaded stuff to us
-            csgResult = setOffset(bgResult, csgResult, rootOffset);
+            recursiveSetOffset(bgResult, rootOffset);
+            csgResult = setOffset(csgResult, rootOffset);
             setAppearance(getAppearance());
-            updateBox(bbox);
+            bbox.combine(stlFileContents.getBbox());
+            updateExtent();
         } else {
             // New independent object.
-            Vector3d bottomLeftShift;
+            bbox = stlFileContents.getBbox();
+            final javax.vecmath.Point3d p0 = new javax.vecmath.Point3d();
+            final javax.vecmath.Point3d p1 = new javax.vecmath.Point3d();
+            bbox.getLower(p0);
+            bbox.getUpper(p1);
+            rootOffset = new Vector3d(-p0.x, -p0.y, -p0.z);
 
-            if (bbox != null) {
-                final javax.vecmath.Point3d p0 = new javax.vecmath.Point3d();
-                final javax.vecmath.Point3d p1 = new javax.vecmath.Point3d();
-                bbox.getLower(p0);
-                bbox.getUpper(p1);
-                rootOffset = new Vector3d(-p0.x, -p0.y, -p0.z);
+            // How big?
+            extent = new Vector3d(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z);
+            final Vector3d centre = scale(extent, 0.5);
 
-                // How big?
-                extent = new Vector3d(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z);
-                final Vector3d centre = scale(extent, 0.5);
-
-                // Position us centre at origin:
-                rootOffset = add(rootOffset, neg(centre));
-                bottomLeftShift = centre;
-            } else {
-                bottomLeftShift = null;
-                rootOffset = null;
-                LOGGER.error("applyOffset(): no bounding box or child.");
-            }
-
-            csgResult = setOffset(stl, csgResult, rootOffset);
+            // Position us centre at origin:
+            rootOffset = add(rootOffset, neg(centre));
+            recursiveSetOffset(bgResult, rootOffset);
+            csgResult = setOffset(csgResult, rootOffset);
             final Transform3D temp_t = new Transform3D();
-            temp_t.set(bottomLeftShift);
+            temp_t.set(centre);
             trans.setTransform(temp_t);
             restoreAppearance();
         }
-
-        contents.add(new STLFileContents(location, bgResult, csgResult, att, volume));
+        stlFileContents.setCsg(csgResult);
+        stlFileContents.setAttribute(att);
+        contents.add(stlFileContents);
     }
 
-    private void updateBox(final BoundingBox bb) {
-        final javax.vecmath.Point3d pNew = new javax.vecmath.Point3d();
-        final javax.vecmath.Point3d pOld = new javax.vecmath.Point3d();
-        bb.getLower(pNew);
-        bbox.getLower(pOld);
-        if (pNew.x < pOld.x) {
-            pOld.x = pNew.x;
-        }
-        if (pNew.y < pOld.y) {
-            pOld.y = pNew.y;
-        }
-        if (pNew.z < pOld.z) {
-            pOld.z = pNew.z;
-        }
-        bbox.setLower(pOld);
+    private void updateExtent() {
+        final javax.vecmath.Point3d point = new javax.vecmath.Point3d();
+        bbox.getLower(point);
         extent = new Vector3d();
-        extent.x = pOld.x;
-        extent.y = pOld.y;
-        extent.z = pOld.z;
+        extent.x = point.x;
+        extent.y = point.y;
+        extent.z = point.z;
 
-        bb.getUpper(pNew);
-        bbox.getUpper(pOld);
-        if (pNew.x > pOld.x) {
-            pOld.x = pNew.x;
-        }
-        if (pNew.y > pOld.y) {
-            pOld.y = pNew.y;
-        }
-        if (pNew.z > pOld.z) {
-            pOld.z = pNew.z;
-        }
-        bbox.setUpper(pOld);
-
-        extent.x = pOld.x - extent.x;
-        extent.y = pOld.y - extent.y;
-        extent.z = pOld.z - extent.z;
-
+        bbox.getUpper(point);
+        extent.x = point.x - extent.x;
+        extent.y = point.y - extent.y;
+        extent.z = point.z - extent.z;
     }
 
     public BranchGroup top() {
@@ -383,7 +314,7 @@ public class STLObject {
     }
 
     public Attributes attributes(final int i) {
-        return contents.get(i).getAtt();
+        return contents.get(i).getAttribute();
     }
 
     public int size() {
@@ -449,8 +380,7 @@ public class STLObject {
         }
     }
 
-    private static CSG3D setOffset(final BranchGroup bg, final CSG3D c, final Vector3d p) {
-        recursiveSetOffset(bg, p);
+    private static CSG3D setOffset(final CSG3D c, final Vector3d p) {
         if (c == null) {
             return null;
         }
@@ -844,26 +774,6 @@ public class STLObject {
     }
 
     /**
-     * Compute the volume of a Shape3D
-     */
-    private static double s3dVolume(final Shape3D shape) {
-        double total = 0;
-        final GeometryArray g = (GeometryArray) shape.getGeometry();
-        final Point3d a = new Point3d();
-        final Point3d b = new Point3d();
-        final Point3d c = new Point3d();
-        if (g != null) {
-            for (int i = 0; i < g.getVertexCount(); i += 3) {
-                g.getCoordinate(i, a);
-                g.getCoordinate(i + 1, b);
-                g.getCoordinate(i + 2, c);
-                total += prismVolume(a, b, c);
-            }
-        }
-        return Math.abs(total);
-    }
-
-    /**
      * Compute the signed volume of a tetrahedron
      */
     private static double tetVolume(final Point3d a, final Point3d b, final Point3d c, final Point3d d) {
@@ -876,7 +786,7 @@ public class STLObject {
      * Compute the signed volume of the prism between the XY plane and the space
      * triangle {a, b, c}
      */
-    private static double prismVolume(final Point3d a, final Point3d b, final Point3d c) {
+    public static double prismVolume(final Point3d a, final Point3d b, final Point3d c) {
         final Point3d d = new Point3d(a.x, a.y, 0);
         final Point3d e = new Point3d(b.x, b.y, 0);
         final Point3d f = new Point3d(c.x, c.y, 0);
