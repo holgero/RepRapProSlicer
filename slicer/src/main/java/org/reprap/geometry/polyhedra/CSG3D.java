@@ -56,6 +56,7 @@ import org.reprap.geometry.polygons.CSG2D;
 import org.reprap.geometry.polygons.CSGOp;
 import org.reprap.geometry.polygons.HalfPlane;
 import org.reprap.geometry.polygons.ParallelException;
+import org.reprap.geometry.polygons.Point2D;
 
 /**
  * RepRap Constructive Solid Geometry class
@@ -359,11 +360,14 @@ public class CSG3D {
     public static CSG2D slice(final CSG3D t, final double z) {
         switch (t.operator()) {
         case LEAF:
+            final HalfSpace halfSpace = t.hSpace();
             try {
-                final HalfPlane hp = new HalfPlane(t.hSpace(), z);
+                final Point3D halfSpaceNormal = halfSpace.normal();
+                final Point2D normal = new Point2D(halfSpaceNormal.x(), halfSpaceNormal.y());
+                final HalfPlane hp = new HalfPlane(normal, halfSpaceNormal.z() * z + halfSpace.offset());
                 return new CSG2D(hp);
             } catch (final ParallelException e) {
-                if (t.hSpace().value(new Point3D(0, 0, z)) <= 0) {
+                if (halfSpace.value(new Point3D(0, 0, z)) <= 0) {
                     return CSG2D.universe();
                 } else {
                     return CSG2D.nothing();

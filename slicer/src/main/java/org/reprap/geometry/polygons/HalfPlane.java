@@ -55,8 +55,6 @@
 
 package org.reprap.geometry.polygons;
 
-import org.reprap.geometry.polyhedra.HalfSpace;
-
 /**
  * Class to hold and manipulate linear half-planes
  */
@@ -73,20 +71,13 @@ public class HalfPlane {
     private Line p = null;
 
     /**
-     * Convert a parametric line
-     */
-    private HalfPlane(final Line l) {
-        p = new Line(l);
-        p.norm();
-        normal = new Point2D(-p.direction().y(), p.direction().x());
-        offset = -Point2D.mul(l.origin(), normal());
-    }
-
-    /**
      * Make one from two points on its edge
      */
     public HalfPlane(final Point2D a, final Point2D b) {
-        this(new Line(a, b));
+        p = new Line(a, b);
+        p.norm();
+        normal = new Point2D(-p.direction().y(), p.direction().x());
+        offset = -Point2D.mul(p.origin(), normal());
     }
 
     /**
@@ -100,18 +91,15 @@ public class HalfPlane {
 
     /**
      * Construct a half-plane from a 3D half-space cutting across a z plane
-     * 
-     * @param hs
-     * @param z
      */
-    public HalfPlane(final HalfSpace hs, final double z) throws ParallelException {
-        normal = new Point2D(hs.normal().x(), hs.normal().y());
+    public HalfPlane(final Point2D normal, final double halfSpaceOffset) throws ParallelException {
+        this.normal = normal;
         final double m = normal.mod();
         if (m < 1.0e-10) {
             throw new ParallelException("HalfPlane from HalfSpace - z parallel");
         }
-        offset = (hs.normal().z() * z + hs.offset()) / m;
-        normal = Point2D.div(normal, m);
+        offset = halfSpaceOffset / m;
+        this.normal = Point2D.div(this.normal, m);
         Point2D p0, p1;
         if (Math.abs(normal.x()) < 0.1) {
             p0 = new Point2D(0, -offset / normal.y());
