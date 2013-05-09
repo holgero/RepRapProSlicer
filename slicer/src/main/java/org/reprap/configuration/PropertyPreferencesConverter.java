@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -75,6 +76,7 @@ final class PropertyPreferencesConverter {
         CurrentConfiguration currentConfiguration = null;
         clearAll();
         final List<Machine> machines = Machine.getMachines();
+        Collections.reverse(machines);
         for (final Machine machine : machines) {
             machineName = machine.getName();
             propertiesFile = new File(new File(reprapDirectory, machineName), "reprap.properties");
