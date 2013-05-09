@@ -208,10 +208,7 @@ public class PolygonList {
      * Re-order and (if need be) reverse the order of the polygons in a list so
      * the end of the first is near the start of the second and so on. This is a
      * heuristic - it does not do a full travelling salesman... This deals with
-     * both open and closed polygons, but it only allows closed ones to be
-     * re-ordered if reOrder is true. If any point on a closed polygon is closer
-     * to any point on any other than sqrt(linkUp), the two polygons are merged
-     * at their closest points. This is suppressed by setting linkUp negative.
+     * both open and closed polygons.
      */
     public PolygonList nearEnds(final Point2D startNearHere) {
         final PolygonList result = new PolygonList();

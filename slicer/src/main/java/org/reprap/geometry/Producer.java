@@ -152,10 +152,9 @@ public class Producer {
         }
         for (int extruder = 0; extruder < totalExtruders; extruder++) {
             if (tempBorderPolygons[extruder].size() > 0) {
-                double linkUp = currentConfiguration.getExtruderSetting(tempBorderPolygons[extruder].polygon(0).getMaterial())
-                        .getExtrusionSize();
-                linkUp = (4 * linkUp * linkUp);
-                tempBorderPolygons[extruder].radicalReOrder(linkUp);
+                final double linkUp = currentConfiguration.getExtruderSetting(
+                        tempBorderPolygons[extruder].polygon(0).getMaterial()).getExtrusionSize();
+                tempBorderPolygons[extruder].radicalReOrder(4 * linkUp * linkUp);
                 tempBorderPolygons[extruder] = tempBorderPolygons[extruder].nearEnds(startNearHere);
                 if (tempBorderPolygons[extruder].size() > 0) {
                     final Polygon last = tempBorderPolygons[extruder].polygon(tempBorderPolygons[extruder].size() - 1);
@@ -164,10 +163,9 @@ public class Producer {
                 allPolygons[extruder].add(tempBorderPolygons[extruder]);
             }
             if (tempFillPolygons[extruder].size() > 0) {
-                double linkUp = currentConfiguration.getExtruderSetting(tempFillPolygons[extruder].polygon(0).getMaterial())
-                        .getExtrusionSize();
-                linkUp = (4 * linkUp * linkUp);
-                tempFillPolygons[extruder].radicalReOrder(linkUp);
+                final double linkUp = currentConfiguration.getExtruderSetting(
+                        tempFillPolygons[extruder].polygon(0).getMaterial()).getExtrusionSize();
+                tempFillPolygons[extruder].radicalReOrder(4 * linkUp * linkUp);
                 tempFillPolygons[extruder] = tempFillPolygons[extruder].nearEnds(startNearHere);
                 if (tempFillPolygons[extruder].size() > 0) {
                     final Polygon last = tempFillPolygons[extruder].polygon(tempFillPolygons[extruder].size() - 1);
