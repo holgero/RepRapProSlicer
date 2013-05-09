@@ -336,21 +336,27 @@ public class PolygonList {
 
                 final boolean leftClosed = polygon(i).isClosed();
                 final boolean rightClosed = polygon(j).isClosed();
+                final boolean joined;
                 // Three possibilities ...
                 if (!leftClosed && !rightClosed) {
-                    handleTwoOpenPolygons(linkUp, i, j);
+                    joined = handleTwoOpenPolygons(linkUp, i, j);
                 } else if (!leftClosed && rightClosed) {
-                    handleOpenAndClosedPolygon(linkUp, i, j);
+                    joined = handleOpenAndClosedPolygon(linkUp, i, j);
                 } else if (leftClosed && rightClosed) {
-                    handleTwoClosedPolygons(linkUp, i, j);
+                    joined = handleTwoClosedPolygons(linkUp, i, j);
                 } else {
                     throw new RuntimeException("RrPolygonList.radicalReOrder(): Polygons are neither closed nor open!");
+                }
+                if (joined) {
+                    polygons.remove(j);
+                    // we joined two polygons, so retry with the same index
+                    j--;
                 }
             }
         }
     }
 
-    private void handleTwoClosedPolygons(final double linkUp, final int i, final int j) {
+    private boolean handleTwoClosedPolygons(final double linkUp, final int i, final int j) {
         Polygon myPolygon = polygon(i);
         Polygon itsPolygon = polygon(j);
         int myPoint = -1;
@@ -373,11 +379,12 @@ public class PolygonList {
             itsPolygon.add(firstPointOf(itsPolygon)); // Make sure we come back to the start
             myPolygon.add(itsPolygon);
             polygons.set(i, myPolygon);
-            polygons.remove(j);
+            return true;
         }
+        return false;
     }
 
-    private void handleOpenAndClosedPolygon(final double linkUp, final int i, final int j) {
+    private boolean handleOpenAndClosedPolygon(final double linkUp, final int i, final int j) {
         Polygon myPolygon = polygon(i);
         Polygon itsPolygon = polygon(j);
         int itsPoint = itsPolygon.nearestVertex(firstPointOf(myPolygon));
@@ -400,8 +407,9 @@ public class PolygonList {
             myPolygon.add(itsPolygon);
             myPolygon.setOpen(); // We were closed, but we must now be open
             polygons.set(i, myPolygon);
-            polygons.remove(j);
+            return true;
         }
+        return false;
     }
 
     private static Point2D firstPointOf(final Polygon polygon) {
@@ -412,7 +420,7 @@ public class PolygonList {
         return polygon.point(polygon.size() - 1);
     }
 
-    private void handleTwoOpenPolygons(final double linkUp, final int i, final int j) {
+    private boolean handleTwoOpenPolygons(final double linkUp, final int i, final int j) {
         Polygon myPolygon = polygon(i);
         Polygon itsPolygon = polygon(j);
         boolean reverseMe = true;
@@ -448,8 +456,9 @@ public class PolygonList {
             }
             myPolygon.add(itsPolygon);
             polygons.set(i, myPolygon);
-            polygons.remove(j);
+            return true;
         }
+        return false;
     }
 
     private void validateSameMaterial() {
