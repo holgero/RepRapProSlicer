@@ -152,6 +152,10 @@ public class RepRapPlater extends JPanel implements MouseListener {
     private static final Color3f SELECTED_COLOR = new Color3f(0.6f, 0.2f, 0.2f);
     private static final Color3f MACHINE_COLOR = new Color3f((float) 0.3, (float) 0.3, (float) 0.3);
 
+    private final CurrentConfiguration currentConfiguration;
+    private final VirtualUniverse virtualUniverse = new VirtualUniverse();
+    private final Appearance pickedAppearance = new Appearance();
+    private final BranchGroup workingVolumeAndStls = new BranchGroup();
     private STLObjectMouseMover mouse;
     private PickCanvas pickCanvas; // The thing picked by a mouse click
     private STLObject lastPicked; // The last thing picked
@@ -160,12 +164,9 @@ public class RepRapPlater extends JPanel implements MouseListener {
     private double xwv;
     private double ywv;
     private double zwv;
-    private final Appearance pickedAppearance = new Appearance();
-    private final BranchGroup workingVolumeAndStls = new BranchGroup();
     private STLObject world;
     private STLObject workingVolume;
     private BranchGroup sceneBranchGroup;
-    private final CurrentConfiguration currentConfiguration;
 
     public RepRapPlater(final CurrentConfiguration currentConfiguration) {
         this.currentConfiguration = currentConfiguration;
@@ -173,6 +174,10 @@ public class RepRapPlater extends JPanel implements MouseListener {
         rfo = new RFO(currentConfiguration);
         reordering = false;
         setPreferredSize(new Dimension(600, 400));
+    }
+
+    public void dispose() {
+        virtualUniverse.removeAllLocales();
     }
 
     private Background createBackground() {
@@ -508,7 +513,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
         createView(viewPlatform);
         final Background background = createBackground();
         sceneBranchGroup.addChild(background);
-        final Locale locale = new Locale(new VirtualUniverse());
+        final Locale locale = new Locale(virtualUniverse);
         locale.addBranchGraph(sceneBranchGroup);
         locale.addBranchGraph(viewBranchGroup);
     }
