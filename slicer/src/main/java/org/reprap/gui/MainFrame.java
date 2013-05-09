@@ -88,7 +88,7 @@ public class MainFrame extends JFrame {
 
     public void autoRun(final String fileName) {
         final File rfoFile = new File(fileName);
-        plater.addRFOFile(rfoFile);
+        plater.loadRFOFile(rfoFile);
         final String rfoFileName = rfoFile.getAbsolutePath();
         slice(rfoFileName.substring(0, rfoFileName.length() - ".rfo".length()), new ProductionProgressListener() {
             @Override
@@ -231,7 +231,7 @@ public class MainFrame extends JFrame {
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             final File result = chooser.getSelectedFile();
             if (extensions[0].toUpperCase().contentEquals("RFO")) {
-                plater.addRFOFile(result);
+                plater.loadRFOFile(result);
             }
             if (extensions[0].toUpperCase().contentEquals("STL")) {
                 plater.anotherSTLFile(result);

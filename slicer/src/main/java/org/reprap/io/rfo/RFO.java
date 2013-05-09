@@ -6,7 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -39,85 +38,36 @@ public class RFO {
     private static final String legendName = "legend.xml";
 
     /**
-     * Copy each unique STL file to a directory. Files used more than once are
-     * only copied once.
-     * 
-     * @throws IOException
+     * Copy each STL file to a directory. Files used more than once are only
+     * copied once.
      */
-    public static List<String> copySTLs(final AllSTLsToBuild astltb, final File rfod) throws IOException {
-        int u = 0;
-        final List<String> uniqueNames = new ArrayList<String>();
+    public static void copySTLs(final AllSTLsToBuild astltb, final File targetDirectory) throws IOException {
         for (int i = 0; i < astltb.size(); i++) {
-            for (int subMod1 = 0; subMod1 < astltb.get(i).size(); subMod1++) {
-                final File file = astltb.get(i).getSourceFile(subMod1);
-                astltb.get(i).setUnique(subMod1, u);
-                for (int j = 0; j < i; j++) {
-                    for (int subMod2 = 0; subMod2 < astltb.get(j).size(); subMod2++) {
-                        if (file.equals(astltb.get(j).getSourceFile(subMod2))) {
-                            astltb.get(i).setUnique(subMod1, astltb.get(j).getUnique(subMod2));
-                            break;
-                        }
-                    }
+            for (int j = 0; j < astltb.get(i).size(); j++) {
+                final File stlFile = astltb.get(i).getSourceFile(j);
+                final String stlFileName = stlFile.getName();
+                final File copiedFile = new File(targetDirectory, stlFileName);
+                if (!copiedFile.exists()) {
+                    FileUtils.copyFile(stlFile, copiedFile);
                 }
-                if (astltb.get(i).getUnique(subMod1) == u) {
-                    final String un = astltb.get(i).getSourceFile(subMod1).getName();
-                    FileUtils.copyFile(file, new File(rfod, un));
-                    uniqueNames.add(un);
 
-                    final String csgFileName = CSGReader.CSGFileExists(file.getAbsolutePath());
-                    if (csgFileName != null) {
-                        final File csgFile = new File(csgFileName);
-                        FileUtils.copyFile(csgFile, new File(rfod, csgFile.getName()));
+                final File csgFile = CSGReader.getCsgFile(stlFile);
+                if (csgFile != null) {
+                    final File copiedCsgFile = new File(targetDirectory, csgFile.getName());
+                    if (!copiedCsgFile.exists()) {
+                        FileUtils.copyFile(csgFile, copiedCsgFile);
                     }
-                    u++;
                 }
             }
         }
-        return uniqueNames;
     }
 
     public static RFO load(final File file, final CurrentConfiguration currentConfiguration) {
-        try {
-            final RFO rfo = new RFO(file, new AllSTLsToBuild(), currentConfiguration);
-            rfo.load();
-            return rfo;
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
-        }
+        final RFO rfo = new RFO(new AllSTLsToBuild(), currentConfiguration);
+        rfo.load(file);
+        return rfo;
     }
 
-    private void load() throws IOException {
-        unCompress();
-        interpretLegend();
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                try {
-                    FileUtils.deleteDirectory(tempDir);
-                } catch (final IOException e) {
-                }
-            }
-        });
-    }
-
-    public static void save(final File file, final AllSTLsToBuild allSTL, final CurrentConfiguration currentConfiguration) {
-        try {
-            final RFO rfo = new RFO(file, allSTL, currentConfiguration);
-            final File rfoDir = new File(rfo.tempDir, "rfo");
-            rfoDir.mkdir();
-            rfo.uNames = copySTLs(allSTL, rfoDir);
-            rfo.createLegend(rfoDir);
-            rfo.compress();
-            FileUtils.deleteDirectory(rfo.tempDir);
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * The unique file names;
-     */
-    private List<String> uNames;
     /**
      * The temporary directory
      */
@@ -131,17 +81,49 @@ public class RFO {
      */
     private RfoXmlRenderer xml;
 
-    private final File file;
     private final CurrentConfiguration currentConfiguration;
 
-    private RFO(final File file, final AllSTLsToBuild as, final CurrentConfiguration currentConfiguration) throws IOException {
-        this.file = file;
+    public RFO(final AllSTLsToBuild as, final CurrentConfiguration currentConfiguration) {
         astl = as;
         this.currentConfiguration = currentConfiguration;
-        uNames = null;
-        tempDir = File.createTempFile("rfo", null);
-        tempDir.delete();
-        tempDir.mkdir();
+        try {
+            tempDir = File.createTempFile("rfo", null);
+            tempDir.delete();
+            tempDir.mkdir();
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public RFO(final CurrentConfiguration currentConfiguration) {
+        this(new AllSTLsToBuild(), currentConfiguration);
+    }
+
+    public void load(final File file) {
+        try {
+            unCompress(file);
+            interpretLegend();
+        } catch (final IOException e1) {
+            throw new RuntimeException(e1);
+        }
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                try {
+                    FileUtils.deleteDirectory(tempDir);
+                } catch (final IOException e) {
+                }
+            }
+        });
+    }
+
+    public void save(final File file) throws IOException, FileNotFoundException {
+        final File rfoDir = new File(tempDir, "rfo");
+        rfoDir.mkdir();
+        copySTLs(astl, rfoDir);
+        createLegend(rfoDir);
+        compress(file);
+        FileUtils.deleteDirectory(tempDir);
     }
 
     /**
@@ -175,7 +157,7 @@ public class RFO {
             xml.push("files");
             final STLObject stlo = astl.get(i);
             for (int subObj = 0; subObj < stlo.size(); subObj++) {
-                xml.push("file location=\"" + uNames.get(stlo.getUnique(subObj))
+                xml.push("file location=\"" + stlo.getSourceFile(subObj).getName()
                         + "\" filetype=\"application/sla\" material=\"" + stlo.attributes(subObj).getMaterial() + "\"");
                 xml.pop();
             }
@@ -191,8 +173,10 @@ public class RFO {
      * complete. Compress it into the required rfo file using zip. Note we
      * delete the temporary files as we go along, ending up by deleting the
      * directory containing them.
+     * 
+     * @param file
      */
-    private void compress() throws IOException {
+    private void compress(final File file) throws IOException {
         final ZipOutputStream rfoFile = new ZipOutputStream(new FileOutputStream(file));
         try {
             final File dirToZip = new File(tempDir, "rfo");
@@ -223,10 +207,8 @@ public class RFO {
     /**
      * This uncompresses the zip that is the rfo file into the temporary
      * directory.
-     * 
-     * @throws IOException
      */
-    private void unCompress() throws IOException {
+    private void unCompress(final File file) throws IOException {
         final ZipFile rfoFile = new ZipFile(file);
         final Enumeration<? extends ZipEntry> allFiles = rfoFile.entries();
         while (allFiles.hasMoreElements()) {

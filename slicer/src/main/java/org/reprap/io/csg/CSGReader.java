@@ -85,19 +85,17 @@ public class CSGReader {
      * For a given STL file, find if there's a CSG file for it in the same
      * directory that we can read.
      */
-    public static String CSGFileExists(final String STLfileName) {
-        String fileName = new String(STLfileName);
+    public static File getCsgFile(final File stlfile) {
+        String fileName = stlfile.getName();
         if (fileName.toLowerCase().endsWith(".stl")) {
-            fileName = fileName.substring(0, fileName.length() - 4) + ".csg";
+            fileName = fileName.substring(0, fileName.length() - ".stl".length()) + ".csg";
         } else {
             return null;
         }
 
-        if (fileName.startsWith("file:")) {
-            fileName = fileName.substring(5, fileName.length());
-        }
-        if (new File(fileName).canRead()) {
-            return fileName;
+        final File csgFile = new File(stlfile.getParent(), fileName);
+        if (csgFile.canRead()) {
+            return csgFile;
         }
         return null;
     }
@@ -107,15 +105,15 @@ public class CSGReader {
      * ("n12:" etc), and all white space.
      */
     private boolean readModel(final File stlfile) {
-        final String fileName = CSGFileExists(stlfile.getAbsolutePath());
-        if (fileName == null) {
+        final File csgFile = getCsgFile(stlfile);
+        if (csgFile == null) {
             return false;
         }
 
         model = new String();
 
         try {
-            final BufferedReader inputStream = new BufferedReader(new FileReader(fileName));
+            final BufferedReader inputStream = new BufferedReader(new FileReader(csgFile));
             String line;
 
             while ((line = inputStream.readLine()) != null) {
@@ -138,7 +136,7 @@ public class CSGReader {
 
         model = model.replaceAll("\\s+", ""); // kill all remaining white space
         laggingModel = new String(model);
-        LOGGER.debug("CSGReader: read CSG model from: " + fileName);
+        LOGGER.debug("CSGReader: read CSG model from: " + csgFile);
         return true;
     }
 

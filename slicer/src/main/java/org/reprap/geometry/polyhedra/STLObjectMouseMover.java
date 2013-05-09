@@ -54,7 +54,7 @@ This version: 14 April 2006
  
  */
 
-package org.reprap.gui;
+package org.reprap.geometry.polyhedra;
 
 import javax.media.j3d.Bounds;
 import javax.media.j3d.BranchGroup;
@@ -62,13 +62,11 @@ import javax.media.j3d.Group;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 
-import org.reprap.geometry.polyhedra.STLObject;
-
 import com.sun.j3d.utils.behaviors.mouse.MouseRotate;
 import com.sun.j3d.utils.behaviors.mouse.MouseTranslate;
 import com.sun.j3d.utils.behaviors.mouse.MouseZoom;
 
-public class MouseObject {
+public class STLObjectMouseMover {
     private static final double MOUSE_TRANSLATION_FACTOR = 50;
     private static final double MOUSE_ZOOM_FACTOR = 50;
     private final BranchGroup top; // Attach this to the rest of the tree
@@ -77,7 +75,7 @@ public class MouseObject {
     private TransformGroup trans; // Set to one of the two above   
     private STLObject movingThing = null; // The part of the scene being moved
 
-    MouseObject(final Bounds behaviorBounds) {
+    public STLObjectMouseMover(final Bounds behaviorBounds) {
         // Set up the free transform that allows all movements
 
         free = new TransformGroup();
@@ -134,7 +132,7 @@ public class MouseObject {
 
     // Select the STL object to control with the mouse; the boolean
     // decides whether to use free or slide.
-    void move(final STLObject stl, final boolean slideOnly) {
+    public void move(final STLObject stl, final boolean slideOnly) {
         Transform3D t3d = new Transform3D();
         trans.getTransform(t3d);
 
@@ -188,7 +186,6 @@ public class MouseObject {
         movingThing.setMouse(this);
     }
 
-    // Get and set our transform
     public void getTransform(final Transform3D t3d) {
         trans.getTransform(t3d);
     }

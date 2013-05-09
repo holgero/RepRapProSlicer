@@ -9,7 +9,6 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.io.rfo.RFO;
 
 /**
  * This class holds a list of STLObjects that represents everything that is to
@@ -130,11 +129,6 @@ public class AllSTLsToBuild {
      */
     public void saveSCAD(final File file) {
         try {
-            final File directory = file.getParentFile();
-            if (!directory.exists()) {
-                directory.mkdir();
-            }
-            RFO.copySTLs(this, directory);
             final PrintWriter out = new PrintWriter(new FileWriter(file));
             try {
                 out.println(toSCAD());

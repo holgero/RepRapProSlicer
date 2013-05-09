@@ -85,7 +85,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.MaterialSetting;
-import org.reprap.gui.MouseObject;
 
 import com.sun.j3d.utils.picking.PickTool;
 
@@ -106,7 +105,7 @@ public class STLObject {
     private final TransformGroup trans = new TransformGroup(); // Static transform for when the mouse is away
     private final BranchGroup stl = new BranchGroup(); // The actual STL geometry; a tree duplicated flat in the list contents
     private final List<STLFileContents> contents = new ArrayList<STLFileContents>();
-    private MouseObject mouse = null; // The mouse, if it is controlling us
+    private STLObjectMouseMover mouse = null; // The mouse, if it is controlling us
     private Vector3d extent = null; // X, Y and Z extent
     private BoundingBox bbox = null; // Temporary storage for the bounding box while loading
     private Vector3d rootOffset = null; // Offset of the first-loaded STL under stl
@@ -483,7 +482,7 @@ public class STLObject {
     }
 
     // The mouse calls this to tell us it is controlling us
-    public void setMouse(final MouseObject m) {
+    public void setMouse(final STLObjectMouseMover m) {
         mouse = m;
     }
 

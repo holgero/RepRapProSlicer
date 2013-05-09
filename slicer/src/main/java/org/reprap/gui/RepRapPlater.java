@@ -94,6 +94,7 @@ import java.awt.GraphicsEnvironment;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
+import java.io.IOException;
 
 import javax.media.j3d.AmbientLight;
 import javax.media.j3d.Appearance;
@@ -129,6 +130,7 @@ import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.geometry.polyhedra.Constants;
 import org.reprap.geometry.polyhedra.STLFileContents;
 import org.reprap.geometry.polyhedra.STLObject;
+import org.reprap.geometry.polyhedra.STLObjectMouseMover;
 import org.reprap.io.rfo.RFO;
 import org.reprap.io.stl.StlFileLoader;
 
@@ -142,14 +144,6 @@ import com.sun.j3d.utils.picking.PickTool;
  * them in the machine.
  */
 public class RepRapPlater extends JPanel implements MouseListener {
-    private MouseObject mouse;
-    private PickCanvas pickCanvas; // The thing picked by a mouse click
-    private STLObject lastPicked; // The last thing picked
-    private final AllSTLsToBuild stls;
-    private boolean reordering;
-    private double xwv;
-    private double ywv;
-    private double zwv;
     private static final double RADIUS_FACTOR = 0.7;
     private static final double BACK_CLIP_FACTOR = 2.0;
     private static final double FRONT_FACTOR = 0.001;
@@ -157,6 +151,15 @@ public class RepRapPlater extends JPanel implements MouseListener {
     private static final Color3f BACKGROUND_COLOR = new Color3f(0.9f, 0.9f, 0.9f);
     private static final Color3f SELECTED_COLOR = new Color3f(0.6f, 0.2f, 0.2f);
     private static final Color3f MACHINE_COLOR = new Color3f((float) 0.3, (float) 0.3, (float) 0.3);
+
+    private STLObjectMouseMover mouse;
+    private PickCanvas pickCanvas; // The thing picked by a mouse click
+    private STLObject lastPicked; // The last thing picked
+    private RFO rfo; // the current project
+    private boolean reordering;
+    private double xwv;
+    private double ywv;
+    private double zwv;
     private final Appearance pickedAppearance = new Appearance();
     private final BranchGroup workingVolumeAndStls = new BranchGroup();
     private STLObject world;
@@ -167,13 +170,9 @@ public class RepRapPlater extends JPanel implements MouseListener {
     public RepRapPlater(final CurrentConfiguration currentConfiguration) {
         this.currentConfiguration = currentConfiguration;
         initialise();
-        stls = new AllSTLsToBuild();
+        rfo = new RFO(currentConfiguration);
         reordering = false;
         setPreferredSize(new Dimension(600, 400));
-    }
-
-    public AllSTLsToBuild getSTLs() {
-        return stls;
     }
 
     private Background createBackground() {
@@ -214,7 +213,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
         headLight.setInfluencingBounds(lightBounds);
         objRoot.addChild(headLight);
 
-        mouse = new MouseObject(createApplicationBounds());
+        mouse = new STLObjectMouseMover(createApplicationBounds());
 
         workingVolumeAndStls.setCapability(Group.ALLOW_CHILDREN_EXTEND);
         workingVolumeAndStls.setCapability(Group.ALLOW_CHILDREN_WRITE);
@@ -309,7 +308,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
             stl.translate(offset);
             if (stl.numChildren() > 0) {
                 workingVolumeAndStls.addChild(stl.top());
-                stls.add(stl);
+                getSTLs().add(stl);
             }
             offset.x += increment;
         }
@@ -334,13 +333,13 @@ public class RepRapPlater extends JPanel implements MouseListener {
             v.add(e);
             stl.translate(v);
             workingVolumeAndStls.addChild(stl.top());
-            stls.add(stl);
+            getSTLs().add(stl);
         } else {
             stl = lastPicked;
             stl.addSTL(stlFileContents, defaultMaterial, currentConfiguration);
         }
 
-        MaterialRadioButtons.createAndShowGUI(stl.attributes(stl.size() - 1), this, stls.size() - 1, stl.volume(),
+        MaterialRadioButtons.createAndShowGUI(stl.attributes(stl.size() - 1), this, getSTLs().size() - 1, stl.volume(),
                 currentConfiguration);
     }
 
@@ -353,7 +352,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
         // New separate object, or just appended to lastPicked?
         if (stl.numChildren() > 0) {
             workingVolumeAndStls.addChild(stl.top());
-            stls.add(index, stl);
+            getSTLs().add(index, stl);
         }
     }
 
@@ -365,29 +364,47 @@ public class RepRapPlater extends JPanel implements MouseListener {
     }
 
     // Callback for when the user selects an RFO file to load
-    public void addRFOFile(final File file) {
+    public void loadRFOFile(final File file) {
         if (file == null) {
             return;
         }
-        final AllSTLsToBuild newStls = RFO.load(file, currentConfiguration).getAllStls();
+        rfo = new RFO(getSTLs(), currentConfiguration);
+        rfo.load(file);
+        final AllSTLsToBuild newStls = rfo.getAllStls();
         for (int i = 0; i < newStls.size(); i++) {
-            workingVolumeAndStls.addChild(newStls.get(i).top());
+            final BranchGroup top = newStls.get(i).top();
+            if (workingVolumeAndStls.indexOfChild(top) == -1) {
+                workingVolumeAndStls.addChild(top);
+            }
         }
-        stls.add(newStls);
     }
 
     public void saveRFOFile(final File file) {
         if (!checkFile(file)) {
             return;
         }
-        RFO.save(file, stls, currentConfiguration);
+        try {
+            rfo.save(file);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void saveSCADFile(final File file) {
         if (!checkFile(file)) {
             return;
         }
-        stls.saveSCAD(file);
+        final File directory = file.getParentFile();
+        if (!directory.exists()) {
+            directory.mkdir();
+        }
+        try {
+            final AllSTLsToBuild allSTLs = getSTLs();
+            RFO.copySTLs(allSTLs, directory);
+            allSTLs.saveSCAD(file);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void addCanvas3D(final Canvas3D canvas3d) {
@@ -438,11 +455,11 @@ public class RepRapPlater extends JPanel implements MouseListener {
         if (!reordering) {
             return;
         }
-        if (stls.reorderAdd(lastPicked)) {
+        if (getSTLs().reorderAdd(lastPicked)) {
             return;
         }
-        for (int i = 0; i < stls.size(); i++) {
-            stls.get(i).restoreAppearance();
+        for (int i = 0; i < getSTLs().size(); i++) {
+            getSTLs().get(i).restoreAppearance();
         }
         lastPicked = null;
         reordering = false;
@@ -450,10 +467,10 @@ public class RepRapPlater extends JPanel implements MouseListener {
 
     public void nextPicked() {
         if (lastPicked == null) {
-            lastPicked = stls.get(0);
+            lastPicked = getSTLs().get(0);
         } else {
             lastPicked.restoreAppearance();
-            lastPicked = stls.getNextOne(lastPicked);
+            lastPicked = getSTLs().getNextOne(lastPicked);
         }
         lastPicked.setAppearance(pickedAppearance);
         mouse.move(lastPicked, true);
@@ -464,14 +481,14 @@ public class RepRapPlater extends JPanel implements MouseListener {
             return;
         }
         int index = -1;
-        for (int i = 0; i < stls.size(); i++) {
-            if (stls.get(i) == lastPicked) {
+        for (int i = 0; i < getSTLs().size(); i++) {
+            if (getSTLs().get(i) == lastPicked) {
                 index = i;
                 break;
             }
         }
         if (index >= 0) {
-            stls.remove(index);
+            getSTLs().remove(index);
             index = workingVolumeAndStls.indexOfChild(lastPicked.top());
             mouseToWorld();
             workingVolumeAndStls.removeChild(index);
@@ -574,4 +591,9 @@ public class RepRapPlater extends JPanel implements MouseListener {
         }
         return true;
     }
+
+    public AllSTLsToBuild getSTLs() {
+        return rfo.getAllStls();
+    }
+
 }
