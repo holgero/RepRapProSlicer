@@ -2,7 +2,7 @@ package org.reprap;
 
 import javax.swing.SwingUtilities;
 
-import org.reprap.gui.MainFrame;
+import org.reprap.gui.PlaterFrame;
 
 /**
  * Main RepRapProSlicer software overview. Please see http://reprap.org/ for
@@ -13,7 +13,7 @@ public class Main {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                final MainFrame main = new MainFrame();
+                final PlaterFrame main = new PlaterFrame();
                 if (args.length == 1) {
                     main.autoRun(args[0]);
                 }

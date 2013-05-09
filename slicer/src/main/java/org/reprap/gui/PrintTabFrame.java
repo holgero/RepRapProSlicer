@@ -38,12 +38,12 @@ public class PrintTabFrame extends JInternalFrame {
     private JButton saveSCAD;
     private AbstractButton displayPathsCheck;
     private JProgressBar progressBar;
-    private final MainFrame mainFrame;
+    private final PlaterFrame mainFrame;
 
     /**
      * Creates new form PrintTabFrame
      */
-    PrintTabFrame(final MainFrame mainFrame, final CurrentConfiguration currentConfiguration) {
+    PrintTabFrame(final PlaterFrame mainFrame, final CurrentConfiguration currentConfiguration) {
         this.mainFrame = mainFrame;
         initComponents(currentConfiguration);
     }

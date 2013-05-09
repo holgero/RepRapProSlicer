@@ -12,7 +12,7 @@ public class SlicerFrame extends JFrame {
     private final JTabbedPane jTabbedPane1;
     private final PrintTabFrame printTabFrame1;
 
-    public SlicerFrame(final MainFrame mainFrame, final CurrentConfiguration currentConfiguration) {
+    public SlicerFrame(final PlaterFrame mainFrame, final CurrentConfiguration currentConfiguration) {
         jTabbedPane1 = new javax.swing.JTabbedPane();
         printTabFrame1 = new PrintTabFrame(mainFrame, currentConfiguration);
         setTitle("RepRapPro Slicer");

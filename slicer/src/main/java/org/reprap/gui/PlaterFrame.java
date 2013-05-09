@@ -47,7 +47,7 @@ import org.reprap.configuration.Configuration;
 import org.reprap.geometry.Producer;
 import org.reprap.geometry.ProductionProgressListener;
 
-public class MainFrame extends JFrame {
+public class PlaterFrame extends JFrame {
     private final Configuration configuration = Configuration.create();
     private final JMenuItem produceProduceB;
     private final JMenuItem cancelMenuItem;
@@ -55,7 +55,7 @@ public class MainFrame extends JFrame {
     private final JFileChooser chooser = new JFileChooser();
     private final SlicerFrame slicerFrame;
 
-    public MainFrame() throws HeadlessException {
+    public PlaterFrame() throws HeadlessException {
         super("RepRap build bed    |     mouse:  left - rotate   middle - zoom   right - translate     |    grid: 20 mm");
         JFrame.setDefaultLookAndFeelDecorated(false);
         JPopupMenu.setDefaultLightWeightPopupEnabled(false);
@@ -303,9 +303,9 @@ public class MainFrame extends JFrame {
                     if (autoExit) {
                         System.exit(0);
                     }
-                    JOptionPane.showMessageDialog(MainFrame.this, "Slicing complete");
+                    JOptionPane.showMessageDialog(PlaterFrame.this, "Slicing complete");
                 } catch (final RuntimeException e) {
-                    JOptionPane.showMessageDialog(MainFrame.this, "Production exception: " + e);
+                    JOptionPane.showMessageDialog(PlaterFrame.this, "Production exception: " + e);
                     throw e;
                 } finally {
                     producing(false);
