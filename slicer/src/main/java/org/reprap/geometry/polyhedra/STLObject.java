@@ -316,14 +316,6 @@ public class STLObject {
         return contents.size();
     }
 
-    public void setUnique(final int i, final int v) {
-        contents.get(i).setUnique(v);
-    }
-
-    public int getUnique(final int i) {
-        return contents.get(i).getUnique();
-    }
-
     /**
      * method to recursively set the user data for objects in the scenegraph
      * tree we also set the capabilites on Shape3D objects required by the

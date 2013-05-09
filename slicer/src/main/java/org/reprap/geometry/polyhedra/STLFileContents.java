@@ -11,7 +11,6 @@ public final class STLFileContents {
     private CSG3D csg; // CSG if available
     private Attributes attribute; // The attributes associated with it
     private final double volume; // Useful to know
-    private int unique;
     private final BoundingBox bbox;
 
     public STLFileContents(final File sourceFile, final BranchGroup stl, final CSG3D csg, final double volume,
@@ -21,15 +20,6 @@ public final class STLFileContents {
         this.csg = csg;
         this.volume = volume;
         this.bbox = bbox;
-        unique = 0;
-    }
-
-    void setUnique(final int i) {
-        unique = i;
-    }
-
-    int getUnique() {
-        return unique;
     }
 
     File getSourceFile() {
