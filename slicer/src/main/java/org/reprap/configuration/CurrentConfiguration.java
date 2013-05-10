@@ -26,11 +26,7 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlIDREF;
 
 public class CurrentConfiguration {
-    @XmlElement
-    @XmlIDREF
     private PrintSetting printSetting;
-    @XmlElement
-    @XmlIDREF
     private PrinterSetting printerSetting;
     @XmlElementWrapper
     @XmlElement(name = "material")
@@ -48,19 +44,23 @@ public class CurrentConfiguration {
         this.materials = materials;
     }
 
+    @XmlElement
+    @XmlIDREF
     public PrintSetting getPrintSetting() {
         return printSetting;
     }
 
-    void setPrintSettings(final PrintSetting printSetting) {
+    public void setPrintSetting(final PrintSetting printSetting) {
         this.printSetting = printSetting;
     }
 
+    @XmlElement
+    @XmlIDREF
     public PrinterSetting getPrinterSetting() {
         return printerSetting;
     }
 
-    void setPrinterSetting(final PrinterSetting printerSetting) {
+    public void setPrinterSetting(final PrinterSetting printerSetting) {
         this.printerSetting = printerSetting;
     }
 
@@ -75,5 +75,9 @@ public class CurrentConfiguration {
 
     public List<MaterialSetting> getMaterials() {
         return Collections.unmodifiableList(materials);
+    }
+
+    public void setMaterial(final int index, final MaterialSetting materialSetting) {
+        materials.set(index, materialSetting);
     }
 }

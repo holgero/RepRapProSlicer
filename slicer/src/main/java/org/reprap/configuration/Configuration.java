@@ -21,6 +21,7 @@ package org.reprap.configuration;
 import java.io.File;
 import java.util.List;
 
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -84,5 +85,13 @@ public class Configuration {
 
     void setMaterials(final List<MaterialSetting> materials) {
         this.materials = materials;
+    }
+
+    public void save() {
+        try {
+            new ConfigurationInitializer(REPRAP_DIRECTORY).saveConfiguration(this);
+        } catch (final JAXBException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

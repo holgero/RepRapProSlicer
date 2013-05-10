@@ -21,24 +21,16 @@ package org.reprap.gui;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EtchedBorder;
-import javax.swing.border.TitledBorder;
 
 import org.reprap.configuration.Configuration;
-import org.reprap.configuration.ExtruderSetting;
-import org.reprap.configuration.NamedSetting;
 
 public class PlaterPanel extends JPanel {
 
     private static final Insets BIG_INSETS = new Insets(5, 5, 5, 5);
-    private static final Insets SMALL_INSETS = new Insets(2, 2, 2, 2);
     private final Configuration configuration;
 
     public PlaterPanel(final Configuration configuration, final RepRapPlater plater) {
@@ -56,48 +48,9 @@ public class PlaterPanel extends JPanel {
         constraints.gridy = 0;
         constraints.gridx++;
         constraints.weightx = 0;
-        add(makeStateBox(), constraints);
+        add(new CurrentConfigurationStateBox(configuration), constraints);
         constraints.gridy++;
         add(makeButtonsBox(), constraints);
-    }
-
-    private JPanel makeStateBox() {
-        final JPanel stateBox = new JPanel();
-        stateBox.setLayout(new GridBagLayout());
-        stateBox.setBorder(new TitledBorder(new EtchedBorder(), "Current Settings"));
-        final GridBagConstraints constraints = new GridBagConstraints();
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.ipadx = 5;
-        constraints.ipady = 5;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        constraints.insets = SMALL_INSETS;
-        stateBox.add(new JLabel("Print Settings"), constraints);
-        constraints.gridy++;
-        stateBox.add(new JComboBox<>(getNames(configuration.getPrintSettings())), constraints);
-        constraints.gridy++;
-        stateBox.add(new JLabel("Material"), constraints);
-        constraints.gridy++;
-        final String[] materialNames = getNames(configuration.getMaterials());
-        final List<ExtruderSetting> extruderSettings = configuration.getCurrentConfiguration().getPrinterSetting()
-                .getExtruderSettings();
-        for (final ExtruderSetting extruderSetting : extruderSettings) {
-            stateBox.add(new JComboBox<>(materialNames), constraints);
-            constraints.gridy++;
-        }
-        stateBox.add(new JLabel("Printer"), constraints);
-        constraints.gridy++;
-        stateBox.add(new JComboBox<>(getNames(configuration.getPrinterSettings())), constraints);
-        constraints.gridy++;
-        return stateBox;
-    }
-
-    private static String[] getNames(final List<? extends NamedSetting> namedSetting) {
-        final List<String> settingsNames = new ArrayList<>();
-        for (final NamedSetting setting : namedSetting) {
-            settingsNames.add(setting.getName());
-        }
-        return settingsNames.toArray(new String[settingsNames.size()]);
     }
 
     private JPanel makePlaterBox(final RepRapPlater plater) {
