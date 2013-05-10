@@ -18,12 +18,10 @@
  */
 package org.reprap.gui;
 
-import java.awt.Component;
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
-import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -56,16 +54,12 @@ public class MainFrame extends JFrame {
 
     private JTabbedPane createTabPane() {
         final JTabbedPane tabPane = new JTabbedPane();
-        tabPane.add("Plater", createPlaterPanel());
+        tabPane.add("Plater", new PlaterPanel(configuration, plater));
         tabPane.add("Print Settings", new PrintSettingsPanel());
+        tabPane.add("Material Settings", new JPanel());
+        tabPane.add("Printer Settings", new JPanel());
+        tabPane.add("Visual Slicer", new JPanel());
         return tabPane;
-    }
-
-    private Component createPlaterPanel() {
-        final JPanel platerPanel = new JPanel();
-        platerPanel.setLayout(new BoxLayout(platerPanel, BoxLayout.Y_AXIS));
-        platerPanel.add(plater);
-        return platerPanel;
     }
 
     public void autoRun(final String fileName) {

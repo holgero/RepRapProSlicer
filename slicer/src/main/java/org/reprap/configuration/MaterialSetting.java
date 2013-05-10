@@ -24,7 +24,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-public class MaterialSetting {
+public class MaterialSetting implements NamedSetting {
     @XmlAttribute
     @XmlID
     private String name; // text
@@ -49,6 +49,7 @@ public class MaterialSetting {
         this.color = color;
     }
 
+    @Override
     public String getName() {
         return name;
     }

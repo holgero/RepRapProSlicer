@@ -28,7 +28,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlID;
 
-public class PrinterSetting {
+public class PrinterSetting implements NamedSetting {
     private static final double MACHINE_RESOLUTION = 0.05; // mm
 
     @XmlAttribute
@@ -142,6 +142,7 @@ public class PrinterSetting {
         this.buildPlatformStl = buildPlatformStl;
     }
 
+    @Override
     public String getName() {
         return name;
     }

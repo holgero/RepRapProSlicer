@@ -25,7 +25,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-public class PrintSetting {
+public class PrintSetting implements NamedSetting {
     @XmlAttribute
     @XmlID
     private String name;
@@ -290,6 +290,7 @@ public class PrintSetting {
         this.shieldStlFile = shieldStlFile;
     }
 
+    @Override
     public String getName() {
         return name;
     }
