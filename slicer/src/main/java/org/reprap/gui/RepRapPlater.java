@@ -180,6 +180,13 @@ public class RepRapPlater extends JPanel implements MouseListener {
 
     public void dispose() {
         virtualUniverse.removeAllLocales();
+        try {
+            // give the Java3D threads the chance to terminate peacefully.
+            Thread.sleep(250);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        // now become rude with those that didn't take the chance
         finishJava3dThreads();
     }
 
@@ -198,6 +205,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
         for (int i = 0; i < count; i++) {
             final ThreadGroup threadGroup = groups[i];
             if ("Java3D".equals(threadGroup.getName())) {
+                threadGroup.setDaemon(true);
                 final Thread[] threads = new Thread[threadGroup.activeCount()];
                 final int threadCount = threadGroup.enumerate(threads);
                 for (int j = 0; j < threadCount; j++) {
@@ -210,6 +218,8 @@ public class RepRapPlater extends JPanel implements MouseListener {
                         }
                     }
                 }
+                Thread.yield();
+                threadGroup.interrupt();
             }
         }
     }
