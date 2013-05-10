@@ -75,12 +75,11 @@ public class MainFrame extends JFrame {
 
     private JMenu createFileMenu() {
         final JMenu fileMenu = new JMenu("File");
-        final JMenuItem quit = new JMenuItem(new AbstractAction("Close") {
+        final JMenuItem quit = new JMenuItem(new AbstractAction("Exit") {
             @Override
             public void actionPerformed(final ActionEvent e) {
                 plater.dispose();
                 dispose();
-                System.exit(0);
             }
         });
         fileMenu.add(quit);

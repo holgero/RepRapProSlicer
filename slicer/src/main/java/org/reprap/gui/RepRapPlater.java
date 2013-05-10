@@ -95,6 +95,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import javax.media.j3d.AmbientLight;
 import javax.media.j3d.Appearance;
@@ -178,6 +180,38 @@ public class RepRapPlater extends JPanel implements MouseListener {
 
     public void dispose() {
         virtualUniverse.removeAllLocales();
+        finishJava3dThreads();
+    }
+
+    private static void finishJava3dThreads() {
+        final Class<?> rendererClass;
+        final Method finishMethod;
+        try {
+            rendererClass = Class.forName("javax.media.j3d.J3dThread");
+            finishMethod = rendererClass.getDeclaredMethod("finish");
+            finishMethod.setAccessible(true);
+        } catch (ClassNotFoundException | NoSuchMethodException | SecurityException e) {
+            throw new RuntimeException(e);
+        }
+        final ThreadGroup[] groups = new ThreadGroup[10];
+        final int count = Thread.currentThread().getThreadGroup().getParent().enumerate(groups);
+        for (int i = 0; i < count; i++) {
+            final ThreadGroup threadGroup = groups[i];
+            if ("Java3D".equals(threadGroup.getName())) {
+                final Thread[] threads = new Thread[threadGroup.activeCount()];
+                final int threadCount = threadGroup.enumerate(threads);
+                for (int j = 0; j < threadCount; j++) {
+                    final Thread thread = threads[j];
+                    if (rendererClass.isInstance(thread)) {
+                        try {
+                            finishMethod.invoke(thread);
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private Background createBackground() {
