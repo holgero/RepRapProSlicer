@@ -20,6 +20,8 @@ package org.reprap.gui;
 
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.AbstractAction;
 import javax.swing.JFrame;
@@ -38,7 +40,7 @@ public class MainFrame extends JFrame {
 
     public MainFrame() throws HeadlessException {
         super("RepRap Slicer");
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         configuration = Configuration.create();
         plater = new RepRapPlater(configuration.getCurrentConfiguration());
     }
@@ -50,6 +52,12 @@ public class MainFrame extends JFrame {
         setVisible(true);
         setFocusable(true);
         requestFocus();
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(final WindowEvent e) {
+                plater.dispose();
+            }
+        });
     }
 
     private JTabbedPane createTabPane() {
@@ -78,7 +86,6 @@ public class MainFrame extends JFrame {
         final JMenuItem quit = new JMenuItem(new AbstractAction("Exit") {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                plater.dispose();
                 dispose();
             }
         });
