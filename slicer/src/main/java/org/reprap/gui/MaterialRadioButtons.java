@@ -112,8 +112,7 @@ class MaterialRadioButtons extends JPanel {
         rrb = r;
         stlIndex = index;
         //Create and set up the window.
-        final JFrame f = new JFrame();
-        dialog = new JDialog(f, "Material selector");
+        dialog = new JDialog((JFrame) null, "Material selector");
         dialog.setLocation(500, 400);
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
