@@ -132,7 +132,8 @@ public class MainFrame extends JFrame {
                     JOptionPane.showMessageDialog(null, "There are no STLs/RFOs loaded to slice.");
                     return;
                 }
-                slice(stripExtension(currentFile), new StatusBarUpdater(statusBar, currentFile), false, true);
+                slice(stripExtension(currentFile),
+                        new StatusBarUpdater(statusBar, currentFile, simulationTab.getSimulationPlotter()), false);
             }
         });
         actions.put(EXIT_ACTION, new AbstractAction(EXIT_ACTION) {
@@ -197,8 +198,7 @@ public class MainFrame extends JFrame {
         }
     }
 
-    void slice(final String gcodeFileName, final ProductionProgressListener listener, final boolean autoExit,
-            final boolean displayPaths) {
+    void slice(final String gcodeFileName, final ProductionProgressListener listener, final boolean autoExit) {
         final File defaultFile = new File(gcodeFileName + ".gcode");
         final File gcodeFile;
         if (autoExit) {
@@ -210,6 +210,7 @@ public class MainFrame extends JFrame {
             }
 
         }
+        actions.get(SLICE_ACTION).setEnabled(false);
         new Thread() {
             @Override
             public void run() {
@@ -228,6 +229,7 @@ public class MainFrame extends JFrame {
                     throw e;
                 } finally {
                     statusBar.setMessage("Sliced: " + currentFile.getName() + " to " + gcodeFile.getName());
+                    actions.get(SLICE_ACTION).setEnabled(true);
                 }
             }
         }.start();
@@ -235,16 +237,17 @@ public class MainFrame extends JFrame {
 
     private JTabbedPane createTabPane() {
         final JTabbedPane tabPane = new JTabbedPane();
-        tabPane.add("Plater", new PlaterPanel(configuration, plater, actions));
-        tabPane.add("Print Settings", new PrintSettingsPanel());
-        tabPane.add("Material Settings", new JPanel());
-        tabPane.add("Printer Settings", new JPanel());
-        tabPane.add("Visual Slicer", simulationTab);
+        tabPane.addTab("Plater", null, new PlaterPanel(configuration, plater, actions), "Place things on the build platform.");
+        tabPane.addTab("Print Settings", new PrintSettingsPanel());
+        tabPane.addTab("Material Settings", new JPanel());
+        tabPane.addTab("Printer Settings", new JPanel());
+        tabPane.addTab("Visual Slicer", null, simulationTab, "Shows the current slice. " + "<space> to pause, "
+                + "<b> to show boxes around polygons, " + "left click to magnify, "
+                + "right click to restore default magnification.");
         tabPane.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
                 simulationTab.hookListeners(simulationTab == tabPane.getSelectedComponent());
-                System.out.println("Tab: " + tabPane.getSelectedIndex() + " is " + tabPane.getSelectedComponent());
             }
         });
         return tabPane;
@@ -253,13 +256,12 @@ public class MainFrame extends JFrame {
     public void autoRun(final String fileName) {
         final File rfoFile = new File(fileName);
         plater.loadRFOFile(rfoFile);
-        final String rfoFileName = rfoFile.getAbsolutePath();
-        slice(rfoFileName.substring(0, rfoFileName.length() - ".rfo".length()), new ProductionProgressListener() {
+        slice(stripExtension(rfoFile), new ProductionProgressListener() {
             @Override
             public void productionProgress(final int layer, final int totalLayers) {
                 System.out.println(layer + "/" + totalLayers);
             }
-        }, true, true);
+        }, true);
     }
 
     private JMenuBar createMenu() {

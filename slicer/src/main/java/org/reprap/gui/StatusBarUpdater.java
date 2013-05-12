@@ -21,19 +21,23 @@ package org.reprap.gui;
 import java.io.File;
 
 import org.reprap.geometry.ProductionProgressListener;
+import org.reprap.geometry.SimulationPlotter;
 
 public class StatusBarUpdater implements ProductionProgressListener {
 
     private final StatusBar statusBar;
     private final File currentFile;
+    private final SimulationPlotter simulationPlotter;
 
-    public StatusBarUpdater(final StatusBar statusBar, final File currentFile) {
+    public StatusBarUpdater(final StatusBar statusBar, final File currentFile, final SimulationPlotter simulationPlotter) {
         this.statusBar = statusBar;
         this.currentFile = currentFile;
+        this.simulationPlotter = simulationPlotter;
     }
 
     @Override
     public void productionProgress(final int layer, final int totalLayers) {
-        statusBar.setMessage("Slicing " + currentFile.getName() + ": " + layer + "/" + totalLayers);
+        statusBar.setMessage("Slicing " + currentFile.getName() + ": " + layer + "/" + totalLayers
+                + (simulationPlotter.isPauseSlicer() ? " (paused)" : ""));
     }
 }

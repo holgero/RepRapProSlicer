@@ -19,8 +19,10 @@
 package org.reprap.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Window;
 
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.geometry.SimulationPlotter;
@@ -40,12 +42,13 @@ class SimulationPanel extends JPanel {
     }
 
     void hookListeners(final boolean activate) {
+        final Window window = SwingUtilities.getWindowAncestor(this);
         if (activate) {
             addMouseListener(mouseListener);
-            addKeyListener(togglePlotBox);
+            window.addKeyListener(togglePlotBox);
         } else {
             removeMouseListener(mouseListener);
-            removeKeyListener(togglePlotBox);
+            window.removeKeyListener(togglePlotBox);
         }
     }
 
