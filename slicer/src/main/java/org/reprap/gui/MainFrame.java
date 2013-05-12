@@ -43,6 +43,8 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.reprap.configuration.Configuration;
+import org.reprap.geometry.Producer;
+import org.reprap.geometry.ProductionProgressListener;
 
 public class MainFrame extends JFrame {
     static final String LOAD_RFO_ACTION = "Load RFO";
@@ -109,20 +111,7 @@ public class MainFrame extends JFrame {
                     JOptionPane.showMessageDialog(null, "There's nothing to save...");
                     return;
                 }
-                if (!isStlOrRfoFile(currentFile)) {
-                    JOptionPane.showMessageDialog(null, "The loaded file is not an STL or an RFO file.");
-                }
                 saveRFO(stripExtension(currentFile));
-            }
-
-            private boolean isStlOrRfoFile(final File file) {
-                final String lowerName = file.getName().toLowerCase();
-                return lowerName.endsWith(".stl") || lowerName.endsWith(".rfo");
-            }
-
-            private String stripExtension(final File file) {
-                final String path = file.getAbsolutePath();
-                return path.substring(0, path.length() - ".rfo".length());
             }
         });
         actions.put(LOAD_STL_CSG_ACTION, new AbstractAction(LOAD_STL_CSG_ACTION) {
@@ -135,8 +124,11 @@ public class MainFrame extends JFrame {
         actions.put(SLICE_ACTION, new AbstractAction(SLICE_ACTION) {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                // TODO Auto-generated method stub
-                System.out.println(SLICE_ACTION);
+                if (currentFile == null) {
+                    JOptionPane.showMessageDialog(null, "There are no STLs/RFOs loaded to slice.");
+                    return;
+                }
+                slice(stripExtension(currentFile), new StatusBarUpdater(statusBar, currentFile), false, true);
             }
         });
         actions.put(EXIT_ACTION, new AbstractAction(EXIT_ACTION) {
@@ -145,6 +137,11 @@ public class MainFrame extends JFrame {
                 dispose();
             }
         });
+    }
+
+    private static String stripExtension(final File file) {
+        final String path = file.getAbsolutePath();
+        return path.substring(0, path.length() - ".rfo".length());
     }
 
     private File load(final String description, final String[] extensions, final String defaultName) {
@@ -179,6 +176,58 @@ public class MainFrame extends JFrame {
         if (rfoChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
             plater.saveRFOFile(rfoChooser.getSelectedFile());
         }
+    }
+
+    private static File gcodeFileDialog(final File defaultFile) {
+        final JFileChooser chooser = new JFileChooser();
+        chooser.setSelectedFile(defaultFile);
+        final FileFilter filter = new FileNameExtensionFilter("G Code file to write to", new String[] { "gcode" });
+        chooser.setFileFilter(filter);
+        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+        final int result = chooser.showSaveDialog(null);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            return chooser.getSelectedFile();
+        } else {
+            return null;
+        }
+    }
+
+    void slice(final String gcodeFileName, final ProductionProgressListener listener, final boolean autoExit,
+            final boolean displayPaths) {
+        final File defaultFile = new File(gcodeFileName + ".gcode");
+        final File gcodeFile;
+        if (autoExit) {
+            gcodeFile = defaultFile;
+        } else {
+            gcodeFile = gcodeFileDialog(defaultFile);
+            if (gcodeFile == null) {
+                return;
+            }
+
+        }
+        new Thread() {
+            @Override
+            public void run() {
+                Thread.currentThread().setName("Producer");
+                plater.mouseToWorld();
+                final Producer producer = new Producer(gcodeFile, plater.getSTLs(), listener, displayPaths,
+                        configuration.getCurrentConfiguration());
+                try {
+                    producer.produce();
+                    if (autoExit) {
+                        System.exit(0);
+                    }
+                    JOptionPane.showMessageDialog(MainFrame.this, "Slicing complete");
+                } catch (final RuntimeException e) {
+                    JOptionPane.showMessageDialog(MainFrame.this, "Production exception: " + e);
+                    throw e;
+                } finally {
+                    producer.dispose();
+                    statusBar.setMessage("Sliced: " + currentFile.getName() + " to " + gcodeFile.getName());
+                }
+            }
+        }.start();
     }
 
     private JTabbedPane createTabPane() {
