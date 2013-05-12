@@ -164,19 +164,18 @@ class RepRapPlater extends JPanel implements MouseListener {
     private PickCanvas pickCanvas; // The thing picked by a mouse click
     private STLObject lastPicked; // The last thing picked
     private RFO rfo; // the current project
-    private boolean reordering;
     private double xwv;
     private double ywv;
     private double zwv;
     private STLObject world;
     private STLObject workingVolume;
     private BranchGroup sceneBranchGroup;
+    private final ActionMap actions;
 
-    RepRapPlater(final CurrentConfiguration currentConfiguration) {
+    RepRapPlater(final CurrentConfiguration currentConfiguration, final ActionMap actions) {
         this.currentConfiguration = currentConfiguration;
-        initialise();
+        this.actions = actions;
         rfo = new RFO(currentConfiguration);
-        reordering = false;
         setPreferredSize(new Dimension(600, 400));
     }
 
@@ -301,18 +300,13 @@ class RepRapPlater extends JPanel implements MouseListener {
             if (picked != null) {
                 if (picked != workingVolume) {
                     picked.setAppearance(pickedAppearance); // Highlight it
-                    if (getLastPicked() != null && !reordering) {
+                    if (getLastPicked() != null) {
                         getLastPicked().restoreAppearance(); // lowlight
                     }
-                    if (!reordering) {
-                        mouse.move(picked, true); // Set the mouse to move it
-                    }
+                    mouse.move(picked, true); // Set the mouse to move it
                     setLastPicked(picked);
-                    reorder();
                 } else {
-                    if (!reordering) {
-                        mouseToWorld();
-                    }
+                    mouseToWorld();
                 }
             }
         }
@@ -453,20 +447,6 @@ class RepRapPlater extends JPanel implements MouseListener {
         }
     }
 
-    private void reorder() {
-        if (!reordering) {
-            return;
-        }
-        if (getSTLs().reorderAdd(getLastPicked())) {
-            return;
-        }
-        for (int i = 0; i < getSTLs().size(); i++) {
-            getSTLs().get(i).restoreAppearance();
-        }
-        setNothingPicked();
-        reordering = false;
-    }
-
     void nextPicked() {
         if (getLastPicked() == null) {
             setLastPicked(getSTLs().get(0));
@@ -498,7 +478,9 @@ class RepRapPlater extends JPanel implements MouseListener {
         }
     }
 
-    private void initialise() {
+    void initialise() {
+        actions.createPlaterActions(this);
+        setNothingPicked();
         final PrinterSetting printerSetting = currentConfiguration.getPrinterSetting();
         xwv = printerSetting.getBedSizeX();
         ywv = printerSetting.getBedSizeY();
@@ -610,10 +592,12 @@ class RepRapPlater extends JPanel implements MouseListener {
     }
 
     private void setNothingPicked() {
+        actions.enablePlaterActions(false);
         lastPicked = null;
     }
 
     private void setLastPicked(final STLObject lastPicked) {
         this.lastPicked = lastPicked;
+        actions.enablePlaterActions(true);
     }
 }

@@ -21,7 +21,9 @@ package org.reprap.gui;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -42,16 +44,9 @@ public class ActionMap {
     static final String DELETE_OBJECT = "Delete object";
 
     private final Map<String, Action> actions = new HashMap<String, Action>();
-    private final MainFrame mainFrame;
-    private final RepRapPlater plater;
+    private Set<String> platerActionKeys;
 
-    public ActionMap(final MainFrame mainFrame, final RepRapPlater plater) {
-        this.mainFrame = mainFrame;
-        this.plater = plater;
-        createActions();
-    }
-
-    private void createActions() {
+    void createMainActions(final MainFrame mainFrame) {
         actions.put(LOAD_RFO_ACTION, new AbstractAction(LOAD_RFO_ACTION) {
             @Override
             public void actionPerformed(final ActionEvent e) {
@@ -84,6 +79,10 @@ public class ActionMap {
                 mainFrame.dispose();
             }
         });
+    }
+
+    void createPlaterActions(final RepRapPlater plater) {
+        final Set<String> before = new HashSet<>(actions.keySet());
         actions.put(ROTATE_X_90, new AbstractAction(ROTATE_X_90) {
             @Override
             public void actionPerformed(final ActionEvent e) {
@@ -132,9 +131,18 @@ public class ActionMap {
                 plater.deleteSTL();
             }
         });
+        platerActionKeys = new HashSet<>(actions.keySet());
+        platerActionKeys.removeAll(before);
+
     }
 
     Action get(final String key) {
         return actions.get(key);
+    }
+
+    void enablePlaterActions(final boolean enabled) {
+        for (final String key : platerActionKeys) {
+            actions.get(key).setEnabled(enabled);
+        }
     }
 }

@@ -46,7 +46,7 @@ import org.reprap.geometry.ProductionProgressListener;
 public class MainFrame extends JFrame {
     private final Configuration configuration;
     private final RepRapPlater plater;
-    private final ActionMap actions;
+    private final ActionMap actions = new ActionMap();
     private final StatusBar statusBar = new StatusBar();
     private File currentFile;
     private final SimulationPanel simulationTab;
@@ -55,12 +55,13 @@ public class MainFrame extends JFrame {
         super("RepRap Slicer");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         configuration = Configuration.create();
-        plater = new RepRapPlater(configuration.getCurrentConfiguration());
-        actions = new ActionMap(this, plater);
+        plater = new RepRapPlater(configuration.getCurrentConfiguration(), actions);
         simulationTab = new SimulationPanel(configuration.getCurrentConfiguration());
     }
 
     public void createGui() {
+        actions.createMainActions(this);
+        plater.initialise();
         setJMenuBar(createMenu());
         final Container contentPane = getContentPane();
         contentPane.add(createTabPane());
@@ -208,7 +209,6 @@ public class MainFrame extends JFrame {
         final JMenuBar menubar = new JMenuBar();
         menubar.add(createFileMenu());
         menubar.add(createPlateMenu());
-        menubar.add(new JMenuItem(actions.get(ActionMap.SLICE_ACTION)));
         return menubar;
     }
 
@@ -229,9 +229,12 @@ public class MainFrame extends JFrame {
         menu.add(new JMenuItem(actions.get(ActionMap.ROTATE_Z_45)));
         menu.add(new JMenuItem(actions.get(ActionMap.ROTATE_Z_P_25)));
         menu.add(new JMenuItem(actions.get(ActionMap.ROTATE_Z_M_25)));
+        menu.addSeparator();
         menu.add(new JMenuItem(actions.get(ActionMap.CHANGE_MATERIAL)));
         menu.add(new JMenuItem(actions.get(ActionMap.SELECT_NEXT)));
         menu.add(new JMenuItem(actions.get(ActionMap.DELETE_OBJECT)));
+        menu.addSeparator();
+        menu.add(new JMenuItem(actions.get(ActionMap.SLICE_ACTION)));
         return menu;
     }
 
