@@ -36,7 +36,6 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 import javax.swing.WindowConstants;
@@ -44,8 +43,6 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.reprap.configuration.Configuration;
-import org.reprap.geometry.Producer;
-import org.reprap.geometry.ProductionProgressListener;
 
 public class PlaterFrame extends JFrame {
     private final Configuration configuration = Configuration.create();
@@ -84,18 +81,6 @@ public class PlaterFrame extends JFrame {
         requestFocus();
 
         slicerFrame = new SlicerFrame(this, configuration.getCurrentConfiguration());
-    }
-
-    public void autoRun(final String fileName) {
-        final File rfoFile = new File(fileName);
-        plater.loadRFOFile(rfoFile);
-        final String rfoFileName = rfoFile.getAbsolutePath();
-        slice(rfoFileName.substring(0, rfoFileName.length() - ".rfo".length()), new ProductionProgressListener() {
-            @Override
-            public void productionProgress(final int layer, final int totalLayers) {
-                System.out.println(layer + "/" + totalLayers);
-            }
-        }, true, true);
     }
 
     private JMenu createMenu() {
@@ -275,45 +260,5 @@ public class PlaterFrame extends JFrame {
         } else {
             return null;
         }
-    }
-
-    boolean slice(final String gcodeFileName, final ProductionProgressListener listener, final boolean autoExit,
-            final boolean displayPaths) {
-        final File defaultFile = new File(gcodeFileName + ".gcode");
-        final File gcodeFile;
-        if (autoExit) {
-            gcodeFile = defaultFile;
-        } else {
-            gcodeFile = gcodeFileDialog(defaultFile);
-            if (gcodeFile == null) {
-                return false;
-            }
-
-        }
-        producing(true);
-        new Thread() {
-            @Override
-            public void run() {
-                Thread.currentThread().setName("Producer");
-                plater.mouseToWorld();
-                final Producer producer = new Producer(gcodeFile, plater.getSTLs(), listener, displayPaths,
-                        configuration.getCurrentConfiguration());
-                try {
-                    producer.produce();
-                    if (autoExit) {
-                        System.exit(0);
-                    }
-                    JOptionPane.showMessageDialog(PlaterFrame.this, "Slicing complete");
-                } catch (final RuntimeException e) {
-                    JOptionPane.showMessageDialog(PlaterFrame.this, "Production exception: " + e);
-                    throw e;
-                } finally {
-                    producing(false);
-                    slicerFrame.slicingFinished();
-                    producer.dispose();
-                }
-            }
-        }.start();
-        return true;
     }
 }

@@ -36,13 +36,9 @@ public class Producer {
     private boolean omitShield;
 
     public Producer(final File gcodeFile, final AllSTLsToBuild allStls, final ProductionProgressListener progressListener,
-            final boolean displayPaths, final CurrentConfiguration currentConfiguration) {
+            final SimulationPlotter simulationPlot, final CurrentConfiguration currentConfiguration) {
         this.progressListener = progressListener;
-        if (displayPaths) {
-            simulationPlot = new SimulationPlotter("RepRap building simulation", currentConfiguration);
-        } else {
-            simulationPlot = null;
-        }
+        this.simulationPlot = simulationPlot;
         this.currentConfiguration = currentConfiguration;
         final Purge purge = new Purge(currentConfiguration);
         printer = new GCodePrinter(currentConfiguration, purge);
@@ -186,11 +182,5 @@ public class Producer {
             }
         }
         return 0;
-    }
-
-    public void dispose() {
-        if (simulationPlot != null) {
-            simulationPlot.dispose();
-        }
     }
 }

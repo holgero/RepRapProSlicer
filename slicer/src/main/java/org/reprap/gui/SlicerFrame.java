@@ -37,8 +37,4 @@ public class SlicerFrame extends JFrame {
                                 org.jdesktop.layout.GroupLayout.PREFERRED_SIZE).addContainerGap(5, Short.MAX_VALUE)));
         pack();
     }
-
-    public void slicingFinished() {
-        printTabFrame1.slicingFinished();
-    }
 }

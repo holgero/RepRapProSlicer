@@ -40,7 +40,7 @@ public class ProducerPerformanceTest {
             @Override
             public void productionProgress(final int layer, final int totalLayers) {
             }
-        }, false, currentConfiguration);
+        }, null, currentConfiguration);
         final long start = System.currentTimeMillis();
         producer.produce();
         final long end = System.currentTimeMillis();

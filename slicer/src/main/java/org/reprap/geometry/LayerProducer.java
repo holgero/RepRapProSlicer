@@ -25,7 +25,7 @@ class LayerProducer {
         if (simulationPlot != null) {
             if (!simulationPlot.isInitialised()) {
                 final Rectangle rec = new Rectangle(lc.getBox());
-                simulationPlot.init(rec, "" + lc.getModelLayer() + " (z=" + lc.getModelZ() + ")");
+                simulationPlot.init(rec);
             } else {
                 try {
                     while (simulationPlot.isPauseSlicer()) {
@@ -34,7 +34,7 @@ class LayerProducer {
                 } catch (final InterruptedException e) {
                     Thread.interrupted();
                 }
-                simulationPlot.cleanPolygons("" + lc.getModelLayer() + " (z=" + lc.getModelZ() + ")");
+                simulationPlot.cleanPolygons();
             }
         }
     }

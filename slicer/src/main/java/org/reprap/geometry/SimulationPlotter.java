@@ -57,7 +57,6 @@
 package org.reprap.geometry;
 
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.KeyAdapter;
@@ -68,7 +67,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.MaterialSetting;
@@ -86,47 +84,29 @@ public class SimulationPlotter extends JComponent {
     private static final Color BOX_COLOR = Color.blue;
 
     private final Map<String, Color> colorMap = new HashMap<String, Color>();
-    /**
-     * Pixels
-     */
-    private final int frame = 600;
-    private int frameWidth;
-    private int frameHeight;
     private PolygonList p_list = null;
 
-    /**
-     * The layer being built
-     */
-    private String layerNumber;
     private double scale;
     private Point2D p_0;
     private Point2D pos;
     private Rectangle scaledBox, originalBox;
-    private JFrame jframe;
     private boolean plot_box = false;
-
-    private String title = "RepRap diagnostics";
-
     private boolean initialised = false;
-
     private boolean pauseSlicer;
 
     /**
      * Constructor for nothing - add stuff later
      */
-    public SimulationPlotter(final String t, final CurrentConfiguration configuration) {
+    public SimulationPlotter(final CurrentConfiguration configuration) {
         p_list = null;
-        title = t;
         initialised = false;
-        layerNumber = "0";
         for (final MaterialSetting material : configuration.getMaterials()) {
             colorMap.put(material.getName(), material.getColor().get());
         }
     }
 
-    public void cleanPolygons(final String ln) {
+    public void cleanPolygons() {
         p_list = null;
-        layerNumber = ln;
     }
 
     private void setScales(final Rectangle b) {
@@ -134,15 +114,8 @@ public class SimulationPlotter extends JComponent {
 
         final double width = scaledBox.x().length();
         final double height = scaledBox.y().length();
-        if (width > height) {
-            frameWidth = frame;
-            frameHeight = (int) (0.5 + (frameWidth * height) / width);
-        } else {
-            frameHeight = frame;
-            frameWidth = (int) (0.5 + (frameHeight * width) / height);
-        }
-        final double xs = frameWidth / width;
-        final double ys = frameHeight / height;
+        final double xs = getWidth() / width;
+        final double ys = getHeight() / height;
 
         if (xs < ys) {
             scale = xs;
@@ -150,8 +123,8 @@ public class SimulationPlotter extends JComponent {
             scale = ys;
         }
 
-        p_0 = new Point2D((frameWidth - (width + 2 * scaledBox.x().low()) * scale) * 0.5,
-                (frameHeight - (height + 2 * scaledBox.y().low()) * scale) * 0.5);
+        p_0 = new Point2D((getWidth() - (width + 2 * scaledBox.x().low()) * scale) * 0.5,
+                (getHeight() - (height + 2 * scaledBox.y().low()) * scale) * 0.5);
 
         pos = new Point2D(width * 0.5, height * 0.5);
     }
@@ -164,23 +137,10 @@ public class SimulationPlotter extends JComponent {
         plot(g2d, p);
     }
 
-    public void init(final Rectangle b, final String ln) {
+    public void init(final Rectangle b) {
         originalBox = b;
         setScales(b);
-
-        jframe = new JFrame();
-        jframe.setSize(frameWidth, frameHeight);
-        jframe.getContentPane().add(this);
-        jframe.setTitle(title);
-        jframe.setVisible(true);
-        jframe.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
-        jframe.addMouseListener(new MouseClickMagnifier());
-        jframe.addKeyListener(new TogglePlotBox());
-        jframe.setIgnoreRepaint(false);
-
         initialised = true;
-
-        layerNumber = ln;
     }
 
     public boolean isInitialised() {
@@ -199,21 +159,21 @@ public class SimulationPlotter extends JComponent {
         } else {
             p_list.add(pl);
         }
-        jframe.repaint();
+        repaint();
     }
 
     /**
      * Real-world coordinates to pixels
      */
     private Point2D transform(final Point2D p) {
-        return new Point2D(p_0.x() + scale * p.x(), frameHeight - (p_0.y() + scale * p.y()));
+        return new Point2D(p_0.x() + scale * p.x(), getHeight() - (p_0.y() + scale * p.y()));
     }
 
     /**
      * Pixels to real-world coordinates
      */
     private Point2D iTransform(final int x, final int y) {
-        return new Point2D((x - p_0.x()) / scale, ((frameHeight - y) - p_0.y()) / scale);
+        return new Point2D((x - p_0.x()) / scale, ((getHeight() - y) - p_0.y()) / scale);
     }
 
     /**
@@ -285,58 +245,53 @@ public class SimulationPlotter extends JComponent {
                 }
             }
         }
-        String titleText = title + ", layer: " + layerNumber;
-        if (isPauseSlicer()) {
-            titleText += " (paused)";
-        }
-        jframe.setTitle(titleText);
     }
 
-    private final class TogglePlotBox extends KeyAdapter {
+    public final class TogglePlotBox extends KeyAdapter {
         @Override
         public void keyTyped(final KeyEvent k) {
             switch (k.getKeyChar()) {
             case 'b':
             case 'B':
                 plot_box = !plot_box;
+                repaint();
                 break;
             case ' ':
                 setPauseSlicer(!isPauseSlicer());
                 break;
             }
-            jframe.repaint();
         }
     }
 
-    private final class MouseClickMagnifier extends MouseAdapter {
+    public final class MouseClickMagnifier extends MouseAdapter {
         private Rectangle magBox(final Rectangle b, final int ix, final int iy) {
             final Point2D cen = iTransform(ix, iy);
-            final Point2D off = new Point2D(b.x().length() * 0.05, b.y().length() * 0.05);
+            final Point2D off = new Point2D(b.x().length() * 0.1, b.y().length() * 0.1);
             return new Rectangle(Point2D.sub(cen, off), Point2D.add(cen, off));
         }
 
         @Override
         public void mouseClicked(final MouseEvent e) {
-            final int ix = e.getX() - 5; // Why needed??
-            final int iy = e.getY() - 25; //  "     "
-
             switch (e.getButton()) {
             case MouseEvent.BUTTON1:
-                setScales(magBox(scaledBox, ix, iy));
+                setScales(magBox(scaledBox, e.getX(), e.getY()));
+                repaint();
                 break;
             case MouseEvent.BUTTON2:
                 break;
             case MouseEvent.BUTTON3:
             default:
                 setScales(originalBox);
+                repaint();
             }
-            jframe.repaint();
         }
     }
 
     @Override
     public void paint(final Graphics g) {
-        plot((Graphics2D) g);
+        if (initialised) {
+            plot((Graphics2D) g);
+        }
     }
 
     public synchronized boolean isPauseSlicer() {
@@ -345,11 +300,5 @@ public class SimulationPlotter extends JComponent {
 
     public synchronized void setPauseSlicer(final boolean pauseSlicer) {
         this.pauseSlicer = pauseSlicer;
-    }
-
-    public void dispose() {
-        if (jframe != null) {
-            jframe.dispose();
-        }
     }
 }

@@ -39,6 +39,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.WindowConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -58,12 +60,14 @@ public class MainFrame extends JFrame {
     private final Map<String, Action> actions = new HashMap<String, Action>();
     private final StatusBar statusBar = new StatusBar();
     private File currentFile;
+    private final SimulationPanel simulationTab;
 
     public MainFrame() throws HeadlessException {
         super("RepRap Slicer");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         configuration = Configuration.create();
         plater = new RepRapPlater(configuration.getCurrentConfiguration());
+        simulationTab = new SimulationPanel(configuration.getCurrentConfiguration());
         createActions();
     }
 
@@ -211,8 +215,8 @@ public class MainFrame extends JFrame {
             public void run() {
                 Thread.currentThread().setName("Producer");
                 plater.mouseToWorld();
-                final Producer producer = new Producer(gcodeFile, plater.getSTLs(), listener, displayPaths,
-                        configuration.getCurrentConfiguration());
+                final Producer producer = new Producer(gcodeFile, plater.getSTLs(), listener,
+                        simulationTab.getSimulationPlotter(), configuration.getCurrentConfiguration());
                 try {
                     producer.produce();
                     if (autoExit) {
@@ -223,7 +227,6 @@ public class MainFrame extends JFrame {
                     JOptionPane.showMessageDialog(MainFrame.this, "Production exception: " + e);
                     throw e;
                 } finally {
-                    producer.dispose();
                     statusBar.setMessage("Sliced: " + currentFile.getName() + " to " + gcodeFile.getName());
                 }
             }
@@ -236,12 +239,27 @@ public class MainFrame extends JFrame {
         tabPane.add("Print Settings", new PrintSettingsPanel());
         tabPane.add("Material Settings", new JPanel());
         tabPane.add("Printer Settings", new JPanel());
-        tabPane.add("Visual Slicer", new JPanel());
+        tabPane.add("Visual Slicer", simulationTab);
+        tabPane.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(final ChangeEvent e) {
+                simulationTab.hookListeners(simulationTab == tabPane.getSelectedComponent());
+                System.out.println("Tab: " + tabPane.getSelectedIndex() + " is " + tabPane.getSelectedComponent());
+            }
+        });
         return tabPane;
     }
 
     public void autoRun(final String fileName) {
-        new PlaterFrame().autoRun(fileName);
+        final File rfoFile = new File(fileName);
+        plater.loadRFOFile(rfoFile);
+        final String rfoFileName = rfoFile.getAbsolutePath();
+        slice(rfoFileName.substring(0, rfoFileName.length() - ".rfo".length()), new ProductionProgressListener() {
+            @Override
+            public void productionProgress(final int layer, final int totalLayers) {
+                System.out.println(layer + "/" + totalLayers);
+            }
+        }, true, true);
     }
 
     private JMenuBar createMenu() {

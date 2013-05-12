@@ -1,6 +1,5 @@
 package org.reprap.gui;
 
-import java.awt.Color;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
@@ -26,11 +25,9 @@ public class PrintTabFrame extends JInternalFrame {
     private static final long serialVersionUID = 1L;
     private File loadedFile;
     private boolean gcodeLoaded = false;
-    private boolean slicing = false;
     private JLabel currentLayerOutOfN;
     private JLabel expectedBuildTime;
     private JLabel expectedFinishTime;
-    private AbstractButton sliceButton;
     private JLabel fileNameBox;
     private JButton loadSTL;
     private JButton loadRFO;
@@ -59,16 +56,6 @@ public class PrintTabFrame extends JInternalFrame {
             }
         });
         helpButton.setText("   Help   ");
-
-        sliceButton = new JButton();
-        sliceButton.setBackground(new java.awt.Color(51, 204, 0));
-        sliceButton.setText("Slice");
-        sliceButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(final java.awt.event.ActionEvent evt) {
-                sliceButtonActionPerformed();
-            }
-        });
 
         loadSTL = new JButton();
         loadSTL.setBackground(new java.awt.Color(0, 204, 255));
@@ -194,8 +181,6 @@ public class PrintTabFrame extends JInternalFrame {
                                                 .createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                                                 .add(exitButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 130,
                                                         org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                                .add(sliceButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 130,
-                                                        org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                                 .add(saveRFO, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 130,
                                                         org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                                 .add(saveSCAD, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 130,
@@ -282,12 +267,8 @@ public class PrintTabFrame extends JInternalFrame {
                                                         .add(saveSCAD, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 41,
                                                                 org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                                        .add(layout
-                                                                .createParallelGroup()
-                                                                .add(sliceButton,
-                                                                        org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 39,
-                                                                        org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                                                .add(layout.createSequentialGroup().add(changeMachineLabel)))
+                                                        .add(layout.createParallelGroup().add(
+                                                                layout.createSequentialGroup().add(changeMachineLabel)))
                                                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                                         .add(exitButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 39,
@@ -318,32 +299,8 @@ public class PrintTabFrame extends JInternalFrame {
                                         org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)).addContainerGap(24, Short.MAX_VALUE)));
     }
 
-    private void printLive() {
-        slicing = true;
-        sliceButton.setText("Slicing...");
-        sliceButton.setBackground(Color.gray);
-    }
-
     private static boolean worthSaving() {
         return true;
-    }
-
-    private void sliceButtonActionPerformed() {
-        if (slicing) {
-            return;
-        }
-        if (loadedFile == null) {
-            JOptionPane.showMessageDialog(null, "There are no STLs/RFOs loaded to slice to file.");
-            return;
-        }
-        if (!isStlOrRfoFile(loadedFile)) {
-            JOptionPane.showMessageDialog(null, "The loaded file is not an STL or an RFO file.");
-            return;
-        }
-        if (mainFrame.slice(stripExtension(loadedFile), new ProgressBarUpdater(currentLayerOutOfN, progressBar,
-                expectedBuildTime, expectedFinishTime, System.currentTimeMillis()), false, displayPathsCheck.isSelected())) {
-            printLive();
-        }
     }
 
     private static String stripExtension(final File file) {
@@ -461,11 +418,5 @@ public class PrintTabFrame extends JInternalFrame {
             JOptionPane.showMessageDialog(null, "The loaded file is not an STL or an RFO file.");
         }
         mainFrame.saveSCAD(stripExtension(loadedFile));
-    }
-
-    void slicingFinished() {
-        slicing = false;
-        sliceButton.setText("Slice");
-        sliceButton.setBackground(new java.awt.Color(51, 204, 0));
     }
 }
