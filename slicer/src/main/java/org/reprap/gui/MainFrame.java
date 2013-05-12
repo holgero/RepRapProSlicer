@@ -21,15 +21,10 @@ package org.reprap.gui;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.HeadlessException;
-import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -49,15 +44,9 @@ import org.reprap.geometry.Producer;
 import org.reprap.geometry.ProductionProgressListener;
 
 public class MainFrame extends JFrame {
-    static final String LOAD_RFO_ACTION = "Load RFO";
-    static final String SAVE_RFO_ACTION = "Save RFO";
-    static final String LOAD_STL_CSG_ACTION = "Load STL/CSG";
-    static final String SLICE_ACTION = "Slice";
-    static final String EXIT_ACTION = "Exit";
-
     private final Configuration configuration;
     private final RepRapPlater plater;
-    private final Map<String, Action> actions = new HashMap<String, Action>();
+    private final ActionMap actions;
     private final StatusBar statusBar = new StatusBar();
     private File currentFile;
     private final SimulationPanel simulationTab;
@@ -67,8 +56,8 @@ public class MainFrame extends JFrame {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         configuration = Configuration.create();
         plater = new RepRapPlater(configuration.getCurrentConfiguration());
+        actions = new ActionMap(this, plater);
         simulationTab = new SimulationPanel(configuration.getCurrentConfiguration());
-        createActions();
     }
 
     public void createGui() {
@@ -89,59 +78,21 @@ public class MainFrame extends JFrame {
         });
     }
 
-    private void setCurrentFile(final File file) {
+    void setCurrentFile(final File file) {
         currentFile = file;
         final String text;
-        if (file != null) {
-            text = file.getName();
+        if (isCurrentFileValid()) {
+            text = currentFile.getName();
         } else {
             text = "";
         }
         statusBar.setMessage("Current file: " + text);
+        actions.get(ActionMap.SAVE_RFO_ACTION).setEnabled(isCurrentFileValid());
+        actions.get(ActionMap.SLICE_ACTION).setEnabled(isCurrentFileValid());
     }
 
-    private void createActions() {
-        actions.put(LOAD_RFO_ACTION, new AbstractAction(LOAD_RFO_ACTION) {
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                final File file = load("RFO multiple-object file", new String[] { "rfo" }, "");
-                setCurrentFile(file);
-            }
-        });
-        actions.put(SAVE_RFO_ACTION, new AbstractAction(SAVE_RFO_ACTION) {
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                if (currentFile == null) {
-                    JOptionPane.showMessageDialog(null, "There's nothing to save...");
-                    return;
-                }
-                saveRFO(stripExtension(currentFile));
-            }
-        });
-        actions.put(LOAD_STL_CSG_ACTION, new AbstractAction(LOAD_STL_CSG_ACTION) {
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                final File file = load("STL triangulation file", new String[] { "stl" }, "");
-                setCurrentFile(file);
-            }
-        });
-        actions.put(SLICE_ACTION, new AbstractAction(SLICE_ACTION) {
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                if (currentFile == null) {
-                    JOptionPane.showMessageDialog(null, "There are no STLs/RFOs loaded to slice.");
-                    return;
-                }
-                slice(stripExtension(currentFile),
-                        new StatusBarUpdater(statusBar, currentFile, simulationTab.getSimulationPlotter()), false);
-            }
-        });
-        actions.put(EXIT_ACTION, new AbstractAction(EXIT_ACTION) {
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                dispose();
-            }
-        });
+    private boolean isCurrentFileValid() {
+        return (currentFile != null) && currentFile.exists();
     }
 
     private static String stripExtension(final File file) {
@@ -149,7 +100,7 @@ public class MainFrame extends JFrame {
         return path.substring(0, path.length() - ".rfo".length());
     }
 
-    private File load(final String description, final String[] extensions, final String defaultName) {
+    File load(final String description, final String[] extensions, final String defaultName) {
         final FileFilter filter = new FileNameExtensionFilter(description, extensions);
         final JFileChooser chooser = new JFileChooser();
         chooser.setFileFilter(filter);
@@ -170,17 +121,6 @@ public class MainFrame extends JFrame {
             return result;
         }
         return null;
-    }
-
-    void saveRFO(final String fileRoot) {
-        final File defaultFile = new File(fileRoot + ".rfo");
-        final JFileChooser rfoChooser = new JFileChooser();
-        rfoChooser.setSelectedFile(defaultFile);
-        rfoChooser.setFileFilter(new FileNameExtensionFilter("RFO files", "rfo"));
-        rfoChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        if (rfoChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-            plater.saveRFOFile(rfoChooser.getSelectedFile());
-        }
     }
 
     private static File gcodeFileDialog(final File defaultFile) {
@@ -210,7 +150,7 @@ public class MainFrame extends JFrame {
             }
 
         }
-        actions.get(SLICE_ACTION).setEnabled(false);
+        actions.get(ActionMap.SLICE_ACTION).setEnabled(false);
         new Thread() {
             @Override
             public void run() {
@@ -229,7 +169,7 @@ public class MainFrame extends JFrame {
                     throw e;
                 } finally {
                     statusBar.setMessage("Sliced: " + currentFile.getName() + " to " + gcodeFile.getName());
-                    actions.get(SLICE_ACTION).setEnabled(true);
+                    actions.get(ActionMap.SLICE_ACTION).setEnabled(true);
                 }
             }
         }.start();
@@ -267,17 +207,47 @@ public class MainFrame extends JFrame {
     private JMenuBar createMenu() {
         final JMenuBar menubar = new JMenuBar();
         menubar.add(createFileMenu());
-        menubar.add(new JMenuItem(actions.get(SLICE_ACTION)));
+        menubar.add(createPlateMenu());
+        menubar.add(new JMenuItem(actions.get(ActionMap.SLICE_ACTION)));
         return menubar;
     }
 
     private JMenu createFileMenu() {
-        final JMenu fileMenu = new JMenu("File");
-        fileMenu.add(new JMenuItem(actions.get(LOAD_RFO_ACTION)));
-        fileMenu.add(new JMenuItem(actions.get(SAVE_RFO_ACTION)));
-        fileMenu.add(new JMenuItem(actions.get(LOAD_STL_CSG_ACTION)));
-        fileMenu.addSeparator();
-        fileMenu.add(new JMenuItem(actions.get(EXIT_ACTION)));
-        return fileMenu;
+        final JMenu menu = new JMenu("File");
+        menu.add(new JMenuItem(actions.get(ActionMap.LOAD_RFO_ACTION)));
+        menu.add(new JMenuItem(actions.get(ActionMap.SAVE_RFO_ACTION)));
+        menu.add(new JMenuItem(actions.get(ActionMap.LOAD_STL_CSG_ACTION)));
+        menu.addSeparator();
+        menu.add(new JMenuItem(actions.get(ActionMap.EXIT_ACTION)));
+        return menu;
+    }
+
+    private JMenu createPlateMenu() {
+        final JMenu menu = new JMenu("Plater");
+        menu.add(new JMenuItem(actions.get(ActionMap.ROTATE_X_90)));
+        menu.add(new JMenuItem(actions.get(ActionMap.ROTATE_Y_90)));
+        menu.add(new JMenuItem(actions.get(ActionMap.ROTATE_Z_45)));
+        menu.add(new JMenuItem(actions.get(ActionMap.ROTATE_Z_P_25)));
+        menu.add(new JMenuItem(actions.get(ActionMap.ROTATE_Z_M_25)));
+        menu.add(new JMenuItem(actions.get(ActionMap.CHANGE_MATERIAL)));
+        menu.add(new JMenuItem(actions.get(ActionMap.SELECT_NEXT)));
+        menu.add(new JMenuItem(actions.get(ActionMap.DELETE_OBJECT)));
+        return menu;
+    }
+
+    void saveRFO() {
+        final File defaultFile = new File(stripExtension(currentFile) + ".rfo");
+        final JFileChooser rfoChooser = new JFileChooser();
+        rfoChooser.setSelectedFile(defaultFile);
+        rfoChooser.setFileFilter(new FileNameExtensionFilter("RFO files", "rfo"));
+        rfoChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        if (rfoChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+            plater.saveRFOFile(rfoChooser.getSelectedFile());
+        }
+    }
+
+    void slice() {
+        slice(stripExtension(currentFile), new StatusBarUpdater(statusBar, currentFile, simulationTab.getSimulationPlotter()),
+                false);
     }
 }

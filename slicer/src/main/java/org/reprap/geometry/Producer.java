@@ -97,6 +97,7 @@ public class Producer {
                 startNearHere = collectPolygonsForObject(stl, startNearHere, allPolygons);
             }
         }
+        progressListener.productionProgress(layerRules.getMachineLayer(), layerRules.getMachineLayerMax());
         layerRules.setFirstAndLast(allPolygons);
         final LayerProducer lp = new LayerProducer(layerRules, simulationPlot, currentConfiguration);
         for (final PolygonList pl : allPolygons) {

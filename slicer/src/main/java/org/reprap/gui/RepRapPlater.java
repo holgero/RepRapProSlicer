@@ -147,7 +147,7 @@ import com.sun.j3d.utils.picking.PickTool;
  * you to put STL-file objects in it, move them about to arrange them, and build
  * them in the machine.
  */
-public class RepRapPlater extends JPanel implements MouseListener {
+class RepRapPlater extends JPanel implements MouseListener {
     private static final double RADIUS_FACTOR = 0.7;
     private static final double BACK_CLIP_FACTOR = 2.0;
     private static final double FRONT_FACTOR = 0.001;
@@ -172,7 +172,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
     private STLObject workingVolume;
     private BranchGroup sceneBranchGroup;
 
-    public RepRapPlater(final CurrentConfiguration currentConfiguration) {
+    RepRapPlater(final CurrentConfiguration currentConfiguration) {
         this.currentConfiguration = currentConfiguration;
         initialise();
         rfo = new RFO(currentConfiguration);
@@ -180,7 +180,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
         setPreferredSize(new Dimension(600, 400));
     }
 
-    public void dispose() {
+    void dispose() {
         virtualUniverse.removeAllLocales();
         try {
             // give the Java3D threads the chance to terminate peacefully.
@@ -301,13 +301,13 @@ public class RepRapPlater extends JPanel implements MouseListener {
             if (picked != null) {
                 if (picked != workingVolume) {
                     picked.setAppearance(pickedAppearance); // Highlight it
-                    if (lastPicked != null && !reordering) {
-                        lastPicked.restoreAppearance(); // lowlight
+                    if (getLastPicked() != null && !reordering) {
+                        getLastPicked().restoreAppearance(); // lowlight
                     }
                     if (!reordering) {
                         mouse.move(picked, true); // Set the mouse to move it
                     }
-                    lastPicked = picked;
+                    setLastPicked(picked);
                     reorder();
                 } else {
                     if (!reordering) {
@@ -318,12 +318,12 @@ public class RepRapPlater extends JPanel implements MouseListener {
         }
     }
 
-    public void mouseToWorld() {
-        if (lastPicked != null) {
-            lastPicked.restoreAppearance();
+    void mouseToWorld() {
+        if (getLastPicked() != null) {
+            getLastPicked().restoreAppearance();
         }
         mouse.move(world, false);
-        lastPicked = null;
+        setNothingPicked();
     }
 
     @Override
@@ -362,7 +362,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
         }
     }
 
-    public void anotherSTLFile(final File file) {
+    void anotherSTLFile(final File file) {
         if (file == null) {
             return;
         }
@@ -370,7 +370,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
         final STLFileContents stlFileContents = StlFileLoader.loadSTLFileContents(file);
         final STLObject stl;
         final String defaultMaterial = currentConfiguration.getMaterials().get(0).getName();
-        if (lastPicked == null) {
+        if (getLastPicked() == null) {
             stl = STLObject.createStlObjectFromFile(stlFileContents, defaultMaterial, currentConfiguration);
             final Point2D middle = Point2D.mul(0.5, new Point2D(200, 200));
             final Vector3d v = new Vector3d(middle.x(), middle.y(), 0);
@@ -383,35 +383,22 @@ public class RepRapPlater extends JPanel implements MouseListener {
             workingVolumeAndStls.addChild(stl.top());
             getSTLs().add(stl);
         } else {
-            stl = lastPicked;
+            stl = getLastPicked();
             stl.addSTL(stlFileContents, defaultMaterial, currentConfiguration);
         }
 
         showMaterialChooserDialog(stl.attributes(stl.size() - 1), stl);
     }
 
-    // Callback for when the user has a pre-loaded STL and attribute
-    public void anotherSTL(final STLObject stl, final Attributes att, final int index) {
-        if (stl == null || att == null) {
+    void changeMaterial() {
+        if (getLastPicked() == null) {
             return;
         }
-
-        // New separate object, or just appended to lastPicked?
-        if (stl.numChildren() > 0) {
-            workingVolumeAndStls.addChild(stl.top());
-            getSTLs().add(index, stl);
-        }
-    }
-
-    public void changeMaterial() {
-        if (lastPicked == null) {
-            return;
-        }
-        showMaterialChooserDialog(lastPicked.attributes(0), lastPicked);
+        showMaterialChooserDialog(getLastPicked().attributes(0), getLastPicked());
     }
 
     // Callback for when the user selects an RFO file to load
-    public void loadRFOFile(final File file) {
+    void loadRFOFile(final File file) {
         if (file == null) {
             return;
         }
@@ -426,29 +413,12 @@ public class RepRapPlater extends JPanel implements MouseListener {
         }
     }
 
-    public void saveRFOFile(final File file) {
+    void saveRFOFile(final File file) {
         if (!checkFile(file)) {
             return;
         }
         try {
             rfo.save(file);
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void saveSCADFile(final File file) {
-        if (!checkFile(file)) {
-            return;
-        }
-        final File directory = file.getParentFile();
-        if (!directory.exists()) {
-            directory.mkdir();
-        }
-        try {
-            final AllSTLsToBuild allSTLs = getSTLs();
-            RFO.copySTLs(allSTLs, directory);
-            allSTLs.saveSCAD(file);
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
@@ -465,81 +435,66 @@ public class RepRapPlater extends JPanel implements MouseListener {
         canvas3d.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
     }
 
-    public void xRotate() {
-        if (lastPicked != null) {
-            lastPicked.xClick();
+    void xRotate() {
+        if (getLastPicked() != null) {
+            getLastPicked().xClick();
         }
     }
 
-    public void yRotate() {
-        if (lastPicked != null) {
-            lastPicked.yClick();
+    void yRotate() {
+        if (getLastPicked() != null) {
+            getLastPicked().yClick();
         }
     }
 
-    public void zRotate(final double angle) {
-        if (lastPicked != null) {
-            lastPicked.zClick(angle);
+    void zRotate(final double angle) {
+        if (getLastPicked() != null) {
+            getLastPicked().zClick(angle);
         }
-    }
-
-    public void inToMM() {
-        if (lastPicked != null) {
-            lastPicked.inToMM();
-        }
-    }
-
-    public void doReorder() {
-        if (lastPicked != null) {
-            lastPicked.restoreAppearance();
-            mouseToWorld();
-            lastPicked = null;
-        }
-        reordering = true;
     }
 
     private void reorder() {
         if (!reordering) {
             return;
         }
-        if (getSTLs().reorderAdd(lastPicked)) {
+        if (getSTLs().reorderAdd(getLastPicked())) {
             return;
         }
         for (int i = 0; i < getSTLs().size(); i++) {
             getSTLs().get(i).restoreAppearance();
         }
-        lastPicked = null;
+        setNothingPicked();
         reordering = false;
     }
 
-    public void nextPicked() {
-        if (lastPicked == null) {
-            lastPicked = getSTLs().get(0);
+    void nextPicked() {
+        if (getLastPicked() == null) {
+            setLastPicked(getSTLs().get(0));
         } else {
-            lastPicked.restoreAppearance();
-            lastPicked = getSTLs().getNextOne(lastPicked);
+            getLastPicked().restoreAppearance();
+            setLastPicked(getSTLs().getNextOne(getLastPicked()));
         }
-        lastPicked.setAppearance(pickedAppearance);
-        mouse.move(lastPicked, true);
+        getLastPicked().setAppearance(pickedAppearance);
+        mouse.move(getLastPicked(), true);
     }
 
-    public void deleteSTL() {
-        if (lastPicked == null) {
+    void deleteSTL() {
+        if (getLastPicked() == null) {
             return;
         }
         int index = -1;
         for (int i = 0; i < getSTLs().size(); i++) {
-            if (getSTLs().get(i) == lastPicked) {
+            if (getSTLs().get(i) == getLastPicked()) {
                 index = i;
                 break;
             }
         }
         if (index >= 0) {
             getSTLs().remove(index);
-            index = workingVolumeAndStls.indexOfChild(lastPicked.top());
+            index = workingVolumeAndStls.indexOfChild(getLastPicked().top());
             mouseToWorld();
             workingVolumeAndStls.removeChild(index);
-            lastPicked = null;
+            setNothingPicked();
         }
     }
 
@@ -630,7 +585,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
     /**
      * Warn the user of an overwrite
      */
-    public static boolean checkFile(final File file) {
+    private static boolean checkFile(final File file) {
         if (file.exists()) {
             final String[] options = { "OK", "Cancel" };
             return JOptionPane.showOptionDialog(null, "The file " + file.getName() + " exists.  Overwrite it?", "Warning",
@@ -639,7 +594,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
         return true;
     }
 
-    public AllSTLsToBuild getSTLs() {
+    AllSTLsToBuild getSTLs() {
         return rfo.getAllStls();
     }
 
@@ -648,5 +603,17 @@ public class RepRapPlater extends JPanel implements MouseListener {
         dialog.pack();
         dialog.setModalityType(Dialog.DEFAULT_MODALITY_TYPE);
         dialog.setVisible(true);
+    }
+
+    private STLObject getLastPicked() {
+        return lastPicked;
+    }
+
+    private void setNothingPicked() {
+        lastPicked = null;
+    }
+
+    private void setLastPicked(final STLObject lastPicked) {
+        this.lastPicked = lastPicked;
     }
 }
