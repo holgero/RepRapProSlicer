@@ -35,6 +35,7 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.WindowConstants;
@@ -54,6 +55,7 @@ public class MainFrame extends JFrame {
     private final RepRapPlater plater;
     private final Map<String, Action> actions = new HashMap<String, Action>();
     private final StatusBar statusBar = new StatusBar();
+    private File currentFile;
 
     public MainFrame() throws HeadlessException {
         super("RepRap Slicer");
@@ -82,9 +84,10 @@ public class MainFrame extends JFrame {
     }
 
     private void setCurrentFile(final File file) {
+        currentFile = file;
         final String text;
         if (file != null) {
-            text = file.getParent();
+            text = file.getName();
         } else {
             text = "";
         }
@@ -102,8 +105,24 @@ public class MainFrame extends JFrame {
         actions.put(SAVE_RFO_ACTION, new AbstractAction(SAVE_RFO_ACTION) {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                // TODO Auto-generated method stub
-                System.out.println(SAVE_RFO_ACTION);
+                if (currentFile == null) {
+                    JOptionPane.showMessageDialog(null, "There's nothing to save...");
+                    return;
+                }
+                if (!isStlOrRfoFile(currentFile)) {
+                    JOptionPane.showMessageDialog(null, "The loaded file is not an STL or an RFO file.");
+                }
+                saveRFO(stripExtension(currentFile));
+            }
+
+            private boolean isStlOrRfoFile(final File file) {
+                final String lowerName = file.getName().toLowerCase();
+                return lowerName.endsWith(".stl") || lowerName.endsWith(".rfo");
+            }
+
+            private String stripExtension(final File file) {
+                final String path = file.getAbsolutePath();
+                return path.substring(0, path.length() - ".rfo".length());
             }
         });
         actions.put(LOAD_STL_CSG_ACTION, new AbstractAction(LOAD_STL_CSG_ACTION) {
@@ -149,6 +168,17 @@ public class MainFrame extends JFrame {
             return result;
         }
         return null;
+    }
+
+    void saveRFO(final String fileRoot) {
+        final File defaultFile = new File(fileRoot + ".rfo");
+        final JFileChooser rfoChooser = new JFileChooser();
+        rfoChooser.setSelectedFile(defaultFile);
+        rfoChooser.setFileFilter(new FileNameExtensionFilter("RFO files", "rfo"));
+        rfoChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        if (rfoChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+            plater.saveRFOFile(rfoChooser.getSelectedFile());
+        }
     }
 
     private JTabbedPane createTabPane() {
