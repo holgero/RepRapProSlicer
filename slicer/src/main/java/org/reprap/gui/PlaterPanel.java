@@ -24,6 +24,7 @@ import java.awt.Insets;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EtchedBorder;
 
 import org.reprap.configuration.Configuration;
@@ -132,6 +133,7 @@ public class PlaterPanel extends JPanel {
         exitButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                SwingUtilities.getWindowAncestor(PlaterPanel.this).dispose();
             }
         });
         buttonsBox.add(exitButton, constraints);
