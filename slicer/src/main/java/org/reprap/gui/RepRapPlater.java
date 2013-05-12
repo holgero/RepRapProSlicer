@@ -87,6 +87,7 @@ package org.reprap.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Cursor;
+import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.GraphicsConfigTemplate;
 import java.awt.GraphicsDevice;
@@ -118,6 +119,7 @@ import javax.media.j3d.TransformGroup;
 import javax.media.j3d.View;
 import javax.media.j3d.ViewPlatform;
 import javax.media.j3d.VirtualUniverse;
+import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.vecmath.Color3f;
@@ -388,8 +390,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
             stl.addSTL(stlFileContents, defaultMaterial, currentConfiguration);
         }
 
-        MaterialRadioButtons.createAndShowGUI(stl.attributes(stl.size() - 1), this, getSTLs().size() - 1, stl.volume(),
-                currentConfiguration);
+        showMaterialChooserDialog(stl.attributes(stl.size() - 1), getSTLs().size() - 1);
     }
 
     // Callback for when the user has a pre-loaded STL and attribute
@@ -409,7 +410,16 @@ public class RepRapPlater extends JPanel implements MouseListener {
         if (lastPicked == null) {
             return;
         }
-        MaterialRadioButtons.createAndShowGUI(lastPicked.attributes(0), this, lastPicked, currentConfiguration);
+        int index = -1;
+        for (int i = 0; i < getSTLs().size(); i++) {
+            if (getSTLs().get(i) == lastPicked) {
+                index = i;
+                break;
+            }
+        }
+        if (index >= 0) {
+            showMaterialChooserDialog(lastPicked.attributes(0), index);
+        }
     }
 
     // Callback for when the user selects an RFO file to load
@@ -645,4 +655,11 @@ public class RepRapPlater extends JPanel implements MouseListener {
         return rfo.getAllStls();
     }
 
+    private void showMaterialChooserDialog(final Attributes attributes, final int index) {
+        final STLObject stl = getSTLs().get(index);
+        final JDialog dialog = new MaterialChooserDialog(attributes, currentConfiguration, stl.volume(), this, index);
+        dialog.pack();
+        dialog.setModalityType(Dialog.DEFAULT_MODALITY_TYPE);
+        dialog.setVisible(true);
+    }
 }

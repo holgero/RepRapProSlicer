@@ -1,6 +1,7 @@
 /* RepRapProSlicer creates G-Code from geometry files.
  *
  *  Copyright (C) 2013  Holger Oehm
+ *  contains code from MaterialRadioButtons, (C) by Adrian Boyer
  * 
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,11 +20,14 @@
 package org.reprap.gui;
 
 import java.awt.BorderLayout;
-import java.awt.GridLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -31,9 +35,12 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.WindowConstants;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.MaterialSetting;
@@ -41,72 +48,73 @@ import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.geometry.polyhedra.STLObject;
 
 public class MaterialChooserDialog extends JDialog {
-    private final JTextField copies;
-    private final Attributes att;
+    private final JSpinner copies;
 
-    public MaterialChooserDialog(final Attributes a, final CurrentConfiguration currentConfiguration, final double volume) {
+    public MaterialChooserDialog(final Attributes attributes, final CurrentConfiguration currentConfiguration,
+            final double volume, final RepRapPlater rrb, final int index) {
         super((JFrame) null, "Material selector");
-        att = a;
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-        final JPanel radioPanel = new JPanel(new GridLayout(0, 1));
-        radioPanel.setSize(300, 200);
+        final JPanel formularPanel = new JPanel(new GridBagLayout());
+        formularPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.insets = new Insets(2, 2, 2, 2);
+        constraints.gridx = 0;
+        constraints.gridy = 0;
 
-        final JLabel jLabel0 = new JLabel();
-        jLabel0.setText("Volume of object: " + Math.round(volume) + " mm^3");
-        jLabel0.setHorizontalAlignment(SwingConstants.CENTER);
-        radioPanel.add(jLabel0);
+        formularPanel.add(new JLabel("Volume of object: "), constraints);
+        constraints.gridx++;
 
-        final JLabel jLabel2 = new JLabel();
-        jLabel2.setText(" Number of copies of the object just loaded to print: ");
-        jLabel2.setHorizontalAlignment(SwingConstants.CENTER);
-        radioPanel.add(jLabel2);
+        formularPanel.add(new JLabel(Math.round(volume) + " mm^3"), constraints);
+        constraints.gridx = 0;
+        constraints.gridy++;
 
-        copies = new JTextField("1");
-        copies.setSize(20, 10);
-        copies.setHorizontalAlignment(SwingConstants.CENTER);
-        radioPanel.add(copies);
+        formularPanel.add(new JLabel("Copies: "), constraints);
+        constraints.gridx++;
 
-        final JLabel jLabel1 = new JLabel();
-        jLabel1.setText(" Select the material for the object(s): ");
-        jLabel1.setHorizontalAlignment(SwingConstants.CENTER);
-        radioPanel.add(jLabel1);
-
-        final List<MaterialSetting> materials = currentConfiguration.getMaterials();
-        final String matname = att.getMaterial();
-
-        final ButtonGroup bGroup = new ButtonGroup();
-        for (final MaterialSetting material : materials) {
-            final JRadioButton b = new JRadioButton(material.getName());
-            b.setActionCommand(material.getName());
-            b.addActionListener(new ActionListener() {
+        copies = new JSpinner(new SpinnerNumberModel(1, 1, 99, 1));
+        formularPanel.add(copies, constraints);
+        constraints.gridx = 0;
+        constraints.gridy++;
+        constraints.gridwidth = 2;
+        final Box buttonBox = new Box(BoxLayout.Y_AXIS);
+        buttonBox.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Material"));
+        final ButtonGroup group = new ButtonGroup();
+        for (final MaterialSetting material : currentConfiguration.getMaterials()) {
+            final JRadioButton button = new JRadioButton(material.getName());
+            button.setActionCommand(material.getName());
+            button.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(final ActionEvent e) {
                     final String materialName = e.getActionCommand();
-                    att.setMaterial(materialName);
-                    att.setAppearance(STLObject.createAppearance(material));
+                    attributes.setMaterial(materialName);
+                    attributes.setAppearance(STLObject.createAppearance(material));
                 }
             });
-            if (matname.contentEquals(material.getName())) {
-                b.setSelected(true);
+            if (attributes.getMaterial().equals(material.getName())) {
+                button.setSelected(true);
             }
-            bGroup.add(b);
-            radioPanel.add(b);
+            group.add(button);
+            buttonBox.add(button, constraints);
         }
+        formularPanel.add(buttonBox, constraints);
+        constraints.gridy++;
+        constraints.gridwidth = 1;
+
+        add(formularPanel, BorderLayout.CENTER);
 
         final JButton okButton = new JButton();
-        radioPanel.add(okButton);
         okButton.setText("OK");
         okButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent evt) {
-                //                final int number = Integer.parseInt(copies.getText().trim()) - 1;
-                //                final STLObject stl = rrb.getSTLs().get(stlIndex);
-                //                rrb.moreCopies(stl, att, number);
-                //                dialog.dispose();
+                final int number = ((Integer) copies.getValue()).intValue() - 1;
+                final STLObject stl = rrb.getSTLs().get(index);
+                rrb.moreCopies(stl, attributes, number);
+                dispose();
             }
         });
-
-        add(radioPanel, BorderLayout.LINE_START);
+        add(okButton, BorderLayout.SOUTH);
     }
 }
