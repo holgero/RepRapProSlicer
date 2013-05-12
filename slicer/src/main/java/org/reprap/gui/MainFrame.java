@@ -18,6 +18,8 @@
  */
 package org.reprap.gui;
 
+import java.awt.BorderLayout;
+import java.awt.Container;
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
@@ -51,6 +53,7 @@ public class MainFrame extends JFrame {
     private final Configuration configuration;
     private final RepRapPlater plater;
     private final Map<String, Action> actions = new HashMap<String, Action>();
+    private final StatusBar statusBar = new StatusBar();
 
     public MainFrame() throws HeadlessException {
         super("RepRap Slicer");
@@ -62,7 +65,10 @@ public class MainFrame extends JFrame {
 
     public void createGui() {
         setJMenuBar(createMenu());
-        getContentPane().add(createTabPane());
+        final Container contentPane = getContentPane();
+        contentPane.add(createTabPane());
+        contentPane.add(statusBar, BorderLayout.SOUTH);
+        setCurrentFile(null);
         pack();
         setVisible(true);
         setFocusable(true);
@@ -75,11 +81,22 @@ public class MainFrame extends JFrame {
         });
     }
 
+    private void setCurrentFile(final File file) {
+        final String text;
+        if (file != null) {
+            text = file.getParent();
+        } else {
+            text = "";
+        }
+        statusBar.setMessage("Current file: " + text);
+    }
+
     private void createActions() {
         actions.put(LOAD_RFO_ACTION, new AbstractAction(LOAD_RFO_ACTION) {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                load("RFO multiple-object file", new String[] { "rfo" }, "");
+                final File file = load("RFO multiple-object file", new String[] { "rfo" }, "");
+                setCurrentFile(file);
             }
         });
         actions.put(SAVE_RFO_ACTION, new AbstractAction(SAVE_RFO_ACTION) {
@@ -92,7 +109,8 @@ public class MainFrame extends JFrame {
         actions.put(LOAD_STL_CSG_ACTION, new AbstractAction(LOAD_STL_CSG_ACTION) {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                load("STL triangulation file", new String[] { "stl" }, "");
+                final File file = load("STL triangulation file", new String[] { "stl" }, "");
+                setCurrentFile(file);
             }
         });
         actions.put(SLICE_ACTION, new AbstractAction(SLICE_ACTION) {
