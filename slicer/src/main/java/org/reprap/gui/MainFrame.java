@@ -246,8 +246,8 @@ public class MainFrame extends JFrame {
 
     private JMenuBar createMenu() {
         final JMenuBar menubar = new JMenuBar();
-        final JMenu fileMenu = createFileMenu();
-        menubar.add(fileMenu);
+        menubar.add(createFileMenu());
+        menubar.add(new JMenuItem(actions.get(SLICE_ACTION)));
         return menubar;
     }
 
