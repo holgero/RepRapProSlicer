@@ -31,7 +31,6 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
@@ -147,16 +146,14 @@ public class MainFrame extends JFrame {
         } else {
             gcodeFile = gcodeFileDialog(defaultFile);
             if (gcodeFile == null) {
+                actions.get(ActionMap.SLICE_ACTION).setEnabled(true);
                 return;
             }
-
         }
-        actions.get(ActionMap.SLICE_ACTION).setEnabled(false);
         new Thread() {
             @Override
             public void run() {
                 Thread.currentThread().setName("Producer");
-                plater.mouseToWorld();
                 final Producer producer = new Producer(gcodeFile, plater.getSTLs(), listener,
                         simulationTab.getSimulationPlotter(), configuration.getCurrentConfiguration());
                 try {
@@ -179,9 +176,9 @@ public class MainFrame extends JFrame {
     private JTabbedPane createTabPane() {
         final JTabbedPane tabPane = new JTabbedPane();
         tabPane.addTab("Plater", null, new PlaterPanel(configuration, plater, actions), "Place things on the build platform.");
-        tabPane.addTab("Print Settings", new PrintSettingsPanel());
-        tabPane.addTab("Material Settings", new JPanel());
-        tabPane.addTab("Printer Settings", new JPanel());
+        //        tabPane.addTab("Print Settings", new PrintSettingsPanel());
+        //        tabPane.addTab("Material Settings", new JPanel());
+        //        tabPane.addTab("Printer Settings", new JPanel());
         tabPane.addTab("Visual Slicer", null, simulationTab, "Shows the current slice. " + "<space> to pause, "
                 + "<b> to show boxes around polygons, " + "left click to magnify, "
                 + "right click to restore default magnification.");
@@ -250,6 +247,8 @@ public class MainFrame extends JFrame {
     }
 
     void slice() {
+        actions.get(ActionMap.SLICE_ACTION).setEnabled(false);
+        plater.mouseToWorld();
         slice(stripExtension(currentFile), new StatusBarUpdater(statusBar, currentFile, simulationTab.getSimulationPlotter()),
                 false);
     }
