@@ -48,13 +48,38 @@ import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.geometry.polyhedra.STLObject;
 
 public class MaterialChooserDialog extends JDialog {
-    private final JSpinner copies;
+    private final JSpinner copies = new JSpinner(new SpinnerNumberModel(1, 1, 99, 1));
+    private final Attributes attributes;
+    private final CurrentConfiguration currentConfiguration;
+    private final STLObject stl;
 
     public MaterialChooserDialog(final Attributes attributes, final CurrentConfiguration currentConfiguration,
-            final double volume, final RepRapPlater rrb, final int index) {
+            final RepRapPlater plater, final STLObject stl) {
         super((JFrame) null, "Material selector");
+        this.attributes = attributes;
+        this.currentConfiguration = currentConfiguration;
+        this.stl = stl;
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
+        add(createFormularPanel(), BorderLayout.CENTER);
+        add(createOkButton(plater), BorderLayout.SOUTH);
+    }
+
+    private JButton createOkButton(final RepRapPlater plater) {
+        final JButton okButton = new JButton();
+        okButton.setText("OK");
+        okButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent evt) {
+                final int count = ((Integer) copies.getValue()).intValue() - 1;
+                plater.moreCopies(stl, attributes, count);
+                dispose();
+            }
+        });
+        return okButton;
+    }
+
+    private JPanel createFormularPanel() {
         final JPanel formularPanel = new JPanel(new GridBagLayout());
         formularPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
         final GridBagConstraints constraints = new GridBagConstraints();
@@ -66,18 +91,25 @@ public class MaterialChooserDialog extends JDialog {
         formularPanel.add(new JLabel("Volume of object: "), constraints);
         constraints.gridx++;
 
-        formularPanel.add(new JLabel(Math.round(volume) + " mm^3"), constraints);
+        formularPanel.add(new JLabel(Math.round(stl.volume()) + " mm^3"), constraints);
         constraints.gridx = 0;
         constraints.gridy++;
 
         formularPanel.add(new JLabel("Copies: "), constraints);
         constraints.gridx++;
 
-        copies = new JSpinner(new SpinnerNumberModel(1, 1, 99, 1));
         formularPanel.add(copies, constraints);
         constraints.gridx = 0;
         constraints.gridy++;
         constraints.gridwidth = 2;
+        final Box buttonBox = createMaterialsButtonBox();
+        formularPanel.add(buttonBox, constraints);
+        constraints.gridy++;
+        constraints.gridwidth = 1;
+        return formularPanel;
+    }
+
+    private Box createMaterialsButtonBox() {
         final Box buttonBox = new Box(BoxLayout.Y_AXIS);
         buttonBox.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Material"));
         final ButtonGroup group = new ButtonGroup();
@@ -96,25 +128,8 @@ public class MaterialChooserDialog extends JDialog {
                 button.setSelected(true);
             }
             group.add(button);
-            buttonBox.add(button, constraints);
+            buttonBox.add(button);
         }
-        formularPanel.add(buttonBox, constraints);
-        constraints.gridy++;
-        constraints.gridwidth = 1;
-
-        add(formularPanel, BorderLayout.CENTER);
-
-        final JButton okButton = new JButton();
-        okButton.setText("OK");
-        okButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(final ActionEvent evt) {
-                final int number = ((Integer) copies.getValue()).intValue() - 1;
-                final STLObject stl = rrb.getSTLs().get(index);
-                rrb.moreCopies(stl, attributes, number);
-                dispose();
-            }
-        });
-        add(okButton, BorderLayout.SOUTH);
+        return buttonBox;
     }
 }

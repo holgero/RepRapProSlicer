@@ -346,13 +346,10 @@ public class RepRapPlater extends JPanel implements MouseListener {
         if (number <= 0) {
             return;
         }
-        final File file = original.getSourceFile(0);
         final double increment = original.extent().x + 5;
-        final Vector3d offset = new Vector3d();
-        offset.x = increment;
-        offset.y = 0;
-        offset.z = 0;
+        final Vector3d offset = new Vector3d(increment, 0, 0);
         for (int i = 0; i < number; i++) {
+            final File file = original.getSourceFile(0);
             final STLFileContents stlFileContents = StlFileLoader.loadSTLFileContents(file);
             final STLObject stl = STLObject.createStlObjectFromFile(stlFileContents, originalAttributes.getMaterial(),
                     currentConfiguration);
@@ -390,7 +387,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
             stl.addSTL(stlFileContents, defaultMaterial, currentConfiguration);
         }
 
-        showMaterialChooserDialog(stl.attributes(stl.size() - 1), getSTLs().size() - 1);
+        showMaterialChooserDialog(stl.attributes(stl.size() - 1), stl);
     }
 
     // Callback for when the user has a pre-loaded STL and attribute
@@ -410,16 +407,7 @@ public class RepRapPlater extends JPanel implements MouseListener {
         if (lastPicked == null) {
             return;
         }
-        int index = -1;
-        for (int i = 0; i < getSTLs().size(); i++) {
-            if (getSTLs().get(i) == lastPicked) {
-                index = i;
-                break;
-            }
-        }
-        if (index >= 0) {
-            showMaterialChooserDialog(lastPicked.attributes(0), index);
-        }
+        showMaterialChooserDialog(lastPicked.attributes(0), lastPicked);
     }
 
     // Callback for when the user selects an RFO file to load
@@ -655,9 +643,8 @@ public class RepRapPlater extends JPanel implements MouseListener {
         return rfo.getAllStls();
     }
 
-    private void showMaterialChooserDialog(final Attributes attributes, final int index) {
-        final STLObject stl = getSTLs().get(index);
-        final JDialog dialog = new MaterialChooserDialog(attributes, currentConfiguration, stl.volume(), this, index);
+    private void showMaterialChooserDialog(final Attributes attributes, final STLObject stl) {
+        final JDialog dialog = new MaterialChooserDialog(attributes, currentConfiguration, this, stl);
         dialog.pack();
         dialog.setModalityType(Dialog.DEFAULT_MODALITY_TYPE);
         dialog.setVisible(true);
