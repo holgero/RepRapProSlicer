@@ -20,69 +20,77 @@ package org.reprap.gui.configuration;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 
-import javax.swing.BoxLayout;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JTree;
 import javax.swing.border.BevelBorder;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.MutableTreeNode;
-import javax.swing.tree.TreeModel;
-import javax.swing.tree.TreeSelectionModel;
 
-public class SettingsPanel extends JPanel {
+public class SettingsPanel extends JPanel implements TreeSelectionListener {
+    private final TopicSelectionTree tree = new TopicSelectionTree();
+    private final JPanel formPanel = createSettingFormPane();
 
     public SettingsPanel() {
         setLayout(new BorderLayout());
-        add(createSettingTopicsTree(), BorderLayout.WEST);
-        add(createSettingFormPane(), BorderLayout.CENTER);
+        add(createSettingTopicsTree(tree), BorderLayout.WEST);
+        add(formPanel, BorderLayout.CENTER);
     }
 
-    private Component createSettingFormPane() {
+    public void hookListener(final boolean enable) {
+        if (enable) {
+            tree.getSelectionModel().addTreeSelectionListener(this);
+        } else {
+            tree.getSelectionModel().removeTreeSelectionListener(this);
+        }
+    }
+
+    private static JPanel createSettingFormPane() {
         final JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setLayout(new GridBagLayout());
         panel.setBorder(new EtchedBorder(EtchedBorder.LOWERED));
         return panel;
     }
 
-    private JPanel createSettingTopicsTree() {
+    private static JPanel createSettingTopicsTree(final JTree tree) {
         final JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
         panel.setBorder(new BevelBorder(BevelBorder.LOWERED));
-        final TreeModel model = createConfigurationTreeModel();
-        final JTree tree = new JTree(model);
-        tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-        tree.setCellRenderer(new SettingsTreeCellRenderer());
-        tree.setRootVisible(false);
-        tree.expandRow(2);
-        tree.expandRow(1);
-        tree.expandRow(0);
-        tree.setBorder(new EmptyBorder(5, 10, 5, 10));
         panel.add(tree, BorderLayout.WEST);
         panel.setBackground(Color.WHITE);
         return panel;
     }
 
-    private TreeModel createConfigurationTreeModel() {
-        final DefaultMutableTreeNode root = new DefaultMutableTreeNode();
-        final DefaultTreeModel result = new DefaultTreeModel(root);
-        root.add(createNode("Printer Settings", "General", "Custom G-Code"));
-        root.add(createNode("Print Settings", "Layers and Perimeters", "Infill", "Speed", "Skirt and Brim", "Support material",
-                "Output options", "Multiple Extruders", "Advanced"));
-        root.add(createNode("Material Settings", "Filament", "Cooling"));
-
-        return result;
-    }
-
-    private MutableTreeNode createNode(final String category, final String... settings) {
-        final DefaultMutableTreeNode printSettingsNode = new DefaultMutableTreeNode(category);
-        for (final String setting : settings) {
-            printSettingsNode.add(new DefaultMutableTreeNode(new DummySettingsPanel(setting)));
+    @Override
+    public void valueChanged(final TreeSelectionEvent event) {
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
+        if (node == null) {
+            return;
         }
-        return printSettingsNode;
+        final Object userData = node.getUserObject();
+        if (userData instanceof SettingsNode) {
+            final SettingsNode settings = (SettingsNode) userData;
+            formPanel.removeAll();
+            final GridBagConstraints constraints = new GridBagConstraints();
+            constraints.insets = new Insets(2, 2, 2, 2);
+            constraints.fill = GridBagConstraints.HORIZONTAL;
+            constraints.anchor = GridBagConstraints.NORTH;
+            constraints.gridx = 0;
+            constraints.gridy = 0;
+            constraints.weightx = 1.0;
+            constraints.weighty = 1.0;
+            for (final JComponent component : settings.getFormComponents()) {
+                formPanel.add(component, constraints);
+                constraints.gridy++;
+            }
+            getParent().validate();
+            repaint();
+        }
     }
 }

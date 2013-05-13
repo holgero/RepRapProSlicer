@@ -177,7 +177,8 @@ public class MainFrame extends JFrame {
     private JTabbedPane createTabPane() {
         final JTabbedPane tabPane = new JTabbedPane();
         tabPane.addTab("Plater", null, new PlaterPanel(configuration, plater, actions), "Place things on the build platform.");
-        tabPane.addTab("Settings Editor", new SettingsPanel());
+        final SettingsPanel settingsTab = new SettingsPanel();
+        tabPane.addTab("Settings Editor", null, settingsTab, "Edit the configuration.");
         tabPane.addTab("Visual Slicer", null, simulationTab, "Shows the current slice. " + "<space> to pause, "
                 + "<b> to show boxes around polygons, " + "left click to magnify, "
                 + "right click to restore default magnification.");
@@ -185,6 +186,7 @@ public class MainFrame extends JFrame {
             @Override
             public void stateChanged(final ChangeEvent e) {
                 simulationTab.hookListeners(simulationTab == tabPane.getSelectedComponent());
+                settingsTab.hookListener(settingsTab == tabPane.getSelectedComponent());
             }
         });
         return tabPane;

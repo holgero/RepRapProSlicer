@@ -32,10 +32,10 @@ public class SettingsTreeCellRenderer extends DefaultTreeCellRenderer {
             final boolean expanded, final boolean leaf, final int row, final boolean hasFocus) {
         super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
         final Object userData = ((DefaultMutableTreeNode) value).getUserObject();
-        if (userData instanceof DummySettingsPanel) {
-            final DummySettingsPanel dummy = (DummySettingsPanel) userData;
-            setIcon(dummy.getIcon());
-            setText(dummy.getTitle());
+        if (userData instanceof SettingsNode) {
+            final SettingsNode node = (SettingsNode) userData;
+            setIcon(node.getIcon());
+            setText(node.getTitle());
         }
         return this;
     }

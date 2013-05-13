@@ -18,11 +18,18 @@
  */
 package org.reprap.gui.configuration;
 
+import java.util.Collections;
+import java.util.List;
+
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 
-class DummySettingsPanel extends JPanel {
+class DummySettingsPanel implements SettingsNode {
     private static final Icon DEFAULT_ICON = new ImageIcon(DummySettingsPanel.class.getClassLoader().getResource(
             "icons/wrench.png"));
     private final String title;
@@ -32,11 +39,21 @@ class DummySettingsPanel extends JPanel {
         this.title = title;
     }
 
-    String getTitle() {
+    @Override
+    public String getTitle() {
         return title;
     }
 
-    Icon getIcon() {
+    @Override
+    public Icon getIcon() {
         return icon;
+    }
+
+    @Override
+    public List<? extends JComponent> getFormComponents() {
+        final JPanel box = new JPanel();
+        box.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), title));
+        box.add(new JLabel(title));
+        return Collections.singletonList(box);
     }
 }
