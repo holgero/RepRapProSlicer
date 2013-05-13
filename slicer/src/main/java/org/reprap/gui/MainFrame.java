@@ -41,6 +41,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.reprap.configuration.Configuration;
 import org.reprap.geometry.Producer;
 import org.reprap.geometry.ProductionProgressListener;
+import org.reprap.gui.configuration.SettingsPanel;
 
 public class MainFrame extends JFrame {
     private final Configuration configuration;
@@ -176,9 +177,7 @@ public class MainFrame extends JFrame {
     private JTabbedPane createTabPane() {
         final JTabbedPane tabPane = new JTabbedPane();
         tabPane.addTab("Plater", null, new PlaterPanel(configuration, plater, actions), "Place things on the build platform.");
-        //        tabPane.addTab("Print Settings", new PrintSettingsPanel());
-        //        tabPane.addTab("Material Settings", new JPanel());
-        //        tabPane.addTab("Printer Settings", new JPanel());
+        tabPane.addTab("Settings Editor", new SettingsPanel());
         tabPane.addTab("Visual Slicer", null, simulationTab, "Shows the current slice. " + "<space> to pause, "
                 + "<b> to show boxes around polygons, " + "left click to magnify, "
                 + "right click to restore default magnification.");
