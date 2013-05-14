@@ -25,6 +25,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTree;
 import javax.swing.border.BevelBorder;
@@ -80,7 +81,7 @@ public class SettingsPanel extends JPanel implements TreeSelectionListener {
             final GridBagConstraints constraints = new GridBagConstraints();
             constraints.insets = new Insets(2, 2, 2, 2);
             constraints.fill = GridBagConstraints.HORIZONTAL;
-            constraints.anchor = GridBagConstraints.NORTH;
+            constraints.anchor = GridBagConstraints.FIRST_LINE_START;
             constraints.gridx = 0;
             constraints.gridy = 0;
             constraints.weightx = 1.0;
@@ -89,6 +90,8 @@ public class SettingsPanel extends JPanel implements TreeSelectionListener {
                 formPanel.add(component, constraints);
                 constraints.gridy++;
             }
+            constraints.weighty = 1000.0;
+            formPanel.add(new JLabel(), constraints);
             getParent().validate();
             repaint();
         }

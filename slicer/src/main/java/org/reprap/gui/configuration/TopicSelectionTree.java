@@ -42,7 +42,7 @@ public class TopicSelectionTree extends JTree {
     private static TreeModel createConfigurationTreeModel() {
         final DefaultMutableTreeNode root = new DefaultMutableTreeNode();
         final DefaultTreeModel result = new DefaultTreeModel(root);
-        root.add(createNode("Printer Settings", "General", "Custom G-Code"));
+        root.add(createNode("Printer Settings", new GeneralPrinterSettings(), "Custom G-Code"));
         root.add(createNode("Print Settings", "Layers and Perimeters", "Infill", "Speed", "Skirt and Brim", "Support material",
                 "Output options", "Multiple Extruders", "Advanced"));
         root.add(createNode("Material Settings", "Filament", "Cooling"));
