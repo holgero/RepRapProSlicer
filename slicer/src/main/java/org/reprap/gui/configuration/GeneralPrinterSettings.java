@@ -31,9 +31,24 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
+import org.reprap.configuration.PrinterSetting;
+
 public class GeneralPrinterSettings implements SettingsNode {
     private static final Icon ICON = new ImageIcon(GeneralPrinterSettings.class.getClassLoader().getResource(
             "icons/printer_empty.png"));
+    private final PrinterSetting printerSetting;
+    private JTextField bedSizeXField;
+    private JTextField bedSizeYField;
+    private JTextField maximumZField;
+    private JCheckBox relativeDistanceEField;
+    private JTextField maximumFeedrateXField;
+    private JTextField maximumFeedrateYField;
+    private JTextField maximumFeedrateZ;
+    private SpinnerNumberModel extrudersSpinnerModel;
+
+    public GeneralPrinterSettings(final PrinterSetting printerSetting) {
+        this.printerSetting = printerSetting;
+    }
 
     @Override
     public Icon getIcon() {
@@ -54,25 +69,33 @@ public class GeneralPrinterSettings implements SettingsNode {
         return result;
     }
 
-    private static JPanel createSizePanel() {
+    private JPanel createSizePanel() {
         final SettingsBoxPanel panel = new SettingsBoxPanel("Sizes");
-        panel.addRow(new JLabel("Bed size: "), new JLabel("x (mm): "), new JTextField("200"), new JLabel("y (mm): "),
-                new JTextField("200"));
-        panel.addRow(new JLabel("Maximum build height: "), new JLabel("z (mm): "), new JTextField("100"));
+        bedSizeXField = new JTextField(Double.toString(printerSetting.getBedSizeX()));
+        bedSizeYField = new JTextField(Double.toString(printerSetting.getBedSizeY()));
+        panel.addRow(new JLabel("Bed size: "), new JLabel("x (mm): "), bedSizeXField, new JLabel("y (mm): "), bedSizeYField);
+        maximumZField = new JTextField("100");
+        panel.addRow(new JLabel("Maximum build height: "), new JLabel("z (mm): "), maximumZField);
         return panel;
     }
 
-    private static JPanel createFirmwarePanel() {
+    private JPanel createFirmwarePanel() {
         final SettingsBoxPanel panel = new SettingsBoxPanel("Firmware");
-        panel.addRow(new JLabel("Use relative E distances: "), new JCheckBox());
+        relativeDistanceEField = new JCheckBox();
+        relativeDistanceEField.setSelected(printerSetting.useRelativeDistanceE());
+        panel.addRow(new JLabel("Use relative E distances: "), relativeDistanceEField);
         return panel;
     }
 
-    private static JPanel createCapabilitiesPanel() {
+    private JPanel createCapabilitiesPanel() {
         final SettingsBoxPanel panel = new SettingsBoxPanel("Capabilities");
-        panel.addRow(new JLabel("Maximum Feedrate: "), new JLabel("x (mm/min): "), new JTextField("15000"), new JLabel(
-                "y (mm/min): "), new JTextField("15000"), new JLabel("z (mm/min): "), new JTextField("200"));
-        panel.addRow(new JLabel("Extruders: "), new JSpinner(new SpinnerNumberModel(1, 1, 99, 1)));
+        maximumFeedrateXField = new JTextField(Double.toString(printerSetting.getMaximumFeedrateX()));
+        maximumFeedrateYField = new JTextField(Double.toString(printerSetting.getMaximumFeedrateY()));
+        maximumFeedrateZ = new JTextField(Double.toString(printerSetting.getMaximumFeedrateZ()));
+        panel.addRow(new JLabel("Maximum Feedrate: "), new JLabel("x (mm/min): "), maximumFeedrateXField, new JLabel(
+                "y (mm/min): "), maximumFeedrateYField, new JLabel("z (mm/min): "), maximumFeedrateZ);
+        extrudersSpinnerModel = new SpinnerNumberModel(printerSetting.getExtruderSettings().size(), 1, 99, 1);
+        panel.addRow(new JLabel("Extruders: "), new JSpinner(extrudersSpinnerModel));
         return panel;
     }
 

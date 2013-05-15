@@ -34,11 +34,14 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import org.reprap.configuration.Configuration;
+
 public class SettingsPanel extends JPanel implements TreeSelectionListener {
-    private final TopicSelectionTree tree = new TopicSelectionTree();
+    private final TopicSelectionTree tree;
     private final JPanel formPanel = createSettingFormPane();
 
-    public SettingsPanel() {
+    public SettingsPanel(final Configuration configuration) {
+        tree = new TopicSelectionTree(configuration);
         setLayout(new BorderLayout());
         add(createSettingTopicsTree(tree), BorderLayout.WEST);
         add(formPanel, BorderLayout.CENTER);
