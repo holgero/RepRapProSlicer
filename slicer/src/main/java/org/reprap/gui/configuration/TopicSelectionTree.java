@@ -26,13 +26,10 @@ import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeSelectionModel;
 
-import org.reprap.configuration.Configuration;
-
 public class TopicSelectionTree extends JTree {
-    private final Configuration configuration;
+    private final GeneralPrinterSettings generalPrinterSettings = new GeneralPrinterSettings();
 
-    public TopicSelectionTree(final Configuration configuration) {
-        this.configuration = configuration;
+    public TopicSelectionTree() {
         setModel(createConfigurationTreeModel());
         getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         setCellRenderer(new SettingsTreeCellRenderer());
@@ -47,8 +44,7 @@ public class TopicSelectionTree extends JTree {
     private TreeModel createConfigurationTreeModel() {
         final DefaultMutableTreeNode root = new DefaultMutableTreeNode();
         final DefaultTreeModel result = new DefaultTreeModel(root);
-        root.add(createNode("Printer Settings", new GeneralPrinterSettings(configuration.getCurrentConfiguration()
-                .getPrinterSetting()), "Custom G-Code"));
+        root.add(createNode("Printer Settings", generalPrinterSettings, "Custom G-Code"));
         root.add(createNode("Print Settings", "Layers and Perimeters", "Infill", "Speed", "Skirt and Brim", "Support material",
                 "Output options", "Multiple Extruders", "Advanced"));
         root.add(createNode("Material Settings", "Filament", "Cooling"));

@@ -37,11 +37,12 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import org.reprap.configuration.Configuration;
 
 public class SettingsPanel extends JPanel implements TreeSelectionListener {
-    private final TopicSelectionTree tree;
+    private final TopicSelectionTree tree = new TopicSelectionTree();
     private final JPanel formPanel = createSettingFormPane();
+    private final Configuration configuration;
 
     public SettingsPanel(final Configuration configuration) {
-        tree = new TopicSelectionTree(configuration);
+        this.configuration = configuration;
         setLayout(new BorderLayout());
         add(createSettingTopicsTree(tree), BorderLayout.WEST);
         add(formPanel, BorderLayout.CENTER);
@@ -50,6 +51,7 @@ public class SettingsPanel extends JPanel implements TreeSelectionListener {
     public void hookListener(final boolean enable) {
         if (enable) {
             tree.getSelectionModel().addTreeSelectionListener(this);
+            updateRightPanel();
         } else {
             tree.getSelectionModel().removeTreeSelectionListener(this);
         }
@@ -73,6 +75,10 @@ public class SettingsPanel extends JPanel implements TreeSelectionListener {
 
     @Override
     public void valueChanged(final TreeSelectionEvent event) {
+        updateRightPanel();
+    }
+
+    private void updateRightPanel() {
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
         if (node == null) {
             return;
@@ -93,6 +99,7 @@ public class SettingsPanel extends JPanel implements TreeSelectionListener {
                 formPanel.add(component, constraints);
                 constraints.gridy++;
             }
+            settings.setValues(configuration);
             constraints.weighty = 1000.0;
             formPanel.add(new JLabel(), constraints);
             getParent().validate();

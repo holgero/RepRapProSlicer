@@ -29,6 +29,8 @@ import javax.swing.JPanel;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
+import org.reprap.configuration.Configuration;
+
 class DummySettingsPanel implements SettingsNode {
     private static final Icon DEFAULT_ICON = new ImageIcon(DummySettingsPanel.class.getClassLoader().getResource(
             "icons/wrench.png"));
@@ -55,5 +57,9 @@ class DummySettingsPanel implements SettingsNode {
         box.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), title));
         box.add(new JLabel(title));
         return Collections.singletonList(box);
+    }
+
+    @Override
+    public void setValues(final Configuration configuration) {
     }
 }

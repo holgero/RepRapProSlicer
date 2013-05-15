@@ -23,6 +23,8 @@ import java.util.List;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 
+import org.reprap.configuration.Configuration;
+
 interface SettingsNode {
 
     Icon getIcon();
@@ -30,5 +32,7 @@ interface SettingsNode {
     String getTitle();
 
     List<? extends JComponent> getFormComponents();
+
+    void setValues(Configuration configuration);
 
 }
