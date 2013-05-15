@@ -18,9 +18,6 @@
  */
 package org.reprap.gui.configuration;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,9 +27,9 @@ import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
-import javax.swing.border.EtchedBorder;
-import javax.swing.border.TitledBorder;
+import javax.swing.SpinnerNumberModel;
 
 public class GeneralPrinterSettings implements SettingsNode {
     private static final Icon ICON = new ImageIcon(GeneralPrinterSettings.class.getClassLoader().getResource(
@@ -53,59 +50,29 @@ public class GeneralPrinterSettings implements SettingsNode {
         final List<JComponent> result = new ArrayList<>();
         result.add(createSizePanel());
         result.add(createFirmwarePanel());
+        result.add(createCapabilitiesPanel());
         return result;
     }
 
     private static JPanel createSizePanel() {
-        final JPanel sizePanel = new JPanel();
-        sizePanel.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Sizes"));
-        sizePanel.setLayout(new GridBagLayout());
-        final GridBagConstraints constraints = new GridBagConstraints();
-        constraints.insets = new Insets(2, 2, 2, 2);
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.weightx = 1.0;
-        constraints.weighty = 1.0;
-        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
-        sizePanel.add(new JLabel("Bed size: "), constraints);
-        constraints.gridx++;
-        constraints.weightx = 0;
-        sizePanel.add(new JLabel("x (mm): "), constraints);
-        constraints.gridx++;
-        constraints.weightx = 1.0;
-        sizePanel.add(new JTextField("200"), constraints);
-        constraints.gridx++;
-        constraints.weightx = 0;
-        sizePanel.add(new JLabel("y (mm): "), constraints);
-        constraints.gridx++;
-        constraints.weightx = 1.0;
-        sizePanel.add(new JTextField("200"), constraints);
-        constraints.gridx = 0;
-        constraints.gridy++;
-        sizePanel.add(new JLabel("Maximum build height: "), constraints);
-        constraints.gridx++;
-        constraints.weightx = 0;
-        sizePanel.add(new JLabel("z (mm): "), constraints);
-        constraints.gridx++;
-        constraints.weightx = 1.0;
-        sizePanel.add(new JTextField("100"), constraints);
-        return sizePanel;
+        final SettingsBoxPanel panel = new SettingsBoxPanel("Sizes");
+        panel.addRow(new JLabel("Bed size: "), new JLabel("x (mm): "), new JTextField("200"), new JLabel("y (mm): "),
+                new JTextField("200"));
+        panel.addRow(new JLabel("Maximum build height: "), new JLabel("z (mm): "), new JTextField("100"));
+        return panel;
     }
 
     private static JPanel createFirmwarePanel() {
-        final JPanel panel = new JPanel();
-        panel.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Firmware"));
-        panel.setLayout(new GridBagLayout());
-        final GridBagConstraints constraints = new GridBagConstraints();
-        constraints.insets = new Insets(2, 2, 2, 2);
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.weightx = 1.0;
-        constraints.weighty = 1.0;
-        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
-        panel.add(new JLabel("Use relative E distances: "), constraints);
-        constraints.gridx++;
-        panel.add(new JCheckBox(), constraints);
+        final SettingsBoxPanel panel = new SettingsBoxPanel("Firmware");
+        panel.addRow(new JLabel("Use relative E distances: "), new JCheckBox());
+        return panel;
+    }
+
+    private static JPanel createCapabilitiesPanel() {
+        final SettingsBoxPanel panel = new SettingsBoxPanel("Capabilities");
+        panel.addRow(new JLabel("Maximum Feedrate: "), new JLabel("x (mm/min): "), new JTextField("15000"), new JLabel(
+                "y (mm/min): "), new JTextField("15000"), new JLabel("z (mm/min): "), new JTextField("200"));
+        panel.addRow(new JLabel("Extruders: "), new JSpinner(new SpinnerNumberModel(1, 1, 99, 1)));
         return panel;
     }
 
