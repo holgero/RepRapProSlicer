@@ -44,24 +44,24 @@ public class TopicSelectionTree extends JTree {
     private TreeModel createConfigurationTreeModel() {
         final DefaultMutableTreeNode root = new DefaultMutableTreeNode();
         final DefaultTreeModel result = new DefaultTreeModel(root);
-        root.add(createNode("Printer Settings", generalPrinterSettings, "Custom G-Code"));
-        root.add(createNode("Print Settings", "Layers and Perimeters", "Infill", "Speed", "Skirt and Brim", "Support material",
-                "Output options", "Multiple Extruders", "Advanced"));
-        root.add(createNode("Material Settings", "Filament", "Cooling"));
+        root.add(createNode(new PrinterCategoryPanel(), generalPrinterSettings, new CustomGcodePanel(), new ExtruderPanel(1)));
+        root.add(createNode(new DummySettingsPanel("Print Settings"), "Layers and Perimeters", "Infill", "Speed",
+                "Skirt and Brim", "Support material", "Output options", "Multiple Extruders", "Advanced"));
+        root.add(createNode(new DummySettingsPanel("Material Settings"), "Filament", "Cooling"));
 
         return result;
     }
 
-    private static MutableTreeNode createNode(final String category, final Object... settings) {
-        final DefaultMutableTreeNode printSettingsNode = new DefaultMutableTreeNode(category);
+    private static MutableTreeNode createNode(final SettingsNode category, final Object... settings) {
+        final DefaultMutableTreeNode node = new DefaultMutableTreeNode(category);
         for (final Object setting : settings) {
             if (setting instanceof String) {
                 final String textSetting = (String) setting;
-                printSettingsNode.add(new DefaultMutableTreeNode(new DummySettingsPanel(textSetting)));
+                node.add(new DefaultMutableTreeNode(new DummySettingsPanel(textSetting)));
             } else {
-                printSettingsNode.add(new DefaultMutableTreeNode(setting));
+                node.add(new DefaultMutableTreeNode(setting));
             }
         }
-        return printSettingsNode;
+        return node;
     }
 }

@@ -37,8 +37,7 @@ import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.PrinterSetting;
 
 public class GeneralPrinterSettings implements SettingsNode {
-    private static final Icon ICON = new ImageIcon(GeneralPrinterSettings.class.getClassLoader().getResource(
-            "icons/printer_empty.png"));
+    private static final Icon ICON = new ImageIcon(GeneralPrinterSettings.class.getClassLoader().getResource("icons/cog.png"));
     private final List<? extends JComponent> components;
     private final JLabel printerSettingName = new JLabel();
     private final JTextField bedSizeXField = new JTextField();

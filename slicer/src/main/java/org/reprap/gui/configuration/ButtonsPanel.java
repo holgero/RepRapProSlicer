@@ -32,10 +32,12 @@ import org.reprap.configuration.Configuration;
 
 public class ButtonsPanel extends JComponent {
 
+    private final SettingsEditor settingsEditor;
     private final Configuration configuration;
     private final SettingsNode settings;
 
-    public ButtonsPanel(final Configuration configuration, final SettingsNode settings) {
+    public ButtonsPanel(final SettingsEditor settingsEditor, final Configuration configuration, final SettingsNode settings) {
+        this.settingsEditor = settingsEditor;
         this.configuration = configuration;
         this.settings = settings;
         setBorder(new EmptyBorder(3, 3, 3, 3));
@@ -79,6 +81,7 @@ public class ButtonsPanel extends JComponent {
             @Override
             public void actionPerformed(final ActionEvent e) {
                 settings.getValues(configuration);
+                settingsEditor.updateTree();
             }
         });
         return button;
@@ -90,6 +93,7 @@ public class ButtonsPanel extends JComponent {
             @Override
             public void actionPerformed(final ActionEvent e) {
                 settings.getValues(configuration);
+                settingsEditor.updateTree();
                 configuration.save();
             }
         });

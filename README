@@ -58,7 +58,9 @@ If you just want to use the binary without compiling it yourself, locate the fil
 
  $ java -jar slicer-*-jar-with-dependencies.jar -Xmx1024M
 
-
 Licence
 =======
 Gnu Lesser General Public License (LGPL), see file LICENSE.
+
+The [Silk icon set](http://www.famfamfam.com/lab/icons/silk/) used is licensed under
+the _Creative Commons Attribution 3.0 License_. The author of the Silk icon set is Mark James.

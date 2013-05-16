@@ -33,6 +33,8 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
 
 import org.reprap.configuration.Configuration;
 
@@ -51,9 +53,27 @@ public class SettingsEditor extends JPanel implements TreeSelectionListener {
     public void hookListener(final boolean enable) {
         if (enable) {
             tree.getSelectionModel().addTreeSelectionListener(this);
+            updateTree();
             updateRightPanel();
         } else {
             tree.getSelectionModel().removeTreeSelectionListener(this);
+        }
+    }
+
+    void updateTree() {
+        final DefaultTreeModel model = (DefaultTreeModel) tree.getModel();
+        final Object root = model.getRoot();
+        final DefaultMutableTreeNode printerSettings = (DefaultMutableTreeNode) model.getChild(root, 0);
+        int treeExtruders = printerSettings.getChildCount() - 2;
+        final int currentExtruders = configuration.getCurrentConfiguration().getPrinterSetting().getExtruderSettings().size();
+        while (treeExtruders < currentExtruders) {
+            treeExtruders++;
+            model.insertNodeInto(new DefaultMutableTreeNode(new ExtruderPanel(treeExtruders)), printerSettings,
+                    treeExtruders + 2 - 1);
+        }
+        while (treeExtruders > currentExtruders) {
+            model.removeNodeFromParent((MutableTreeNode) printerSettings.getChildAt(treeExtruders + 2 - 1));
+            treeExtruders--;
         }
     }
 
@@ -104,7 +124,7 @@ public class SettingsEditor extends JPanel implements TreeSelectionListener {
             formPanel.add(new JLabel(), constraints);
             constraints.gridy++;
             constraints.weighty = 1.0;
-            formPanel.add(new ButtonsPanel(configuration, settings), constraints);
+            formPanel.add(new ButtonsPanel(this, configuration, settings), constraints);
             getParent().validate();
             repaint();
         }
