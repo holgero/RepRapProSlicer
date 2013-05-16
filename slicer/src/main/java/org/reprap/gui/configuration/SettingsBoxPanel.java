@@ -40,6 +40,8 @@ public class SettingsBoxPanel extends JPanel {
     private static GridBagConstraints createConstraints() {
         final GridBagConstraints constraints = new GridBagConstraints();
         constraints.insets = new Insets(2, 2, 2, 2);
+        constraints.ipadx = 2;
+        constraints.ipady = 2;
         constraints.gridx = 0;
         constraints.gridy = 0;
         constraints.weightx = 0;

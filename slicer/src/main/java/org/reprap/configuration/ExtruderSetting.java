@@ -40,6 +40,21 @@ public class ExtruderSetting {
     @XmlElement
     private double lift; // mm 0
 
+    public ExtruderSetting() {
+    }
+
+    public ExtruderSetting(final ExtruderSetting other) {
+        nozzleDiameter = other.nozzleDiameter;
+        extrudeRatio = other.extrudeRatio;
+        airExtrusionFeedRate = other.airExtrusionFeedRate;
+        printExtrusionRate = other.printExtrusionRate;
+        retraction = other.retraction;
+        extraLengthPerLayer = other.extraLengthPerLayer;
+        extraLengthPerPolygon = other.extraLengthPerPolygon;
+        extrusionOverrun = other.extrusionOverrun;
+        lift = other.lift;
+    }
+
     public double getNozzleDiameter() {
         return nozzleDiameter;
     }

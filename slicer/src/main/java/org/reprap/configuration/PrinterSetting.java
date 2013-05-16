@@ -27,6 +27,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlID;
+import javax.xml.bind.annotation.XmlTransient;
 
 public class PrinterSetting implements NamedSetting {
     private static final double MACHINE_RESOLUTION = 0.05; // mm
@@ -63,30 +64,33 @@ public class PrinterSetting implements NamedSetting {
     @XmlElement(name = "extruderSetting")
     private ExtruderSetting[] extruderSettings;
 
-    PrinterSetting() {
+    public PrinterSetting() {
     }
 
+    @XmlTransient
     public double getBedSizeX() {
         return bedSizeX;
     }
 
-    void setBedSizeX(final double bedSizeX) {
+    public void setBedSizeX(final double bedSizeX) {
         this.bedSizeX = bedSizeX;
     }
 
+    @XmlTransient
     public double getBedSizeY() {
         return bedSizeY;
     }
 
-    void setBedSizeY(final double bedSizeY) {
+    public void setBedSizeY(final double bedSizeY) {
         this.bedSizeY = bedSizeY;
     }
 
+    @XmlTransient
     public double getMaximumZ() {
         return maximumZ;
     }
 
-    void setMaximumZ(final double maximumZ) {
+    public void setMaximumZ(final double maximumZ) {
         this.maximumZ = maximumZ;
     }
 
@@ -94,31 +98,34 @@ public class PrinterSetting implements NamedSetting {
         return relativeDistanceE;
     }
 
-    void setRelativeDistanceE(final boolean relativeDistanceE) {
+    public void setRelativeDistanceE(final boolean relativeDistanceE) {
         this.relativeDistanceE = relativeDistanceE;
     }
 
+    @XmlTransient
     public double getMaximumFeedrateX() {
         return maximumFeedrateX;
     }
 
-    void setMaximumFeedrateX(final double maximumFeedrateX) {
+    public void setMaximumFeedrateX(final double maximumFeedrateX) {
         this.maximumFeedrateX = maximumFeedrateX;
     }
 
+    @XmlTransient
     public double getMaximumFeedrateY() {
         return maximumFeedrateY;
     }
 
-    void setMaximumFeedrateY(final double maximumFeedrateY) {
+    public void setMaximumFeedrateY(final double maximumFeedrateY) {
         this.maximumFeedrateY = maximumFeedrateY;
     }
 
+    @XmlTransient
     public double getMaximumFeedrateZ() {
         return maximumFeedrateZ;
     }
 
-    void setMaximumFeedrateZ(final double maximumFeedrateZ) {
+    public void setMaximumFeedrateZ(final double maximumFeedrateZ) {
         this.maximumFeedrateZ = maximumFeedrateZ;
     }
 
@@ -126,7 +133,7 @@ public class PrinterSetting implements NamedSetting {
         return Collections.unmodifiableList(Arrays.asList(extruderSettings));
     }
 
-    void setExtruderSettings(final ExtruderSetting[] extruderSettings) {
+    public void setExtruderSettings(final ExtruderSetting[] extruderSettings) {
         this.extruderSettings = extruderSettings;
     }
 
@@ -138,16 +145,17 @@ public class PrinterSetting implements NamedSetting {
         return new File(Configuration.getReprapDirectory(), buildPlatformStl);
     }
 
-    void setBuildPlatformStl(final String buildPlatformStl) {
+    public void setBuildPlatformStl(final String buildPlatformStl) {
         this.buildPlatformStl = buildPlatformStl;
     }
 
     @Override
+    @XmlTransient
     public String getName() {
         return name;
     }
 
-    void setName(final String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 
@@ -155,7 +163,7 @@ public class PrinterSetting implements NamedSetting {
         return gCodePrologue;
     }
 
-    void setGcodePrologue(final String gCodePrologue) {
+    public void setGcodePrologue(final String gCodePrologue) {
         this.gCodePrologue = gCodePrologue;
     }
 
@@ -163,7 +171,7 @@ public class PrinterSetting implements NamedSetting {
         return gCodeEpilogue;
     }
 
-    void setGcodeEpilogue(final String gCodeEpilogue) {
+    public void setGcodeEpilogue(final String gCodeEpilogue) {
         this.gCodeEpilogue = gCodeEpilogue;
     }
 }

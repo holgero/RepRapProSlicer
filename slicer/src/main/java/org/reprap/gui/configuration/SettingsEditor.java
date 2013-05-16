@@ -36,12 +36,12 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.reprap.configuration.Configuration;
 
-public class SettingsPanel extends JPanel implements TreeSelectionListener {
+public class SettingsEditor extends JPanel implements TreeSelectionListener {
     private final TopicSelectionTree tree = new TopicSelectionTree();
     private final JPanel formPanel = createSettingFormPane();
     private final Configuration configuration;
 
-    public SettingsPanel(final Configuration configuration) {
+    public SettingsEditor(final Configuration configuration) {
         this.configuration = configuration;
         setLayout(new BorderLayout());
         add(createSettingTopicsTree(tree), BorderLayout.WEST);
@@ -102,6 +102,9 @@ public class SettingsPanel extends JPanel implements TreeSelectionListener {
             settings.setValues(configuration);
             constraints.weighty = 1000.0;
             formPanel.add(new JLabel(), constraints);
+            constraints.gridy++;
+            constraints.weighty = 1.0;
+            formPanel.add(new ButtonsPanel(configuration, settings), constraints);
             getParent().validate();
             repaint();
         }

@@ -62,4 +62,8 @@ class DummySettingsPanel implements SettingsNode {
     @Override
     public void setValues(final Configuration configuration) {
     }
+
+    @Override
+    public void getValues(final Configuration configuration) {
+    }
 }

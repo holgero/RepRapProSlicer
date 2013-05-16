@@ -33,12 +33,14 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
 import org.reprap.configuration.Configuration;
+import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.PrinterSetting;
 
 public class GeneralPrinterSettings implements SettingsNode {
     private static final Icon ICON = new ImageIcon(GeneralPrinterSettings.class.getClassLoader().getResource(
             "icons/printer_empty.png"));
     private final List<? extends JComponent> components;
+    private final JLabel printerSettingName = new JLabel();
     private final JTextField bedSizeXField = new JTextField();
     private final JTextField bedSizeYField = new JTextField();
     private final JTextField maximumZField = new JTextField();
@@ -72,15 +74,8 @@ public class GeneralPrinterSettings implements SettingsNode {
         setValues(configuration.getCurrentConfiguration().getPrinterSetting());
     }
 
-    private List<? extends JComponent> createComponents() {
-        final List<JComponent> result = new ArrayList<>();
-        result.add(createSizePanel());
-        result.add(createFirmwarePanel());
-        result.add(createCapabilitiesPanel());
-        return Collections.unmodifiableList(result);
-    }
-
     private void setValues(final PrinterSetting printerSetting) {
+        printerSettingName.setText(printerSetting.getName());
         bedSizeXField.setText(Double.toString(printerSetting.getBedSizeX()));
         bedSizeYField.setText(Double.toString(printerSetting.getBedSizeY()));
         maximumZField.setText(Double.toString(printerSetting.getMaximumZ()));
@@ -89,6 +84,57 @@ public class GeneralPrinterSettings implements SettingsNode {
         maximumFeedrateYField.setText(Double.toString(printerSetting.getMaximumFeedrateY()));
         maximumFeedrateZField.setText(Double.toString(printerSetting.getMaximumFeedrateZ()));
         extrudersSpinnerModel.setValue(printerSetting.getExtruderSettings().size());
+    }
+
+    @Override
+    public void getValues(final Configuration configuration) {
+        getValues(configuration.getCurrentConfiguration().getPrinterSetting());
+    }
+
+    private void getValues(final PrinterSetting printerSetting) {
+        if (!printerSetting.getName().equals(printerSettingName.getText())) {
+            throw new IllegalStateException("My printer setting is " + printerSettingName.getText()
+                    + ", but current printer setting is " + printerSetting.getName() + ".");
+        }
+        printerSetting.setBedSizeX(fieldToDouble(bedSizeXField));
+        printerSetting.setBedSizeY(fieldToDouble(bedSizeYField));
+        printerSetting.setMaximumZ(fieldToDouble(maximumZField));
+        printerSetting.setRelativeDistanceE(relativeDistanceEField.isEnabled());
+        printerSetting.setMaximumFeedrateX(fieldToDouble(maximumFeedrateXField));
+        printerSetting.setMaximumFeedrateY(fieldToDouble(maximumFeedrateYField));
+        printerSetting.setMaximumFeedrateZ(fieldToDouble(maximumFeedrateZField));
+        final List<ExtruderSetting> previousExtruders = printerSetting.getExtruderSettings();
+        final int newExtruderCount = ((Integer) extrudersSpinnerModel.getValue()).intValue();
+        if (previousExtruders.size() != newExtruderCount) {
+            final ExtruderSetting[] newExtruders = new ExtruderSetting[newExtruderCount];
+            for (int i = 0; i < newExtruders.length; i++) {
+                if (i < previousExtruders.size()) {
+                    newExtruders[i] = previousExtruders.get(i);
+                } else {
+                    newExtruders[i] = new ExtruderSetting(previousExtruders.get(previousExtruders.size() - 1));
+                }
+            }
+            printerSetting.setExtruderSettings(newExtruders);
+        }
+    }
+
+    private static double fieldToDouble(final JTextField field) {
+        return Double.parseDouble(field.getText());
+    }
+
+    private List<? extends JComponent> createComponents() {
+        final List<JComponent> result = new ArrayList<>();
+        result.add(createNamePanel());
+        result.add(createSizePanel());
+        result.add(createFirmwarePanel());
+        result.add(createCapabilitiesPanel());
+        return Collections.unmodifiableList(result);
+    }
+
+    private JComponent createNamePanel() {
+        final JPanel result = new JPanel();
+        result.add(printerSettingName);
+        return result;
     }
 
     private JPanel createSizePanel() {

@@ -35,4 +35,6 @@ interface SettingsNode {
 
     void setValues(Configuration configuration);
 
+    void getValues(Configuration configuration);
+
 }
