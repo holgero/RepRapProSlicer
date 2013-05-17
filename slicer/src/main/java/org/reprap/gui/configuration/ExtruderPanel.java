@@ -18,17 +18,29 @@
  */
 package org.reprap.gui.configuration;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
 
 import org.reprap.configuration.PrinterSetting;
 
 class ExtruderPanel extends AbstractPrinterSettingPanel {
     private static final Icon ICON = new ImageIcon(ExtruderPanel.class.getClassLoader().getResource("icons/funnel.png"));
+
+    private final JTextField nozzleDiameter = new JTextField();
+    private final JTextField extrudeRatio = new JTextField();
+    private final JTextField airExtrusionFeedRate = new JTextField();
+    private final JTextField printExtrusionFeedRate = new JTextField();
+    private final JTextField retraction = new JTextField();
+    private final JTextField extraLengthPerLayer = new JTextField();
+    private final JTextField extraLengthPerPolygon = new JTextField();
+    private final JTextField extrusionOverrun = new JTextField();
+    private final JTextField lift = new JTextField();
     private final int number;
 
     ExtruderPanel(final int number) {
@@ -46,9 +58,42 @@ class ExtruderPanel extends AbstractPrinterSettingPanel {
         return "Extruder " + number;
     }
 
-    private static List<? extends JComponent> getFormComponents() {
-        // TODO Auto-generated method stub
-        return Collections.emptyList();
+    private List<? extends JComponent> getFormComponents() {
+        final List<JComponent> result = new ArrayList<>();
+        result.add(createSizePanel());
+        result.add(createExtrusionSpeedsPanel());
+        result.add(createRetractionPanel());
+        result.add(createLiftPanel());
+        return result;
+    }
+
+    private SettingsBoxPanel createSizePanel() {
+        final SettingsBoxPanel result = new SettingsBoxPanel("Size");
+        result.addRow(new JLabel("Nozzle diameter: "), nozzleDiameter, new JLabel(" mm"));
+        return result;
+    }
+
+    private SettingsBoxPanel createExtrusionSpeedsPanel() {
+        final SettingsBoxPanel result = new SettingsBoxPanel("Extrusion Speeds");
+        result.addRow(new JLabel("Extrude ratio: "), extrudeRatio, new JLabel(" ratio"));
+        result.addRow(new JLabel("Feedrate in air: "), airExtrusionFeedRate, new JLabel(" mm/min"));
+        result.addRow(new JLabel("Feedrate printing: "), printExtrusionFeedRate, new JLabel(" mm/min"));
+        return result;
+    }
+
+    private SettingsBoxPanel createRetractionPanel() {
+        final SettingsBoxPanel result = new SettingsBoxPanel("Retraction");
+        result.addRow(new JLabel("Retraction length: "), retraction, new JLabel(" mm"));
+        result.addRow(new JLabel("Extra length on layer start: "), extraLengthPerLayer, new JLabel(" mm"));
+        result.addRow(new JLabel("Extra length on polygon start: "), extraLengthPerPolygon, new JLabel(" mm"));
+        result.addRow(new JLabel("Extrusion overrun: "), extrusionOverrun, new JLabel(" mm"));
+        return result;
+    }
+
+    private SettingsBoxPanel createLiftPanel() {
+        final SettingsBoxPanel result = new SettingsBoxPanel("Lift");
+        result.addRow(new JLabel("Lift: "), lift, new JLabel(" mm"));
+        return result;
     }
 
     @Override
