@@ -78,7 +78,7 @@ class CurrentConfigurationStateBox extends JPanel implements ItemListener {
             materialComboBoxes.get(i).setSelectedItem(material.getName());
             materialComboBoxes.get(i).setEnabled(true);
         }
-        for (int i = currentConfiguration.getPrinterSetting().getExtruderSettings().size(); i < countMaximumMaterials(); i++) {
+        for (int i = currentConfiguration.getPrinterSetting().getExtruderSettings().size(); i < materialComboBoxes.size(); i++) {
             materialComboBoxes.get(i).setEnabled(false);
         }
     }
