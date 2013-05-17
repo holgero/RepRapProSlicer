@@ -19,6 +19,7 @@
 package org.reprap.configuration;
 
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 public class ExtruderSetting {
     @XmlElement
@@ -55,78 +56,88 @@ public class ExtruderSetting {
         lift = other.lift;
     }
 
+    @XmlTransient
     public double getNozzleDiameter() {
         return nozzleDiameter;
     }
 
-    void setNozzleDiameter(final double nozzleDiameter) {
+    public void setNozzleDiameter(final double nozzleDiameter) {
         this.nozzleDiameter = nozzleDiameter;
     }
 
+    @XmlTransient
     public double getRetraction() {
         return retraction;
     }
 
-    void setRetraction(final double retraction) {
+    public void setRetraction(final double retraction) {
         this.retraction = retraction;
     }
 
+    @XmlTransient
     public double getExtraLengthPerLayer() {
         return extraLengthPerLayer;
     }
 
-    void setExtraLengthPerLayer(final double extraLengthPerLayer) {
+    public void setExtraLengthPerLayer(final double extraLengthPerLayer) {
         this.extraLengthPerLayer = extraLengthPerLayer;
     }
 
+    @XmlTransient
     public double getExtraLengthPerPolygon() {
         return extraLengthPerPolygon;
     }
 
-    void setExtraLengthPerPolygon(final double extraLengthPerPolygon) {
+    public void setExtraLengthPerPolygon(final double extraLengthPerPolygon) {
         this.extraLengthPerPolygon = extraLengthPerPolygon;
     }
 
+    @XmlTransient
     public double getExtrudeRatio() {
         return extrudeRatio;
     }
 
-    void setExtrudeRatio(final double extrudeRatio) {
+    public void setExtrudeRatio(final double extrudeRatio) {
         this.extrudeRatio = extrudeRatio;
     }
 
+    @XmlTransient
     public double getExtrusionOverrun() {
         return extrusionOverrun;
     }
 
-    void setExtrusionOverrun(final double extrusionOverrun) {
+    public void setExtrusionOverrun(final double extrusionOverrun) {
         this.extrusionOverrun = extrusionOverrun;
     }
 
+    @XmlTransient
     public double getAirExtrusionFeedRate() {
         return airExtrusionFeedRate;
     }
 
-    void setAirExtrusionFeedRate(final double airExtrusionFeedRate) {
+    public void setAirExtrusionFeedRate(final double airExtrusionFeedRate) {
         this.airExtrusionFeedRate = airExtrusionFeedRate;
     }
 
+    @XmlTransient
     public double getPrintExtrusionRate() {
         return printExtrusionRate;
     }
 
-    void setPrintExtrusionRate(final double printExtrusionRate) {
+    public void setPrintExtrusionRate(final double printExtrusionRate) {
         this.printExtrusionRate = printExtrusionRate;
     }
 
+    @XmlTransient
     public double getLift() {
         return lift;
     }
 
-    void setLift(final double lift) {
+    public void setLift(final double lift) {
         this.lift = lift;
     }
 
+    @XmlTransient
     public double getExtrusionSize() {
         return getNozzleDiameter();
     }

@@ -26,6 +26,7 @@ import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 abstract class AbstractSettingPanel implements SettingsNode {
 
@@ -61,5 +62,9 @@ abstract class AbstractSettingPanel implements SettingsNode {
             constraints.weighty = 1000.0;
             panel.add(new JLabel(), constraints);
         }
+    }
+
+    static final double fieldToDouble(final JTextField field) {
+        return Double.parseDouble(field.getText());
     }
 }

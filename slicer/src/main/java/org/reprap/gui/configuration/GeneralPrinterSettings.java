@@ -96,10 +96,6 @@ class GeneralPrinterSettings extends AbstractPrinterSettingPanel {
         }
     }
 
-    private static double fieldToDouble(final JTextField field) {
-        return Double.parseDouble(field.getText());
-    }
-
     private List<? extends JComponent> createComponents() {
         final List<JComponent> result = new ArrayList<>();
         result.add(createSizePanel());

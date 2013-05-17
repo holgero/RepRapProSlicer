@@ -27,6 +27,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
+import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.PrinterSetting;
 
 class ExtruderPanel extends AbstractPrinterSettingPanel {
@@ -98,11 +99,35 @@ class ExtruderPanel extends AbstractPrinterSettingPanel {
 
     @Override
     void setValues(final PrinterSetting printerSetting) {
-        // TODO Auto-generated method stub
+        setValues(printerSetting.getExtruderSettings().get(number - 1));
+    }
+
+    private void setValues(final ExtruderSetting extruderSetting) {
+        nozzleDiameter.setText(Double.toString(extruderSetting.getNozzleDiameter()));
+        extrudeRatio.setText(Double.toString(extruderSetting.getExtrudeRatio()));
+        airExtrusionFeedRate.setText(Double.toString(extruderSetting.getAirExtrusionFeedRate()));
+        printExtrusionFeedRate.setText(Double.toString(extruderSetting.getPrintExtrusionRate()));
+        retraction.setText(Double.toString(extruderSetting.getRetraction()));
+        extraLengthPerLayer.setText(Double.toString(extruderSetting.getExtraLengthPerLayer()));
+        extraLengthPerPolygon.setText(Double.toString(extruderSetting.getExtraLengthPerPolygon()));
+        extrusionOverrun.setText(Double.toString(extruderSetting.getExtrusionOverrun()));
+        lift.setText(Double.toString(extruderSetting.getLift()));
     }
 
     @Override
     void getValues(final PrinterSetting printerSetting) {
-        // TODO Auto-generated method stub
+        getValues(printerSetting.getExtruderSettings().get(number - 1));
+    }
+
+    private void getValues(final ExtruderSetting extruderSetting) {
+        extruderSetting.setNozzleDiameter(fieldToDouble(nozzleDiameter));
+        extruderSetting.setExtrudeRatio(fieldToDouble(extrudeRatio));
+        extruderSetting.setAirExtrusionFeedRate(fieldToDouble(airExtrusionFeedRate));
+        extruderSetting.setPrintExtrusionRate(fieldToDouble(printExtrusionFeedRate));
+        extruderSetting.setRetraction(fieldToDouble(retraction));
+        extruderSetting.setExtraLengthPerLayer(fieldToDouble(extraLengthPerLayer));
+        extruderSetting.setExtraLengthPerPolygon(fieldToDouble(extraLengthPerPolygon));
+        extruderSetting.setExtrusionOverrun(fieldToDouble(extrusionOverrun));
+        extruderSetting.setLift(fieldToDouble(lift));
     }
 }
