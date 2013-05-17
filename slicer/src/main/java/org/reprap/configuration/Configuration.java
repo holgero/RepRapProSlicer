@@ -19,6 +19,7 @@
 package org.reprap.configuration;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.JAXBException;
@@ -93,5 +94,13 @@ public class Configuration {
         } catch (final JAXBException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static String[] getNames(final List<? extends NamedSetting> namedSetting) {
+        final List<String> settingsNames = new ArrayList<>();
+        for (final NamedSetting setting : namedSetting) {
+            settingsNames.add(setting.getName());
+        }
+        return settingsNames.toArray(new String[settingsNames.size()]);
     }
 }

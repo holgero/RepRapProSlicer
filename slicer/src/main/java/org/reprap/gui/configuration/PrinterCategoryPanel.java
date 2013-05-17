@@ -18,18 +18,24 @@
  */
 package org.reprap.gui.configuration;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 
 import org.reprap.configuration.Configuration;
+import org.reprap.configuration.PrinterSetting;
 
 public class PrinterCategoryPanel implements SettingsNode {
     private static final Icon ICON = new ImageIcon(PrinterCategoryPanel.class.getClassLoader().getResource(
             "icons/printer_empty.png"));
+
+    private final JComboBox<String> printerCombo = new JComboBox<>();
 
     @Override
     public Icon getIcon() {
@@ -43,18 +49,29 @@ public class PrinterCategoryPanel implements SettingsNode {
 
     @Override
     public List<? extends JComponent> getFormComponents() {
-        return Collections.emptyList();
-        // TODO Auto-generated method stub
+        final List<JComponent> result = new ArrayList<>();
+        final SettingsBoxPanel panel = new SettingsBoxPanel("Printer");
+        panel.addRow(new JLabel("Printer setting: "), printerCombo);
+        result.add(panel);
+        return result;
     }
 
     @Override
     public void setValues(final Configuration configuration) {
-        // TODO Auto-generated method stub
+        printerCombo.setModel(new DefaultComboBoxModel<String>(Configuration.getNames(configuration.getPrinterSettings())));
+        printerCombo.setSelectedItem(configuration.getCurrentConfiguration().getPrinterSetting().getName());
     }
 
     @Override
     public void getValues(final Configuration configuration) {
-        // TODO Auto-generated method stub
+        final String printer = (String) printerCombo.getSelectedItem();
+        for (final PrinterSetting setting : configuration.getPrinterSettings()) {
+            if (setting.getName().equals(printer)) {
+                configuration.getCurrentConfiguration().setPrinterSetting(setting);
+                return;
+            }
+        }
+        throw new IllegalStateException("Unknown printer setting >>" + printer + "<< in combo box.");
     }
 
 }

@@ -31,6 +31,7 @@ import org.reprap.configuration.Configuration;
 public class PlaterPanel extends JPanel {
 
     private static final Insets BIG_INSETS = new Insets(5, 5, 5, 5);
+    private final CurrentConfigurationStateBox configurationState;
 
     public PlaterPanel(final Configuration configuration, final RepRapPlater plater, final ActionMap actions) {
         setLayout(new GridBagLayout());
@@ -46,9 +47,14 @@ public class PlaterPanel extends JPanel {
         constraints.gridy = 0;
         constraints.gridx++;
         constraints.weightx = 0;
-        add(new CurrentConfigurationStateBox(configuration), constraints);
+        configurationState = new CurrentConfigurationStateBox(configuration);
+        add(configurationState, constraints);
         constraints.gridy++;
         add(makeButtonsBox(actions), constraints);
+    }
+
+    void updateDisplay() {
+        configurationState.updateFromConfiguration();
     }
 
     private static JPanel makePlaterBox(final RepRapPlater plater) {
