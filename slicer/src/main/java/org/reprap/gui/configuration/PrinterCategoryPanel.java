@@ -41,7 +41,7 @@ import javax.swing.JOptionPane;
 import org.reprap.configuration.Configuration;
 import org.reprap.configuration.PrinterSetting;
 
-public class PrinterCategoryPanel implements SettingsNode {
+public class PrinterCategoryPanel extends AbstractSettingsPanel {
     private static final Icon ICON = createIcon("printer_empty.png");
 
     private static ImageIcon createIcon(final String name) {
@@ -107,7 +107,7 @@ public class PrinterCategoryPanel implements SettingsNode {
     }
 
     @Override
-    public List<? extends JComponent> getFormComponents() {
+    List<? extends JComponent> getFormComponents() {
         final List<JComponent> result = new ArrayList<>();
         final SettingsBoxPanel panel = new SettingsBoxPanel("Printer");
         panel.addRow(new JLabel("Current printer: "), printerCombo);
@@ -152,10 +152,5 @@ public class PrinterCategoryPanel implements SettingsNode {
             }
         }
         toDelete.clear();
-    }
-
-    @Override
-    public boolean needPadding() {
-        return true;
     }
 }

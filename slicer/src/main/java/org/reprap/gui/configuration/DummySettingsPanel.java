@@ -31,7 +31,7 @@ import javax.swing.border.TitledBorder;
 
 import org.reprap.configuration.Configuration;
 
-class DummySettingsPanel implements SettingsNode {
+class DummySettingsPanel extends AbstractSettingsPanel {
     private static final Icon DEFAULT_ICON = new ImageIcon(DummySettingsPanel.class.getClassLoader().getResource(
             "icons/wrench.png"));
     private final String title;
@@ -52,7 +52,7 @@ class DummySettingsPanel implements SettingsNode {
     }
 
     @Override
-    public List<? extends JComponent> getFormComponents() {
+    List<? extends JComponent> getFormComponents() {
         final JPanel box = new JPanel();
         box.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), title));
         box.add(new JLabel(title));
@@ -65,10 +65,5 @@ class DummySettingsPanel implements SettingsNode {
 
     @Override
     public void getValues(final Configuration configuration) {
-    }
-
-    @Override
-    public boolean needPadding() {
-        return true;
     }
 }

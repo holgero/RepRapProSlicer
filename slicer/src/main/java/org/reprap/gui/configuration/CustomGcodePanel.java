@@ -18,6 +18,9 @@
  */
 package org.reprap.gui.configuration;
 
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,12 +54,8 @@ public class CustomGcodePanel implements SettingsNode {
         return "Custom G-Code";
     }
 
-    @Override
-    public List<? extends JComponent> getFormComponents() {
+    private List<? extends JComponent> getFormComponents() {
         final List<JComponent> result = new ArrayList<>();
-        final JPanel printerNamePanel = new JPanel();
-        printerNamePanel.add(printerSettingName);
-        result.add(printerNamePanel);
         result.add(createTextAreaScrollPane(prologueTextArea, "Prologue"));
         result.add(createTextAreaScrollPane(epilogueTextArea, "Epilogue"));
         return result;
@@ -96,7 +95,28 @@ public class CustomGcodePanel implements SettingsNode {
     }
 
     @Override
-    public boolean needPadding() {
-        return false;
+    public JPanel getPanel() {
+        final JPanel result = new JPanel();
+        result.setLayout(new GridBagLayout());
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.insets = new Insets(2, 2, 2, 2);
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.weightx = 1.0;
+        constraints.weighty = 0;
+        final JPanel printerNamePanel = new JPanel();
+        printerNamePanel.add(printerSettingName);
+        result.add(printerNamePanel, constraints);
+        constraints.gridy++;
+        constraints.weighty = 1.0;
+        for (final JComponent component : getFormComponents()) {
+            result.add(component, constraints);
+            constraints.gridy++;
+        }
+
+        return result;
     }
+
 }

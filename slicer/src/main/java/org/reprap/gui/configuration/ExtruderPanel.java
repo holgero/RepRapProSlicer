@@ -27,7 +27,7 @@ import javax.swing.JComponent;
 
 import org.reprap.configuration.Configuration;
 
-public class ExtruderPanel implements SettingsNode {
+public class ExtruderPanel extends AbstractSettingsPanel {
     private static final Icon ICON = new ImageIcon(ExtruderPanel.class.getClassLoader().getResource("icons/funnel.png"));
     private final int number;
 
@@ -46,7 +46,7 @@ public class ExtruderPanel implements SettingsNode {
     }
 
     @Override
-    public List<? extends JComponent> getFormComponents() {
+    List<? extends JComponent> getFormComponents() {
         // TODO Auto-generated method stub
         return Collections.emptyList();
     }
@@ -61,8 +61,4 @@ public class ExtruderPanel implements SettingsNode {
         // TODO Auto-generated method stub
     }
 
-    @Override
-    public boolean needPadding() {
-        return true;
-    }
 }

@@ -20,12 +20,8 @@ package org.reprap.gui.configuration;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
 
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTree;
 import javax.swing.border.BevelBorder;
@@ -40,14 +36,18 @@ import org.reprap.configuration.Configuration;
 
 public class SettingsEditor extends JPanel implements TreeSelectionListener {
     private final TopicSelectionTree tree = new TopicSelectionTree();
-    private final JPanel formPanel = createSettingFormPane();
+    private final JPanel rightPanel = new JPanel();
     private final Configuration configuration;
+    private JPanel formPanel;
+    private JComponent buttonsPanel;
 
     public SettingsEditor(final Configuration configuration) {
         this.configuration = configuration;
         setLayout(new BorderLayout());
-        add(createSettingTopicsTree(tree), BorderLayout.WEST);
-        add(formPanel, BorderLayout.CENTER);
+        add(createTopicsTreePanel(tree), BorderLayout.WEST);
+        rightPanel.setLayout(new BorderLayout());
+        rightPanel.setBorder(new EtchedBorder(EtchedBorder.LOWERED));
+        add(rightPanel, BorderLayout.CENTER);
     }
 
     public void hookListener(final boolean enable) {
@@ -77,14 +77,7 @@ public class SettingsEditor extends JPanel implements TreeSelectionListener {
         }
     }
 
-    private static JPanel createSettingFormPane() {
-        final JPanel panel = new JPanel();
-        panel.setLayout(new GridBagLayout());
-        panel.setBorder(new EtchedBorder(EtchedBorder.LOWERED));
-        return panel;
-    }
-
-    private static JPanel createSettingTopicsTree(final JTree tree) {
+    private static JPanel createTopicsTreePanel(final JTree tree) {
         final JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
         panel.setBorder(new BevelBorder(BevelBorder.LOWERED));
@@ -106,27 +99,17 @@ public class SettingsEditor extends JPanel implements TreeSelectionListener {
         final Object userData = node.getUserObject();
         if (userData instanceof SettingsNode) {
             final SettingsNode settings = (SettingsNode) userData;
-            formPanel.removeAll();
-            final GridBagConstraints constraints = new GridBagConstraints();
-            constraints.insets = new Insets(2, 2, 2, 2);
-            constraints.fill = GridBagConstraints.BOTH;
-            constraints.anchor = GridBagConstraints.FIRST_LINE_START;
-            constraints.gridx = 0;
-            constraints.gridy = 0;
-            constraints.weightx = 1.0;
-            constraints.weighty = 1.0;
-            for (final JComponent component : settings.getFormComponents()) {
-                formPanel.add(component, constraints);
-                constraints.gridy++;
+            if (formPanel != null) {
+                rightPanel.remove(formPanel);
             }
+            formPanel = settings.getPanel();
+            rightPanel.add(formPanel, BorderLayout.CENTER);
             settings.setValues(configuration);
-            if (settings.needPadding()) {
-                constraints.weighty = 1000.0;
-                formPanel.add(new JLabel(), constraints);
-                constraints.gridy++;
+            if (buttonsPanel != null) {
+                rightPanel.remove(buttonsPanel);
             }
-            constraints.weighty = 0;
-            formPanel.add(new ButtonsPanel(this, configuration, settings), constraints);
+            buttonsPanel = new ButtonsPanel(this, configuration, settings);
+            rightPanel.add(buttonsPanel, BorderLayout.SOUTH);
             getParent().validate();
             repaint();
         }

@@ -36,7 +36,7 @@ import org.reprap.configuration.Configuration;
 import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.PrinterSetting;
 
-public class GeneralPrinterSettings implements SettingsNode {
+public class GeneralPrinterSettings extends AbstractSettingsPanel {
     private static final Icon ICON = new ImageIcon(GeneralPrinterSettings.class.getClassLoader().getResource("icons/cog.png"));
     private final List<? extends JComponent> components;
     private final JLabel printerSettingName = new JLabel();
@@ -64,7 +64,7 @@ public class GeneralPrinterSettings implements SettingsNode {
     }
 
     @Override
-    public List<? extends JComponent> getFormComponents() {
+    List<? extends JComponent> getFormComponents() {
         return components;
     }
 
@@ -155,10 +155,5 @@ public class GeneralPrinterSettings implements SettingsNode {
                 "y (mm/min): "), maximumFeedrateYField, new JLabel("z (mm/min): "), maximumFeedrateZField);
         panel.addRow(new JLabel("Extruders: "), new JSpinner(extrudersSpinnerModel));
         return panel;
-    }
-
-    @Override
-    public boolean needPadding() {
-        return true;
     }
 }

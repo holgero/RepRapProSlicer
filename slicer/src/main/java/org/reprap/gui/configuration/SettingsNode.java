@@ -18,10 +18,8 @@
  */
 package org.reprap.gui.configuration;
 
-import java.util.List;
-
 import javax.swing.Icon;
-import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 import org.reprap.configuration.Configuration;
 
@@ -31,11 +29,9 @@ interface SettingsNode {
 
     String getTitle();
 
-    List<? extends JComponent> getFormComponents();
-
     void setValues(Configuration configuration);
 
     void getValues(Configuration configuration);
 
-    boolean needPadding();
+    JPanel getPanel();
 }
