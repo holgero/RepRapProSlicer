@@ -32,14 +32,11 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
-import org.reprap.configuration.Configuration;
 import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.PrinterSetting;
 
-public class GeneralPrinterSettings extends AbstractSettingsPanel {
+class GeneralPrinterSettings extends AbstractPrinterSettingPanel {
     private static final Icon ICON = new ImageIcon(GeneralPrinterSettings.class.getClassLoader().getResource("icons/cog.png"));
-    private final List<? extends JComponent> components;
-    private final JLabel printerSettingName = new JLabel();
     private final JTextField bedSizeXField = new JTextField();
     private final JTextField bedSizeYField = new JTextField();
     private final JTextField maximumZField = new JTextField();
@@ -49,8 +46,8 @@ public class GeneralPrinterSettings extends AbstractSettingsPanel {
     private final JTextField maximumFeedrateZField = new JTextField();
     private final SpinnerNumberModel extrudersSpinnerModel = new SpinnerNumberModel(1, 1, 99, 1);
 
-    public GeneralPrinterSettings() {
-        components = createComponents();
+    GeneralPrinterSettings() {
+        addComponents(createComponents(), true);
     }
 
     @Override
@@ -64,17 +61,7 @@ public class GeneralPrinterSettings extends AbstractSettingsPanel {
     }
 
     @Override
-    List<? extends JComponent> getFormComponents() {
-        return components;
-    }
-
-    @Override
-    public void setValues(final Configuration configuration) {
-        setValues(configuration.getCurrentConfiguration().getPrinterSetting());
-    }
-
-    private void setValues(final PrinterSetting printerSetting) {
-        printerSettingName.setText(printerSetting.getName());
+    void setValues(final PrinterSetting printerSetting) {
         bedSizeXField.setText(Double.toString(printerSetting.getBedSizeX()));
         bedSizeYField.setText(Double.toString(printerSetting.getBedSizeY()));
         maximumZField.setText(Double.toString(printerSetting.getMaximumZ()));
@@ -86,15 +73,7 @@ public class GeneralPrinterSettings extends AbstractSettingsPanel {
     }
 
     @Override
-    public void getValues(final Configuration configuration) {
-        getValues(configuration.getCurrentConfiguration().getPrinterSetting());
-    }
-
-    private void getValues(final PrinterSetting printerSetting) {
-        if (!printerSetting.getName().equals(printerSettingName.getText())) {
-            throw new IllegalStateException("My printer setting is " + printerSettingName.getText()
-                    + ", but current printer setting is " + printerSetting.getName() + ".");
-        }
+    void getValues(final PrinterSetting printerSetting) {
         printerSetting.setBedSizeX(fieldToDouble(bedSizeXField));
         printerSetting.setBedSizeY(fieldToDouble(bedSizeYField));
         printerSetting.setMaximumZ(fieldToDouble(maximumZField));
@@ -123,17 +102,10 @@ public class GeneralPrinterSettings extends AbstractSettingsPanel {
 
     private List<? extends JComponent> createComponents() {
         final List<JComponent> result = new ArrayList<>();
-        result.add(createNamePanel());
         result.add(createSizePanel());
         result.add(createFirmwarePanel());
         result.add(createCapabilitiesPanel());
         return Collections.unmodifiableList(result);
-    }
-
-    private JComponent createNamePanel() {
-        final JPanel result = new JPanel();
-        result.add(printerSettingName);
-        return result;
     }
 
     private JPanel createSizePanel() {

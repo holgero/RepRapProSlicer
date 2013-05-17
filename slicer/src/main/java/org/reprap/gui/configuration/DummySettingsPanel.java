@@ -31,7 +31,7 @@ import javax.swing.border.TitledBorder;
 
 import org.reprap.configuration.Configuration;
 
-class DummySettingsPanel extends AbstractSettingsPanel {
+class DummySettingsPanel extends AbstractSettingPanel {
     private static final Icon DEFAULT_ICON = new ImageIcon(DummySettingsPanel.class.getClassLoader().getResource(
             "icons/wrench.png"));
     private final String title;
@@ -39,6 +39,7 @@ class DummySettingsPanel extends AbstractSettingsPanel {
 
     DummySettingsPanel(final String title) {
         this.title = title;
+        addComponents(getFormComponents(title), true);
     }
 
     @Override
@@ -51,8 +52,7 @@ class DummySettingsPanel extends AbstractSettingsPanel {
         return icon;
     }
 
-    @Override
-    List<? extends JComponent> getFormComponents() {
+    private static List<? extends JComponent> getFormComponents(final String title) {
         final JPanel box = new JPanel();
         box.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), title));
         box.add(new JLabel(title));

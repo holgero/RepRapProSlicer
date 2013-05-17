@@ -25,14 +25,15 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 
-import org.reprap.configuration.Configuration;
+import org.reprap.configuration.PrinterSetting;
 
-public class ExtruderPanel extends AbstractSettingsPanel {
+class ExtruderPanel extends AbstractPrinterSettingPanel {
     private static final Icon ICON = new ImageIcon(ExtruderPanel.class.getClassLoader().getResource("icons/funnel.png"));
     private final int number;
 
-    public ExtruderPanel(final int number) {
+    ExtruderPanel(final int number) {
         this.number = number;
+        addComponents(getFormComponents(), true);
     }
 
     @Override
@@ -45,20 +46,18 @@ public class ExtruderPanel extends AbstractSettingsPanel {
         return "Extruder " + number;
     }
 
-    @Override
-    List<? extends JComponent> getFormComponents() {
+    private static List<? extends JComponent> getFormComponents() {
         // TODO Auto-generated method stub
         return Collections.emptyList();
     }
 
     @Override
-    public void setValues(final Configuration configuration) {
+    void setValues(final PrinterSetting printerSetting) {
         // TODO Auto-generated method stub
     }
 
     @Override
-    public void getValues(final Configuration configuration) {
+    void getValues(final PrinterSetting printerSetting) {
         // TODO Auto-generated method stub
     }
-
 }

@@ -27,13 +27,13 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-abstract class AbstractSettingsPanel implements SettingsNode {
+abstract class AbstractSettingPanel implements SettingsNode {
 
-    @Override
-    public JPanel getPanel() {
-        final JPanel result = new JPanel();
-        result.setLayout(new GridBagLayout());
-        final GridBagConstraints constraints = new GridBagConstraints();
+    private final JPanel panel = new JPanel();
+    private final GridBagConstraints constraints = new GridBagConstraints();
+
+    public AbstractSettingPanel() {
+        panel.setLayout(new GridBagLayout());
         constraints.insets = new Insets(2, 2, 2, 2);
         constraints.fill = GridBagConstraints.BOTH;
         constraints.anchor = GridBagConstraints.FIRST_LINE_START;
@@ -41,15 +41,25 @@ abstract class AbstractSettingsPanel implements SettingsNode {
         constraints.gridy = 0;
         constraints.weightx = 1.0;
         constraints.weighty = 1.0;
-        for (final JComponent component : getFormComponents()) {
-            result.add(component, constraints);
-            constraints.gridy++;
-        }
-        constraints.weighty = 1000.0;
-        result.add(new JLabel(), constraints);
-
-        return result;
     }
 
-    abstract List<? extends JComponent> getFormComponents();
+    @Override
+    public JPanel getPanel() {
+        return panel;
+    }
+
+    GridBagConstraints getConstraints() {
+        return constraints;
+    }
+
+    void addComponents(final List<? extends JComponent> components, final boolean pad) {
+        for (final JComponent component : components) {
+            panel.add(component, constraints);
+            constraints.gridy++;
+        }
+        if (pad) {
+            constraints.weighty = 1000.0;
+            panel.add(new JLabel(), constraints);
+        }
+    }
 }

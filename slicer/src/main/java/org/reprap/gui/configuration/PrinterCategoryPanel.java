@@ -41,7 +41,7 @@ import javax.swing.JOptionPane;
 import org.reprap.configuration.Configuration;
 import org.reprap.configuration.PrinterSetting;
 
-public class PrinterCategoryPanel extends AbstractSettingsPanel {
+public class PrinterCategoryPanel extends AbstractSettingPanel {
     private static final Icon ICON = createIcon("printer_empty.png");
 
     private static ImageIcon createIcon(final String name) {
@@ -94,6 +94,7 @@ public class PrinterCategoryPanel extends AbstractSettingsPanel {
                 printerCombo.removeItem(name);
             }
         };
+        addComponents(getFormComponents(), true);
     }
 
     @Override
@@ -106,8 +107,7 @@ public class PrinterCategoryPanel extends AbstractSettingsPanel {
         return "Printer Settings";
     }
 
-    @Override
-    List<? extends JComponent> getFormComponents() {
+    private List<? extends JComponent> getFormComponents() {
         final List<JComponent> result = new ArrayList<>();
         final SettingsBoxPanel panel = new SettingsBoxPanel("Printer");
         panel.addRow(new JLabel("Current printer: "), printerCombo);

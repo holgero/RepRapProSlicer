@@ -27,7 +27,6 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeSelectionModel;
 
 public class TopicSelectionTree extends JTree {
-    private final GeneralPrinterSettings generalPrinterSettings = new GeneralPrinterSettings();
 
     public TopicSelectionTree() {
         setModel(createConfigurationTreeModel());
@@ -41,10 +40,11 @@ public class TopicSelectionTree extends JTree {
         setBorder(new EmptyBorder(5, 10, 5, 10));
     }
 
-    private TreeModel createConfigurationTreeModel() {
+    private static TreeModel createConfigurationTreeModel() {
         final DefaultMutableTreeNode root = new DefaultMutableTreeNode();
         final DefaultTreeModel result = new DefaultTreeModel(root);
-        root.add(createNode(new PrinterCategoryPanel(), generalPrinterSettings, new CustomGcodePanel(), new ExtruderPanel(1)));
+        root.add(createNode(new PrinterCategoryPanel(), new GeneralPrinterSettings(), new CustomGcodePanel(),
+                new ExtruderPanel(1)));
         root.add(createNode(new DummySettingsPanel("Print Settings"), "Layers and Perimeters", "Infill", "Speed",
                 "Skirt and Brim", "Support material", "Output options", "Multiple Extruders", "Advanced"));
         root.add(createNode(new DummySettingsPanel("Material Settings"), "Filament", "Cooling"));
