@@ -103,4 +103,23 @@ public class Configuration {
         }
         return settingsNames.toArray(new String[settingsNames.size()]);
     }
+
+    public PrinterSetting findPrinterSetting(final String name) {
+        for (final PrinterSetting printerSetting : printerSettings) {
+            if (printerSetting.getName().equals(name)) {
+                return printerSetting;
+            }
+        }
+        return null;
+    }
+
+    public PrinterSetting createSettingsCopy(final String newName, final String basedOn) {
+        final PrinterSetting baseSetting = findPrinterSetting(basedOn);
+        if (baseSetting == null) {
+            throw new IllegalStateException("Unknown printer setting >>" + baseSetting + "<<.");
+        }
+        final PrinterSetting result = new PrinterSetting(baseSetting);
+        result.setName(newName);
+        return result;
+    }
 }

@@ -67,6 +67,24 @@ public class PrinterSetting implements NamedSetting {
     public PrinterSetting() {
     }
 
+    PrinterSetting(final PrinterSetting other) {
+        name = other.name;
+        bedSizeX = other.bedSizeX;
+        bedSizeY = other.bedSizeY;
+        maximumZ = other.maximumZ;
+        buildPlatformStl = other.buildPlatformStl;
+        maximumFeedrateX = other.maximumFeedrateX;
+        maximumFeedrateY = other.maximumFeedrateY;
+        maximumFeedrateZ = other.maximumFeedrateZ;
+        relativeDistanceE = other.relativeDistanceE;
+        gCodePrologue = other.gCodePrologue;
+        gCodeEpilogue = other.gCodeEpilogue;
+        extruderSettings = new ExtruderSetting[other.extruderSettings.length];
+        for (int i = 0; i < other.extruderSettings.length; i++) {
+            extruderSettings[i] = new ExtruderSetting(other.extruderSettings[i]);
+        }
+    }
+
     @XmlTransient
     public double getBedSizeX() {
         return bedSizeX;

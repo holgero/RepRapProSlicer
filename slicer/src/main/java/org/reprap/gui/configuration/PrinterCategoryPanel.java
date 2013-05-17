@@ -22,7 +22,9 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.AbstractAction;
@@ -50,11 +52,33 @@ public class PrinterCategoryPanel implements SettingsNode {
     private final Action createNewAction;
     private final Action deleteAction;
     private final Set<String> toDelete = new HashSet<>();
+    private final Map<String, String> toAdd = new LinkedHashMap<>();
 
     PrinterCategoryPanel() {
         createNewAction = new AbstractAction("Create new Printer", createIcon("printer_add.png")) {
             @Override
             public void actionPerformed(final ActionEvent e) {
+                final String name = JOptionPane.showInputDialog("Select a name for the new printer setting",
+                        printerCombo.getSelectedItem());
+                if (name != null && !name.isEmpty()) {
+                    if (printerComboContains(name)) {
+                        JOptionPane.showMessageDialog(null, "A printer with the same name already exists",
+                                "Duplicate Printer Name", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    toAdd.put(name, (String) printerCombo.getSelectedItem());
+                    toDelete.remove(name);
+                    printerCombo.addItem(name);
+                }
+            }
+
+            private boolean printerComboContains(final String name) {
+                for (int i = 0; i < printerCombo.getItemCount(); i++) {
+                    if (printerCombo.getItemAt(i).equals(name)) {
+                        return true;
+                    }
+                }
+                return false;
             }
         };
         deleteAction = new AbstractAction("Delete Printer", createIcon("printer_delete.png")) {
@@ -65,9 +89,9 @@ public class PrinterCategoryPanel implements SettingsNode {
                             JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                final String printer = (String) printerCombo.getSelectedItem();
-                toDelete.add(printer);
-                printerCombo.removeItem(printer);
+                final String name = (String) printerCombo.getSelectedItem();
+                toDelete.add(name);
+                printerCombo.removeItem(name);
             }
         };
     }
@@ -101,6 +125,25 @@ public class PrinterCategoryPanel implements SettingsNode {
 
     @Override
     public void getValues(final Configuration configuration) {
+        performAdditions(configuration);
+        performDeletions(configuration);
+        final String printer = (String) printerCombo.getSelectedItem();
+        final PrinterSetting setting = configuration.findPrinterSetting(printer);
+        if (setting == null) {
+            throw new IllegalStateException("Unknown printer setting >>" + printer + "<< in combo box.");
+        }
+        configuration.getCurrentConfiguration().setPrinterSetting(setting);
+    }
+
+    private void performAdditions(final Configuration configuration) {
+        for (final String newName : toAdd.keySet()) {
+            final String basedOn = toAdd.get(newName);
+            configuration.getPrinterSettings().add(configuration.createSettingsCopy(newName, basedOn));
+        }
+        toAdd.clear();
+    }
+
+    private void performDeletions(final Configuration configuration) {
         final List<PrinterSetting> printerSettings = configuration.getPrinterSettings();
         for (final Iterator<PrinterSetting> iterator = printerSettings.iterator(); iterator.hasNext();) {
             final PrinterSetting printerSetting = iterator.next();
@@ -109,13 +152,5 @@ public class PrinterCategoryPanel implements SettingsNode {
             }
         }
         toDelete.clear();
-        final String printer = (String) printerCombo.getSelectedItem();
-        for (final PrinterSetting setting : printerSettings) {
-            if (setting.getName().equals(printer)) {
-                configuration.getCurrentConfiguration().setPrinterSetting(setting);
-                return;
-            }
-        }
-        throw new IllegalStateException("Unknown printer setting >>" + printer + "<< in combo box.");
     }
 }
