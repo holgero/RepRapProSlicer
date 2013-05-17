@@ -60,4 +60,9 @@ public class ExtruderPanel implements SettingsNode {
     public void getValues(final Configuration configuration) {
         // TODO Auto-generated method stub
     }
+
+    @Override
+    public boolean needPadding() {
+        return true;
+    }
 }

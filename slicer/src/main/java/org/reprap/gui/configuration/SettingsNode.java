@@ -37,4 +37,5 @@ interface SettingsNode {
 
     void getValues(Configuration configuration);
 
+    boolean needPadding();
 }

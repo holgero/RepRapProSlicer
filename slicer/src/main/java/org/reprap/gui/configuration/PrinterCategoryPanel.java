@@ -153,4 +153,9 @@ public class PrinterCategoryPanel implements SettingsNode {
         }
         toDelete.clear();
     }
+
+    @Override
+    public boolean needPadding() {
+        return true;
+    }
 }

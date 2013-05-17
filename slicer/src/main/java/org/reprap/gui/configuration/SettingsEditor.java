@@ -109,7 +109,7 @@ public class SettingsEditor extends JPanel implements TreeSelectionListener {
             formPanel.removeAll();
             final GridBagConstraints constraints = new GridBagConstraints();
             constraints.insets = new Insets(2, 2, 2, 2);
-            constraints.fill = GridBagConstraints.HORIZONTAL;
+            constraints.fill = GridBagConstraints.BOTH;
             constraints.anchor = GridBagConstraints.FIRST_LINE_START;
             constraints.gridx = 0;
             constraints.gridy = 0;
@@ -120,10 +120,12 @@ public class SettingsEditor extends JPanel implements TreeSelectionListener {
                 constraints.gridy++;
             }
             settings.setValues(configuration);
-            constraints.weighty = 1000.0;
-            formPanel.add(new JLabel(), constraints);
-            constraints.gridy++;
-            constraints.weighty = 1.0;
+            if (settings.needPadding()) {
+                constraints.weighty = 1000.0;
+                formPanel.add(new JLabel(), constraints);
+                constraints.gridy++;
+            }
+            constraints.weighty = 0;
             formPanel.add(new ButtonsPanel(this, configuration, settings), constraints);
             getParent().validate();
             repaint();

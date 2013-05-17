@@ -18,17 +18,28 @@
  */
 package org.reprap.gui.configuration;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 
 import org.reprap.configuration.Configuration;
+import org.reprap.configuration.PrinterSetting;
 
 public class CustomGcodePanel implements SettingsNode {
     private static final Icon ICON = new ImageIcon(CustomGcodePanel.class.getClassLoader().getResource("icons/script.png"));
+    private final JLabel printerSettingName = new JLabel();
+    private final JTextArea prologueTextArea = new JTextArea(2, 10);
+    private final JTextArea epilogueTextArea = new JTextArea(2, 10);
 
     @Override
     public Icon getIcon() {
@@ -42,17 +53,50 @@ public class CustomGcodePanel implements SettingsNode {
 
     @Override
     public List<? extends JComponent> getFormComponents() {
-        // TODO Auto-generated method stub
-        return Collections.emptyList();
+        final List<JComponent> result = new ArrayList<>();
+        final JPanel printerNamePanel = new JPanel();
+        printerNamePanel.add(printerSettingName);
+        result.add(printerNamePanel);
+        result.add(createTextAreaScrollPane(prologueTextArea, "Prologue"));
+        result.add(createTextAreaScrollPane(epilogueTextArea, "Epilogue"));
+        return result;
+    }
+
+    private static JScrollPane createTextAreaScrollPane(final JTextArea textArea, final String title) {
+        textArea.setLineWrap(true);
+        final JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), title));
+        return scrollPane;
     }
 
     @Override
     public void setValues(final Configuration configuration) {
-        // TODO Auto-generated method stub
+        setValues(configuration.getCurrentConfiguration().getPrinterSetting());
+    }
+
+    public void setValues(final PrinterSetting printerSetting) {
+        printerSettingName.setText(printerSetting.getName());
+        prologueTextArea.setText(printerSetting.getGcodePrologue());
+        epilogueTextArea.setText(printerSetting.getGcodeEpilogue());
     }
 
     @Override
     public void getValues(final Configuration configuration) {
-        // TODO Auto-generated method stub
+        getValues(configuration.getCurrentConfiguration().getPrinterSetting());
+    }
+
+    private void getValues(final PrinterSetting printerSetting) {
+        if (!printerSetting.getName().equals(printerSettingName.getText())) {
+            throw new IllegalStateException("My printer setting is " + printerSettingName.getText()
+                    + ", but current printer setting is " + printerSetting.getName() + ".");
+        }
+        printerSetting.setGcodePrologue(prologueTextArea.getText());
+        printerSetting.setGcodeEpilogue(epilogueTextArea.getText());
+    }
+
+    @Override
+    public boolean needPadding() {
+        return false;
     }
 }

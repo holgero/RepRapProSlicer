@@ -156,4 +156,9 @@ public class GeneralPrinterSettings implements SettingsNode {
         panel.addRow(new JLabel("Extruders: "), new JSpinner(extrudersSpinnerModel));
         return panel;
     }
+
+    @Override
+    public boolean needPadding() {
+        return true;
+    }
 }

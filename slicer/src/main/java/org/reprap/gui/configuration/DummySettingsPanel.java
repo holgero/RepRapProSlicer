@@ -66,4 +66,9 @@ class DummySettingsPanel implements SettingsNode {
     @Override
     public void getValues(final Configuration configuration) {
     }
+
+    @Override
+    public boolean needPadding() {
+        return true;
+    }
 }
