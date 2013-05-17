@@ -31,7 +31,6 @@ import javax.swing.border.EmptyBorder;
 import org.reprap.configuration.Configuration;
 
 public class ButtonsPanel extends JComponent {
-
     private final SettingsEditor settingsEditor;
     private final Configuration configuration;
     private final SettingsNode settings;
@@ -56,10 +55,6 @@ public class ButtonsPanel extends JComponent {
         constraints.weighty = 1;
         add(createRestoreButton(), constraints);
         constraints.gridx++;
-        constraints.weightx = 5;
-        add(createApplyButton(), constraints);
-        constraints.gridx++;
-        constraints.weightx = 1;
         add(createSaveButton(), constraints);
         constraints.gridx++;
     }
@@ -70,18 +65,6 @@ public class ButtonsPanel extends JComponent {
             @Override
             public void actionPerformed(final ActionEvent e) {
                 settings.setValues(configuration);
-            }
-        });
-        return button;
-    }
-
-    private JButton createApplyButton() {
-        final JButton button = new JButton("Apply");
-        button.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                settings.getValues(configuration);
-                settingsEditor.updateTree();
             }
         });
         return button;
