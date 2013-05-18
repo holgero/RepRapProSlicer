@@ -67,8 +67,11 @@ public class PrinterSetting implements NamedSetting {
     public PrinterSetting() {
     }
 
-    PrinterSetting(final PrinterSetting other) {
-        name = other.name;
+    PrinterSetting(final String newName, final PrinterSetting other) {
+        if (newName == null) {
+            throw new IllegalArgumentException("newName must not be null");
+        }
+        name = newName;
         bedSizeX = other.bedSizeX;
         bedSizeY = other.bedSizeY;
         maximumZ = other.maximumZ;

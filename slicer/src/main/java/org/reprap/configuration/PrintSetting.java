@@ -93,8 +93,11 @@ public class PrintSetting implements NamedSetting {
     public PrintSetting() {
     }
 
-    public PrintSetting(final PrintSetting other) {
-        name = other.name;
+    public PrintSetting(final String newName, final PrintSetting other) {
+        if (newName == null) {
+            throw new IllegalArgumentException("newName must not be null");
+        }
+        name = newName;
         layerHeight = other.layerHeight;
         verticalShells = other.verticalShells;
         horizontalShells = other.horizontalShells;

@@ -104,42 +104,34 @@ public class Configuration {
         return settingsNames.toArray(new String[settingsNames.size()]);
     }
 
-    public PrinterSetting findPrinterSetting(final String name) {
-        for (final PrinterSetting printerSetting : printerSettings) {
-            if (printerSetting.getName().equals(name)) {
-                return printerSetting;
+    public <T extends NamedSetting> T findSetting(final String name, final Class<T> clazz) {
+        final List<? extends NamedSetting> settings;
+        if (clazz == PrinterSetting.class) {
+            settings = printerSettings;
+        } else if (clazz == PrintSetting.class) {
+            settings = printSettings;
+        } else {
+            throw new IllegalArgumentException("unknown class: " + clazz);
+        }
+        for (final NamedSetting setting : settings) {
+            if (setting.getName().equals(name)) {
+                return clazz.cast(setting);
             }
         }
         return null;
     }
 
-    public PrinterSetting createPrinterSettingsCopy(final String newName, final String basedOn) {
-        final PrinterSetting baseSetting = findPrinterSetting(basedOn);
+    public <T extends NamedSetting> void createAndAddSettingsCopy(final String newName, final String basedOn,
+            final Class<T> clazz) {
+        final NamedSetting baseSetting = findSetting(basedOn, clazz);
         if (baseSetting == null) {
-            throw new IllegalStateException("Unknown printer setting >>" + baseSetting + "<<.");
+            throw new IllegalStateException("Unknown setting >>" + baseSetting + "<<.");
         }
-        final PrinterSetting result = new PrinterSetting(baseSetting);
-        result.setName(newName);
-        return result;
-    }
-
-    public PrintSetting findPrintSetting(final String name) {
-        for (final PrintSetting printSetting : printSettings) {
-            if (printSetting.getName().equals(name)) {
-                return printSetting;
-            }
+        if (baseSetting instanceof PrinterSetting) {
+            printerSettings.add(new PrinterSetting(newName, (PrinterSetting) baseSetting));
+        } else {
+            printSettings.add(new PrintSetting(newName, (PrintSetting) baseSetting));
         }
-        return null;
-    }
-
-    public PrintSetting createPrintSettingsCopy(final String newName, final String basedOn) {
-        final PrintSetting baseSetting = findPrintSetting(basedOn);
-        if (baseSetting == null) {
-            throw new IllegalStateException("Unknown print setting >>" + baseSetting + "<<.");
-        }
-        final PrintSetting result = new PrintSetting(baseSetting);
-        result.setName(newName);
-        return result;
     }
 
 }
