@@ -18,12 +18,26 @@
  */
 package org.reprap.gui.configuration.printsetting;
 
+import java.util.Collections;
+
 import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 
 import org.reprap.configuration.PrintSetting;
+import org.reprap.gui.configuration.common.SettingsBoxPanel;
 
 public class OutputSettingsPanel extends AbstractPrintSettingPanel {
     private static final Icon ICON = createIcon("page_white_go.png");
+    private final JCheckBox verboseGCode = new JCheckBox();
+    private final JCheckBox pathOptimize = new JCheckBox();
+
+    public OutputSettingsPanel() {
+        final SettingsBoxPanel box = new SettingsBoxPanel("Output");
+        box.addRow(new JLabel("Verbose G-code: "), verboseGCode);
+        box.addRow(new JLabel("Optimize paths: "), pathOptimize);
+        addComponents(Collections.singletonList(box), true);
+    }
 
     @Override
     public Icon getIcon() {
@@ -37,14 +51,13 @@ public class OutputSettingsPanel extends AbstractPrintSettingPanel {
 
     @Override
     void setValues(final PrintSetting printSetting) {
-        // TODO Auto-generated method stub
-
+        verboseGCode.setSelected(printSetting.isVerboseGCode());
+        pathOptimize.setSelected(printSetting.isPathOptimize());
     }
 
     @Override
     void getValues(final PrintSetting printSetting) {
-        // TODO Auto-generated method stub
-
+        printSetting.setVerboseGCode(verboseGCode.isSelected());
+        printSetting.setPathOptimize(pathOptimize.isSelected());
     }
-
 }
