@@ -18,12 +18,46 @@
  */
 package org.reprap.gui.configuration.printsetting;
 
-import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.List;
 
+import javax.swing.Icon;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
+
+import org.reprap.configuration.FillPattern;
+import org.reprap.configuration.LinearFillPattern;
 import org.reprap.configuration.PrintSetting;
+import org.reprap.configuration.RectilinearFillPattern;
+import org.reprap.gui.configuration.common.SettingsBoxPanel;
 
 public class InfillSettingsPanel extends AbstractPrintSettingPanel {
     private static final Icon ICON = createIcon("paintcan.png");
+    private final JTextField fillDensity = new JTextField();
+    private final JComboBox<String> pattern = new JComboBox<String>(new String[] { "rectilinear", "linear" });
+    private final JTextField fillAngle = new JTextField();
+    private final JTextField infillOverlap = new JTextField();
+
+    public InfillSettingsPanel() {
+        addComponents(createComponents(), true);
+    }
+
+    private List<? extends JComponent> createComponents() {
+        final ArrayList<JComponent> result = new ArrayList<>();
+        result.add(createInfillBox());
+        return result;
+    }
+
+    private SettingsBoxPanel createInfillBox() {
+        final SettingsBoxPanel result = new SettingsBoxPanel("Infill");
+        result.addRow(new JLabel("Fill density (%): "), fillDensity);
+        result.addRow(new JLabel("Fill pattern: "), pattern);
+        result.addRow(new JLabel("Fill angle (degrees): "), fillAngle);
+        result.addRow(new JLabel("Overlapp (mm): "), infillOverlap);
+        return result;
+    }
 
     @Override
     public Icon getIcon() {
@@ -37,14 +71,32 @@ public class InfillSettingsPanel extends AbstractPrintSettingPanel {
 
     @Override
     void setValues(final PrintSetting printSetting) {
-        // TODO Auto-generated method stub
-
+        fillDensity.setText(Double.toString(printSetting.getFillDensity()));
+        final FillPattern fillPattern = printSetting.getFillPattern();
+        if (fillPattern instanceof RectilinearFillPattern) {
+            pattern.setSelectedItem("rectilinear");
+            fillAngle.setText(Double.toString(((RectilinearFillPattern) fillPattern).getFillAngle()));
+        } else if (fillPattern instanceof LinearFillPattern) {
+            pattern.setSelectedItem("linear");
+            fillAngle.setText(Double.toString(((LinearFillPattern) fillPattern).getFillAngle()));
+        }
+        infillOverlap.setText(Double.toString(printSetting.getInfillOverlap()));
     }
 
     @Override
     void getValues(final PrintSetting printSetting) {
-        // TODO Auto-generated method stub
-
+        printSetting.setFillDensity(fieldToDouble(fillDensity));
+        final double fillAngleValue = fieldToDouble(fillAngle);
+        switch ((String) pattern.getSelectedItem()) {
+        case "rectilinear":
+            printSetting.setFillPattern(new RectilinearFillPattern(fillAngleValue));
+            break;
+        case "linear":
+            printSetting.setFillPattern(new LinearFillPattern(fillAngleValue));
+            break;
+        default:
+            throw new IllegalStateException("Illegal fill pattern name: " + pattern.getSelectedItem());
+        }
+        printSetting.setInfillOverlap(fieldToDouble(infillOverlap));
     }
-
 }

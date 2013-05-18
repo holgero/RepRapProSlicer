@@ -56,7 +56,7 @@ public class LayersSettingsPanel extends AbstractPrintSettingPanel {
 
     private SettingsBoxPanel createLayerHeightPanel() {
         final SettingsBoxPanel result = new SettingsBoxPanel("Layer height");
-        result.addRow(new JLabel("Layer height: "), layerHeight, new JLabel(" mm"));
+        result.addRow(new JLabel("Layer height (mm): "), layerHeight);
         return result;
     }
 
@@ -72,7 +72,7 @@ public class LayersSettingsPanel extends AbstractPrintSettingPanel {
     private SettingsBoxPanel createArcsPanel() {
         final SettingsBoxPanel result = new SettingsBoxPanel("Arc compensation");
         result.addRow(new JLabel("Arc compensation factor: "), arcCompensation);
-        result.addRow(new JLabel("Arc short sides: "), arcShortSides, new JLabel(" mm"));
+        result.addRow(new JLabel("Arc short sides (mm): "), arcShortSides);
         return result;
     }
 

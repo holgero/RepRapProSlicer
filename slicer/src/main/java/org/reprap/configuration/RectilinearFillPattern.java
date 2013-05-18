@@ -18,10 +18,10 @@
  */
 package org.reprap.configuration;
 
-final class RectilinearFillPattern implements FillPattern {
+public final class RectilinearFillPattern implements FillPattern {
     private final double fillAngle;
 
-    RectilinearFillPattern(final double fillAngle) {
+    public RectilinearFillPattern(final double fillAngle) {
         this.fillAngle = fillAngle;
     }
 
@@ -34,7 +34,7 @@ final class RectilinearFillPattern implements FillPattern {
         }
     }
 
-    double getFillAngle() {
+    public double getFillAngle() {
         return fillAngle;
     }
 }
