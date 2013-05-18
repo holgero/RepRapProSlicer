@@ -23,6 +23,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.List;
 
+import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -66,5 +67,9 @@ abstract class AbstractSettingPanel implements SettingsNode {
 
     static final double fieldToDouble(final JTextField field) {
         return Double.parseDouble(field.getText());
+    }
+
+    static ImageIcon createIcon(final String name) {
+        return new ImageIcon(AbstractSettingPanel.class.getClassLoader().getResource("icons/" + name));
     }
 }

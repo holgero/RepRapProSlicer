@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -33,7 +32,7 @@ import javax.swing.border.TitledBorder;
 import org.reprap.configuration.PrinterSetting;
 
 class CustomGcodePanel extends AbstractPrinterSettingPanel {
-    private static final Icon ICON = new ImageIcon(CustomGcodePanel.class.getClassLoader().getResource("icons/script.png"));
+    private static final Icon ICON = createIcon("script.png");
     private final JTextArea prologueTextArea = new JTextArea(2, 10);
     private final JTextArea epilogueTextArea = new JTextArea(2, 10);
 

@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -36,7 +35,7 @@ import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.PrinterSetting;
 
 class GeneralPrinterSettings extends AbstractPrinterSettingPanel {
-    private static final Icon ICON = new ImageIcon(GeneralPrinterSettings.class.getClassLoader().getResource("icons/cog.png"));
+    private static final Icon ICON = createIcon("cog.png");
     private final JTextField bedSizeXField = new JTextField();
     private final JTextField bedSizeYField = new JTextField();
     private final JTextField maximumZField = new JTextField();

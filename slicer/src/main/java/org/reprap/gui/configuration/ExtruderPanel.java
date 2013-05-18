@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
@@ -31,7 +30,7 @@ import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.PrinterSetting;
 
 class ExtruderPanel extends AbstractPrinterSettingPanel {
-    private static final Icon ICON = new ImageIcon(ExtruderPanel.class.getClassLoader().getResource("icons/funnel.png"));
+    private static final Icon ICON = createIcon("funnel.png");
 
     private final JTextField nozzleDiameter = new JTextField();
     private final JTextField extrudeRatio = new JTextField();

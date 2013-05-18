@@ -31,7 +31,6 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -43,10 +42,6 @@ import org.reprap.configuration.PrinterSetting;
 
 public class PrinterCategoryPanel extends AbstractSettingPanel {
     private static final Icon ICON = createIcon("printer_empty.png");
-
-    private static ImageIcon createIcon(final String name) {
-        return new ImageIcon(PrinterCategoryPanel.class.getClassLoader().getResource("icons/" + name));
-    }
 
     private final JComboBox<String> printerCombo = new JComboBox<>();
     private final Action createNewAction;

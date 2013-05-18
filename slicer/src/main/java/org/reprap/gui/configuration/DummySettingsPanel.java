@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -32,10 +31,8 @@ import javax.swing.border.TitledBorder;
 import org.reprap.configuration.Configuration;
 
 class DummySettingsPanel extends AbstractSettingPanel {
-    private static final Icon DEFAULT_ICON = new ImageIcon(DummySettingsPanel.class.getClassLoader().getResource(
-            "icons/wrench.png"));
+    private static final Icon ICON = createIcon("wrench.png");
     private final String title;
-    private final Icon icon = DEFAULT_ICON;
 
     DummySettingsPanel(final String title) {
         this.title = title;
@@ -49,7 +46,7 @@ class DummySettingsPanel extends AbstractSettingPanel {
 
     @Override
     public Icon getIcon() {
-        return icon;
+        return ICON;
     }
 
     private static List<? extends JComponent> getFormComponents(final String title) {

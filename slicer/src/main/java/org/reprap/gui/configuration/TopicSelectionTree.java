@@ -45,8 +45,8 @@ public class TopicSelectionTree extends JTree {
         final DefaultTreeModel result = new DefaultTreeModel(root);
         root.add(createNode(new PrinterCategoryPanel(), new GeneralPrinterSettings(), new CustomGcodePanel(),
                 new ExtruderPanel(1)));
-        root.add(createNode(new DummySettingsPanel("Print Settings"), "Layers and Perimeters", "Infill", "Speed",
-                "Skirt and Brim", "Support material", "Output options", "Multiple Extruders", "Advanced"));
+        root.add(createNode(new DummySettingsPanel("Print Settings"), new LayersSettingsPanel(), new InfillSettingsPanel(),
+                new SpeedSettingsPanel(), new SkirtBrimSettingsPanel(), new SupportSettingPanel(), new OutputSettingsPanel()));
         root.add(createNode(new DummySettingsPanel("Material Settings"), "Filament", "Cooling"));
 
         return result;
