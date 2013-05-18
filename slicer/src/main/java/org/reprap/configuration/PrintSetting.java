@@ -23,6 +23,7 @@ import java.io.File;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlID;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 public class PrintSetting implements NamedSetting {
@@ -125,59 +126,66 @@ public class PrintSetting implements NamedSetting {
         pathOptimize = other.pathOptimize;
     }
 
+    @XmlTransient
     public double getLayerHeight() {
         return layerHeight;
     }
 
-    void setLayerHeight(final double layerHeight) {
+    public void setLayerHeight(final double layerHeight) {
         this.layerHeight = layerHeight;
     }
 
+    @XmlTransient
     public int getVerticalShells() {
         return verticalShells;
     }
 
-    void setVerticalShells(final int verticalShells) {
+    public void setVerticalShells(final int verticalShells) {
         this.verticalShells = verticalShells;
     }
 
+    @XmlTransient
     public int getHorizontalShells() {
         return horizontalShells;
     }
 
-    void setHorizontalShells(final int horizontalShells) {
+    public void setHorizontalShells(final int horizontalShells) {
         this.horizontalShells = horizontalShells;
     }
 
+    @XmlTransient
     public double getFillDensity() {
         return fillDensity;
     }
 
-    void setFillDensity(final double fillDensity) {
+    public void setFillDensity(final double fillDensity) {
         this.fillDensity = fillDensity;
     }
 
+    @XmlTransient
     public FillPattern getFillPattern() {
         return pattern;
     }
 
-    void setFillPattern(final FillPattern pattern) {
+    public void setFillPattern(final FillPattern pattern) {
         this.pattern = pattern;
     }
 
+    @XmlTransient
     public double getPerimeterSpeed() {
         return perimeterSpeed;
     }
 
-    void setPerimeterSpeed(final double perimeterSpeed) {
+    public void setPerimeterSpeed(final double perimeterSpeed) {
         this.perimeterSpeed = perimeterSpeed;
     }
 
+    @XmlTransient
     public double getInfillSpeed() {
         return infillSpeed;
     }
 
-    void setInfillSpeed(final double infillSpeed) {
+    public void setInfillSpeed(final double infillSpeed) {
         this.infillSpeed = infillSpeed;
     }
 
@@ -185,15 +193,16 @@ public class PrintSetting implements NamedSetting {
         return skirt;
     }
 
-    void setSkirt(final boolean skirt) {
+    public void setSkirt(final boolean skirt) {
         this.skirt = skirt;
     }
 
+    @XmlTransient
     public int getBrimLines() {
         return brimLines;
     }
 
-    void setBrimLines(final int brimLines) {
+    public void setBrimLines(final int brimLines) {
         this.brimLines = brimLines;
     }
 
@@ -201,23 +210,25 @@ public class PrintSetting implements NamedSetting {
         return shield;
     }
 
-    void setShield(final boolean shield) {
+    public void setShield(final boolean shield) {
         this.shield = shield;
     }
 
+    @XmlTransient
     public int getDumpX() {
         return dumpX;
     }
 
-    void setDumpX(final int dumpX) {
+    public void setDumpX(final int dumpX) {
         this.dumpX = dumpX;
     }
 
+    @XmlTransient
     public int getDumpY() {
         return dumpY;
     }
 
-    void setDumpY(final int dumpY) {
+    public void setDumpY(final int dumpY) {
         this.dumpY = dumpY;
     }
 
@@ -225,95 +236,106 @@ public class PrintSetting implements NamedSetting {
         return support;
     }
 
-    void setSupport(final boolean support) {
+    public void setSupport(final boolean support) {
         this.support = support;
     }
 
+    @XmlTransient
     public FillPattern getSupportPattern() {
         return supportPattern;
     }
 
-    void setSupportPattern(final FillPattern supportPattern) {
+    public void setSupportPattern(final FillPattern supportPattern) {
         this.supportPattern = supportPattern;
     }
 
+    @XmlTransient
     public double getSupportSpacing() {
         return supportSpacing;
     }
 
-    void setSupportSpacing(final double supportSpacing) {
+    public void setSupportSpacing(final double supportSpacing) {
         this.supportSpacing = supportSpacing;
     }
 
+    @XmlTransient
     public int getRaftLayers() {
         return raftLayers;
     }
 
-    void setRaftLayers(final int raftLayers) {
+    public void setRaftLayers(final int raftLayers) {
         this.raftLayers = raftLayers;
     }
 
+    @XmlTransient
     public boolean isVerboseGCode() {
         return verboseGCode;
     }
 
-    void setVerboseGCode(final boolean verboseGCode) {
+    public void setVerboseGCode(final boolean verboseGCode) {
         this.verboseGCode = verboseGCode;
     }
 
+    @XmlTransient
     public int getSupportExtruder() {
         return supportExtruder;
     }
 
-    void setSupportExtruder(final int supportExtruder) {
+    public void setSupportExtruder(final int supportExtruder) {
         this.supportExtruder = supportExtruder;
     }
 
+    @XmlTransient
     public boolean isPathOptimize() {
         return pathOptimize;
     }
 
-    void setPathOptimize(final boolean pathOptimize) {
+    public void setPathOptimize(final boolean pathOptimize) {
         this.pathOptimize = pathOptimize;
     }
 
+    @XmlTransient
     public boolean isInsideOut() {
         return insideOut;
     }
 
-    void setInsideOut(final boolean insideOut) {
+    public void setInsideOut(final boolean insideOut) {
         this.insideOut = insideOut;
     }
 
+    @XmlTransient
     public boolean isMiddleStart() {
         return middleStart;
     }
 
-    void setMiddleStart(final boolean middleStart) {
+    public void setMiddleStart(final boolean middleStart) {
         this.middleStart = middleStart;
     }
 
+    @XmlTransient
     public double getArcCompensation() {
         return arcCompensation;
     }
 
-    void setArcCompensation(final double arcCompensation) {
+    public void setArcCompensation(final double arcCompensation) {
         this.arcCompensation = arcCompensation;
     }
 
+    @XmlTransient
     public double getArcShortSides() {
         return arcShortSides;
     }
 
-    void setArcShortSides(final double arcShortSides) {
+    public void setArcShortSides(final double arcShortSides) {
         this.arcShortSides = arcShortSides;
     }
 
+    @XmlTransient
     public double getInfillOverlap() {
         return infillOverlap;
     }
 
-    void setInfillOverlap(final double infillOverlap) {
+    public void setInfillOverlap(final double infillOverlap) {
         this.infillOverlap = infillOverlap;
     }
 
@@ -321,7 +343,7 @@ public class PrintSetting implements NamedSetting {
         return new File(Configuration.getReprapDirectory(), shieldStlFile);
     }
 
-    void setShieldStlFile(final String shieldStlFile) {
+    public void setShieldStlFile(final String shieldStlFile) {
         this.shieldStlFile = shieldStlFile;
     }
 
