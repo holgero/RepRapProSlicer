@@ -90,6 +90,38 @@ public class PrintSetting implements NamedSetting {
     @XmlElement
     private boolean pathOptimize; // boolean true
 
+    public PrintSetting() {
+    }
+
+    public PrintSetting(final PrintSetting other) {
+        name = other.name;
+        layerHeight = other.layerHeight;
+        verticalShells = other.verticalShells;
+        horizontalShells = other.horizontalShells;
+        insideOut = other.insideOut;
+        middleStart = other.middleStart;
+        arcCompensation = other.arcCompensation;
+        arcShortSides = other.arcShortSides;
+        fillDensity = other.fillDensity;
+        pattern = other.pattern;
+        infillOverlap = other.infillOverlap;
+        perimeterSpeed = other.perimeterSpeed;
+        infillSpeed = other.infillSpeed;
+        skirt = other.skirt;
+        brimLines = other.brimLines;
+        shield = other.shield;
+        shieldStlFile = other.shieldStlFile;
+        dumpX = other.dumpX;
+        dumpY = other.dumpY;
+        support = other.support;
+        supportExtruder = other.supportExtruder;
+        supportPattern = other.supportPattern;
+        supportSpacing = other.supportSpacing;
+        raftLayers = other.raftLayers;
+        verboseGCode = other.verboseGCode;
+        pathOptimize = other.pathOptimize;
+    }
+
     public double getLayerHeight() {
         return layerHeight;
     }

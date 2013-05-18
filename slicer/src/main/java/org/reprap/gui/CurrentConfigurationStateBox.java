@@ -35,19 +35,17 @@ import javax.swing.border.TitledBorder;
 import org.reprap.configuration.Configuration;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.MaterialSetting;
-import org.reprap.configuration.PrintSetting;
 import org.reprap.configuration.PrinterSetting;
 
 class CurrentConfigurationStateBox extends JPanel implements ItemListener {
     private static final Insets SMALL_INSETS = new Insets(2, 2, 2, 2);
     private final Configuration configuration;
-    private final JLabel printerLabel = new JLabel();
-    private final JComboBox<String> printSettingsCombo;
+    private final JLabel printerSettingLabel = new JLabel();
+    private final JLabel printSettingLabel = new JLabel();
     private final List<JComboBox<String>> materialComboBoxes = new ArrayList<>();
 
     CurrentConfigurationStateBox(final Configuration configuration) {
         this.configuration = configuration;
-        printSettingsCombo = new JComboBox<>(Configuration.getNames(configuration.getPrintSettings()));
         setLayout(new GridBagLayout());
         setBorder(new TitledBorder(new EtchedBorder(), "Current Settings"));
         addComponents();
@@ -56,7 +54,6 @@ class CurrentConfigurationStateBox extends JPanel implements ItemListener {
     }
 
     private void registerMe() {
-        printSettingsCombo.addItemListener(this);
         for (final JComboBox<String> combo : materialComboBoxes) {
             combo.addItemListener(this);
         }
@@ -64,8 +61,8 @@ class CurrentConfigurationStateBox extends JPanel implements ItemListener {
 
     void updateFromConfiguration() {
         final CurrentConfiguration currentConfiguration = configuration.getCurrentConfiguration();
-        printerLabel.setText(currentConfiguration.getPrinterSetting().getName());
-        printSettingsCombo.setSelectedItem(currentConfiguration.getPrintSetting().getName());
+        printerSettingLabel.setText(currentConfiguration.getPrinterSetting().getName());
+        printSettingLabel.setText(currentConfiguration.getPrintSetting().getName());
         updateMaterialCombos(currentConfiguration);
     }
 
@@ -90,13 +87,13 @@ class CurrentConfigurationStateBox extends JPanel implements ItemListener {
         constraints.insets = SMALL_INSETS;
         add(new JLabel("Printer: "), constraints);
         constraints.gridx++;
-        add(printerLabel, constraints);
+        add(printerSettingLabel, constraints);
         constraints.gridx = 0;
         constraints.gridy++;
         constraints.gridwidth = GridBagConstraints.REMAINDER;
-        add(new JLabel("Print Settings"), constraints);
+        add(new JLabel("Print Settings: "), constraints);
         constraints.gridy++;
-        add(printSettingsCombo, constraints);
+        add(printSettingLabel, constraints);
         constraints.gridy++;
         add(new JLabel("Material"), constraints);
         constraints.gridy++;
@@ -126,20 +123,12 @@ class CurrentConfigurationStateBox extends JPanel implements ItemListener {
         if (e.getStateChange() == ItemEvent.SELECTED) {
             final JComboBox<?> source = (JComboBox<?>) e.getSource();
             final CurrentConfiguration currentConfiguration = configuration.getCurrentConfiguration();
-            if (source == printSettingsCombo) {
-                for (final PrintSetting printSetting : configuration.getPrintSettings()) {
-                    if (printSetting.getName().equals(e.getItem())) {
-                        currentConfiguration.setPrintSetting(printSetting);
-                    }
-                }
-            } else {
-                for (int i = 0; i < materialComboBoxes.size(); i++) {
-                    final JComboBox<?> materialCombo = materialComboBoxes.get(i);
-                    if (source == materialCombo) {
-                        for (final MaterialSetting materialSetting : configuration.getMaterials()) {
-                            if (materialSetting.getName().equals(e.getItem())) {
-                                currentConfiguration.setMaterial(i, materialSetting);
-                            }
+            for (int i = 0; i < materialComboBoxes.size(); i++) {
+                final JComboBox<?> materialCombo = materialComboBoxes.get(i);
+                if (source == materialCombo) {
+                    for (final MaterialSetting materialSetting : configuration.getMaterials()) {
+                        if (materialSetting.getName().equals(e.getItem())) {
+                            currentConfiguration.setMaterial(i, materialSetting);
                         }
                     }
                 }

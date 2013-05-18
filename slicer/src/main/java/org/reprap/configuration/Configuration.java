@@ -113,7 +113,7 @@ public class Configuration {
         return null;
     }
 
-    public PrinterSetting createSettingsCopy(final String newName, final String basedOn) {
+    public PrinterSetting createPrinterSettingsCopy(final String newName, final String basedOn) {
         final PrinterSetting baseSetting = findPrinterSetting(basedOn);
         if (baseSetting == null) {
             throw new IllegalStateException("Unknown printer setting >>" + baseSetting + "<<.");
@@ -122,4 +122,24 @@ public class Configuration {
         result.setName(newName);
         return result;
     }
+
+    public PrintSetting findPrintSetting(final String name) {
+        for (final PrintSetting printSetting : printSettings) {
+            if (printSetting.getName().equals(name)) {
+                return printSetting;
+            }
+        }
+        return null;
+    }
+
+    public PrintSetting createPrintSettingsCopy(final String newName, final String basedOn) {
+        final PrintSetting baseSetting = findPrintSetting(basedOn);
+        if (baseSetting == null) {
+            throw new IllegalStateException("Unknown print setting >>" + baseSetting + "<<.");
+        }
+        final PrintSetting result = new PrintSetting(baseSetting);
+        result.setName(newName);
+        return result;
+    }
+
 }

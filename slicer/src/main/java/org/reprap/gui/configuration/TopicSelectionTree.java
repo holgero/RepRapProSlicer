@@ -45,22 +45,17 @@ public class TopicSelectionTree extends JTree {
         final DefaultTreeModel result = new DefaultTreeModel(root);
         root.add(createNode(new PrinterCategoryPanel(), new GeneralPrinterSettings(), new CustomGcodePanel(),
                 new ExtruderPanel(1)));
-        root.add(createNode(new DummySettingsPanel("Print Settings"), new LayersSettingsPanel(), new InfillSettingsPanel(),
+        root.add(createNode(new PrintCategoryPanel(), new LayersSettingsPanel(), new InfillSettingsPanel(),
                 new SpeedSettingsPanel(), new SkirtBrimSettingsPanel(), new SupportSettingPanel(), new OutputSettingsPanel()));
-        root.add(createNode(new DummySettingsPanel("Material Settings"), "Filament", "Cooling"));
+        root.add(createNode(new DummySettingsPanel("Material Settings"), new FilamentSettingsPanel()));
 
         return result;
     }
 
-    private static MutableTreeNode createNode(final SettingsNode category, final Object... settings) {
+    private static MutableTreeNode createNode(final SettingsNode category, final SettingsNode... settings) {
         final DefaultMutableTreeNode node = new DefaultMutableTreeNode(category);
-        for (final Object setting : settings) {
-            if (setting instanceof String) {
-                final String textSetting = (String) setting;
-                node.add(new DefaultMutableTreeNode(new DummySettingsPanel(textSetting)));
-            } else {
-                node.add(new DefaultMutableTreeNode(setting));
-            }
+        for (final SettingsNode setting : settings) {
+            node.add(new DefaultMutableTreeNode(setting));
         }
         return node;
     }

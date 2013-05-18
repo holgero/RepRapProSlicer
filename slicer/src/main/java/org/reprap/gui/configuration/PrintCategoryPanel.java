@@ -38,55 +38,55 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 
 import org.reprap.configuration.Configuration;
-import org.reprap.configuration.PrinterSetting;
+import org.reprap.configuration.PrintSetting;
 
-public class PrinterCategoryPanel extends AbstractSettingPanel {
-    private static final Icon ICON = createIcon("printer_empty.png");
+public class PrintCategoryPanel extends AbstractSettingPanel {
+    private static final Icon ICON = createIcon("wrench.png");
 
-    private final JComboBox<String> printerCombo = new JComboBox<>();
+    private final JComboBox<String> printCombo = new JComboBox<>();
     private final Action createNewAction;
     private final Action deleteAction;
     private final Set<String> toDelete = new HashSet<>();
     private final Map<String, String> toAdd = new LinkedHashMap<>();
 
-    PrinterCategoryPanel() {
-        createNewAction = new AbstractAction("Create new Printer", createIcon("printer_add.png")) {
+    PrintCategoryPanel() {
+        createNewAction = new AbstractAction("Create new Print Setting", createIcon("add.png")) {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                final String name = JOptionPane.showInputDialog("Select a name for the new printer setting",
-                        printerCombo.getSelectedItem());
+                final String name = JOptionPane.showInputDialog("Select a name for the new print setting",
+                        printCombo.getSelectedItem());
                 if (name != null && !name.isEmpty()) {
-                    if (printerComboContains(name)) {
-                        JOptionPane.showMessageDialog(null, "A printer with the same name already exists",
-                                "Duplicate Printer Name", JOptionPane.ERROR_MESSAGE);
+                    if (printComboContains(name)) {
+                        JOptionPane.showMessageDialog(null, "A print setting with the same name already exists",
+                                "Duplicate Print Setting Name", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
-                    toAdd.put(name, (String) printerCombo.getSelectedItem());
+                    toAdd.put(name, (String) printCombo.getSelectedItem());
                     toDelete.remove(name);
-                    printerCombo.addItem(name);
+                    printCombo.addItem(name);
                 }
             }
 
-            private boolean printerComboContains(final String name) {
-                for (int i = 0; i < printerCombo.getItemCount(); i++) {
-                    if (printerCombo.getItemAt(i).equals(name)) {
+            private boolean printComboContains(final String name) {
+                for (int i = 0; i < printCombo.getItemCount(); i++) {
+                    if (printCombo.getItemAt(i).equals(name)) {
                         return true;
                     }
                 }
                 return false;
             }
         };
-        deleteAction = new AbstractAction("Delete Printer", createIcon("printer_delete.png")) {
+        deleteAction = new AbstractAction("Delete Print Setting", createIcon("delete.png")) {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                if (printerCombo.getItemCount() <= 1) {
-                    JOptionPane.showMessageDialog(null, "You cannot delete the last printer", "Only One Printer Left",
-                            JOptionPane.ERROR_MESSAGE);
+                if (printCombo.getItemCount() <= 1) {
+                    JOptionPane.showMessageDialog(null, "You cannot delete the last print setting",
+                            "Only One Print Setting Left", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                final String name = (String) printerCombo.getSelectedItem();
+                final String name = (String) printCombo.getSelectedItem();
                 toDelete.add(name);
-                printerCombo.removeItem(name);
+                printCombo.removeItem(name);
             }
         };
         addComponents(getFormComponents(), true);
@@ -99,13 +99,13 @@ public class PrinterCategoryPanel extends AbstractSettingPanel {
 
     @Override
     public String getTitle() {
-        return "Printer Settings";
+        return "Print Settings";
     }
 
     private List<? extends JComponent> getFormComponents() {
         final List<JComponent> result = new ArrayList<>();
-        final SettingsBoxPanel panel = new SettingsBoxPanel("Printer");
-        panel.addRow(new JLabel("Current printer: "), printerCombo);
+        final SettingsBoxPanel panel = new SettingsBoxPanel("Print Setting");
+        panel.addRow(new JLabel("Current print setting: "), printCombo);
         panel.addRow(new JLabel("Actions: "), new JButton(createNewAction), new JButton(deleteAction));
         result.add(panel);
         return result;
@@ -113,36 +113,36 @@ public class PrinterCategoryPanel extends AbstractSettingPanel {
 
     @Override
     public void setValues(final Configuration configuration) {
-        printerCombo.setModel(new DefaultComboBoxModel<String>(Configuration.getNames(configuration.getPrinterSettings())));
+        printCombo.setModel(new DefaultComboBoxModel<String>(Configuration.getNames(configuration.getPrintSettings())));
         toDelete.clear();
-        printerCombo.setSelectedItem(configuration.getCurrentConfiguration().getPrinterSetting().getName());
+        printCombo.setSelectedItem(configuration.getCurrentConfiguration().getPrintSetting().getName());
     }
 
     @Override
     public void getValues(final Configuration configuration) {
         performAdditions(configuration);
         performDeletions(configuration);
-        final String printer = (String) printerCombo.getSelectedItem();
-        final PrinterSetting setting = configuration.findPrinterSetting(printer);
+        final String printSetting = (String) printCombo.getSelectedItem();
+        final PrintSetting setting = configuration.findPrintSetting(printSetting);
         if (setting == null) {
-            throw new IllegalStateException("Unknown printer setting >>" + printer + "<< in combo box.");
+            throw new IllegalStateException("Unknown print setting >>" + printSetting + "<< in combo box.");
         }
-        configuration.getCurrentConfiguration().setPrinterSetting(setting);
+        configuration.getCurrentConfiguration().setPrintSetting(setting);
     }
 
     private void performAdditions(final Configuration configuration) {
         for (final String newName : toAdd.keySet()) {
             final String basedOn = toAdd.get(newName);
-            configuration.getPrinterSettings().add(configuration.createPrinterSettingsCopy(newName, basedOn));
+            configuration.getPrintSettings().add(configuration.createPrintSettingsCopy(newName, basedOn));
         }
         toAdd.clear();
     }
 
     private void performDeletions(final Configuration configuration) {
-        final List<PrinterSetting> printerSettings = configuration.getPrinterSettings();
-        for (final Iterator<PrinterSetting> iterator = printerSettings.iterator(); iterator.hasNext();) {
-            final PrinterSetting printerSetting = iterator.next();
-            if (toDelete.contains(printerSetting.getName())) {
+        final List<PrintSetting> printSettings = configuration.getPrintSettings();
+        for (final Iterator<PrintSetting> iterator = printSettings.iterator(); iterator.hasNext();) {
+            final PrintSetting printSetting = iterator.next();
+            if (toDelete.contains(printSetting.getName())) {
                 iterator.remove();
             }
         }
