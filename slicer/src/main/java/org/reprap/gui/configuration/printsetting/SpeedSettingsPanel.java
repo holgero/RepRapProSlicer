@@ -18,12 +18,27 @@
  */
 package org.reprap.gui.configuration.printsetting;
 
+import java.util.Collections;
+
 import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
 
 import org.reprap.configuration.PrintSetting;
+import org.reprap.gui.configuration.common.SettingsBoxPanel;
 
 public class SpeedSettingsPanel extends AbstractPrintSettingPanel {
     private static final Icon ICON = createIcon("time.png");
+
+    private final JTextField perimeterSpeed = new JTextField();
+    private final JTextField infillSpeed = new JTextField();
+
+    public SpeedSettingsPanel() {
+        final SettingsBoxPanel panel = new SettingsBoxPanel("Speed");
+        panel.addRow(new JLabel("Perimeter speed ratio (0..1): "), perimeterSpeed);
+        panel.addRow(new JLabel("Infill speed ratio (0..1): "), infillSpeed);
+        addComponents(Collections.singletonList(panel), true);
+    }
 
     @Override
     public Icon getIcon() {
@@ -37,14 +52,13 @@ public class SpeedSettingsPanel extends AbstractPrintSettingPanel {
 
     @Override
     void setValues(final PrintSetting printSetting) {
-        // TODO Auto-generated method stub
-
+        perimeterSpeed.setText(Double.toString(printSetting.getPerimeterSpeed()));
+        infillSpeed.setText(Double.toString(printSetting.getInfillSpeed()));
     }
 
     @Override
     void getValues(final PrintSetting printSetting) {
-        // TODO Auto-generated method stub
-
+        printSetting.setPerimeterSpeed(fieldToDouble(perimeterSpeed));
+        printSetting.setInfillSpeed(fieldToDouble(infillSpeed));
     }
-
 }
