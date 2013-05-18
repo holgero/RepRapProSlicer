@@ -18,12 +18,62 @@
  */
 package org.reprap.gui.configuration.printsetting;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
 
 import org.reprap.configuration.PrintSetting;
+import org.reprap.gui.configuration.common.SettingsBoxPanel;
 
 public class SkirtBrimSettingsPanel extends AbstractPrintSettingPanel {
     private static final Icon ICON = createIcon("box.png");
+
+    private final JCheckBox skirt = new JCheckBox();
+    private final SpinnerNumberModel brimLines = new SpinnerNumberModel(0, 0, 99, 1);
+    private final JCheckBox shield = new JCheckBox();
+    private final JTextField shieldStlFile = new JTextField();
+    private final JTextField dumpX = new JTextField();
+    private final JTextField dumpY = new JTextField();
+
+    public SkirtBrimSettingsPanel() {
+        addComponents(createComponents(), true);
+    }
+
+    private List<? extends JComponent> createComponents() {
+        final ArrayList<JComponent> result = new ArrayList<>();
+        result.add(createSkirtBox());
+        result.add(createBrimBox());
+        result.add(createShieldBox());
+        return result;
+    }
+
+    private SettingsBoxPanel createSkirtBox() {
+        final SettingsBoxPanel skirtBox = new SettingsBoxPanel("Skirt");
+        skirtBox.addRow(new JLabel("Print skirt: "), skirt);
+        return skirtBox;
+    }
+
+    private SettingsBoxPanel createBrimBox() {
+        final SettingsBoxPanel box = new SettingsBoxPanel("Brim");
+        box.addRow(new JLabel("Brim lines: "), new JSpinner(brimLines));
+        return box;
+    }
+
+    private SettingsBoxPanel createShieldBox() {
+        final SettingsBoxPanel box = new SettingsBoxPanel("Shield");
+        box.addRow(new JLabel("Print shield: "), shield);
+        box.addRow(new JLabel("Shield STL file name: "), shieldStlFile);
+        box.addRow(new JLabel("Dump x coordinate: "), dumpX);
+        box.addRow(new JLabel("Dump y coordinate: "), dumpY);
+        return box;
+    }
 
     @Override
     public Icon getIcon() {
@@ -37,14 +87,22 @@ public class SkirtBrimSettingsPanel extends AbstractPrintSettingPanel {
 
     @Override
     void setValues(final PrintSetting printSetting) {
-        // TODO Auto-generated method stub
-
+        skirt.setSelected(printSetting.printSkirt());
+        brimLines.setValue(Integer.valueOf(printSetting.getBrimLines()));
+        shield.setSelected(printSetting.printShield());
+        shieldStlFile.setText(printSetting.getShieldStlFile().getName());
+        dumpX.setText(Integer.toString(printSetting.getDumpX()));
+        dumpY.setText(Integer.toString(printSetting.getDumpY()));
     }
 
     @Override
     void getValues(final PrintSetting printSetting) {
-        // TODO Auto-generated method stub
-
+        printSetting.setSkirt(skirt.isSelected());
+        printSetting.setBrimLines(((Integer) brimLines.getValue()).intValue());
+        printSetting.setShield(shield.isSelected());
+        printSetting.setShieldStlFile(shieldStlFile.getText());
+        printSetting.setDumpX(Integer.parseInt(dumpX.getText()));
+        printSetting.setDumpY(Integer.parseInt(dumpY.getText()));
     }
 
 }
