@@ -47,7 +47,7 @@ public class TopicSelectionTree extends JTree {
                 new ExtruderPanel(1)));
         root.add(createNode(new PrintCategoryPanel(), new LayersSettingsPanel(), new InfillSettingsPanel(),
                 new SpeedSettingsPanel(), new SkirtBrimSettingsPanel(), new SupportSettingPanel(), new OutputSettingsPanel()));
-        root.add(createNode(new DummySettingsPanel("Material Settings"), new FilamentSettingsPanel()));
+        root.add(createNode(new MaterialCategoryPanel(), new FilamentSettingsPanel()));
 
         return result;
     }

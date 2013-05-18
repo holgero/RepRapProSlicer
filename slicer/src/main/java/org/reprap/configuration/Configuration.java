@@ -110,6 +110,8 @@ public class Configuration {
             settings = printerSettings;
         } else if (clazz == PrintSetting.class) {
             settings = printSettings;
+        } else if (clazz == MaterialSetting.class) {
+            settings = materials;
         } else {
             throw new IllegalArgumentException("unknown class: " + clazz);
         }
@@ -129,8 +131,10 @@ public class Configuration {
         }
         if (baseSetting instanceof PrinterSetting) {
             printerSettings.add(new PrinterSetting(newName, (PrinterSetting) baseSetting));
-        } else {
+        } else if (baseSetting instanceof PrintSetting) {
             printSettings.add(new PrintSetting(newName, (PrintSetting) baseSetting));
+        } else if (baseSetting instanceof MaterialSetting) {
+            materials.add(new MaterialSetting(newName, (MaterialSetting) baseSetting));
         }
     }
 

@@ -18,30 +18,16 @@
  */
 package org.reprap.gui.configuration;
 
-import java.util.Collections;
-import java.util.List;
-
 import javax.swing.Icon;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.border.EtchedBorder;
-import javax.swing.border.TitledBorder;
 
 import org.reprap.configuration.Configuration;
+import org.reprap.configuration.MaterialSetting;
 
-class DummySettingsPanel extends AbstractSettingPanel {
-    private static final Icon ICON = createIcon("wrench.png");
-    private final String title;
+public class MaterialCategoryPanel extends AbstractCategoryPanel {
+    private static final Icon ICON = createIcon("color_swatch.png");
 
-    DummySettingsPanel(final String title) {
-        this.title = title;
-        addComponents(getFormComponents(title), true);
-    }
-
-    @Override
-    public String getTitle() {
-        return title;
+    MaterialCategoryPanel() {
+        super("material", "Material", createIcon("add.png"), createIcon("delete.png"));
     }
 
     @Override
@@ -49,18 +35,25 @@ class DummySettingsPanel extends AbstractSettingPanel {
         return ICON;
     }
 
-    private static List<? extends JComponent> getFormComponents(final String title) {
-        final JPanel box = new JPanel();
-        box.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), title));
-        box.add(new JLabel(title));
-        return Collections.singletonList(box);
+    @Override
+    public String getTitle() {
+        return "Material Settings";
     }
 
     @Override
     public void setValues(final Configuration configuration) {
+        setValues(configuration.getCurrentConfiguration().getMaterials().get(0).getName(), configuration.getMaterials());
     }
 
     @Override
     public void getValues(final Configuration configuration) {
+        performAdditions(configuration, MaterialSetting.class);
+        performDeletions(configuration.getMaterials());
+        final String material = getSelectedSetting();
+        final MaterialSetting setting = configuration.findSetting(material, MaterialSetting.class);
+        if (setting == null) {
+            throw new IllegalStateException("Unknown material >>" + material + "<< in combo box.");
+        }
     }
+
 }

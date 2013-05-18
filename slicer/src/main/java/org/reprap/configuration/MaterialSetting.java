@@ -33,6 +33,15 @@ public class MaterialSetting implements NamedSetting {
     @XmlJavaTypeAdapter(Color3fXmlAdapter.class)
     private Color3f color; // rgb value
 
+    public MaterialSetting() {
+    }
+
+    public MaterialSetting(final String newName, final MaterialSetting other) {
+        name = newName;
+        diameter = other.diameter;
+        color = new Color3f(other.color);
+    }
+
     public double getDiameter() {
         return diameter;
     }
