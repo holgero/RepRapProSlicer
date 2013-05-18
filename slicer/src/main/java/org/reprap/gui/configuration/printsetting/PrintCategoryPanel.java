@@ -16,18 +16,19 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.gui.configuration;
+package org.reprap.gui.configuration.printsetting;
 
 import javax.swing.Icon;
 
 import org.reprap.configuration.Configuration;
-import org.reprap.configuration.MaterialSetting;
+import org.reprap.configuration.PrintSetting;
+import org.reprap.gui.configuration.common.AbstractCategoryPanel;
 
-public class MaterialCategoryPanel extends AbstractCategoryPanel {
-    private static final Icon ICON = createIcon("color_swatch.png");
+public class PrintCategoryPanel extends AbstractCategoryPanel {
+    private static final Icon ICON = createIcon("wrench.png");
 
-    MaterialCategoryPanel() {
-        super("material", "Material", createIcon("add.png"), createIcon("delete.png"));
+    public PrintCategoryPanel() {
+        super("print setting", "Print Setting", createIcon("add.png"), createIcon("delete.png"));
     }
 
     @Override
@@ -37,23 +38,23 @@ public class MaterialCategoryPanel extends AbstractCategoryPanel {
 
     @Override
     public String getTitle() {
-        return "Material Settings";
+        return "Print Settings";
     }
 
     @Override
     public void setValues(final Configuration configuration) {
-        setValues(configuration.getCurrentConfiguration().getMaterials().get(0).getName(), configuration.getMaterials());
+        setValues(configuration.getCurrentConfiguration().getPrintSetting().getName(), configuration.getPrintSettings());
     }
 
     @Override
     public void getValues(final Configuration configuration) {
-        performAdditions(configuration, MaterialSetting.class);
-        performDeletions(configuration.getMaterials());
-        final String material = getSelectedSetting();
-        final MaterialSetting setting = configuration.findSetting(material, MaterialSetting.class);
+        performAdditions(configuration, PrintSetting.class);
+        performDeletions(configuration.getPrintSettings());
+        final String printSetting = getSelectedSetting();
+        final PrintSetting setting = configuration.findSetting(printSetting, PrintSetting.class);
         if (setting == null) {
-            throw new IllegalStateException("Unknown material >>" + material + "<< in combo box.");
+            throw new IllegalStateException("Unknown print setting >>" + printSetting + "<< in combo box.");
         }
+        configuration.getCurrentConfiguration().setPrintSetting(setting);
     }
-
 }

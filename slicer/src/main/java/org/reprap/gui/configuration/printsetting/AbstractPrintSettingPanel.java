@@ -16,7 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.gui.configuration;
+package org.reprap.gui.configuration.printsetting;
 
 import java.awt.GridBagConstraints;
 import java.util.Collections;
@@ -26,12 +26,13 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import org.reprap.configuration.Configuration;
-import org.reprap.configuration.PrinterSetting;
+import org.reprap.configuration.PrintSetting;
+import org.reprap.gui.configuration.common.AbstractSettingPanel;
 
-abstract class AbstractPrinterSettingPanel extends AbstractSettingPanel {
-    private final JLabel printerSettingName = new JLabel();
+abstract class AbstractPrintSettingPanel extends AbstractSettingPanel {
+    private final JLabel printSettingName = new JLabel();
 
-    public AbstractPrinterSettingPanel() {
+    public AbstractPrintSettingPanel() {
         final GridBagConstraints constraints = getConstraints();
         constraints.weighty = 0;
         addComponents(Collections.singletonList(createNamePanel()), false);
@@ -40,28 +41,28 @@ abstract class AbstractPrinterSettingPanel extends AbstractSettingPanel {
 
     @Override
     public final void setValues(final Configuration configuration) {
-        final PrinterSetting printerSetting = configuration.getCurrentConfiguration().getPrinterSetting();
-        printerSettingName.setText(printerSetting.getName());
-        setValues(printerSetting);
+        final PrintSetting printSetting = configuration.getCurrentConfiguration().getPrintSetting();
+        printSettingName.setText(printSetting.getName());
+        setValues(printSetting);
     }
 
     @Override
     public final void getValues(final Configuration configuration) {
-        final PrinterSetting printerSetting = configuration.getCurrentConfiguration().getPrinterSetting();
-        if (!printerSetting.getName().equals(printerSettingName.getText())) {
-            throw new IllegalStateException("My printer setting is " + printerSettingName.getText()
-                    + ", but current printer setting is " + printerSetting.getName() + ".");
+        final PrintSetting printSetting = configuration.getCurrentConfiguration().getPrintSetting();
+        if (!printSetting.getName().equals(printSettingName.getText())) {
+            throw new IllegalStateException("My print setting is " + printSettingName.getText()
+                    + ", but current print setting is " + printSetting.getName() + ".");
         }
-        getValues(printerSetting);
+        getValues(printSetting);
     }
 
     private JComponent createNamePanel() {
         final JPanel result = new JPanel();
-        result.add(printerSettingName);
+        result.add(printSettingName);
         return result;
     }
 
-    abstract void setValues(PrinterSetting printerSetting);
+    abstract void setValues(PrintSetting printSetting);
 
-    abstract void getValues(PrinterSetting printerSetting);
+    abstract void getValues(PrintSetting printSetting);
 }

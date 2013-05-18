@@ -16,14 +16,14 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.gui.configuration;
+package org.reprap.gui.configuration.printsetting;
 
 import javax.swing.Icon;
 
 import org.reprap.configuration.PrintSetting;
 
-class SupportSettingPanel extends AbstractPrintSettingPanel {
-    private static final Icon ICON = createIcon("shape_align_top.png");
+public class SpeedSettingsPanel extends AbstractPrintSettingPanel {
+    private static final Icon ICON = createIcon("time.png");
 
     @Override
     public Icon getIcon() {
@@ -32,7 +32,7 @@ class SupportSettingPanel extends AbstractPrintSettingPanel {
 
     @Override
     public String getTitle() {
-        return "Support material";
+        return "Speed";
     }
 
     @Override

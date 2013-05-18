@@ -29,6 +29,7 @@ import javax.swing.JComponent;
 import javax.swing.border.EmptyBorder;
 
 import org.reprap.configuration.Configuration;
+import org.reprap.gui.configuration.common.SettingsNode;
 
 public class ButtonsPanel extends JComponent {
     private final SettingsEditor settingsEditor;

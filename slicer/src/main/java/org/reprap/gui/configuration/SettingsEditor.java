@@ -33,6 +33,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 
 import org.reprap.configuration.Configuration;
+import org.reprap.gui.configuration.common.SettingsNode;
+import org.reprap.gui.configuration.printer.ExtruderPanel;
 
 public class SettingsEditor extends JPanel implements TreeSelectionListener {
     private final TopicSelectionTree tree = new TopicSelectionTree();

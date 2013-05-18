@@ -16,7 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.gui.configuration;
+package org.reprap.gui.configuration.common;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -29,7 +29,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-abstract class AbstractSettingPanel implements SettingsNode {
+public abstract class AbstractSettingPanel implements SettingsNode {
 
     private final JPanel panel = new JPanel();
     private final GridBagConstraints constraints = new GridBagConstraints();
@@ -50,11 +50,11 @@ abstract class AbstractSettingPanel implements SettingsNode {
         return panel;
     }
 
-    GridBagConstraints getConstraints() {
+    protected GridBagConstraints getConstraints() {
         return constraints;
     }
 
-    void addComponents(final List<? extends JComponent> components, final boolean pad) {
+    protected void addComponents(final List<? extends JComponent> components, final boolean pad) {
         for (final JComponent component : components) {
             panel.add(component, constraints);
             constraints.gridy++;
@@ -65,11 +65,11 @@ abstract class AbstractSettingPanel implements SettingsNode {
         }
     }
 
-    static final double fieldToDouble(final JTextField field) {
+    protected static final double fieldToDouble(final JTextField field) {
         return Double.parseDouble(field.getText());
     }
 
-    static ImageIcon createIcon(final String name) {
+    protected static ImageIcon createIcon(final String name) {
         return new ImageIcon(AbstractSettingPanel.class.getClassLoader().getResource("icons/" + name));
     }
 }

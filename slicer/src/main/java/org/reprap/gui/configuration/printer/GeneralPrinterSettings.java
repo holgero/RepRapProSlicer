@@ -16,7 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.gui.configuration;
+package org.reprap.gui.configuration.printer;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,8 +33,9 @@ import javax.swing.SpinnerNumberModel;
 
 import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.PrinterSetting;
+import org.reprap.gui.configuration.common.SettingsBoxPanel;
 
-class GeneralPrinterSettings extends AbstractPrinterSettingPanel {
+public class GeneralPrinterSettings extends AbstractPrinterSettingPanel {
     private static final Icon ICON = createIcon("cog.png");
     private final JTextField bedSizeXField = new JTextField();
     private final JTextField bedSizeYField = new JTextField();
@@ -45,7 +46,7 @@ class GeneralPrinterSettings extends AbstractPrinterSettingPanel {
     private final JTextField maximumFeedrateZField = new JTextField();
     private final SpinnerNumberModel extrudersSpinnerModel = new SpinnerNumberModel(1, 1, 99, 1);
 
-    GeneralPrinterSettings() {
+    public GeneralPrinterSettings() {
         addComponents(createComponents(), true);
     }
 

@@ -16,19 +16,15 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.gui.configuration;
+package org.reprap.gui.configuration.material;
 
 import javax.swing.Icon;
 
 import org.reprap.configuration.Configuration;
-import org.reprap.configuration.PrinterSetting;
+import org.reprap.gui.configuration.common.AbstractSettingPanel;
 
-public class PrinterCategoryPanel extends AbstractCategoryPanel {
-    private static final Icon ICON = createIcon("printer_empty.png");
-
-    PrinterCategoryPanel() {
-        super("printer", "Printer", createIcon("printer_add.png"), createIcon("printer_delete.png"));
-    }
+public class FilamentSettingsPanel extends AbstractSettingPanel {
+    private static final Icon ICON = createIcon("spool.png");
 
     @Override
     public Icon getIcon() {
@@ -37,23 +33,19 @@ public class PrinterCategoryPanel extends AbstractCategoryPanel {
 
     @Override
     public String getTitle() {
-        return "Printer";
+        return "Filament";
     }
 
     @Override
     public void setValues(final Configuration configuration) {
-        setValues(configuration.getCurrentConfiguration().getPrinterSetting().getName(), configuration.getPrinterSettings());
+        // TODO Auto-generated method stub
+
     }
 
     @Override
     public void getValues(final Configuration configuration) {
-        performAdditions(configuration, PrinterSetting.class);
-        performDeletions(configuration.getPrinterSettings());
-        final String printer = getSelectedSetting();
-        final PrinterSetting setting = configuration.findSetting(printer, PrinterSetting.class);
-        if (setting == null) {
-            throw new IllegalStateException("Unknown printer >>" + printer + "<< in combo box.");
-        }
-        configuration.getCurrentConfiguration().setPrinterSetting(setting);
+        // TODO Auto-generated method stub
+
     }
+
 }

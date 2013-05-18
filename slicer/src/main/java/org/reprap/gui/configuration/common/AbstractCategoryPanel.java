@@ -16,7 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.gui.configuration;
+package org.reprap.gui.configuration.common;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -40,7 +40,7 @@ import javax.swing.JOptionPane;
 import org.reprap.configuration.Configuration;
 import org.reprap.configuration.NamedSetting;
 
-abstract class AbstractCategoryPanel extends AbstractSettingPanel {
+public abstract class AbstractCategoryPanel extends AbstractSettingPanel {
 
     private final JComboBox<String> printCombo = new JComboBox<>();
     private final Action createNewAction;
@@ -52,7 +52,8 @@ abstract class AbstractCategoryPanel extends AbstractSettingPanel {
     private final Icon addIcon;
     private final Icon deleteIcon;
 
-    AbstractCategoryPanel(final String settingName, final String settingNameUpper, final Icon addIcon, final Icon deleteIcon) {
+    protected AbstractCategoryPanel(final String settingName, final String settingNameUpper, final Icon addIcon,
+            final Icon deleteIcon) {
         this.settingName = settingName;
         this.settingNameUpper = settingNameUpper;
         this.addIcon = addIcon;
@@ -116,18 +117,18 @@ abstract class AbstractCategoryPanel extends AbstractSettingPanel {
         return result;
     }
 
-    void setValues(final String currentSetting, final List<? extends NamedSetting> settings) {
+    protected void setValues(final String currentSetting, final List<? extends NamedSetting> settings) {
         printCombo.setModel(new DefaultComboBoxModel<String>(Configuration.getNames(settings)));
         toAdd.clear();
         toDelete.clear();
         printCombo.setSelectedItem(currentSetting);
     }
 
-    String getSelectedSetting() {
+    protected String getSelectedSetting() {
         return (String) printCombo.getSelectedItem();
     }
 
-    void performAdditions(final Configuration configuration, final Class<? extends NamedSetting> clazz) {
+    protected void performAdditions(final Configuration configuration, final Class<? extends NamedSetting> clazz) {
         for (final String newName : toAdd.keySet()) {
             final String basedOn = toAdd.get(newName);
             configuration.createAndAddSettingsCopy(newName, basedOn, clazz);
@@ -135,7 +136,7 @@ abstract class AbstractCategoryPanel extends AbstractSettingPanel {
         toAdd.clear();
     }
 
-    void performDeletions(final List<? extends NamedSetting> settings) {
+    protected void performDeletions(final List<? extends NamedSetting> settings) {
         for (final Iterator<? extends NamedSetting> iterator = settings.iterator(); iterator.hasNext();) {
             final NamedSetting printSetting = iterator.next();
             if (toDelete.contains(printSetting.getName())) {

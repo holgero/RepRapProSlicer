@@ -16,14 +16,14 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.gui.configuration;
+package org.reprap.gui.configuration.printsetting;
 
 import javax.swing.Icon;
 
 import org.reprap.configuration.PrintSetting;
 
-class LayersSettingsPanel extends AbstractPrintSettingPanel {
-    private static final Icon ICON = createIcon("layers.png");
+public class SkirtBrimSettingsPanel extends AbstractPrintSettingPanel {
+    private static final Icon ICON = createIcon("box.png");
 
     @Override
     public Icon getIcon() {
@@ -32,17 +32,19 @@ class LayersSettingsPanel extends AbstractPrintSettingPanel {
 
     @Override
     public String getTitle() {
-        return "Layers and Perimeters";
+        return "Skirt and Brim";
     }
 
     @Override
     void setValues(final PrintSetting printSetting) {
         // TODO Auto-generated method stub
+
     }
 
     @Override
     void getValues(final PrintSetting printSetting) {
         // TODO Auto-generated method stub
+
     }
 
 }

@@ -16,14 +16,14 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.gui.configuration;
+package org.reprap.gui.configuration.printsetting;
 
 import javax.swing.Icon;
 
-import org.reprap.configuration.Configuration;
+import org.reprap.configuration.PrintSetting;
 
-public class FilamentSettingsPanel extends AbstractSettingPanel {
-    private static final Icon ICON = createIcon("spool.png");
+public class InfillSettingsPanel extends AbstractPrintSettingPanel {
+    private static final Icon ICON = createIcon("paintcan.png");
 
     @Override
     public Icon getIcon() {
@@ -32,17 +32,17 @@ public class FilamentSettingsPanel extends AbstractSettingPanel {
 
     @Override
     public String getTitle() {
-        return "Filament";
+        return "Infill";
     }
 
     @Override
-    public void setValues(final Configuration configuration) {
+    void setValues(final PrintSetting printSetting) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void getValues(final Configuration configuration) {
+    void getValues(final PrintSetting printSetting) {
         // TODO Auto-generated method stub
 
     }

@@ -16,35 +16,22 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.gui.configuration;
+package org.reprap.gui.configuration.common;
 
 import javax.swing.Icon;
+import javax.swing.JPanel;
 
-import org.reprap.configuration.PrintSetting;
+import org.reprap.configuration.Configuration;
 
-class InfillSettingsPanel extends AbstractPrintSettingPanel {
-    private static final Icon ICON = createIcon("paintcan.png");
+public interface SettingsNode {
 
-    @Override
-    public Icon getIcon() {
-        return ICON;
-    }
+    Icon getIcon();
 
-    @Override
-    public String getTitle() {
-        return "Infill";
-    }
+    String getTitle();
 
-    @Override
-    void setValues(final PrintSetting printSetting) {
-        // TODO Auto-generated method stub
+    void setValues(Configuration configuration);
 
-    }
+    void getValues(Configuration configuration);
 
-    @Override
-    void getValues(final PrintSetting printSetting) {
-        // TODO Auto-generated method stub
-
-    }
-
+    JPanel getPanel();
 }

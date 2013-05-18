@@ -16,7 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.gui.configuration;
+package org.reprap.gui.configuration.printer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,8 +28,9 @@ import javax.swing.JTextField;
 
 import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.PrinterSetting;
+import org.reprap.gui.configuration.common.SettingsBoxPanel;
 
-class ExtruderPanel extends AbstractPrinterSettingPanel {
+public class ExtruderPanel extends AbstractPrinterSettingPanel {
     private static final Icon ICON = createIcon("funnel.png");
 
     private final JTextField nozzleDiameter = new JTextField();
@@ -43,7 +44,7 @@ class ExtruderPanel extends AbstractPrinterSettingPanel {
     private final JTextField lift = new JTextField();
     private final int number;
 
-    ExtruderPanel(final int number) {
+    public ExtruderPanel(final int number) {
         this.number = number;
         addComponents(getFormComponents(), true);
     }

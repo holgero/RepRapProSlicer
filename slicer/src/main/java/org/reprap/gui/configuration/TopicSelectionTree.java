@@ -26,6 +26,21 @@ import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeSelectionModel;
 
+import org.reprap.gui.configuration.common.SettingsNode;
+import org.reprap.gui.configuration.material.FilamentSettingsPanel;
+import org.reprap.gui.configuration.material.MaterialCategoryPanel;
+import org.reprap.gui.configuration.printer.CustomGcodePanel;
+import org.reprap.gui.configuration.printer.ExtruderPanel;
+import org.reprap.gui.configuration.printer.GeneralPrinterSettings;
+import org.reprap.gui.configuration.printer.PrinterCategoryPanel;
+import org.reprap.gui.configuration.printsetting.InfillSettingsPanel;
+import org.reprap.gui.configuration.printsetting.LayersSettingsPanel;
+import org.reprap.gui.configuration.printsetting.OutputSettingsPanel;
+import org.reprap.gui.configuration.printsetting.PrintCategoryPanel;
+import org.reprap.gui.configuration.printsetting.SkirtBrimSettingsPanel;
+import org.reprap.gui.configuration.printsetting.SpeedSettingsPanel;
+import org.reprap.gui.configuration.printsetting.SupportSettingPanel;
+
 public class TopicSelectionTree extends JTree {
 
     public TopicSelectionTree() {

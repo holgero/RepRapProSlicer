@@ -16,7 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.gui.configuration;
+package org.reprap.gui.configuration.printer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,12 +31,12 @@ import javax.swing.border.TitledBorder;
 
 import org.reprap.configuration.PrinterSetting;
 
-class CustomGcodePanel extends AbstractPrinterSettingPanel {
+public class CustomGcodePanel extends AbstractPrinterSettingPanel {
     private static final Icon ICON = createIcon("script.png");
     private final JTextArea prologueTextArea = new JTextArea(2, 10);
     private final JTextArea epilogueTextArea = new JTextArea(2, 10);
 
-    CustomGcodePanel() {
+    public CustomGcodePanel() {
         addComponents(getFormComponents(), false);
     }
 

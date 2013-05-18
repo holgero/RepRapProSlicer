@@ -24,6 +24,8 @@ import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
+import org.reprap.gui.configuration.common.SettingsNode;
+
 public class SettingsTreeCellRenderer extends DefaultTreeCellRenderer {
 
     @SuppressWarnings("hiding")

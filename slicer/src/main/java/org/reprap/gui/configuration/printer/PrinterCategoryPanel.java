@@ -16,18 +16,19 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.gui.configuration;
+package org.reprap.gui.configuration.printer;
 
 import javax.swing.Icon;
 
 import org.reprap.configuration.Configuration;
-import org.reprap.configuration.PrintSetting;
+import org.reprap.configuration.PrinterSetting;
+import org.reprap.gui.configuration.common.AbstractCategoryPanel;
 
-public class PrintCategoryPanel extends AbstractCategoryPanel {
-    private static final Icon ICON = createIcon("wrench.png");
+public class PrinterCategoryPanel extends AbstractCategoryPanel {
+    private static final Icon ICON = createIcon("printer_empty.png");
 
-    PrintCategoryPanel() {
-        super("print setting", "Print Setting", createIcon("add.png"), createIcon("delete.png"));
+    public PrinterCategoryPanel() {
+        super("printer", "Printer", createIcon("printer_add.png"), createIcon("printer_delete.png"));
     }
 
     @Override
@@ -37,23 +38,23 @@ public class PrintCategoryPanel extends AbstractCategoryPanel {
 
     @Override
     public String getTitle() {
-        return "Print Settings";
+        return "Printer";
     }
 
     @Override
     public void setValues(final Configuration configuration) {
-        setValues(configuration.getCurrentConfiguration().getPrintSetting().getName(), configuration.getPrintSettings());
+        setValues(configuration.getCurrentConfiguration().getPrinterSetting().getName(), configuration.getPrinterSettings());
     }
 
     @Override
     public void getValues(final Configuration configuration) {
-        performAdditions(configuration, PrintSetting.class);
-        performDeletions(configuration.getPrintSettings());
-        final String printSetting = getSelectedSetting();
-        final PrintSetting setting = configuration.findSetting(printSetting, PrintSetting.class);
+        performAdditions(configuration, PrinterSetting.class);
+        performDeletions(configuration.getPrinterSettings());
+        final String printer = getSelectedSetting();
+        final PrinterSetting setting = configuration.findSetting(printer, PrinterSetting.class);
         if (setting == null) {
-            throw new IllegalStateException("Unknown print setting >>" + printSetting + "<< in combo box.");
+            throw new IllegalStateException("Unknown printer >>" + printer + "<< in combo box.");
         }
-        configuration.getCurrentConfiguration().setPrintSetting(setting);
+        configuration.getCurrentConfiguration().setPrinterSetting(setting);
     }
 }
