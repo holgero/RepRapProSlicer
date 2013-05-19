@@ -687,6 +687,7 @@ public class BooleanGrid {
         final int top = 400000;
         final Integer2DPoint[] stack = new Integer2DPoint[top];
         int sp = 0;
+        result.set(p, true);
         stack[sp] = p;
         Integer2DPoint q;
 
@@ -694,11 +695,10 @@ public class BooleanGrid {
             p = stack[sp];
             sp--;
 
-            result.set(p, true);
-
             for (int i = 1; i < 8; i = i + 2) {
                 q = p.add(NEIGHBOUR[i]);
                 if (this.get(q) && !result.get(q)) {
+                    result.set(q, true);
                     sp++;
                     if (sp >= top) {
                         LOGGER.error("BooleanGrid.floodCopy(): stack overflow!");
