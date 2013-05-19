@@ -135,10 +135,7 @@ public class Producer {
         }
         for (int pol = 0; pol < fills.size(); pol++) {
             final Polygon polygon = fills.polygon(pol);
-            final double minLength = 3 * currentConfiguration.getExtruderSetting(polygon.getMaterial()).getExtrusionSize();
-            if (polygon.getLength() > minLength) {
-                tempFillPolygons[getExtruderId(polygon)].add(polygon);
-            }
+            tempFillPolygons[getExtruderId(polygon)].add(polygon);
         }
         if (printSupport) {
             final PolygonList support = stlList.computeSupport(stl);
