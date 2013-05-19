@@ -393,13 +393,6 @@ class ProducerStlList {
         return neededSlice;
     }
 
-    /**
-     * Compute the infill hatching polygons for this set of patterns
-     */
-    PolygonList computeInfill(final int stl) {
-        return new InFillPatterns(layerRules, currentConfiguration).computeHatchedPolygons(stl, this);
-    }
-
     private static void setUpShield(final Purge purge, final List<STLObject> stls,
             final CurrentConfiguration currentConfiguration) {
         final PrintSetting printSetting = currentConfiguration.getPrintSetting();
@@ -439,9 +432,9 @@ class ProducerStlList {
     /**
      * Compute the outline polygons for this set of patterns.
      */
-    PolygonList computeOutlines(final int stl, final PolygonList hatchedPolygons) {
+    PolygonList computeOutlines(final int stl, final PolygonList hatchedPolygons, final String material) {
         // The shapes to outline.
-        BooleanGridList slice = slice(stl, layerRules.getModelLayer());
+        BooleanGridList slice = InFillPatterns.filter(slice(stl, layerRules.getModelLayer()), material);
 
         // Pick out the ones we need to do at this height
         slice = neededThisLayer(slice);

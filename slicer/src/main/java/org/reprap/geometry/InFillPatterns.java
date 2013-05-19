@@ -19,27 +19,26 @@ import org.reprap.geometry.polygons.PolygonList;
  */
 public final class InFillPatterns {
     private static final Logger LOGGER = LogManager.getLogger(InFillPatterns.class);
+
+    private final CurrentConfiguration currentConfiguration;
+    private final LayerRules layerRules;
+
     private BooleanGridList bridges = new BooleanGridList();
     private BooleanGridList insides = new BooleanGridList();
     private BooleanGridList surfaces = new BooleanGridList();
-    private final PolygonList hatchedPolygons = new PolygonList();
-    private final LayerRules layerRules;
-    private final CurrentConfiguration currentConfiguration;
+    private PolygonList hatchedPolygons = new PolygonList();
 
     public InFillPatterns(final LayerRules layerRules, final CurrentConfiguration currentConfiguration) {
         this.layerRules = layerRules;
         this.currentConfiguration = currentConfiguration;
     }
 
-    PolygonList computeHatchedPolygons(final int stl, final ProducerStlList slicer) {
+    PolygonList computePolygonsForMaterial(final int stl, final ProducerStlList slicer, final String material) {
+        hatchedPolygons = new PolygonList();
         // Where are we and what does the current slice look like?
         final int layer = layerRules.getModelLayer();
-        BooleanGridList slice = slicer.slice(stl, layer);
-
-        //CurrentConfiguration currentConfiguration = Configuration.getInstance().getCurrentConfiguration();
-
+        BooleanGridList slice = filter(slicer.slice(stl, layer), material);
         final int surfaceLayers = currentConfiguration.getPrintSetting().getHorizontalShells();
-
         // Get the bottom out of the way - no fancy calculations needed.
         if (layer <= surfaceLayers) {
             slice = offset(slice, -1);
@@ -76,7 +75,6 @@ public final class InFillPatterns {
         // The remainder with nothing under them will be supported by support material
         // and so needs no special treatment.
         // All the parts of this slice that need surface infill
-
         surfaces = BooleanGridList.unions(nothingbelow, nothingabove);
 
         // Make the bridges fatter, then crop them to the slice.
@@ -115,6 +113,16 @@ public final class InFillPatterns {
         hatchedPolygons.add(ProducerStlList.hatch(surfaces, layerRules, true, false, currentConfiguration));
 
         return hatchedPolygons;
+    }
+
+    static BooleanGridList filter(final BooleanGridList slice, final String material) {
+        final BooleanGridList result = new BooleanGridList();
+        for (final BooleanGrid grid : slice) {
+            if (grid.getMaterial().equals(material)) {
+                result.add(grid);
+            }
+        }
+        return result;
     }
 
     // Parts with nothing under them that have no support material

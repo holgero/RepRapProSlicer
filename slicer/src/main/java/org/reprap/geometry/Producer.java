@@ -2,12 +2,10 @@ package org.reprap.geometry;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.CurrentConfiguration;
-import org.reprap.configuration.MaterialSetting;
 import org.reprap.configuration.PrintSetting;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.gcode.Purge;
@@ -30,6 +28,8 @@ public class Producer {
     private final int brimLines;
     private final boolean printSupport;
     private final CurrentConfiguration currentConfiguration;
+    private final InFillPatterns inFillPatterns;
+
     /*
      * Skip generating the shield if only one color is printed
      */
@@ -48,6 +48,7 @@ public class Producer {
         final BoundingBox buildVolume = ProducerStlList.calculateBoundingBox(allStls, purge, currentConfiguration);
         layerRules = new LayerRules(printer, buildVolume, currentConfiguration);
         stlList = new ProducerStlList(allStls, purge, layerRules, currentConfiguration);
+        inFillPatterns = new InFillPatterns(layerRules, currentConfiguration);
         totalExtruders = currentConfiguration.getPrinterSetting().getExtruderSettings().size();
         final PrintSetting printSetting = currentConfiguration.getPrintSetting();
         omitShield = printSetting.printShield();
@@ -117,68 +118,44 @@ public class Producer {
     }
 
     private Point2D collectPolygonsForObject(final int stl, Point2D startNearHere, final PolygonList[] allPolygons) {
-        final PolygonList tempBorderPolygons[] = new PolygonList[totalExtruders];
-        final PolygonList tempFillPolygons[] = new PolygonList[totalExtruders];
         for (int extruder = 0; extruder < totalExtruders; extruder++) {
-            tempBorderPolygons[extruder] = new PolygonList();
-            tempFillPolygons[extruder] = new PolygonList();
-        }
-        if (layerRules.getModelLayer() == 1 && brimLines > 0) {
-            final PolygonList brim = stlList.computeBrim(stl, brimLines);
-            tempBorderPolygons[0].add(brim);
-        }
-        final PolygonList fills = stlList.computeInfill(stl);
-        final PolygonList borders = stlList.computeOutlines(stl, fills);
-        for (int pol = 0; pol < borders.size(); pol++) {
-            final Polygon polygon = borders.polygon(pol);
-            tempBorderPolygons[getExtruderId(polygon)].add(polygon);
-        }
-        for (int pol = 0; pol < fills.size(); pol++) {
-            final Polygon polygon = fills.polygon(pol);
-            tempFillPolygons[getExtruderId(polygon)].add(polygon);
-        }
-        if (printSupport) {
-            final PolygonList support = stlList.computeSupport(stl);
-            for (int pol = 0; pol < support.size(); pol++) {
-                final Polygon polygon = support.polygon(pol);
-                tempFillPolygons[currentConfiguration.getPrintSetting().getSupportExtruder()].add(polygon);
+            final String material = currentConfiguration.getMaterials().get(extruder).getName();
+            PolygonList fills = inFillPatterns.computePolygonsForMaterial(stl, stlList, material);
+            if (printSupport && extruder == currentConfiguration.getPrintSetting().getSupportExtruder()) {
+                final PolygonList support = stlList.computeSupport(stl);
+                for (int pol = 0; pol < support.size(); pol++) {
+                    final Polygon polygon = support.polygon(pol);
+                    fills.add(polygon);
+                }
             }
-        }
-        for (int extruder = 0; extruder < totalExtruders; extruder++) {
-            if (tempBorderPolygons[extruder].size() > 0) {
-                final double linkUp = currentConfiguration.getExtruderSetting(
-                        tempBorderPolygons[extruder].polygon(0).getMaterial()).getExtrusionSize();
-                tempBorderPolygons[extruder].radicalReOrder(4 * linkUp * linkUp);
-                tempBorderPolygons[extruder] = tempBorderPolygons[extruder].nearEnds(startNearHere);
-                if (tempBorderPolygons[extruder].size() > 0) {
-                    final Polygon last = tempBorderPolygons[extruder].polygon(tempBorderPolygons[extruder].size() - 1);
+            PolygonList borders = stlList.computeOutlines(stl, fills, material);
+            if (layerRules.getModelLayer() == 1 && brimLines > 0 && extruder == 0) {
+                final PolygonList brim = stlList.computeBrim(stl, brimLines);
+                borders.add(brim);
+            }
+            if (borders.size() > 0) {
+                final double linkUp = currentConfiguration.getExtruderSetting(borders.polygon(0).getMaterial())
+                        .getExtrusionSize();
+                borders.radicalReOrder(4 * linkUp * linkUp);
+                borders = borders.nearEnds(startNearHere);
+                if (borders.size() > 0) {
+                    final Polygon last = borders.polygon(borders.size() - 1);
                     startNearHere = last.point(last.size() - 1);
                 }
-                allPolygons[extruder].add(tempBorderPolygons[extruder]);
+                allPolygons[extruder].add(borders);
             }
-            if (tempFillPolygons[extruder].size() > 0) {
-                final double linkUp = currentConfiguration.getExtruderSetting(
-                        tempFillPolygons[extruder].polygon(0).getMaterial()).getExtrusionSize();
-                tempFillPolygons[extruder].radicalReOrder(4 * linkUp * linkUp);
-                tempFillPolygons[extruder] = tempFillPolygons[extruder].nearEnds(startNearHere);
-                if (tempFillPolygons[extruder].size() > 0) {
-                    final Polygon last = tempFillPolygons[extruder].polygon(tempFillPolygons[extruder].size() - 1);
+            if (fills.size() > 0) {
+                final double linkUp = currentConfiguration.getExtruderSetting(fills.polygon(0).getMaterial())
+                        .getExtrusionSize();
+                fills.radicalReOrder(4 * linkUp * linkUp);
+                fills = fills.nearEnds(startNearHere);
+                if (fills.size() > 0) {
+                    final Polygon last = fills.polygon(fills.size() - 1);
                     startNearHere = last.point(last.size() - 1);
                 }
-                allPolygons[extruder].add(tempFillPolygons[extruder]);
+                allPolygons[extruder].add(fills);
             }
         }
         return startNearHere;
-    }
-
-    private int getExtruderId(final Polygon polygon) {
-        final List<MaterialSetting> materials = currentConfiguration.getMaterials();
-        for (int i = 0; i < materials.size(); i++) {
-            final MaterialSetting material = materials.get(i);
-            if (material.getName().equals(polygon.getMaterial())) {
-                return i;
-            }
-        }
-        return 0;
     }
 }
