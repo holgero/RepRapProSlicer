@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSetting;
+import org.reprap.configuration.PrintSetting;
 import org.reprap.geometry.polygons.BooleanGrid;
 import org.reprap.geometry.polygons.BooleanGridList;
 import org.reprap.geometry.polygons.HalfPlane;
@@ -22,9 +23,15 @@ public final class InFillPatterns {
     private BooleanGridList insides = new BooleanGridList();
     private BooleanGridList surfaces = new BooleanGridList();
     private final PolygonList hatchedPolygons = new PolygonList();
+    private final LayerRules layerRules;
+    private final CurrentConfiguration currentConfiguration;
 
-    PolygonList computeHatchedPolygons(final int stl, final LayerRules layerRules, final ProducerStlList slicer,
-            final CurrentConfiguration currentConfiguration) {
+    public InFillPatterns(final LayerRules layerRules, final CurrentConfiguration currentConfiguration) {
+        this.layerRules = layerRules;
+        this.currentConfiguration = currentConfiguration;
+    }
+
+    PolygonList computeHatchedPolygons(final int stl, final ProducerStlList slicer) {
         // Where are we and what does the current slice look like?
         final int layer = layerRules.getModelLayer();
         BooleanGridList slice = slicer.slice(stl, layer);
@@ -35,7 +42,7 @@ public final class InFillPatterns {
 
         // Get the bottom out of the way - no fancy calculations needed.
         if (layer <= surfaceLayers) {
-            slice = ProducerStlList.offset(slice, -1, currentConfiguration);
+            slice = offset(slice, -1);
             slice = slicer.neededThisLayer(slice);
             return ProducerStlList.hatch(slice, layerRules, true, false, currentConfiguration);
         }
@@ -64,10 +71,7 @@ public final class InFillPatterns {
         // Find the region that is not surface.
         insides = BooleanGridList.differences(slice, nothingbelow, false);
         insides = BooleanGridList.differences(insides, nothingabove, false);
-
-        // Parts with nothing under them that have no support material
-        // need to have bridges constructed to do the best for in-air 
-        bridges = cullNoSupport(nothingbelow, currentConfiguration.getPrintSetting().printSupport());
+        bridges = computeBridges(nothingbelow);
 
         // The remainder with nothing under them will be supported by support material
         // and so needs no special treatment.
@@ -78,7 +82,7 @@ public final class InFillPatterns {
         // Make the bridges fatter, then crop them to the slice.
         // This will make them interpenetrate at their ends/sides to give
         // bridge landing areas.
-        bridges = ProducerStlList.offset(bridges, 2, currentConfiguration);
+        bridges = offset(bridges, 2);
         bridges = BooleanGridList.intersections(bridges, slice);
 
         // Find the landing areas as a separate set of shapes that go with the bridges.
@@ -86,9 +90,9 @@ public final class InFillPatterns {
 
         // Shapes will be outlined, and so need to be shrunk to allow for that.  But they
         // must not also shrink from each other internally.  So initially expand them so they overlap
-        bridges = ProducerStlList.offset(bridges, 1, currentConfiguration);
-        insides = ProducerStlList.offset(insides, 1, currentConfiguration);
-        surfaces = ProducerStlList.offset(surfaces, 1, currentConfiguration);
+        bridges = offset(bridges, 1);
+        insides = offset(insides, 1);
+        surfaces = offset(surfaces, 1);
 
         // Now intersect them with the slice so the outer edges are back where they should be.
         bridges = BooleanGridList.intersections(bridges, slice);
@@ -98,13 +102,13 @@ public final class InFillPatterns {
         // Now shrink them so the edges are in a bit to allow the outlines to
         // be put round the outside.  The inner joins should now shrink back to be
         // adjacent to each other as they should be.
-        bridges = ProducerStlList.offset(bridges, -1, currentConfiguration);
-        insides = ProducerStlList.offset(insides, -1, currentConfiguration);
-        surfaces = ProducerStlList.offset(surfaces, -1, currentConfiguration);
+        bridges = offset(bridges, -1);
+        insides = offset(insides, -1);
+        surfaces = offset(surfaces, -1);
 
         // Generate the infill patterns.  We do the bridges first, as each bridge subtracts its
         // lands from the other two sets of shapes.  We want that, so they don't get infilled twice.
-        bridgeHatch(lands, layerRules, currentConfiguration);
+        bridgeHatch(lands);
         insides = slicer.neededThisLayer(insides);
         hatchedPolygons.add(ProducerStlList.hatch(insides, layerRules, false, false, currentConfiguration));
         surfaces = slicer.neededThisLayer(surfaces);
@@ -113,20 +117,16 @@ public final class InFillPatterns {
         return hatchedPolygons;
     }
 
-    /**
-     * Return only those elements in the list that have no support material
-     * specified
-     */
-    public static BooleanGridList cullNoSupport(final BooleanGridList list, final boolean printSupport) {
+    // Parts with nothing under them that have no support material
+    // need to have bridges constructed to do the best for in-air 
+    private BooleanGridList computeBridges(final BooleanGridList nothingbelow) {
         final BooleanGridList result = new BooleanGridList();
-
-        if (!printSupport) {
-            for (int i = 0; i < list.size(); i++) {
-                final BooleanGrid grid = list.get(i);
+        if (!currentConfiguration.getPrintSetting().printSupport()) {
+            for (int i = 0; i < nothingbelow.size(); i++) {
+                final BooleanGrid grid = nothingbelow.get(i);
                 result.add(grid);
             }
         }
-
         return result;
     }
 
@@ -160,8 +160,7 @@ public final class InFillPatterns {
      * Compute the bridge infill for unsupported polygons for a slice. This is
      * very heuristic...
      */
-    private void bridgeHatch(final BooleanGridList lands, final LayerRules layerConditions,
-            final CurrentConfiguration currentConfiguration) {
+    private void bridgeHatch(final BooleanGridList lands) {
         for (int i = 0; i < lands.size(); i++) {
             BooleanGrid landPattern = lands.get(i);
             BooleanGrid land1;
@@ -202,7 +201,7 @@ public final class InFillPatterns {
                 if (cen2 == null) {
                     LOGGER.debug("Second land found with no centroid.");
                     // No second land implies a ring of support - just infill it.
-                    hatchedPolygons.add(bridge.hatch(layerConditions.getHatchDirection(false, extrusionWidth), extrusionWidth,
+                    hatchedPolygons.add(bridge.hatch(layerRules.getHatchDirection(false, extrusionWidth), extrusionWidth,
                             currentConfiguration.getPrintSetting().isPathOptimize()));
 
                     // Remove this bridge (in fact, just its lands) from the other infill patterns.
@@ -256,5 +255,25 @@ public final class InFillPatterns {
                 bridges = BooleanGridList.differences(bridges, b, false);
             }
         }
+    }
+
+    private BooleanGridList offset(final BooleanGridList gridList, final double multiplier) {
+        final BooleanGridList result = new BooleanGridList();
+        for (int i = 0; i < gridList.size(); i++) {
+            final BooleanGrid grid = gridList.get(i);
+            final ExtruderSetting extruder = currentConfiguration.getExtruderSetting(grid.getMaterial());
+            final double extrusionSize = extruder.getExtrusionSize();
+            final PrintSetting printSetting = currentConfiguration.getPrintSetting();
+            final int shells = printSetting.getVerticalShells();
+            // Must be a hatch.  Only do it if the gap is +ve or we're building the foundation
+            final double offSize;
+            if (multiplier < 0) {
+                offSize = multiplier * (shells + 0.5) * extrusionSize + printSetting.getInfillOverlap();
+            } else {
+                offSize = multiplier * (shells + 0.5) * extrusionSize;
+            }
+            result.add(grid.createOffsetGrid(offSize));
+        }
+        return result;
     }
 }

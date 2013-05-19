@@ -397,7 +397,7 @@ class ProducerStlList {
      * Compute the infill hatching polygons for this set of patterns
      */
     PolygonList computeInfill(final int stl) {
-        return new InFillPatterns().computeHatchedPolygons(stl, layerRules, this, currentConfiguration);
+        return new InFillPatterns(layerRules, currentConfiguration).computeHatchedPolygons(stl, this);
     }
 
     private static void setUpShield(final Purge purge, final List<STLObject> stls,
@@ -893,27 +893,6 @@ class ProducerStlList {
             } else {
                 result.add(thisOne);
             }
-        }
-        return result;
-    }
-
-    static BooleanGridList offset(final BooleanGridList gridList, final double multiplier,
-            final CurrentConfiguration currentConfiguration) {
-        final BooleanGridList result = new BooleanGridList();
-        for (int i = 0; i < gridList.size(); i++) {
-            final BooleanGrid grid = gridList.get(i);
-            final ExtruderSetting extruder = currentConfiguration.getExtruderSetting(grid.getMaterial());
-            final double extrusionSize = extruder.getExtrusionSize();
-            final PrintSetting printSetting = currentConfiguration.getPrintSetting();
-            final int shells = printSetting.getVerticalShells();
-            // Must be a hatch.  Only do it if the gap is +ve or we're building the foundation
-            final double offSize;
-            if (multiplier < 0) {
-                offSize = multiplier * (shells + 0.5) * extrusionSize + printSetting.getInfillOverlap();
-            } else {
-                offSize = multiplier * (shells + 0.5) * extrusionSize;
-            }
-            result.add(grid.createOffsetGrid(offSize));
         }
         return result;
     }

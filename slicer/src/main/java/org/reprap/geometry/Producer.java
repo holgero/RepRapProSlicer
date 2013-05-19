@@ -141,7 +141,7 @@ public class Producer {
             final PolygonList support = stlList.computeSupport(stl);
             for (int pol = 0; pol < support.size(); pol++) {
                 final Polygon polygon = support.polygon(pol);
-                tempFillPolygons[getExtruderId(polygon)].add(polygon);
+                tempFillPolygons[currentConfiguration.getPrintSetting().getSupportExtruder()].add(polygon);
             }
         }
         for (int extruder = 0; extruder < totalExtruders; extruder++) {
