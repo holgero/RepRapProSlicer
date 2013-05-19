@@ -464,13 +464,19 @@ public class BooleanGrid {
             }
             sw = new Integer2DPoint(x0, y0);
             ne = new Integer2DPoint(x0, ym);
-            generateQuadTree(sw, ne, csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
-                    rec.realPoint(ne, pixelSize), inc))));
+            generateQuadTree(
+                    sw,
+                    ne,
+                    csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
+                            rec.realPoint(ne, pixelSize), inc))));
 
             sw = new Integer2DPoint(x0, ym + 1);
             ne = new Integer2DPoint(x0, y1);
-            generateQuadTree(sw, ne, csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
-                    rec.realPoint(ne, pixelSize), inc))));
+            generateQuadTree(
+                    sw,
+                    ne,
+                    csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
+                            rec.realPoint(ne, pixelSize), inc))));
 
             return;
         }
@@ -479,13 +485,19 @@ public class BooleanGrid {
         if (yd <= 1) {
             sw = new Integer2DPoint(x0, y0);
             ne = new Integer2DPoint(xm, y0);
-            generateQuadTree(sw, ne, csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
-                    rec.realPoint(ne, pixelSize), inc))));
+            generateQuadTree(
+                    sw,
+                    ne,
+                    csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
+                            rec.realPoint(ne, pixelSize), inc))));
 
             sw = new Integer2DPoint(xm + 1, y0);
             ne = new Integer2DPoint(x1, y0);
-            generateQuadTree(sw, ne, csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
-                    rec.realPoint(ne, pixelSize), inc))));
+            generateQuadTree(
+                    sw,
+                    ne,
+                    csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
+                            rec.realPoint(ne, pixelSize), inc))));
 
             return;
         }
@@ -493,23 +505,35 @@ public class BooleanGrid {
         // General case - 4 quads.
         sw = new Integer2DPoint(x0, y0);
         ne = new Integer2DPoint(xm, ym);
-        generateQuadTree(sw, ne,
-                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(rec.realPoint(ne, pixelSize), inc))));
+        generateQuadTree(
+                sw,
+                ne,
+                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
+                        rec.realPoint(ne, pixelSize), inc))));
 
         sw = new Integer2DPoint(x0, ym + 1);
         ne = new Integer2DPoint(xm, y1);
-        generateQuadTree(sw, ne,
-                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(rec.realPoint(ne, pixelSize), inc))));
+        generateQuadTree(
+                sw,
+                ne,
+                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
+                        rec.realPoint(ne, pixelSize), inc))));
 
         sw = new Integer2DPoint(xm + 1, ym + 1);
         ne = new Integer2DPoint(x1, y1);
-        generateQuadTree(sw, ne,
-                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(rec.realPoint(ne, pixelSize), inc))));
+        generateQuadTree(
+                sw,
+                ne,
+                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
+                        rec.realPoint(ne, pixelSize), inc))));
 
         sw = new Integer2DPoint(xm + 1, y0);
         ne = new Integer2DPoint(x1, ym);
-        generateQuadTree(sw, ne,
-                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(rec.realPoint(ne, pixelSize), inc))));
+        generateQuadTree(
+                sw,
+                ne,
+                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
+                        rec.realPoint(ne, pixelSize), inc))));
 
     }
 
