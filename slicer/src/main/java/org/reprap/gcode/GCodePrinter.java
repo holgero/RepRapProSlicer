@@ -336,6 +336,10 @@ public class GCodePrinter {
     }
 
     public void terminate(final Point2D lastPoint, final double lastZ) {
+        if (getPrintSetting().printShield()) {
+            moveToDump(extruders[currentExtruder]);
+        }
+
         currentX = round(lastPoint.x(), 2);
         currentY = round(lastPoint.y(), 2);
         currentZ = round(lastZ, 1);
@@ -401,10 +405,7 @@ public class GCodePrinter {
                 extruder.stopExtruding(); // Make sure we are off
 
                 if (shield) {
-                    final Point2D purgePoint = purge.getPurgeEnd(extruder, true, 0);
-                    singleMove(purgePoint.x(), purgePoint.y(), currentZ, getFastXYFeedrate(), true);
-                    currentX = purgePoint.x();
-                    currentY = purgePoint.y();
+                    moveToDump(extruder);
                 }
 
                 // Now tell the GCodes to select the new extruder and stabilise all temperatures
@@ -445,6 +446,13 @@ public class GCodePrinter {
             }
             forceSelection = false;
         }
+    }
+
+    private void moveToDump(final GCodeExtruder extruder) {
+        final Point2D purgePoint = purge.getPurgeEnd(extruder, true, 0);
+        singleMove(purgePoint.x(), purgePoint.y(), currentZ, getFastXYFeedrate(), true);
+        currentX = purgePoint.x();
+        currentY = purgePoint.y();
     }
 
     /**
