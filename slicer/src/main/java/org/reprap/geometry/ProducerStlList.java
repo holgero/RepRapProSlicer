@@ -50,12 +50,10 @@ import org.reprap.geometry.polygons.BooleanGridList;
 import org.reprap.geometry.polygons.CSG2D;
 import org.reprap.geometry.polygons.Circle;
 import org.reprap.geometry.polygons.HalfPlane;
-import org.reprap.geometry.polygons.Line;
 import org.reprap.geometry.polygons.LineSegment;
 import org.reprap.geometry.polygons.ParallelException;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
-import org.reprap.geometry.polygons.PolygonIndexedPoint;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
@@ -429,29 +427,14 @@ class ProducerStlList {
         stls.add(0, shield);
     }
 
-    /**
-     * Compute the outline polygons for this set of patterns.
-     */
-    PolygonList computeOutlines(final int stl, final PolygonList hatchedPolygons, final String material) {
-        // The shapes to outline.
+    PolygonList computeOutlines(final int stl, final String material) {
         BooleanGridList slice = InFillPatterns.filter(slice(stl, layerRules.getModelLayer()), material);
-
-        // Pick out the ones we need to do at this height
         slice = neededThisLayer(slice);
-
         if (slice.size() <= 0) {
             return new PolygonList();
         }
-
         final BooleanGridList offBorder = offsetOutline(slice, -1);
-        final PolygonList borderPolygons = offBorder.borders();
-
-        if (currentConfiguration.getPrintSetting().isMiddleStart()) {
-            if (borderPolygons != null && borderPolygons.size() > 0) {
-                middleStarts(borderPolygons, hatchedPolygons, layerRules, slice);
-            }
-        }
-        return borderPolygons;
+        return offBorder.borders();
     }
 
     PolygonList computeBrim(final int stl, final int brimLines) {
@@ -675,77 +658,6 @@ class ProducerStlList {
                 }
             } else if (sg instanceof Shape3D) {
                 addAllEdges((Shape3D) sg, trans, z, material, edges);
-            }
-        }
-    }
-
-    /**
-     * This assumes that the PolygonList for which it is called is all the
-     * closed outline polygons, and that hatching is their infill hatch. It goes
-     * through the outlines and the hatch modifying both so that that outlines
-     * actually start and end half-way along a hatch line (that half of the
-     * hatch line being deleted). When the outlines are then printed, they start
-     * and end in the middle of a solid area, thus minimising dribble.
-     * 
-     * The outline polygons are re-ordered before the start so that their first
-     * point is the most extreme one in the current hatch direction.
-     * 
-     * Only hatches and outlines whose physical extruders match are altered.
-     */
-    private void middleStarts(final PolygonList list, final PolygonList hatching, final LayerRules lc,
-            final BooleanGridList slice) {
-        for (int i = 0; i < list.size(); i++) {
-            Polygon outline = list.polygon(i);
-            final String material = outline.getMaterial();
-            final ExtruderSetting extruder = currentConfiguration.getExtruderSetting(material);
-            Line l = lc.getHatchDirection(false, extruder.getExtrusionSize()).pLine();
-            if (i % 2 != 0 ^ lc.getMachineLayer() % 4 > 1) {
-                l = l.neg();
-            }
-            outline = outline.newStart(outline.maximalVertex(l));
-
-            final Point2D start = outline.point(0);
-            final PolygonIndexedPoint pp = hatching.ppSearch(start, material);
-            boolean failed = true;
-            if (pp != null) {
-                pp.findLongEnough(10, 30);
-                final int st = pp.near();
-                final int en = pp.end();
-                final Polygon pg = pp.polygon();
-
-                // Check that the line from the start of the outline polygon to the first point
-                // of the tail-in is in solid.  If not, we have jumped between polygons and don't
-                // want to use that as a lead in.
-                final Point2D pDif = Point2D.sub(pg.point(st), start);
-                final Point2D pq1 = Point2D.add(start, Point2D.mul(0.25, pDif));
-                final Point2D pq2 = Point2D.add(start, Point2D.mul(0.5, pDif));
-                final Point2D pq3 = Point2D.add(start, Point2D.mul(0.5, pDif));
-
-                if (slice.membership(pq1) & slice.membership(pq2) & slice.membership(pq3)) {
-                    outline.add(start);
-
-                    if (en >= st) {
-                        for (int j = st; j <= en; j++) {
-                            outline.add(0, pg.point(j)); // Put it on the beginning...
-                            if (j < en) {
-                                outline.add(pg.point(j)); // ...and the end.
-                            }
-                        }
-                    } else {
-                        for (int j = st; j >= en; j--) {
-                            outline.add(0, pg.point(j));
-                            if (j > en) {
-                                outline.add(pg.point(j));
-                            }
-                        }
-                    }
-                    list.set(i, outline);
-                    hatching.cutPolygon(pp.pIndex(), st, en);
-                    failed = false;
-                }
-            }
-            if (failed) {
-                list.set(i, outline.randomStart()); // Best we can do.
             }
         }
     }

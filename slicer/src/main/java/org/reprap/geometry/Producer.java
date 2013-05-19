@@ -26,7 +26,6 @@ public class Producer {
     private final GCodePrinter printer;
     private final int totalExtruders;
     private final int brimLines;
-    private final boolean printSupport;
     private final CurrentConfiguration currentConfiguration;
     private final InFillPatterns inFillPatterns;
 
@@ -53,7 +52,6 @@ public class Producer {
         final PrintSetting printSetting = currentConfiguration.getPrintSetting();
         omitShield = printSetting.printShield();
         brimLines = printSetting.getBrimLines();
-        printSupport = printSetting.printSupport();
     }
 
     public void produce() {
@@ -119,16 +117,17 @@ public class Producer {
 
     private Point2D collectPolygonsForObject(final int stl, Point2D startNearHere, final PolygonList[] allPolygons) {
         for (int extruder = 0; extruder < totalExtruders; extruder++) {
+            final PolygonList result = allPolygons[extruder];
             final String material = currentConfiguration.getMaterials().get(extruder).getName();
-            PolygonList fills = inFillPatterns.computePolygonsForMaterial(stl, stlList, material);
-            if (printSupport && extruder == currentConfiguration.getPrintSetting().getSupportExtruder()) {
+            PolygonList borders = stlList.computeOutlines(stl, material);
+            if (currentConfiguration.getPrintSetting().printSupport()
+                    && extruder == currentConfiguration.getPrintSetting().getSupportExtruder()) {
                 final PolygonList support = stlList.computeSupport(stl);
                 for (int pol = 0; pol < support.size(); pol++) {
                     final Polygon polygon = support.polygon(pol);
-                    fills.add(polygon);
+                    borders.add(polygon);
                 }
             }
-            PolygonList borders = stlList.computeOutlines(stl, fills, material);
             if (layerRules.getModelLayer() == 1 && brimLines > 0 && extruder == 0) {
                 final PolygonList brim = stlList.computeBrim(stl, brimLines);
                 borders.add(brim);
@@ -142,8 +141,9 @@ public class Producer {
                     final Polygon last = borders.polygon(borders.size() - 1);
                     startNearHere = last.point(last.size() - 1);
                 }
-                allPolygons[extruder].add(borders);
+                result.add(borders);
             }
+            PolygonList fills = inFillPatterns.computePolygonsForMaterial(stl, stlList, material);
             if (fills.size() > 0) {
                 final double linkUp = currentConfiguration.getExtruderSetting(fills.polygon(0).getMaterial())
                         .getExtrusionSize();
@@ -153,7 +153,7 @@ public class Producer {
                     final Polygon last = fills.polygon(fills.size() - 1);
                     startNearHere = last.point(last.size() - 1);
                 }
-                allPolygons[extruder].add(fills);
+                result.add(fills);
             }
         }
         return startNearHere;

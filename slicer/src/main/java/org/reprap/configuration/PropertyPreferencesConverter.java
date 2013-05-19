@@ -249,7 +249,6 @@ final class PropertyPreferencesConverter {
         result.setSupportExtruder(getIntegerProperty("Extruder" + supportExtruderNo + "_Address"));
         result.setPathOptimize(getBooleanProperty("PathOptimise"));
         result.setInsideOut(getBooleanProperty("Extruder0_InsideOut"));
-        result.setMiddleStart(getBooleanProperty("Extruder0_MiddleStart"));
         result.setArcCompensation(getDoubleProperty("Extruder0_ArcCompensationFactor(0..)"));
         result.setArcShortSides(getDoubleProperty("Extruder0_ArcShortSides(0..)"));
         result.setInfillOverlap(getDoubleProperty("Extruder0_InfillOverlap(mm)"));

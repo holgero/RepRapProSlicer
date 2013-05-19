@@ -38,7 +38,6 @@ public class LayersSettingsPanel extends AbstractPrintSettingPanel {
     private final SpinnerNumberModel verticalShells = new SpinnerNumberModel(1, 1, 99, 1);
     private final SpinnerNumberModel horizontalShells = new SpinnerNumberModel(1, 1, 99, 1);
     private final JCheckBox insideOut = new JCheckBox();
-    private final JCheckBox middleStart = new JCheckBox();
     private final JTextField arcCompensation = new JTextField();
     private final JTextField arcShortSides = new JTextField();
 
@@ -64,7 +63,6 @@ public class LayersSettingsPanel extends AbstractPrintSettingPanel {
         final SettingsBoxPanel result = new SettingsBoxPanel("Shells");
         result.addRow(new JLabel("Vertical shells (perimeters): "), new JSpinner(verticalShells));
         result.addRow(new JLabel("Print perimeters inside out"), insideOut);
-        result.addRow(new JLabel("Middle start of perimeters"), middleStart);
         result.addRow(new JLabel("Horizontal shells (solid layers): "), new JSpinner(horizontalShells));
         return result;
     }
@@ -92,7 +90,6 @@ public class LayersSettingsPanel extends AbstractPrintSettingPanel {
         verticalShells.setValue(Integer.valueOf(printSetting.getVerticalShells()));
         horizontalShells.setValue(Integer.valueOf(printSetting.getHorizontalShells()));
         insideOut.setSelected(printSetting.isInsideOut());
-        middleStart.setSelected(printSetting.isMiddleStart());
         arcCompensation.setText(Double.toString(printSetting.getArcCompensation()));
         arcShortSides.setText(Double.toString(printSetting.getArcShortSides()));
     }
@@ -103,7 +100,6 @@ public class LayersSettingsPanel extends AbstractPrintSettingPanel {
         printSetting.setVerticalShells(((Integer) verticalShells.getValue()).intValue());
         printSetting.setHorizontalShells(((Integer) horizontalShells.getValue()).intValue());
         printSetting.setInsideOut(insideOut.isSelected());
-        printSetting.setMiddleStart(middleStart.isSelected());
         printSetting.setArcCompensation(fieldToDouble(arcCompensation));
         printSetting.setArcShortSides(fieldToDouble(arcShortSides));
     }

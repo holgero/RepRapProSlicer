@@ -304,15 +304,6 @@ public class PrintSetting implements NamedSetting {
     }
 
     @XmlTransient
-    public boolean isMiddleStart() {
-        return middleStart;
-    }
-
-    public void setMiddleStart(final boolean middleStart) {
-        this.middleStart = middleStart;
-    }
-
-    @XmlTransient
     public double getArcCompensation() {
         return arcCompensation;
     }
