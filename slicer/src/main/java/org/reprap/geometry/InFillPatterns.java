@@ -49,15 +49,15 @@ public final class InFillPatterns {
         // we are (at least partly) surface.
         // The intersection of the slices above does not need surface ..
         // How many do we need to consider?
-        BooleanGridList above = slicer.slice(stl, layer + 1).getBitmaps();
+        BooleanGridList above = slicer.slice(stl, layer + 1).getBitmaps(material);
         for (int i = 2; i <= surfaceLayers; i++) {
-            above = BooleanGridList.intersections(slicer.slice(stl, layer + i).getBitmaps(), above);
+            above = BooleanGridList.intersections(slicer.slice(stl, layer + i).getBitmaps(material), above);
         }
 
         // ...nor does the intersection of those below.
-        BooleanGridList below = slicer.slice(stl, layer - 1).getBitmaps();
+        BooleanGridList below = slicer.slice(stl, layer - 1).getBitmaps(material);
         for (int i = 2; i <= surfaceLayers; i++) {
-            below = BooleanGridList.intersections(slicer.slice(stl, layer - i).getBitmaps(), below);
+            below = BooleanGridList.intersections(slicer.slice(stl, layer - i).getBitmaps(material), below);
         }
 
         // The bit of the slice with nothing above it needs fine ..
