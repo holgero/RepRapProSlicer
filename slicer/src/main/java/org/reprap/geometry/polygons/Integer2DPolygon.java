@@ -13,8 +13,8 @@ final class Integer2DPolygon {
      */
     private final boolean closed;
 
-    Integer2DPolygon(final boolean c) {
-        closed = c;
+    Integer2DPolygon(final boolean closed) {
+        this.closed = closed;
     }
 
     /**

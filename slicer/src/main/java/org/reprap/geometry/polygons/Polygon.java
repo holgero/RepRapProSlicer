@@ -418,8 +418,8 @@ public class Polygon {
     }
 
     /**
-     * Simplify a polygon by deleting points from it that are closer than d to
-     * lines joining other points NB - this ignores speeds
+     * Create a new simplified polygon by only points to it that are not closer
+     * than d to lines joining other points.
      * 
      * @return simplified polygon object
      */
@@ -428,41 +428,45 @@ public class Polygon {
         if (leng <= 3) {
             return new Polygon(this);
         }
-        final Polygon r = new Polygon(material, closed);
+        final Polygon result = new Polygon(material, closed);
         final double d2 = d * d;
 
         final int v1 = findAngleStart(0, d2);
         // We get back -1 if the points are in a straight line.
         if (v1 < 0) {
-            r.add(point(0));
-            r.add(point(leng - 1));
-            return r;
+            result.add(point(0));
+            result.add(point(leng - 1));
+            return result;
         }
 
         if (!isClosed()) {
-            r.add(point(0));
+            result.add(point(0));
         }
 
-        r.add(point(v1 % leng));
+        result.add(point(v1));
         int v2 = v1;
         while (true) {
             // We get back -1 if the points are in a straight line. 
             v2 = findAngleStart(v2, d2);
             if (v2 < 0) {
                 LOGGER.error("RrPolygon.simplify(): points were not in a straight line; now they are!");
-                return (r);
+                return result;
             }
 
             if (v2 > leng || (!isClosed() && v2 == leng)) {
-                return (r);
+                if (v2 % leng < v1) {
+                    result.points.add(0, point(0));
+                    result.re_box();
+                }
+                return result;
             }
 
             if (v2 == leng && isClosed()) {
-                r.points.add(0, point(0));
-                r.re_box();
-                return r;
+                result.points.add(0, point(0));
+                result.re_box();
+                return result;
             }
-            r.add(point(v2 % leng));
+            result.add(point(v2 % leng));
         }
     }
 
