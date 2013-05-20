@@ -54,6 +54,10 @@
  
  */
 
+/*
+ * Changes after 2013-04-13 are Copyright (C) 2013  Holger Oehm
+ * also licensed under LGPL.
+ */
 package org.reprap.geometry;
 
 import java.awt.Color;
@@ -70,6 +74,8 @@ import javax.swing.JComponent;
 
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.MaterialSetting;
+import org.reprap.geometry.polygons.BooleanGrid;
+import org.reprap.geometry.polygons.BooleanGridList;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
@@ -83,30 +89,42 @@ import org.reprap.geometry.polygons.Rectangle;
 public class SimulationPlotter extends JComponent {
     private static final Color BOX_COLOR = Color.blue;
 
+    private static SimulationPlotter instance;
     private final Map<String, Color> colorMap = new HashMap<String, Color>();
-    private PolygonList p_list = null;
+    private BooleanGridList grids = null;
+    private PolygonList polygons = null;
 
     private double scale;
-    private Point2D p_0;
+    private Point2D origin;
     private Point2D pos;
     private Rectangle scaledBox, originalBox;
-    private boolean plot_box = false;
+    private boolean plotBoxes = false;
     private boolean initialised = false;
     private boolean pauseSlicer;
+
+    /**
+     * For debugging purposes, to allow display of PolygonLists and
+     * BooleanGridLists from anywhere.
+     */
+    public static SimulationPlotter getInstance() {
+        return instance;
+    }
 
     /**
      * Constructor for nothing - add stuff later
      */
     public SimulationPlotter(final CurrentConfiguration configuration) {
-        p_list = null;
+        polygons = null;
         initialised = false;
         for (final MaterialSetting material : configuration.getMaterials()) {
             colorMap.put(material.getName(), material.getColor().get());
         }
+        instance = this;
     }
 
     public void cleanPolygons() {
-        p_list = null;
+        polygons = null;
+        grids = null;
     }
 
     private void setScales(final Rectangle b) {
@@ -123,7 +141,7 @@ public class SimulationPlotter extends JComponent {
             scale = ys;
         }
 
-        p_0 = new Point2D((getWidth() - (width + 2 * scaledBox.x().low()) * scale) * 0.5,
+        origin = new Point2D((getWidth() - (width + 2 * scaledBox.x().low()) * scale) * 0.5,
                 (getHeight() - (height + 2 * scaledBox.y().low()) * scale) * 0.5);
 
         pos = new Point2D(width * 0.5, height * 0.5);
@@ -147,6 +165,24 @@ public class SimulationPlotter extends JComponent {
         return initialised;
     }
 
+    public void add(final BooleanGridList gridList) {
+        if (grids == null) {
+            grids = new BooleanGridList();
+        }
+        for (final BooleanGrid grid : gridList) {
+            grids.add(grid);
+        }
+        repaint();
+    }
+
+    public void add(final BooleanGrid grid) {
+        if (grids == null) {
+            grids = new BooleanGridList();
+        }
+        grids.add(grid);
+        repaint();
+    }
+
     public void add(final PolygonList pl) {
         if (pl == null) {
             return;
@@ -154,11 +190,19 @@ public class SimulationPlotter extends JComponent {
         if (pl.size() <= 0) {
             return;
         }
-        if (p_list == null) {
-            p_list = new PolygonList(pl);
+        if (polygons == null) {
+            polygons = new PolygonList(pl);
         } else {
-            p_list.add(pl);
+            polygons.add(pl);
         }
+        repaint();
+    }
+
+    public void add(final Polygon polygon) {
+        if (polygons == null) {
+            polygons = new PolygonList();
+        }
+        polygons.add(polygon);
         repaint();
     }
 
@@ -166,14 +210,14 @@ public class SimulationPlotter extends JComponent {
      * Real-world coordinates to pixels
      */
     private Point2D transform(final Point2D p) {
-        return new Point2D(p_0.x() + scale * p.x(), getHeight() - (p_0.y() + scale * p.y()));
+        return new Point2D(origin.x() + scale * p.x(), getHeight() - (origin.y() + scale * p.y()));
     }
 
     /**
      * Pixels to real-world coordinates
      */
     private Point2D iTransform(final int x, final int y) {
-        return new Point2D((x - p_0.x()) / scale, ((getHeight() - y) - p_0.y()) / scale);
+        return new Point2D((x - origin.x()) / scale, ((getHeight() - y) - origin.y()) / scale);
     }
 
     /**
@@ -229,20 +273,35 @@ public class SimulationPlotter extends JComponent {
         }
     }
 
+    private void plot(final Graphics2D g2d, final BooleanGrid grid) {
+        if (grid.isEmpty()) {
+            return;
+        }
+        final PolygonList perimeters = grid.allPerimiters();
+        for (int i = 0; i < perimeters.size(); i++) {
+            final Polygon polygon = perimeters.polygon(i);
+            plot(g2d, polygon);
+        }
+    }
+
     /**
      * Master plot function - draw everything
      */
     private void plot(final Graphics2D g2d) {
         plotBar(g2d);
-        if (p_list != null) {
-            final int leng = p_list.size();
-            for (int i = 0; i < leng; i++) {
-                plot(g2d, p_list.polygon(i));
+        if (polygons != null) {
+            for (int i = 0; i < polygons.size(); i++) {
+                plot(g2d, polygons.polygon(i));
             }
-            if (plot_box) {
-                for (int i = 0; i < leng; i++) {
-                    plot(g2d, p_list.polygon(i).getBox());
+            if (plotBoxes) {
+                for (int i = 0; i < polygons.size(); i++) {
+                    plot(g2d, polygons.polygon(i).getBox());
                 }
+            }
+        }
+        if (grids != null) {
+            for (final BooleanGrid grid : grids) {
+                plot(g2d, grid);
             }
         }
     }
@@ -253,7 +312,7 @@ public class SimulationPlotter extends JComponent {
             switch (k.getKeyChar()) {
             case 'b':
             case 'B':
-                plot_box = !plot_box;
+                plotBoxes = !plotBoxes;
                 repaint();
                 break;
             case ' ':

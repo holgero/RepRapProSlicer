@@ -443,7 +443,7 @@ public class Polygon {
             result.add(point(0));
         }
 
-        result.add(point(v1));
+        result.add(point(v1 % leng));
         int v2 = v1;
         while (true) {
             // We get back -1 if the points are in a straight line. 

@@ -1376,7 +1376,8 @@ public class BooleanGrid {
             final Integer2DPoint start = rec.convertToInteger2DPoint(polygon.point(i), pixelSize);
             final Integer2DPoint end = rec.convertToInteger2DPoint(polygon.point((i + 1) % polygon.size()), pixelSize);
             rectangle(start, end, pixelWidth, false);
-            disc(end, Math.abs(pixelWidth), false);
+            rectangle(end.add(new Integer2DPoint(-pixelWidth, 0)), end.add(new Integer2DPoint(pixelWidth, 0)), pixelWidth,
+                    false);
         }
     }
 }

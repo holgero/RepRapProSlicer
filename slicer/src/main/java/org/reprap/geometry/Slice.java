@@ -79,10 +79,10 @@ class Slice {
         if (gridList.size() <= 0) {
             return new BooleanGridList();
         }
-        final BooleanGridList remaining = gridList.subtractPolygons(borders, extrusionSize);
+        final BooleanGridList remaining = gridList.subtractPolygons(borders, extrusionSize * 0.7);
         final BooleanGridList result = new BooleanGridList();
         for (final BooleanGrid grid : remaining) {
-            result.add(grid.createOffsetGrid(infillOverlap));
+            result.add(grid.createOffsetGrid(infillOverlap * 0.5));
         }
         return result;
     }
