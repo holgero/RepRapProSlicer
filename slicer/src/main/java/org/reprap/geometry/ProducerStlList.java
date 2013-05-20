@@ -397,16 +397,6 @@ class ProducerStlList {
         stls.add(0, shield);
     }
 
-    PolygonList computeOutlines(final int stl, final String material) {
-        final boolean insideOut = currentConfiguration.getPrintSetting().isInsideOut();
-        final int shells = currentConfiguration.getPrintSetting().getVerticalShells();
-        final double extrusionSize = currentConfiguration.getExtruderSetting(material).getExtrusionSize();
-
-        final Slice slice = slice(stl, layerRules.getModelLayer());
-        final BooleanGridList result = slice.getOutlineGrids(material, insideOut, shells, extrusionSize);
-        return result.borders();
-    }
-
     BooleanGridList sliceWithoutBorder(final int stl, final String material) {
         final double extrusionSize = currentConfiguration.getExtruderSetting(material).getExtrusionSize();
         final int shells = currentConfiguration.getPrintSetting().getVerticalShells();

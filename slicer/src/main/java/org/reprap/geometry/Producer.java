@@ -2,10 +2,12 @@ package org.reprap.geometry;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.CurrentConfiguration;
+import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.PrintSetting;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.gcode.Purge;
@@ -116,25 +118,27 @@ public class Producer {
     }
 
     private Point2D collectPolygonsForObject(final int stl, Point2D startNearHere, final PolygonList[] allPolygons) {
+        final PrintSetting printSetting = currentConfiguration.getPrintSetting();
+        final List<ExtruderSetting> extruderSettings = currentConfiguration.getPrinterSetting().getExtruderSettings();
         if (layerRules.getModelLayer() == 1 && brimLines > 0) {
             final PolygonList brim = stlList.computeBrim(stl, brimLines);
-            final double extrusionSize = currentConfiguration.getPrinterSetting().getExtruderSettings().get(0)
-                    .getExtrusionSize();
+            final double extrusionSize = extruderSettings.get(0).getExtrusionSize();
             final double linkUp = 4 * extrusionSize * extrusionSize;
             startNearHere = simplifyAndAdd(brim, linkUp, startNearHere, allPolygons[0]);
         }
         for (int extruder = 0; extruder < totalExtruders; extruder++) {
             final PolygonList result = allPolygons[extruder];
             final String material = currentConfiguration.getMaterials().get(extruder).getName();
-            final double extrusionSize = currentConfiguration.getPrinterSetting().getExtruderSettings().get(extruder)
-                    .getExtrusionSize();
+            final double extrusionSize = extruderSettings.get(extruder).getExtrusionSize();
             final double linkUp = 4 * extrusionSize * extrusionSize;
-            if (currentConfiguration.getPrintSetting().printSupport()
-                    && extruder == currentConfiguration.getPrintSetting().getSupportExtruder()) {
+            if (printSetting.printSupport() && extruder == printSetting.getSupportExtruder()) {
                 final PolygonList support = stlList.computeSupport(stl);
                 startNearHere = simplifyAndAdd(support, linkUp, startNearHere, result);
             }
-            final PolygonList borders = stlList.computeOutlines(stl, material);
+            final boolean insideOut = printSetting.isInsideOut();
+            final int shells = printSetting.getVerticalShells();
+            final Slice slice = stlList.slice(stl, layerRules.getModelLayer());
+            final PolygonList borders = slice.getOutlineGrids(material, shells, extrusionSize, insideOut);
             startNearHere = simplifyAndAdd(borders, linkUp, startNearHere, result);
             final PolygonList fills = inFillPatterns.computePolygonsForMaterial(stl, stlList, material);
             startNearHere = simplifyAndAdd(fills, linkUp, startNearHere, result);

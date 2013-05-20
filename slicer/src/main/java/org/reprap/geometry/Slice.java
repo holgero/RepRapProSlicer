@@ -93,23 +93,22 @@ class Slice {
         return result;
     }
 
-    BooleanGridList getOutlineGrids(final String material, final boolean insideOut, final int shells, final double extrusionSize) {
+    PolygonList getOutlineGrids(final String material, final int shells, final double extrusionSize, final boolean insideOut) {
         final BooleanGridList gridList = getBitmaps(material);
         if (gridList.size() <= 0) {
-            return gridList;
+            return new PolygonList();
         }
         final BooleanGridList result = new BooleanGridList();
         for (int i = 0; i < gridList.size(); i++) {
-            final BooleanGrid grid = gridList.get(i);
-            final BooleanGridList offset = offsetOutline(grid, shells, extrusionSize);
+            final BooleanGridList offset = offsetOutline(gridList.get(i), shells, extrusionSize);
             if (insideOut) {
                 offset.reverse();
             }
-            for (int j = 0; j < offset.size(); j++) {
-                result.add(offset.get(j));
+            for (final BooleanGrid grid : offset) {
+                result.add(grid);
             }
         }
-        return result;
+        return result.borders();
     }
 
     private static BooleanGridList offsetOutline(final BooleanGrid grid, final int shells, final double extrusionSize) {

@@ -37,12 +37,11 @@ public final class InFillPatterns {
         hatchedPolygons = new PolygonList();
         // Where are we and what does the current slice look like?
         final int layer = layerRules.getModelLayer();
-        BooleanGridList slice = slicer.slice(stl, layer).getBitmaps(material);
+        final BooleanGridList slice = slicer.slice(stl, layer).getBitmaps(material);
         final int surfaceLayers = currentConfiguration.getPrintSetting().getHorizontalShells();
         // Get the bottom out of the way - no fancy calculations needed.
         if (layer <= surfaceLayers) {
-            slice = offset(slice, -1);
-            return ProducerStlList.hatch(slice, layerRules, true, false, currentConfiguration);
+            return ProducerStlList.hatch(offset(slice, -1), layerRules, true, false, currentConfiguration);
         }
 
         // If we are solid but the slices above or below us weren't, we need some fine infill as
