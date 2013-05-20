@@ -66,6 +66,7 @@ import org.reprap.io.stl.StlFileLoader;
 class ProducerStlList {
     private static final Logger LOGGER = LogManager.getLogger(Producer.class);
     private static final double GRID_RESOLUTION = 0.01;
+    private static final Slice EMPTY_SLICE = new Slice(new BooleanGridList());
 
     static BoundingBox calculateBoundingBox(final AllSTLsToBuild allStls, final Purge purge,
             final CurrentConfiguration currentConfiguration) {
@@ -91,7 +92,7 @@ class ProducerStlList {
         setUpShield(purge, stlsToBuild, currentConfiguration);
         setRectangles(stlsToBuild, rectangles);
         this.layerRules = layerRules;
-        cache = new SliceCache(layerRules, stlsToBuild);
+        cache = new SliceCache(layerRules.sliceCacheSize(), stlsToBuild.size());
     }
 
     /**
@@ -322,16 +323,13 @@ class ProducerStlList {
         // We start by computing the union of everything in this layer because
         // that is everywhere that support _isn't_ needed.
         final int layer = layerRules.getModelLayer();
-        BooleanGrid unionOfThisLayer = union(slice(stl, layer));
+        BooleanGrid unionOfThisLayer = slice(stl, layer).unionMaterials();
 
         final String material;
         if (!unionOfThisLayer.isEmpty()) {
             material = unionOfThisLayer.getMaterial();
-            // Expand the union of this layer a bit, so that any support is a little clear of 
-            // this layer's boundaries.
-            final BooleanGridList allThis = offsetOutline(unionOfThisLayer, 2);
-            // the first grid in the resulting grid list is now offset by its extruders extrusionSize.
-            unionOfThisLayer = allThis.get(0);
+            // Expand the union of this layer a bit, so that any support is a little clear of this layer's boundaries.
+            unionOfThisLayer = unionOfThisLayer.createOffsetGrid(0.5);
         } else {
             // default to the stl to build
             material = stlsToBuild.get(stl).attributes(0).getMaterial();
@@ -340,7 +338,7 @@ class ProducerStlList {
         // support on the next layer down.
         final BooleanGridList previousSupport = cache.getSupport(layer + 1, stl);
 
-        cache.setSupport(BooleanGridList.unions(previousSupport, slice(stl, layer)), layer, stl);
+        cache.setSupport(BooleanGridList.unions(previousSupport, slice(stl, layer).getBitmaps()), layer, stl);
 
         // Now we subtract the union of this layer from all the stuff requiring support in the layer above.
         BooleanGridList support = new BooleanGridList();
@@ -362,33 +360,6 @@ class ProducerStlList {
         }
 
         return hatch(support, layerRules, false, true, currentConfiguration);
-    }
-
-    private static BooleanGrid union(final BooleanGridList slice) {
-        if (slice.size() == 0) {
-            return BooleanGrid.nullBooleanGrid();
-        }
-        BooleanGrid unionOfThisLayer = slice.get(0);
-        for (int i = 1; i < slice.size(); i++) {
-            unionOfThisLayer = BooleanGrid.union(unionOfThisLayer, slice.get(i), unionOfThisLayer.getMaterial());
-        }
-        return unionOfThisLayer;
-    }
-
-    /**
-     * Select from a slice (allLayer) just those parts of it that will be
-     * plotted this layer
-     */
-    BooleanGridList neededThisLayer(final BooleanGridList allLayer) {
-        final BooleanGridList neededSlice = new BooleanGridList();
-        for (int i = 0; i < allLayer.size(); i++) {
-            final ExtruderSetting extruder = currentConfiguration.getExtruderSetting(allLayer.get(i).getMaterial());
-            if (extruder != null) {
-                // TODO can extruder be null here?
-                neededSlice.add(allLayer.get(i));
-            }
-        }
-        return neededSlice;
     }
 
     private static void setUpShield(final Purge purge, final List<STLObject> stls,
@@ -428,33 +399,51 @@ class ProducerStlList {
     }
 
     PolygonList computeOutlines(final int stl, final String material) {
-        BooleanGridList slice = InFillPatterns.filter(slice(stl, layerRules.getModelLayer()), material);
-        slice = neededThisLayer(slice);
+        final BooleanGridList slice = slice(stl, layerRules.getModelLayer()).getBitmaps(material);
         if (slice.size() <= 0) {
             return new PolygonList();
         }
-        final BooleanGridList offBorder = offsetOutline(slice, -1);
-        return offBorder.borders();
+        final PrintSetting printSetting = currentConfiguration.getPrintSetting();
+        final BooleanGridList result = new BooleanGridList();
+        for (int i = 0; i < slice.size(); i++) {
+            final BooleanGrid grid = slice.get(i);
+            final BooleanGridList offset = offsetOutline(grid);
+            if (printSetting.isInsideOut()) {
+                offset.reverse();
+            }
+            for (int j = 0; j < offset.size(); j++) {
+                result.add(offset.get(j));
+            }
+        }
+        return result.borders();
+    }
+
+    BooleanGridList sliceWithoutBorder(final int stl, final String material) {
+        final BooleanGridList slice = slice(stl, layerRules.getModelLayer()).getBitmaps(material);
+        if (slice.size() <= 0) {
+            return new BooleanGridList();
+        }
+        final double extrusionSize = currentConfiguration.getExtruderSetting(material).getExtrusionSize();
+        final int shells = currentConfiguration.getPrintSetting().getVerticalShells();
+        final double infillOverlap = currentConfiguration.getPrintSetting().getInfillOverlap();
+        final BooleanGridList result = new BooleanGridList();
+        for (int i = 0; i < slice.size(); i++) {
+            final BooleanGrid grid = slice.get(i);
+            for (double offset = -(shells + 0.5) * extrusionSize + infillOverlap; offset < 0; offset += extrusionSize) {
+                final BooleanGrid borderGrid = grid.createOffsetGrid(offset);
+                if (!borderGrid.isEmpty()) {
+                    result.add(borderGrid);
+                    break;
+                }
+            }
+        }
+        return result;
     }
 
     PolygonList computeBrim(final int stl, final int brimLines) {
-        final ExtruderSetting extruder = currentConfiguration.getPrinterSetting().getExtruderSettings().get(0);
-        final double extrusionSize = extruder.getExtrusionSize();
+        final double extrusionSize = currentConfiguration.getPrinterSetting().getExtruderSettings().get(0).getExtrusionSize();
 
-        BooleanGridList slice = neededThisLayer(slice(stl, 0));
-        final PolygonList result = new PolygonList();
-        result.add(slice.borders());
-        for (int line = 1; line < brimLines; line++) {
-            final BooleanGridList nextSlice = new BooleanGridList();
-            for (int i = 0; i < slice.size(); i++) {
-                final BooleanGrid grid = slice.get(i);
-                nextSlice.add(grid.createOffsetGrid(extrusionSize));
-            }
-            slice = nextSlice;
-            result.add(slice.borders());
-        }
-
-        return result;
+        return slice(stl, 0).computeBrim(brimLines, extrusionSize);
     }
 
     private static final class EdgeAndCsgsCollector {
@@ -467,18 +456,18 @@ class ProducerStlList {
      * Generate a set of pixel-map representations, one for each material, for
      * STLObject stl at height z.
      */
-    BooleanGridList slice(final int stlIndex, final int layer) {
+    Slice slice(final int stlIndex, final int layer) {
         if (layer < 0) {
-            return new BooleanGridList();
+            return EMPTY_SLICE;
         }
 
-        final BooleanGridList cachedSlice = cache.getSlice(layer, stlIndex);
+        final Slice cachedSlice = cache.getSlice(layer, stlIndex);
         if (cachedSlice != null) {
             return cachedSlice;
         }
 
         if (rectangles.get(stlIndex) == null) {
-            return new BooleanGridList();
+            return EMPTY_SLICE;
         }
 
         final double currentZ = layerRules.getModelZ(layer) + layerRules.getZStep() * 0.5;
@@ -511,7 +500,7 @@ class ProducerStlList {
         }
 
         cache.setSlice(result, layer, stlIndex);
-        return result;
+        return cache.getSlice(layer, stlIndex);
     }
 
     private Map<String, EdgeAndCsgsCollector> collectEdgeLinesAndCsgs(final int stlIndex, final double currentZ) {
@@ -770,28 +759,13 @@ class ProducerStlList {
         return result;
     }
 
-    private BooleanGridList offsetOutline(final BooleanGridList gridList, final double multiplier) {
-        final BooleanGridList result = new BooleanGridList();
-        for (int i = 0; i < gridList.size(); i++) {
-            final BooleanGrid grid = gridList.get(i);
-            final BooleanGridList offset = offsetOutline(grid, multiplier);
-            if (currentConfiguration.getPrintSetting().isInsideOut()) {
-                offset.reverse();
-            }
-            for (int j = 0; j < offset.size(); j++) {
-                result.add(offset.get(j));
-            }
-        }
-        return result;
-    }
-
-    private BooleanGridList offsetOutline(final BooleanGrid grid, final double multiplier) {
+    private BooleanGridList offsetOutline(final BooleanGrid grid) {
+        final int shells = currentConfiguration.getPrintSetting().getVerticalShells();
         final ExtruderSetting extruder = currentConfiguration.getExtruderSetting(grid.getMaterial());
         final BooleanGridList result = new BooleanGridList();
-        final int shells = currentConfiguration.getPrintSetting().getVerticalShells();
         for (int shell = 0; shell < shells; shell++) {
             final double extrusionSize = extruder.getExtrusionSize();
-            final double offset = multiplier * (shell + 0.5) * extrusionSize;
+            final double offset = -(shell + 0.5) * extrusionSize;
             final BooleanGrid thisOne = grid.createOffsetGrid(offset);
             if (thisOne.isEmpty()) {
                 break;

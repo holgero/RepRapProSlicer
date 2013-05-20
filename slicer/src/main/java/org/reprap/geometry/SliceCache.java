@@ -20,10 +20,7 @@
  */
 package org.reprap.geometry;
 
-import java.util.List;
-
 import org.reprap.geometry.polygons.BooleanGridList;
-import org.reprap.geometry.polyhedra.STLObject;
 
 /**
  * Ring buffer cache to hold previously computed slices for doing infill and
@@ -32,27 +29,24 @@ import org.reprap.geometry.polyhedra.STLObject;
  * @author ensab
  */
 final class SliceCache {
+    private static final int NO_LAYER = Integer.MIN_VALUE;
     private final BooleanGridList[][] sliceRing;
     private final BooleanGridList[][] supportRing;
     private final int[] layerNumber;
     private int ringPointer;
-    private final int noLayer = Integer.MIN_VALUE;
     private final int ringSize;
 
-    SliceCache(final LayerRules lr, final List<STLObject> stls) {
-        if (lr == null) {
-            throw new IllegalArgumentException("lr must not be null");
-        }
-        ringSize = lr.sliceCacheSize();
-        sliceRing = new BooleanGridList[ringSize][stls.size()];
-        supportRing = new BooleanGridList[ringSize][stls.size()];
+    SliceCache(final int ringSize, final int size) {
+        this.ringSize = ringSize;
+        sliceRing = new BooleanGridList[ringSize][size];
+        supportRing = new BooleanGridList[ringSize][size];
         layerNumber = new int[ringSize];
         ringPointer = 0;
         for (int layer = 0; layer < ringSize; layer++) {
-            for (int stl = 0; stl < stls.size(); stl++) {
+            for (int stl = 0; stl < size; stl++) {
                 sliceRing[layer][stl] = null;
                 supportRing[layer][stl] = null;
-                layerNumber[layer] = noLayer;
+                layerNumber[layer] = NO_LAYER;
             }
         }
     }
@@ -102,10 +96,10 @@ final class SliceCache {
         return -1;
     }
 
-    BooleanGridList getSlice(final int layer, final int stl) {
+    Slice getSlice(final int layer, final int stl) {
         final int rp = getTheRingLocationForRead(layer);
         if (rp >= 0) {
-            return sliceRing[rp][stl];
+            return new Slice(sliceRing[rp][stl]);
         }
         return null;
     }

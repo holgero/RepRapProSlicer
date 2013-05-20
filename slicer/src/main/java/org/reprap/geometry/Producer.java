@@ -116,45 +116,40 @@ public class Producer {
     }
 
     private Point2D collectPolygonsForObject(final int stl, Point2D startNearHere, final PolygonList[] allPolygons) {
+        if (layerRules.getModelLayer() == 1 && brimLines > 0) {
+            final PolygonList brim = stlList.computeBrim(stl, brimLines);
+            final double extrusionSize = currentConfiguration.getPrinterSetting().getExtruderSettings().get(0)
+                    .getExtrusionSize();
+            final double linkUp = 4 * extrusionSize * extrusionSize;
+            startNearHere = simplifyAndAdd(brim, linkUp, startNearHere, allPolygons[0]);
+        }
         for (int extruder = 0; extruder < totalExtruders; extruder++) {
             final PolygonList result = allPolygons[extruder];
             final String material = currentConfiguration.getMaterials().get(extruder).getName();
-            PolygonList borders = stlList.computeOutlines(stl, material);
+            final double extrusionSize = currentConfiguration.getPrinterSetting().getExtruderSettings().get(extruder)
+                    .getExtrusionSize();
+            final double linkUp = 4 * extrusionSize * extrusionSize;
             if (currentConfiguration.getPrintSetting().printSupport()
                     && extruder == currentConfiguration.getPrintSetting().getSupportExtruder()) {
                 final PolygonList support = stlList.computeSupport(stl);
-                for (int pol = 0; pol < support.size(); pol++) {
-                    final Polygon polygon = support.polygon(pol);
-                    borders.add(polygon);
-                }
+                startNearHere = simplifyAndAdd(support, linkUp, startNearHere, result);
             }
-            if (layerRules.getModelLayer() == 1 && brimLines > 0 && extruder == 0) {
-                final PolygonList brim = stlList.computeBrim(stl, brimLines);
-                borders.add(brim);
-            }
-            if (borders.size() > 0) {
-                final double linkUp = currentConfiguration.getExtruderSetting(borders.polygon(0).getMaterial())
-                        .getExtrusionSize();
-                borders.radicalReOrder(4 * linkUp * linkUp);
-                borders = borders.nearEnds(startNearHere);
-                if (borders.size() > 0) {
-                    final Polygon last = borders.polygon(borders.size() - 1);
-                    startNearHere = last.point(last.size() - 1);
-                }
-                result.add(borders);
-            }
-            PolygonList fills = inFillPatterns.computePolygonsForMaterial(stl, stlList, material);
-            if (fills.size() > 0) {
-                final double linkUp = currentConfiguration.getExtruderSetting(fills.polygon(0).getMaterial())
-                        .getExtrusionSize();
-                fills.radicalReOrder(4 * linkUp * linkUp);
-                fills = fills.nearEnds(startNearHere);
-                if (fills.size() > 0) {
-                    final Polygon last = fills.polygon(fills.size() - 1);
-                    startNearHere = last.point(last.size() - 1);
-                }
-                result.add(fills);
-            }
+            final PolygonList borders = stlList.computeOutlines(stl, material);
+            startNearHere = simplifyAndAdd(borders, linkUp, startNearHere, result);
+            final PolygonList fills = inFillPatterns.computePolygonsForMaterial(stl, stlList, material);
+            startNearHere = simplifyAndAdd(fills, linkUp, startNearHere, result);
+        }
+        return startNearHere;
+    }
+
+    private static Point2D simplifyAndAdd(final PolygonList list, final double linkUp, Point2D startNearHere,
+            final PolygonList result) {
+        if (list.size() > 0) {
+            list.radicalReOrder(linkUp);
+            final PolygonList reorderedList = list.nearEnds(startNearHere);
+            final Polygon last = reorderedList.polygon(reorderedList.size() - 1);
+            startNearHere = last.point(last.size() - 1);
+            result.add(reorderedList);
         }
         return startNearHere;
     }

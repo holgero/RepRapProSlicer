@@ -211,7 +211,7 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
      * attributes are considered and an element of a has no corresponding
      * element in b, then an entry equal to a is returned for that.
      */
-    public static BooleanGridList differences(final BooleanGridList a, final BooleanGridList b, final boolean ignoreMaterial) {
+    public static BooleanGridList differences(final BooleanGridList a, final BooleanGridList b) {
         final BooleanGridList result = new BooleanGridList();
 
         if (a == null) {
@@ -235,15 +235,13 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
             boolean aMatched = false;
             for (int j = 0; j < b.size(); j++) {
                 final BooleanGrid grid = b.get(j);
-                if (ignoreMaterial || (abg.getMaterial().equals(grid.getMaterial()))) {
+                if (abg.getMaterial().equals(grid.getMaterial())) {
                     result.add(BooleanGrid.difference(abg, grid, abg.getMaterial()));
-                    if (!ignoreMaterial) {
-                        aMatched = true;
-                        break;
-                    }
+                    aMatched = true;
+                    break;
                 }
             }
-            if (!aMatched && !ignoreMaterial) {
+            if (!aMatched) {
                 result.add(abg);
             }
 

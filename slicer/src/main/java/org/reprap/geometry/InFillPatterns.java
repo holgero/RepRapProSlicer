@@ -37,12 +37,11 @@ public final class InFillPatterns {
         hatchedPolygons = new PolygonList();
         // Where are we and what does the current slice look like?
         final int layer = layerRules.getModelLayer();
-        BooleanGridList slice = filter(slicer.slice(stl, layer), material);
+        BooleanGridList slice = slicer.slice(stl, layer).getBitmaps(material);
         final int surfaceLayers = currentConfiguration.getPrintSetting().getHorizontalShells();
         // Get the bottom out of the way - no fancy calculations needed.
         if (layer <= surfaceLayers) {
             slice = offset(slice, -1);
-            slice = slicer.neededThisLayer(slice);
             return ProducerStlList.hatch(slice, layerRules, true, false, currentConfiguration);
         }
 
@@ -50,26 +49,26 @@ public final class InFillPatterns {
         // we are (at least partly) surface.
         // The intersection of the slices above does not need surface ..
         // How many do we need to consider?
-        BooleanGridList above = slicer.slice(stl, layer + 1);
+        BooleanGridList above = slicer.slice(stl, layer + 1).getBitmaps();
         for (int i = 2; i <= surfaceLayers; i++) {
-            above = BooleanGridList.intersections(slicer.slice(stl, layer + i), above);
+            above = BooleanGridList.intersections(slicer.slice(stl, layer + i).getBitmaps(), above);
         }
 
         // ...nor does the intersection of those below.
-        BooleanGridList below = slicer.slice(stl, layer - 1);
+        BooleanGridList below = slicer.slice(stl, layer - 1).getBitmaps();
         for (int i = 2; i <= surfaceLayers; i++) {
-            below = BooleanGridList.intersections(slicer.slice(stl, layer - i), below);
+            below = BooleanGridList.intersections(slicer.slice(stl, layer - i).getBitmaps(), below);
         }
 
         // The bit of the slice with nothing above it needs fine ..
-        final BooleanGridList nothingabove = BooleanGridList.differences(slice, above, false);
+        final BooleanGridList nothingabove = BooleanGridList.differences(slice, above);
 
         // ...as does the bit with nothing below.
-        final BooleanGridList nothingbelow = BooleanGridList.differences(slice, below, false);
+        final BooleanGridList nothingbelow = BooleanGridList.differences(slice, below);
 
         // Find the region that is not surface.
-        insides = BooleanGridList.differences(slice, nothingbelow, false);
-        insides = BooleanGridList.differences(insides, nothingabove, false);
+        insides = BooleanGridList.differences(slice, nothingbelow);
+        insides = BooleanGridList.differences(insides, nothingabove);
         bridges = computeBridges(nothingbelow);
 
         // The remainder with nothing under them will be supported by support material
@@ -86,43 +85,19 @@ public final class InFillPatterns {
         // Find the landing areas as a separate set of shapes that go with the bridges.
         final BooleanGridList lands = BooleanGridList.intersections(bridges, BooleanGridList.unions(insides, surfaces));
 
-        // Shapes will be outlined, and so need to be shrunk to allow for that.  But they
-        // must not also shrink from each other internally.  So initially expand them so they overlap
-        bridges = offset(bridges, 1);
-        insides = offset(insides, 1);
-        surfaces = offset(surfaces, 1);
-
-        // Now intersect them with the slice so the outer edges are back where they should be.
-        bridges = BooleanGridList.intersections(bridges, slice);
-        insides = BooleanGridList.intersections(insides, slice);
-        surfaces = BooleanGridList.intersections(surfaces, slice);
-
-        // Now shrink them so the edges are in a bit to allow the outlines to
-        // be put round the outside.  The inner joins should now shrink back to be
-        // adjacent to each other as they should be.
-        bridges = offset(bridges, -1);
-        insides = offset(insides, -1);
-        surfaces = offset(surfaces, -1);
+        final BooleanGridList sliceWithoutBorder = slicer.sliceWithoutBorder(stl, material);
+        // intersect with the slice without border: subtract the room for the border
+        bridges = BooleanGridList.intersections(bridges, sliceWithoutBorder);
+        insides = BooleanGridList.intersections(insides, sliceWithoutBorder);
+        surfaces = BooleanGridList.intersections(surfaces, sliceWithoutBorder);
 
         // Generate the infill patterns.  We do the bridges first, as each bridge subtracts its
         // lands from the other two sets of shapes.  We want that, so they don't get infilled twice.
         bridgeHatch(lands);
-        insides = slicer.neededThisLayer(insides);
         hatchedPolygons.add(ProducerStlList.hatch(insides, layerRules, false, false, currentConfiguration));
-        surfaces = slicer.neededThisLayer(surfaces);
         hatchedPolygons.add(ProducerStlList.hatch(surfaces, layerRules, true, false, currentConfiguration));
 
         return hatchedPolygons;
-    }
-
-    static BooleanGridList filter(final BooleanGridList slice, final String material) {
-        final BooleanGridList result = new BooleanGridList();
-        for (final BooleanGrid grid : slice) {
-            if (grid.getMaterial().equals(material)) {
-                result.add(grid);
-            }
-        }
-        return result;
     }
 
     // Parts with nothing under them that have no support material
@@ -215,8 +190,8 @@ public final class InFillPatterns {
                     // Remove this bridge (in fact, just its lands) from the other infill patterns.
                     final BooleanGridList b = new BooleanGridList();
                     b.add(bridge);
-                    insides = BooleanGridList.differences(insides, b, false);
-                    surfaces = BooleanGridList.differences(surfaces, b, false);
+                    insides = BooleanGridList.differences(insides, b);
+                    surfaces = BooleanGridList.differences(surfaces, b);
                 } else {
                     // Wipe this land from the land pattern
                     landPattern = BooleanGrid.difference(landPattern, land2);
@@ -254,13 +229,13 @@ public final class InFillPatterns {
                     // Remove this bridge (in fact, just its lands) from the other infill patterns. 
                     final BooleanGridList b = new BooleanGridList();
                     b.add(bridge);
-                    insides = BooleanGridList.differences(insides, b, false);
-                    surfaces = BooleanGridList.differences(surfaces, b, false);
+                    insides = BooleanGridList.differences(insides, b);
+                    surfaces = BooleanGridList.differences(surfaces, b);
                 }
                 // remove the bridge from the bridge patterns.
                 final BooleanGridList b = new BooleanGridList();
                 b.add(bridge);
-                bridges = BooleanGridList.differences(bridges, b, false);
+                bridges = BooleanGridList.differences(bridges, b);
             }
         }
     }
