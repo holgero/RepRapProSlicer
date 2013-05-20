@@ -40,7 +40,6 @@ import javax.vecmath.Vector3d;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.CurrentConfiguration;
-import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.MaterialSetting;
 import org.reprap.configuration.MathRoutines;
 import org.reprap.configuration.PrintSetting;
@@ -399,45 +398,21 @@ class ProducerStlList {
     }
 
     PolygonList computeOutlines(final int stl, final String material) {
-        final BooleanGridList slice = slice(stl, layerRules.getModelLayer()).getBitmaps(material);
-        if (slice.size() <= 0) {
-            return new PolygonList();
-        }
-        final PrintSetting printSetting = currentConfiguration.getPrintSetting();
-        final BooleanGridList result = new BooleanGridList();
-        for (int i = 0; i < slice.size(); i++) {
-            final BooleanGrid grid = slice.get(i);
-            final BooleanGridList offset = offsetOutline(grid);
-            if (printSetting.isInsideOut()) {
-                offset.reverse();
-            }
-            for (int j = 0; j < offset.size(); j++) {
-                result.add(offset.get(j));
-            }
-        }
+        final boolean insideOut = currentConfiguration.getPrintSetting().isInsideOut();
+        final int shells = currentConfiguration.getPrintSetting().getVerticalShells();
+        final double extrusionSize = currentConfiguration.getExtruderSetting(material).getExtrusionSize();
+
+        final Slice slice = slice(stl, layerRules.getModelLayer());
+        final BooleanGridList result = slice.getOutlineGrids(material, insideOut, shells, extrusionSize);
         return result.borders();
     }
 
     BooleanGridList sliceWithoutBorder(final int stl, final String material) {
-        final BooleanGridList slice = slice(stl, layerRules.getModelLayer()).getBitmaps(material);
-        if (slice.size() <= 0) {
-            return new BooleanGridList();
-        }
         final double extrusionSize = currentConfiguration.getExtruderSetting(material).getExtrusionSize();
         final int shells = currentConfiguration.getPrintSetting().getVerticalShells();
         final double infillOverlap = currentConfiguration.getPrintSetting().getInfillOverlap();
-        final BooleanGridList result = new BooleanGridList();
-        for (int i = 0; i < slice.size(); i++) {
-            final BooleanGrid grid = slice.get(i);
-            for (double offset = -(shells + 0.5) * extrusionSize + infillOverlap; offset < 0; offset += extrusionSize) {
-                final BooleanGrid borderGrid = grid.createOffsetGrid(offset);
-                if (!borderGrid.isEmpty()) {
-                    result.add(borderGrid);
-                    break;
-                }
-            }
-        }
-        return result;
+
+        return slice(stl, layerRules.getModelLayer()).getSliceWithoutBorder(material, extrusionSize, shells, infillOverlap);
     }
 
     PolygonList computeBrim(final int stl, final int brimLines) {
@@ -755,23 +730,6 @@ class ProducerStlList {
             }
             final HalfPlane hatchLine = layerConditions.getHatchDirection(support, infillWidth);
             result.add(grid.hatch(hatchLine, infillWidth, currentConfiguration.getPrintSetting().isPathOptimize()));
-        }
-        return result;
-    }
-
-    private BooleanGridList offsetOutline(final BooleanGrid grid) {
-        final int shells = currentConfiguration.getPrintSetting().getVerticalShells();
-        final ExtruderSetting extruder = currentConfiguration.getExtruderSetting(grid.getMaterial());
-        final BooleanGridList result = new BooleanGridList();
-        for (int shell = 0; shell < shells; shell++) {
-            final double extrusionSize = extruder.getExtrusionSize();
-            final double offset = -(shell + 0.5) * extrusionSize;
-            final BooleanGrid thisOne = grid.createOffsetGrid(offset);
-            if (thisOne.isEmpty()) {
-                break;
-            } else {
-                result.add(thisOne);
-            }
         }
         return result;
     }

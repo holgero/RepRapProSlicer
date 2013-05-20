@@ -73,4 +73,57 @@ class Slice {
         return union;
     }
 
+    BooleanGridList getSliceWithoutBorder(final String material, final double extrusionSize, final int shells,
+            final double infillOverlap) {
+        final BooleanGridList gridList = getBitmaps(material);
+        if (gridList.size() <= 0) {
+            return new BooleanGridList();
+        }
+        final BooleanGridList result = new BooleanGridList();
+        for (int i = 0; i < gridList.size(); i++) {
+            final BooleanGrid grid = gridList.get(i);
+            for (double offset = -(shells + 0.5) * extrusionSize + infillOverlap; offset < 0; offset += extrusionSize) {
+                final BooleanGrid borderGrid = grid.createOffsetGrid(offset);
+                if (!borderGrid.isEmpty()) {
+                    result.add(borderGrid);
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
+    BooleanGridList getOutlineGrids(final String material, final boolean insideOut, final int shells, final double extrusionSize) {
+        final BooleanGridList gridList = getBitmaps(material);
+        if (gridList.size() <= 0) {
+            return gridList;
+        }
+        final BooleanGridList result = new BooleanGridList();
+        for (int i = 0; i < gridList.size(); i++) {
+            final BooleanGrid grid = gridList.get(i);
+            final BooleanGridList offset = offsetOutline(grid, shells, extrusionSize);
+            if (insideOut) {
+                offset.reverse();
+            }
+            for (int j = 0; j < offset.size(); j++) {
+                result.add(offset.get(j));
+            }
+        }
+        return result;
+    }
+
+    private static BooleanGridList offsetOutline(final BooleanGrid grid, final int shells, final double extrusionSize) {
+        final BooleanGridList result = new BooleanGridList();
+        for (int shell = 0; shell < shells; shell++) {
+            final double offset = -(shell + 0.5) * extrusionSize;
+            final BooleanGrid thisOne = grid.createOffsetGrid(offset);
+            if (thisOne.isEmpty()) {
+                break;
+            } else {
+                result.add(thisOne);
+            }
+        }
+        return result;
+    }
+
 }
