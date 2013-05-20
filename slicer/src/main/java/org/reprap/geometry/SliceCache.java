@@ -99,7 +99,10 @@ final class SliceCache {
     Slice getSlice(final int layer, final int stl) {
         final int rp = getTheRingLocationForRead(layer);
         if (rp >= 0) {
-            return new Slice(sliceRing[rp][stl]);
+            final BooleanGridList bitmaps = sliceRing[rp][stl];
+            if (bitmaps != null) {
+                return new Slice(bitmaps);
+            }
         }
         return null;
     }

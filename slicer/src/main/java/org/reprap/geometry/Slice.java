@@ -26,6 +26,9 @@ class Slice {
     private final BooleanGridList bitmaps;
 
     Slice(final BooleanGridList bitmaps) {
+        if (bitmaps == null) {
+            throw new IllegalArgumentException("bitmaps must not be null");
+        }
         this.bitmaps = bitmaps;
     }
 
