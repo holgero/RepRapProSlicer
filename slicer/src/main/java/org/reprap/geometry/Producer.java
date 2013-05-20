@@ -140,7 +140,7 @@ public class Producer {
             final Slice slice = stlList.slice(stl, layerRules.getModelLayer());
             final PolygonList borders = slice.getOutlineGrids(material, shells, extrusionSize, insideOut);
             startNearHere = simplifyAndAdd(borders, linkUp, startNearHere, result);
-            final PolygonList fills = inFillPatterns.computePolygonsForMaterial(stl, stlList, material);
+            final PolygonList fills = inFillPatterns.computePolygonsForMaterial(stl, stlList, material, borders);
             startNearHere = simplifyAndAdd(fills, linkUp, startNearHere, result);
         }
         return startNearHere;

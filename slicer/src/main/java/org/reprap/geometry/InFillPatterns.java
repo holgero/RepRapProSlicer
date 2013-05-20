@@ -33,15 +33,17 @@ public final class InFillPatterns {
         this.currentConfiguration = currentConfiguration;
     }
 
-    PolygonList computePolygonsForMaterial(final int stl, final ProducerStlList slicer, final String material) {
+    PolygonList computePolygonsForMaterial(final int stl, final ProducerStlList slicer, final String material,
+            final PolygonList borders) {
         hatchedPolygons = new PolygonList();
         // Where are we and what does the current slice look like?
         final int layer = layerRules.getModelLayer();
-        final BooleanGridList slice = slicer.slice(stl, layer).getBitmaps(material);
+        final Slice slice = slicer.slice(stl, layer);
+        final BooleanGridList sliceBitmap = slice.getBitmaps(material);
         final int surfaceLayers = currentConfiguration.getPrintSetting().getHorizontalShells();
         // Get the bottom out of the way - no fancy calculations needed.
         if (layer <= surfaceLayers) {
-            return ProducerStlList.hatch(offset(slice, -1), layerRules, true, false, currentConfiguration);
+            return ProducerStlList.hatch(offset(sliceBitmap, -1), layerRules, true, false, currentConfiguration);
         }
 
         // If we are solid but the slices above or below us weren't, we need some fine infill as
@@ -60,13 +62,13 @@ public final class InFillPatterns {
         }
 
         // The bit of the slice with nothing above it needs fine ..
-        final BooleanGridList nothingabove = BooleanGridList.differences(slice, above);
+        final BooleanGridList nothingabove = BooleanGridList.differences(sliceBitmap, above);
 
         // ...as does the bit with nothing below.
-        final BooleanGridList nothingbelow = BooleanGridList.differences(slice, below);
+        final BooleanGridList nothingbelow = BooleanGridList.differences(sliceBitmap, below);
 
         // Find the region that is not surface.
-        insides = BooleanGridList.differences(slice, nothingbelow);
+        insides = BooleanGridList.differences(sliceBitmap, nothingbelow);
         insides = BooleanGridList.differences(insides, nothingabove);
         bridges = computeBridges(nothingbelow);
 
@@ -79,12 +81,14 @@ public final class InFillPatterns {
         // This will make them interpenetrate at their ends/sides to give
         // bridge landing areas.
         bridges = offset(bridges, 2);
-        bridges = BooleanGridList.intersections(bridges, slice);
+        bridges = BooleanGridList.intersections(bridges, sliceBitmap);
 
         // Find the landing areas as a separate set of shapes that go with the bridges.
         final BooleanGridList lands = BooleanGridList.intersections(bridges, BooleanGridList.unions(insides, surfaces));
+        final double extrusionSize = currentConfiguration.getExtruderSetting(material).getExtrusionSize();
+        final double infillOverlap = currentConfiguration.getPrintSetting().getInfillOverlap();
 
-        final BooleanGridList sliceWithoutBorder = slicer.sliceWithoutBorder(stl, material);
+        final BooleanGridList sliceWithoutBorder = slice.subtractBorder(material, extrusionSize, infillOverlap, borders);
         // intersect with the slice without border: subtract the room for the border
         bridges = BooleanGridList.intersections(bridges, sliceWithoutBorder);
         insides = BooleanGridList.intersections(insides, sliceWithoutBorder);

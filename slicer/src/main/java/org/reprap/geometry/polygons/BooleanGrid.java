@@ -1360,4 +1360,23 @@ public class BooleanGrid {
         }
         return result;
     }
+
+    public BooleanGrid subtractPolygons(final PolygonList polygons, final double width) {
+        final BooleanGrid result = new BooleanGrid(this, pixelSize);
+        for (int i = 0; i < polygons.size(); i++) {
+            final Polygon polygon = polygons.polygon(i);
+            result.subtract(polygon, width);
+        }
+        return result;
+    }
+
+    private void subtract(final Polygon polygon, final double width) {
+        final int pixelWidth = (int) Math.round(width / pixelSize);
+        for (int i = 0; i < polygon.size(); i++) {
+            final Integer2DPoint start = rec.convertToInteger2DPoint(polygon.point(i), pixelSize);
+            final Integer2DPoint end = rec.convertToInteger2DPoint(polygon.point((i + 1) % polygon.size()), pixelSize);
+            rectangle(start, end, pixelWidth, false);
+            disc(end, Math.abs(pixelWidth), false);
+        }
+    }
 }

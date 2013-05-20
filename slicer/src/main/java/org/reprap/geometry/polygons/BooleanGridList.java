@@ -253,4 +253,12 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
     public Iterator<BooleanGrid> iterator() {
         return shapes.iterator();
     }
+
+    public BooleanGridList subtractPolygons(final PolygonList polygons, final double width) {
+        final BooleanGridList result = new BooleanGridList();
+        for (final BooleanGrid grid : shapes) {
+            result.add(grid.subtractPolygons(polygons, width));
+        }
+        return result;
+    }
 }

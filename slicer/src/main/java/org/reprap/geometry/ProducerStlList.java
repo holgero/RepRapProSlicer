@@ -397,14 +397,6 @@ class ProducerStlList {
         stls.add(0, shield);
     }
 
-    BooleanGridList sliceWithoutBorder(final int stl, final String material) {
-        final double extrusionSize = currentConfiguration.getExtruderSetting(material).getExtrusionSize();
-        final int shells = currentConfiguration.getPrintSetting().getVerticalShells();
-        final double infillOverlap = currentConfiguration.getPrintSetting().getInfillOverlap();
-
-        return slice(stl, layerRules.getModelLayer()).getSliceWithoutBorder(material, extrusionSize, shells, infillOverlap);
-    }
-
     PolygonList computeBrim(final int stl, final int brimLines) {
         final double extrusionSize = currentConfiguration.getPrinterSetting().getExtruderSettings().get(0).getExtrusionSize();
 

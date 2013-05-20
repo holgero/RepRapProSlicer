@@ -73,22 +73,16 @@ class Slice {
         return union;
     }
 
-    BooleanGridList getSliceWithoutBorder(final String material, final double extrusionSize, final int shells,
-            final double infillOverlap) {
+    BooleanGridList subtractBorder(final String material, final double extrusionSize, final double infillOverlap,
+            final PolygonList borders) {
         final BooleanGridList gridList = getBitmaps(material);
         if (gridList.size() <= 0) {
             return new BooleanGridList();
         }
+        final BooleanGridList remaining = gridList.subtractPolygons(borders, extrusionSize);
         final BooleanGridList result = new BooleanGridList();
-        for (int i = 0; i < gridList.size(); i++) {
-            final BooleanGrid grid = gridList.get(i);
-            for (double offset = -(shells + 0.5) * extrusionSize + infillOverlap; offset < 0; offset += extrusionSize) {
-                final BooleanGrid borderGrid = grid.createOffsetGrid(offset);
-                if (!borderGrid.isEmpty()) {
-                    result.add(borderGrid);
-                    break;
-                }
-            }
+        for (final BooleanGrid grid : remaining) {
+            result.add(grid.createOffsetGrid(infillOverlap));
         }
         return result;
     }
