@@ -318,11 +318,11 @@ class ProducerStlList {
     /**
      * Compute the support hatching polygons for this set of patterns
      */
-    PolygonList computeSupport(final int stl) {
+    PolygonList computeSupport(final int stl, final Slice slice) {
         // We start by computing the union of everything in this layer because
         // that is everywhere that support _isn't_ needed.
         final int layer = layerRules.getModelLayer();
-        BooleanGrid unionOfThisLayer = slice(stl, layer).unionMaterials();
+        BooleanGrid unionOfThisLayer = slice.unionMaterials();
 
         final String material;
         if (!unionOfThisLayer.isEmpty()) {
@@ -337,7 +337,7 @@ class ProducerStlList {
         // support on the next layer down.
         final BooleanGridList previousSupport = cache.getSupport(layer + 1, stl);
 
-        cache.setSupport(BooleanGridList.unions(previousSupport, slice(stl, layer).getBitmaps()), layer, stl);
+        cache.setSupport(BooleanGridList.unions(previousSupport, slice.getBitmaps()), layer, stl);
 
         // Now we subtract the union of this layer from all the stuff requiring support in the layer above.
         BooleanGridList support = new BooleanGridList();

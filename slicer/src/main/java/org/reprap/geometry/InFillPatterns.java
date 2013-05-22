@@ -33,12 +33,11 @@ public final class InFillPatterns {
         this.currentConfiguration = currentConfiguration;
     }
 
-    PolygonList computePolygonsForMaterial(final int stl, final ProducerStlList slicer, final String material,
-            final PolygonList borders) {
+    PolygonList computePolygonsForMaterial(final int stl, final Slice slice, final ProducerStlList slicer,
+            final String material, final PolygonList borders) {
         hatchedPolygons = new PolygonList();
         // Where are we and what does the current slice look like?
         final int layer = layerRules.getModelLayer();
-        final Slice slice = slicer.slice(stl, layer);
         final BooleanGridList sliceBitmap = slice.getBitmaps(material);
         final int surfaceLayers = currentConfiguration.getPrintSetting().getHorizontalShells();
         // Get the bottom out of the way - no fancy calculations needed.
