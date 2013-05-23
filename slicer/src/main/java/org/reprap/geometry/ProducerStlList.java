@@ -397,12 +397,6 @@ class ProducerStlList {
         stls.add(0, shield);
     }
 
-    PolygonList computeBrim(final int stl, final int brimLines) {
-        final double extrusionSize = currentConfiguration.getPrinterSetting().getExtruderSettings().get(0).getExtrusionSize();
-
-        return slice(stl, 0).computeBrim(brimLines, extrusionSize);
-    }
-
     private static final class EdgeAndCsgsCollector {
         final List<LineSegment> edges = new ArrayList<>();
         final List<CSG3D> csgs = new ArrayList<>();
