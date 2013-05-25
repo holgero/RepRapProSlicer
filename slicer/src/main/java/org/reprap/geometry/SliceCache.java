@@ -30,7 +30,6 @@ import org.reprap.geometry.polygons.BooleanGridList;
  */
 final class SliceCache {
     private static final int NO_LAYER = Integer.MIN_VALUE;
-    private final BooleanGridList[][] sliceRing;
     private final BooleanGridList[][] supportRing;
     private final int[] layerNumber;
     private int ringPointer;
@@ -38,13 +37,11 @@ final class SliceCache {
 
     SliceCache(final int ringSize, final int size) {
         this.ringSize = ringSize;
-        sliceRing = new BooleanGridList[ringSize][size];
         supportRing = new BooleanGridList[ringSize][size];
         layerNumber = new int[ringSize];
         ringPointer = 0;
         for (int layer = 0; layer < ringSize; layer++) {
             for (int stl = 0; stl < size; stl++) {
-                sliceRing[layer][stl] = null;
                 supportRing[layer][stl] = null;
                 layerNumber[layer] = NO_LAYER;
             }
@@ -59,8 +56,7 @@ final class SliceCache {
         }
 
         final int rp = ringPointer;
-        for (int s = 0; s < sliceRing[rp].length; s++) {
-            sliceRing[rp][s] = null;
+        for (int s = 0; s < supportRing[rp].length; s++) {
             supportRing[rp][s] = null;
         }
         ringPointer++;
@@ -68,12 +64,6 @@ final class SliceCache {
             ringPointer = 0;
         }
         return rp;
-    }
-
-    void setSlice(final BooleanGridList slice, final int layer, final int stl) {
-        final int rp = getTheRingLocationForWrite(layer);
-        layerNumber[rp] = layer;
-        sliceRing[rp][stl] = slice;
     }
 
     void setSupport(final BooleanGridList support, final int layer, final int stl) {
@@ -94,17 +84,6 @@ final class SliceCache {
             }
         }
         return -1;
-    }
-
-    Slice getSlice(final int layer, final int stl) {
-        final int rp = getTheRingLocationForRead(layer);
-        if (rp >= 0) {
-            final BooleanGridList bitmaps = sliceRing[rp][stl];
-            if (bitmaps != null) {
-                return new Slice(bitmaps);
-            }
-        }
-        return null;
     }
 
     BooleanGridList getSupport(final int layer, final int stl) {

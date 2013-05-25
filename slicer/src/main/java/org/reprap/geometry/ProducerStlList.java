@@ -412,11 +412,6 @@ class ProducerStlList {
             return EMPTY_SLICE;
         }
 
-        final Slice cachedSlice = cache.getSlice(layer, stlIndex);
-        if (cachedSlice != null) {
-            return cachedSlice;
-        }
-
         if (rectangles.get(stlIndex) == null) {
             return EMPTY_SLICE;
         }
@@ -450,8 +445,7 @@ class ProducerStlList {
             }
         }
 
-        cache.setSlice(result, layer, stlIndex);
-        return cache.getSlice(layer, stlIndex);
+        return new Slice(result);
     }
 
     private Map<String, EdgeAndCsgsCollector> collectEdgeLinesAndCsgs(final int stlIndex, final double currentZ) {
