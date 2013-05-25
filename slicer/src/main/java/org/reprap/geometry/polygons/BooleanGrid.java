@@ -983,9 +983,6 @@ public class BooleanGrid {
     /**
      * Hatch all the polygons parallel to line hp with increment gap
      * 
-     * @param pathOptimize
-     *            TODO
-     * 
      * @return a polygon list of hatch lines
      */
     public PolygonList hatch(final HalfPlane hp, final double gap, final boolean pathOptimize) {
@@ -994,53 +991,19 @@ public class BooleanGrid {
         }
 
         final Rectangle big = box().scale(1.1);
-        final double d = Math.sqrt(big.dSquared());
-
-        final Point2D orth = hp.normal();
-
-        final int quadPointing = (int) (2 + 2 * Math.atan2(orth.y(), orth.x()) / Math.PI);
-
-        Point2D org = big.ne();
-
-        switch (quadPointing) {
-        case 1:
-            org = big.nw();
-            break;
-
-        case 2:
-            org = big.sw();
-            break;
-
-        case 3:
-            org = big.se();
-            break;
-
-        case 0:
-        default:
-            break;
-        }
-
-        double dist = Point2D.mul(org, orth) / gap;
-        dist = (1 + (long) dist) * gap;
-        HalfPlane hatcher = new HalfPlane(hp);
-        hatcher = hatcher.offset(dist);
-
         final List<HalfPlane> hatches = new ArrayList<HalfPlane>();
         final Integer2DPolygonList iHatches = new Integer2DPolygonList();
+        collectHatches(hp.offset(calculateDistance(hp, gap, big)), gap, Math.sqrt(big.dSquared()), hatches, iHatches);
 
-        double g = 0;
-        while (g < d) {
-            final Integer2DPolygon ip = hatch(hatcher);
-
-            if (ip.size() > 0) {
-                hatches.add(hatcher);
-                iHatches.add(ip);
-            }
-            hatcher = hatcher.offset(gap);
-            g += gap;
+        final Integer2DPolygonList snakes = createSnakes(hatches, iHatches);
+        if (pathOptimize) {
+            joinUpSnakes(snakes, hatches, gap);
         }
+        resetVisited();
+        return snakes.realPolygons(getMaterial(), rec, pixelSize).simplify(1.5 * pixelSize);
+    }
 
-        // Now we have the individual hatch lines, join them up
+    private Integer2DPolygonList createSnakes(final List<HalfPlane> hatches, final Integer2DPolygonList iHatches) {
         final Integer2DPolygonList snakes = new Integer2DPolygonList();
         int segment;
         do {
@@ -1055,12 +1018,44 @@ public class BooleanGrid {
                 snakes.add(snakeGrow(iHatches, hatches, segment, 0));
             }
         } while (segment >= 0);
+        return snakes;
+    }
 
-        if (pathOptimize) {
-            joinUpSnakes(snakes, hatches, gap);
+    private static double calculateDistance(final HalfPlane hp, final double gap, final Rectangle big) {
+        final Point2D orth = hp.normal();
+        final Point2D org = determineHatchOrigin(big, orth);
+        double dist = Point2D.mul(org, orth) / gap;
+        dist = (1 + (long) dist) * gap;
+        return dist;
+    }
+
+    private void collectHatches(HalfPlane hatcher, final double gap, final double maxLength, final List<HalfPlane> hatches,
+            final Integer2DPolygonList iHatches) {
+        double g = 0;
+        while (g < maxLength) {
+            final Integer2DPolygon ip = hatch(hatcher);
+            if (ip.size() > 0) {
+                hatches.add(hatcher);
+                iHatches.add(ip);
+            }
+            hatcher = hatcher.offset(gap);
+            g += gap;
         }
-        resetVisited();
-        return snakes.realPolygons(getMaterial(), rec, pixelSize).simplify(1.5 * pixelSize);
+    }
+
+    private static Point2D determineHatchOrigin(final Rectangle big, final Point2D orth) {
+        final int quadPointing = (int) (2 + 2 * Math.atan2(orth.y(), orth.x()) / Math.PI);
+        switch (quadPointing) {
+        case 1:
+            return big.nw();
+        case 2:
+            return big.sw();
+        case 3:
+            return big.se();
+        case 0:
+        default:
+            return big.ne();
+        }
     }
 
     /**
