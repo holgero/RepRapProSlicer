@@ -35,7 +35,6 @@ import javax.media.j3d.Shape3D;
 import javax.media.j3d.Transform3D;
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,7 +42,6 @@ import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.MaterialSetting;
 import org.reprap.configuration.MathRoutines;
 import org.reprap.configuration.PrintSetting;
-import org.reprap.gcode.Purge;
 import org.reprap.geometry.polygons.BooleanGrid;
 import org.reprap.geometry.polygons.BooleanGridList;
 import org.reprap.geometry.polygons.CSG2D;
@@ -57,20 +55,12 @@ import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.geometry.polyhedra.CSG3D;
-import org.reprap.geometry.polyhedra.STLFileContents;
 import org.reprap.geometry.polyhedra.STLObject;
-import org.reprap.io.stl.StlFileLoader;
 
 class ProducerStlList {
     private static final Logger LOGGER = LogManager.getLogger(Producer.class);
     private static final double GRID_RESOLUTION = 0.01;
     private static final Slice EMPTY_SLICE = new Slice(new BooleanGridList());
-
-    static BoundingBox calculateBoundingBox(final List<STLObject> stlList, final Purge purge,
-            final CurrentConfiguration currentConfiguration) {
-        setUpShield(purge, stlList, currentConfiguration);
-        return getBoundingBox(stlList);
-    }
 
     private final CurrentConfiguration currentConfiguration;
     private final List<STLObject> stlsToBuild;
@@ -81,7 +71,8 @@ class ProducerStlList {
     private final LayerRules layerRules;
     private final SliceCache cache;
 
-    ProducerStlList(final List<STLObject> stlsToBuild, final LayerRules layerRules, final CurrentConfiguration currentConfiguration) {
+    ProducerStlList(final List<STLObject> stlsToBuild, final LayerRules layerRules,
+            final CurrentConfiguration currentConfiguration) {
         this.stlsToBuild = stlsToBuild;
         this.currentConfiguration = currentConfiguration;
         setRectangles(stlsToBuild, rectangles);
@@ -99,7 +90,7 @@ class ProducerStlList {
     /**
      * calculate the bounding box of all STLs in a list.
      */
-    private static BoundingBox getBoundingBox(final List<STLObject> stls) {
+    static BoundingBox getBoundingBox(final List<STLObject> stls) {
         BoundingBox result = null;
 
         for (int i = 0; i < stls.size(); i++) {
@@ -354,42 +345,6 @@ class ProducerStlList {
         }
 
         return hatch(support, layerRules, false, true, currentConfiguration);
-    }
-
-    private static void setUpShield(final Purge purge, final List<STLObject> stls,
-            final CurrentConfiguration currentConfiguration) {
-        final PrintSetting printSetting = currentConfiguration.getPrintSetting();
-        if (!printSetting.printShield()) {
-            return;
-        }
-        final String shieldMaterial = currentConfiguration.getMaterials().get(0).getName();
-        final STLFileContents stlFileContents = StlFileLoader.loadSTLFileContents(printSetting.getShieldStlFile());
-        final STLObject shield = STLObject.createStlObjectFromFile(stlFileContents, shieldMaterial, currentConfiguration);
-
-        final BoundingBox boxWithoutShield = getBoundingBox(stls);
-        final double modelZMax = boxWithoutShield.getZint().high();
-        final Vector3d shieldSize = shield.extent();
-        shield.rScale(modelZMax / shieldSize.z, true);
-
-        final double zOff = 0.5 * (modelZMax - shieldSize.z);
-        final Point2D purgePoint = purge.getPurgeMiddle();
-        double xOff = purgePoint.x();
-        double yOff = purgePoint.y();
-        if (!purge.isPurgeXOriented()) {
-            shield.translate(new Vector3d(-0.5 * shieldSize.x, -0.5 * shieldSize.y, 0));
-            final Transform3D t3d1 = shield.getTransform();
-            final Transform3D t3d2 = new Transform3D();
-            t3d2.rotZ(0.5 * Math.PI);
-            t3d1.mul(t3d2);
-            shield.setTransform(t3d1);
-            shield.translate(new Vector3d(yOff, -xOff, zOff));
-        } else {
-            xOff -= 0.5 * shieldSize.x;
-            yOff -= shieldSize.y;
-            shield.translate(new Vector3d(xOff, yOff, zOff));
-        }
-
-        stls.add(0, shield);
     }
 
     private static final class EdgeAndCsgsCollector {

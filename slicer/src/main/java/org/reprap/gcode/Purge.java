@@ -19,10 +19,16 @@
  */
 package org.reprap.gcode;
 
+import javax.media.j3d.Transform3D;
+import javax.vecmath.Vector3d;
+
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.PrintSetting;
 import org.reprap.configuration.PrinterSetting;
 import org.reprap.geometry.polygons.Point2D;
+import org.reprap.geometry.polyhedra.STLFileContents;
+import org.reprap.geometry.polyhedra.STLObject;
+import org.reprap.io.stl.StlFileLoader;
 
 public final class Purge {
     /**
@@ -34,8 +40,10 @@ public final class Purge {
      */
     private final double purgeL = 25;
     private final boolean purgeXOriented;
+    private final CurrentConfiguration currentConfiguration;
 
     public Purge(final CurrentConfiguration currentConfiguration) {
+        this.currentConfiguration = currentConfiguration;
         final PrintSetting printSetting = currentConfiguration.getPrintSetting();
         final PrinterSetting printerSetting = currentConfiguration.getPrinterSetting();
         purgePoint = new Point2D(printSetting.getDumpX(), printSetting.getDumpY());
@@ -63,5 +71,32 @@ public final class Purge {
 
     public boolean isPurgeXOriented() {
         return purgeXOriented;
+    }
+
+    public STLObject getShield(final double modelZMax) {
+        final String shieldMaterial = currentConfiguration.getMaterials().get(0).getName();
+        final STLFileContents stlFileContents = StlFileLoader.loadSTLFileContents(currentConfiguration.getPrintSetting()
+                .getShieldStlFile());
+        final STLObject shield = STLObject.createStlObjectFromFile(stlFileContents, shieldMaterial, currentConfiguration);
+        final Vector3d shieldSize = shield.extent();
+        shield.rScale(modelZMax / shieldSize.z, true);
+
+        final double zOff = 0.5 * (modelZMax - shieldSize.z);
+        double xOff = purgePoint.x();
+        double yOff = purgePoint.y();
+        if (!isPurgeXOriented()) {
+            shield.translate(new Vector3d(-0.5 * shieldSize.x, -0.5 * shieldSize.y, 0));
+            final Transform3D t3d1 = shield.getTransform();
+            final Transform3D t3d2 = new Transform3D();
+            t3d2.rotZ(0.5 * Math.PI);
+            t3d1.mul(t3d2);
+            shield.setTransform(t3d1);
+            shield.translate(new Vector3d(yOff, -xOff, zOff));
+        } else {
+            xOff -= 0.5 * shieldSize.x;
+            yOff -= shieldSize.y;
+            shield.translate(new Vector3d(xOff, yOff, zOff));
+        }
+        return shield;
     }
 }

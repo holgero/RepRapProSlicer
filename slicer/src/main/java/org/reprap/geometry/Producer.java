@@ -46,7 +46,12 @@ public class Producer {
         if (gcodeFile != null) {
             printer.setGCodeFileForOutput(gcodeFile);
         }
-        final BoundingBox buildVolume = ProducerStlList.calculateBoundingBox(stlObjects, purge, currentConfiguration);
+        if (currentConfiguration.getPrintSetting().printShield()) {
+            final BoundingBox boxWithoutShield = ProducerStlList.getBoundingBox(stlObjects);
+            final double modelZMax = boxWithoutShield.getZint().high();
+            stlObjects.add(0, purge.getShield(modelZMax));
+        }
+        final BoundingBox buildVolume = ProducerStlList.getBoundingBox(stlObjects);
         layerRules = new LayerRules(printer, buildVolume, currentConfiguration);
         stlList = new ProducerStlList(stlObjects, layerRules, currentConfiguration);
         inFillPatterns = new InFillPatterns(layerRules, currentConfiguration);
