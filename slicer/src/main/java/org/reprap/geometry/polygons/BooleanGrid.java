@@ -86,7 +86,6 @@ public class BooleanGrid {
         bits = new BitSet(rec.size.x * rec.size.y);
         visited = null;
         generateQuadTree(new Integer2DPoint(0, 0), new Integer2DPoint(rec.size.x - 1, rec.size.y - 1), csgExp);
-        deWhisker();
     }
 
     /**
@@ -565,18 +564,6 @@ public class BooleanGrid {
     }
 
     /**
-     * Remove whiskers (single threads of pixels) and similar nasties. TODO:
-     * also need to do the same for cracks?
-     */
-    private void deWhisker() {
-        for (int i = bits.nextSetBit(0); i >= 0; i = bits.nextSetBit(i + 1)) {
-            if (neighbourCount(i) < 3) {
-                bits.set(i, false);
-            }
-        }
-    }
-
-    /**
      * Look-up table to find the index of a neighbour point, n, from the point.
      */
     private static int neighbourIndex(final Integer2DPoint n) {
@@ -601,21 +588,6 @@ public class BooleanGrid {
             LOGGER.error("BooleanGrid.neighbourIndex(): not a neighbour point!" + n.toString());
         }
         return 0;
-    }
-
-    private int neighbourCount(final int i) {
-        int result = 0;
-        for (int x = -1; x < 2; x++) {
-            for (int y = -1; y < 2; y++) {
-                final int j = pixI(x, y);
-                if (i + j >= 0 && i + j < bits.size()) {
-                    if (bits.get(i + j)) {
-                        result++;
-                    }
-                }
-            }
-        }
-        return result;
     }
 
     /**
@@ -1211,7 +1183,6 @@ public class BooleanGrid {
                 disc(p1, Math.abs(r), r > 0);
             }
         }
-        deWhisker();
     }
 
     Integer2DRectangle getRec() {
@@ -1294,7 +1265,6 @@ public class BooleanGrid {
         if (result.isEmpty()) {
             return NOTHING_THERE;
         }
-        result.deWhisker();
         result.material = resultMaterial;
         return result;
     }
@@ -1343,7 +1313,6 @@ public class BooleanGrid {
         if (result.isEmpty()) {
             return NOTHING_THERE;
         }
-        result.deWhisker();
         result.material = resultMaterial;
         return result;
     }
