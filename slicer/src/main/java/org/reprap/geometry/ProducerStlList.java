@@ -55,7 +55,6 @@ import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
-import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.geometry.polyhedra.CSG3D;
 import org.reprap.geometry.polyhedra.STLFileContents;
@@ -67,16 +66,14 @@ class ProducerStlList {
     private static final double GRID_RESOLUTION = 0.01;
     private static final Slice EMPTY_SLICE = new Slice(new BooleanGridList());
 
-    static BoundingBox calculateBoundingBox(final AllSTLsToBuild allStls, final Purge purge,
+    static BoundingBox calculateBoundingBox(final List<STLObject> stlList, final Purge purge,
             final CurrentConfiguration currentConfiguration) {
-        final List<STLObject> stlList = new ArrayList<>();
-        copyAllStls(allStls, stlList);
         setUpShield(purge, stlList, currentConfiguration);
         return getBoundingBox(stlList);
     }
 
     private final CurrentConfiguration currentConfiguration;
-    private final List<STLObject> stlsToBuild = new ArrayList<STLObject>();
+    private final List<STLObject> stlsToBuild;
     /**
      * A plan box round each item
      */
@@ -84,11 +81,9 @@ class ProducerStlList {
     private final LayerRules layerRules;
     private final SliceCache cache;
 
-    ProducerStlList(final AllSTLsToBuild allStls, final Purge purge, final LayerRules layerRules,
-            final CurrentConfiguration currentConfiguration) {
+    ProducerStlList(final List<STLObject> stlsToBuild, final LayerRules layerRules, final CurrentConfiguration currentConfiguration) {
+        this.stlsToBuild = stlsToBuild;
         this.currentConfiguration = currentConfiguration;
-        copyAllStls(allStls, stlsToBuild);
-        setUpShield(purge, stlsToBuild, currentConfiguration);
         setRectangles(stlsToBuild, rectangles);
         this.layerRules = layerRules;
         cache = new SliceCache(layerRules.sliceCacheSize(), stlsToBuild.size());
@@ -702,11 +697,5 @@ class ProducerStlList {
             result.add(grid.hatch(hatchLine, infillWidth, currentConfiguration.getPrintSetting().isPathOptimize()));
         }
         return result;
-    }
-
-    private static void copyAllStls(final AllSTLsToBuild allStls, final List<STLObject> stlList) {
-        for (int i = 0; i < allStls.size(); i++) {
-            stlList.add(allStls.get(i));
-        }
     }
 }

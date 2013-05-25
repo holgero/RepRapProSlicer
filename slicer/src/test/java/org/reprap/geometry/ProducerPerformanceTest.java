@@ -36,7 +36,7 @@ public class ProducerPerformanceTest {
     public void testSlicingPerformance() {
         final CurrentConfiguration currentConfiguration = Configuration.create().getCurrentConfiguration();
         final AllSTLsToBuild stls = RFO.load(testFile, currentConfiguration).getAllStls();
-        final Producer producer = new Producer(null, stls, new ProductionProgressListener() {
+        final Producer producer = new Producer(null, stls.getStlObjects(), new ProductionProgressListener() {
             @Override
             public void productionProgress(final int layer, final int totalLayers) {
             }

@@ -14,7 +14,7 @@ import org.reprap.gcode.Purge;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
-import org.reprap.geometry.polyhedra.AllSTLsToBuild;
+import org.reprap.geometry.polyhedra.STLObject;
 
 public class Producer {
     private static final Logger LOGGER = LogManager.getLogger(Producer.class);
@@ -36,7 +36,7 @@ public class Producer {
      */
     private boolean omitShield;
 
-    public Producer(final File gcodeFile, final AllSTLsToBuild allStls, final ProductionProgressListener progressListener,
+    public Producer(final File gcodeFile, final List<STLObject> stlObjects, final ProductionProgressListener progressListener,
             final SimulationPlotter simulationPlot, final CurrentConfiguration currentConfiguration) {
         this.progressListener = progressListener;
         this.simulationPlot = simulationPlot;
@@ -46,9 +46,9 @@ public class Producer {
         if (gcodeFile != null) {
             printer.setGCodeFileForOutput(gcodeFile);
         }
-        final BoundingBox buildVolume = ProducerStlList.calculateBoundingBox(allStls, purge, currentConfiguration);
+        final BoundingBox buildVolume = ProducerStlList.calculateBoundingBox(stlObjects, purge, currentConfiguration);
         layerRules = new LayerRules(printer, buildVolume, currentConfiguration);
-        stlList = new ProducerStlList(allStls, purge, layerRules, currentConfiguration);
+        stlList = new ProducerStlList(stlObjects, layerRules, currentConfiguration);
         inFillPatterns = new InFillPatterns(layerRules, currentConfiguration);
         totalExtruders = currentConfiguration.getPrinterSetting().getExtruderSettings().size();
         final PrintSetting printSetting = currentConfiguration.getPrintSetting();

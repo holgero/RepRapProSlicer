@@ -155,7 +155,7 @@ public class MainFrame extends JFrame {
             @Override
             public void run() {
                 Thread.currentThread().setName("Producer");
-                final Producer producer = new Producer(gcodeFile, plater.getSTLs(), listener,
+                final Producer producer = new Producer(gcodeFile, plater.getSTLs().getStlObjects(), listener,
                         simulationTab.getSimulationPlotter(), configuration.getCurrentConfiguration());
                 try {
                     producer.produce();

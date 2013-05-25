@@ -69,6 +69,10 @@ public class AllSTLsToBuild {
         stls.remove(i);
     }
 
+    public List<STLObject> getStlObjects() {
+        return new ArrayList<>(stls);
+    }
+
     /**
      * Find an object in the list
      */
