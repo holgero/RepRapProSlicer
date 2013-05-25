@@ -33,7 +33,6 @@ public class BooleanGrid {
      * How simple does a CSG expression have to be to not be worth pruning
      * further?
      */
-    private static final int SIMPLE_ENOUGH = 3;
     private static final BooleanGrid NOTHING_THERE = new BooleanGrid(0.0);
 
     /**
@@ -276,18 +275,6 @@ public class BooleanGrid {
     }
 
     /**
-     * Set a whole rectangle to the right values for a CSG expression
-     */
-    private void heterogeneous(final Integer2DPoint ipsw, final Integer2DPoint ipne, final CSG2D csgExpression) {
-        for (int x = ipsw.x; x <= ipne.x; x++) {
-            for (int y = ipsw.y; y <= ipne.y; y++) {
-                final Integer2DPoint r = new Integer2DPoint(x, y);
-                bits.set(pixI(x, y), csgExpression.value(rec.realPoint(r, pixelSize)) <= 0);
-            }
-        }
-    }
-
-    /**
      * The rectangle surrounding the set pixels in real coordinates.
      */
     private Rectangle box() {
@@ -410,11 +397,10 @@ public class BooleanGrid {
     }
 
     /**
-     * Generate the entire image from a CSG experession recursively using a quad
+     * Generate the entire image from a CSG expression recursively using a quad
      * tree.
      */
     private void generateQuadTree(final Integer2DPoint ipsw, final Integer2DPoint ipne, final CSG2D csgExpression) {
-        final Point2D inc = new Point2D(pixelSize / 2, pixelSize / 2);
         final Point2D p0 = rec.realPoint(ipsw, pixelSize);
 
         // Single pixel?
@@ -423,6 +409,7 @@ public class BooleanGrid {
             return;
         }
 
+        final Point2D inc = new Point2D(pixelSize / 2, pixelSize / 2);
         // Uniform rectangle?
         final Point2D p1 = rec.realPoint(ipne, pixelSize);
         final Interval i = csgExpression.value(new Rectangle(Point2D.sub(p0, inc), Point2D.add(p1, inc)));
@@ -431,14 +418,7 @@ public class BooleanGrid {
             return;
         }
 
-        // Non-uniform, but simple, rectangle
-        if (csgExpression.complexity() <= SIMPLE_ENOUGH) {
-            heterogeneous(ipsw, ipne, csgExpression);
-            return;
-        }
-
         // Divide this rectangle into four (roughly) congruent quads.
-
         // Work out the corner coordinates.
         final int x0 = ipsw.x;
         final int y0 = ipsw.y;
@@ -454,86 +434,38 @@ public class BooleanGrid {
         if (yd == 2) {
             ym--;
         }
-        Integer2DPoint sw, ne;
 
         // Special case - a single vertical line of pixels
         if (xd <= 1) {
             if (yd <= 1) {
                 LOGGER.error("BooleanGrid.generateQuadTree: attempt to divide single pixel!");
             }
-            sw = new Integer2DPoint(x0, y0);
-            ne = new Integer2DPoint(x0, ym);
-            generateQuadTree(
-                    sw,
-                    ne,
-                    csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
-                            rec.realPoint(ne, pixelSize), inc))));
-
-            sw = new Integer2DPoint(x0, ym + 1);
-            ne = new Integer2DPoint(x0, y1);
-            generateQuadTree(
-                    sw,
-                    ne,
-                    csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
-                            rec.realPoint(ne, pixelSize), inc))));
-
+            callGenerateQuadTree(x0, y0, x0, ym, inc, csgExpression);
+            callGenerateQuadTree(x0, ym + 1, x0, y1, inc, csgExpression);
             return;
         }
 
         // Special case - a single horizontal line of pixels
         if (yd <= 1) {
-            sw = new Integer2DPoint(x0, y0);
-            ne = new Integer2DPoint(xm, y0);
-            generateQuadTree(
-                    sw,
-                    ne,
-                    csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
-                            rec.realPoint(ne, pixelSize), inc))));
-
-            sw = new Integer2DPoint(xm + 1, y0);
-            ne = new Integer2DPoint(x1, y0);
-            generateQuadTree(
-                    sw,
-                    ne,
-                    csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
-                            rec.realPoint(ne, pixelSize), inc))));
-
+            callGenerateQuadTree(x0, y0, xm, y0, inc, csgExpression);
+            callGenerateQuadTree(xm + 1, y0, x1, y0, inc, csgExpression);
             return;
         }
 
         // General case - 4 quads.
-        sw = new Integer2DPoint(x0, y0);
-        ne = new Integer2DPoint(xm, ym);
-        generateQuadTree(
-                sw,
-                ne,
-                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
-                        rec.realPoint(ne, pixelSize), inc))));
+        callGenerateQuadTree(x0, y0, xm, ym, inc, csgExpression);
+        callGenerateQuadTree(x0, ym + 1, xm, y1, inc, csgExpression);
+        callGenerateQuadTree(xm + 1, ym + 1, x1, y1, inc, csgExpression);
+        callGenerateQuadTree(xm + 1, y0, x1, ym, inc, csgExpression);
+    }
 
-        sw = new Integer2DPoint(x0, ym + 1);
-        ne = new Integer2DPoint(xm, y1);
-        generateQuadTree(
-                sw,
-                ne,
-                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
-                        rec.realPoint(ne, pixelSize), inc))));
-
-        sw = new Integer2DPoint(xm + 1, ym + 1);
-        ne = new Integer2DPoint(x1, y1);
-        generateQuadTree(
-                sw,
-                ne,
-                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
-                        rec.realPoint(ne, pixelSize), inc))));
-
-        sw = new Integer2DPoint(xm + 1, y0);
-        ne = new Integer2DPoint(x1, ym);
-        generateQuadTree(
-                sw,
-                ne,
-                csgExpression.prune(new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
-                        rec.realPoint(ne, pixelSize), inc))));
-
+    private void callGenerateQuadTree(final int swX, final int swY, final int neX, final int neY, final Point2D inc,
+            final CSG2D csgExpression) {
+        final Integer2DPoint sw = new Integer2DPoint(swX, swY);
+        final Integer2DPoint ne = new Integer2DPoint(neX, neY);
+        final Rectangle rectangle = new Rectangle(Point2D.sub(rec.realPoint(sw, pixelSize), inc), Point2D.add(
+                rec.realPoint(ne, pixelSize), inc));
+        generateQuadTree(sw, ne, csgExpression.prune(rectangle));
     }
 
     /**
