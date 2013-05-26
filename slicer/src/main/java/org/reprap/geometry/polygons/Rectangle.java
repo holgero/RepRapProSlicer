@@ -62,7 +62,10 @@ public class Rectangle {
     private Interval x;
     private Interval y;
 
-    private Rectangle(final Interval xi, final Interval yi, @SuppressWarnings("unused") final boolean internal) {
+    /**
+     * Make from X and Y intervals
+     */
+    public Rectangle(final Interval xi, final Interval yi) {
         x = xi;
         y = yi;
     }
@@ -71,7 +74,7 @@ public class Rectangle {
      * Copy constructor
      */
     public Rectangle(final Rectangle b) {
-        this(new Interval(b.x), new Interval(b.y), true);
+        this(new Interval(b.x), new Interval(b.y));
     }
 
     /**
@@ -79,18 +82,11 @@ public class Rectangle {
      */
     public Rectangle(final Point2D a, final Point2D b) {
         this(new Interval(Math.min(a.x(), b.x()), Math.max(a.x(), b.x())), new Interval(Math.min(a.y(), b.y()), Math.max(a.y(),
-                b.y())), true);
-    }
-
-    /**
-     * Make from X and Y intervals
-     */
-    public Rectangle(final Interval xi, final Interval yi) {
-        this(new Interval(xi), new Interval(yi), true);
+                b.y())));
     }
 
     Rectangle() {
-        this(new Interval(), new Interval(), true);
+        this(new Interval(), new Interval());
     }
 
     public Interval x() {

@@ -74,7 +74,8 @@ final class Integer2DRectangle {
      * This rectangle in the real world
      */
     Rectangle realRectangle(final double pixelSize) {
-        return new Rectangle(realPoint(swCorner, pixelSize), realPoint(getNeCorner(), pixelSize));
+        return new Rectangle(realPoint(new Integer2DPoint(0, 0), pixelSize), realPoint(
+                new Integer2DPoint(sizeX - 1, sizeY - 1), pixelSize));
     }
 
     /**

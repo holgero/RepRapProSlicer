@@ -95,8 +95,7 @@ public class BooleanGrid {
      */
     public BooleanGrid(final double pixelSize, final String material, final Rectangle realRectangle, final CSG2D csgExp) {
         this(pixelSize, material, new Integer2DRectangle(realRectangle.offset(0.5), pixelSize));
-        generateQuadTree(new Integer2DPoint(0, 0), new Integer2DPoint(rectangle.getSizeX() - 1, rectangle.getSizeY() - 1),
-                csgExp);
+        new Csg2dGridPainter(pixelSize, rectangle, bits).paint(csgExp);
     }
 
     /**
@@ -245,27 +244,6 @@ public class BooleanGrid {
     }
 
     /**
-     * Set a whole rectangle to one value
-     */
-    private void homogeneous(final Integer2DPoint ipsw, final Integer2DPoint ipne, final boolean v) {
-        for (int x = ipsw.getX(); x <= ipne.getX(); x++) {
-            bits.set(pixI(x, ipsw.getY()), pixI(x, ipne.getY()) + 1, v);
-        }
-    }
-
-    /**
-     * The rectangle surrounding the set pixels in real coordinates.
-     * 
-     * TODO: check if this is obsoleted by
-     * {@link Integer2DRectangle#realRectangle(double)}
-     */
-    private Rectangle box() {
-        final Integer2DPoint r = new Integer2DPoint(0, 0);
-        final Integer2DPoint r1 = new Integer2DPoint(rectangle.getSizeX() - 1, rectangle.getSizeY() - 1);
-        return new Rectangle(rectangle.realPoint(r, pixelSize), rectangle.realPoint(r1, pixelSize));
-    }
-
-    /**
      * The value at a point.
      */
     boolean get(final Integer2DPoint p) {
@@ -376,78 +354,6 @@ public class BooleanGrid {
         } else {
             return rectangle.realPoint(p, pixelSize);
         }
-    }
-
-    /**
-     * Generate the entire image from a CSG expression recursively using a quad
-     * tree.
-     */
-    private void generateQuadTree(final Integer2DPoint ipsw, final Integer2DPoint ipne, final CSG2D csgExpression) {
-        final Point2D p0 = rectangle.realPoint(ipsw, pixelSize);
-
-        // Single pixel?
-        if (ipsw.coincidesWith(ipne)) {
-            set(ipsw, csgExpression.value(p0) <= 0);
-            return;
-        }
-
-        final Point2D inc = new Point2D(pixelSize / 2, pixelSize / 2);
-        // Uniform rectangle?
-        final Point2D p1 = rectangle.realPoint(ipne, pixelSize);
-        final Interval i = csgExpression.value(new Rectangle(Point2D.sub(p0, inc), Point2D.add(p1, inc)));
-        if (!i.zero()) {
-            homogeneous(ipsw, ipne, i.high() <= 0);
-            return;
-        }
-
-        // Divide this rectangle into four (roughly) congruent quads.
-        // Work out the corner coordinates.
-        final int x0 = ipsw.getX();
-        final int y0 = ipsw.getY();
-        final int x1 = ipne.getX();
-        final int y1 = ipne.getY();
-        final int xd = (x1 - x0 + 1);
-        final int yd = (y1 - y0 + 1);
-        int xm = x0 + xd / 2;
-        if (xd == 2) {
-            xm--;
-        }
-        int ym = y0 + yd / 2;
-        if (yd == 2) {
-            ym--;
-        }
-
-        // Special case - a single vertical line of pixels
-        if (xd <= 1) {
-            if (yd <= 1) {
-                LOGGER.error("BooleanGrid.generateQuadTree: attempt to divide single pixel!");
-            }
-            callGenerateQuadTree(x0, y0, x0, ym, inc, csgExpression);
-            callGenerateQuadTree(x0, ym + 1, x0, y1, inc, csgExpression);
-            return;
-        }
-
-        // Special case - a single horizontal line of pixels
-        if (yd <= 1) {
-            callGenerateQuadTree(x0, y0, xm, y0, inc, csgExpression);
-            callGenerateQuadTree(xm + 1, y0, x1, y0, inc, csgExpression);
-            return;
-        }
-
-        // General case - 4 quads.
-        callGenerateQuadTree(x0, y0, xm, ym, inc, csgExpression);
-        callGenerateQuadTree(x0, ym + 1, xm, y1, inc, csgExpression);
-        callGenerateQuadTree(xm + 1, ym + 1, x1, y1, inc, csgExpression);
-        callGenerateQuadTree(xm + 1, y0, x1, ym, inc, csgExpression);
-    }
-
-    private void callGenerateQuadTree(final int swX, final int swY, final int neX, final int neY, final Point2D inc,
-            final CSG2D csgExpression) {
-        final Integer2DPoint sw = new Integer2DPoint(swX, swY);
-        final Integer2DPoint ne = new Integer2DPoint(neX, neY);
-        final Rectangle realRectangle = new Rectangle(Point2D.sub(rectangle.realPoint(sw, pixelSize), inc), Point2D.add(
-                rectangle.realPoint(ne, pixelSize), inc));
-        generateQuadTree(sw, ne, csgExpression.prune(realRectangle));
     }
 
     /**
@@ -645,7 +551,7 @@ public class BooleanGrid {
     private Integer2DPolygon hatch(final HalfPlane h) {
         final Integer2DPolygon result = new Integer2DPolygon(false);
 
-        final Interval se = box().wipe(h.pLine(), Interval.bigInterval());
+        final Interval se = rectangle.realRectangle(pixelSize).wipe(h.pLine(), Interval.bigInterval());
 
         if (se.empty()) {
             return result;
@@ -962,7 +868,7 @@ public class BooleanGrid {
             return new PolygonList();
         }
 
-        final Rectangle big = box().scale(1.1);
+        final Rectangle big = rectangle.realRectangle(pixelSize).scale(1.1);
         final List<HalfPlane> hatches = new ArrayList<HalfPlane>();
         final Integer2DPolygonList iHatches = new Integer2DPolygonList();
         collectHatches(hp.offset(calculateDistance(hp, gap, big)), gap, Math.sqrt(big.dSquared()), hatches, iHatches);
