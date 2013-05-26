@@ -28,50 +28,30 @@ public class BooleanGridMath {
     /**
      * Compute the union of two bit patterns, forcing material on the result.
      */
-    public static BooleanGrid union(final BooleanGrid lh, final BooleanGrid rh, final String resultMaterial) {
-        BooleanGrid result;
-
+    public static BooleanGrid union(final BooleanGrid lh, final BooleanGrid rh) {
         if (lh == BooleanGrid.NOTHING_THERE) {
             if (rh == BooleanGrid.NOTHING_THERE) {
                 return BooleanGrid.NOTHING_THERE;
             }
-            if (rh.getMaterial() == resultMaterial) { // TODO: string comparison by identity
-                return rh;
-            }
-            result = new BooleanGrid(rh);
-            result.setMaterial(resultMaterial);
-            return result;
+            return rh;
         }
 
         if (rh == BooleanGrid.NOTHING_THERE) {
-            if (lh.getMaterial() == resultMaterial) {
-                return lh;
-            }
-            result = new BooleanGrid(lh);
-            result.setMaterial(resultMaterial);
-            return result;
+            return lh;
         }
 
+        final BooleanGrid result;
         if (lh.getRectangle().coincidesWith(rh.getRectangle())) {
             result = new BooleanGrid(lh);
             result.unionWith(rh);
         } else {
             final Integer2DRectangle u = lh.getRectangle().union(rh.getRectangle());
             result = new BooleanGrid(lh, u);
-            final BooleanGrid temp = new BooleanGrid(rh, u);
-            result.unionWith(temp);
+            result.unionWith(new BooleanGrid(rh, u));
         }
-        result.setMaterial(resultMaterial);
-        return result;
-    }
-
-    /**
-     * Compute the union of two bit patterns
-     */
-    static BooleanGrid union(final BooleanGrid d, final BooleanGrid e) {
-        final BooleanGrid result = union(d, e, d.getMaterial());
-        if (result != BooleanGrid.NOTHING_THERE && d.getMaterial() != e.getMaterial()) {
-            LOGGER.error("attempt to union two bitmaps of different materials: " + d.getMaterial() + " and " + e.getMaterial());
+        if (lh.getMaterial() != rh.getMaterial()) {
+            LOGGER.error("attempt to union two bitmaps of different materials: " + lh.getMaterial() + " and "
+                    + rh.getMaterial());
         }
         return result;
     }
@@ -80,67 +60,6 @@ public class BooleanGridMath {
      * Compute the intersection of two bit patterns
      */
     public static BooleanGrid intersection(final BooleanGrid d, final BooleanGrid e) {
-        final BooleanGrid result = BooleanGridMath.intersection(d, e, d.getMaterial());
-        if (result != BooleanGrid.NOTHING_THERE && d.getMaterial() != e.getMaterial()) {
-            LOGGER.error("attempt to intersect two bitmaps of different materials: " + d.getMaterial() + " and "
-                    + e.getMaterial());
-        }
-        return result;
-    }
-
-    /**
-     * Grid d - grid e d's rectangle is presumed to contain the result. TODO:
-     * write a function to compute the rectangle from the bitmap
-     */
-    public static BooleanGrid difference(final BooleanGrid d, final BooleanGrid e) {
-        final BooleanGrid result = BooleanGridMath.difference(d, e, d.getMaterial());
-        if (result != BooleanGrid.NOTHING_THERE && d.getMaterial() != e.getMaterial()) {
-            LOGGER.error("attempt to subtract two bitmaps of different materials: " + d.getMaterial() + " and "
-                    + e.getMaterial());
-        }
-        return result;
-    }
-
-    /**
-     * Grid d - grid e, forcing attribute a on the result d's rectangle is
-     * presumed to contain the result. TODO: write a function to compute the
-     * rectangle from the bitmap
-     */
-    public static BooleanGrid difference(final BooleanGrid d, final BooleanGrid e, final String resultMaterial) {
-        if (d == BooleanGrid.NOTHING_THERE) {
-            return BooleanGrid.NOTHING_THERE;
-        }
-
-        BooleanGrid result;
-
-        if (e == BooleanGrid.NOTHING_THERE) {
-            if (d.getMaterial() == resultMaterial) {
-                return d;
-            }
-            result = new BooleanGrid(d);
-            result.setMaterial(resultMaterial);
-            return result;
-        }
-
-        result = new BooleanGrid(d);
-        BooleanGrid temp;
-        if (d.getRectangle().coincidesWith(e.getRectangle())) {
-            temp = e;
-        } else {
-            temp = new BooleanGrid(e, result.getRectangle());
-        }
-        result.substract(temp);
-        if (result.isEmpty()) {
-            return BooleanGrid.NOTHING_THERE;
-        }
-        result.setMaterial(resultMaterial);
-        return result;
-    }
-
-    /**
-     * Compute the intersection of two bit patterns
-     */
-    static BooleanGrid intersection(final BooleanGrid d, final BooleanGrid e, final String resultMaterial) {
         if (d == BooleanGrid.NOTHING_THERE || e == BooleanGrid.NOTHING_THERE) {
             return BooleanGrid.NOTHING_THERE;
         }
@@ -161,8 +80,42 @@ public class BooleanGridMath {
         if (result.isEmpty()) {
             return BooleanGrid.NOTHING_THERE;
         }
-        result.setMaterial(resultMaterial);
+        if (!d.getMaterial().equals(e.getMaterial())) {
+            LOGGER.error("attempt to intersect two bitmaps of different materials: " + d.getMaterial() + " and "
+                    + e.getMaterial());
+        }
         return result;
     }
 
+    /**
+     * Grid d - grid e, forcing attribute a on the result d's rectangle is
+     * presumed to contain the result. TODO: write a function to compute the
+     * rectangle from the bitmap
+     */
+    public static BooleanGrid difference(final BooleanGrid lh, final BooleanGrid rh) {
+        if (lh == BooleanGrid.NOTHING_THERE) {
+            return BooleanGrid.NOTHING_THERE;
+        }
+
+        if (rh == BooleanGrid.NOTHING_THERE) {
+            return lh;
+        }
+
+        final BooleanGrid result = new BooleanGrid(lh);
+        BooleanGrid temp;
+        if (lh.getRectangle().coincidesWith(rh.getRectangle())) {
+            temp = rh;
+        } else {
+            temp = new BooleanGrid(rh, result.getRectangle());
+        }
+        result.substract(temp);
+        if (result.isEmpty()) {
+            return BooleanGrid.NOTHING_THERE;
+        }
+        if (lh.getMaterial() != rh.getMaterial()) {
+            LOGGER.error("attempt to subtract two bitmaps of different materials: " + lh.getMaterial() + " and "
+                    + rh.getMaterial());
+        }
+        return result;
+    }
 }

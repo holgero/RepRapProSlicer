@@ -20,7 +20,7 @@
  */
 package org.reprap.geometry;
 
-import org.reprap.geometry.polygons.BooleanGridList;
+import org.reprap.geometry.polygons.BooleanGrid;
 
 /**
  * Ring buffer cache to hold previously computed slices for doing infill and
@@ -30,14 +30,14 @@ import org.reprap.geometry.polygons.BooleanGridList;
  */
 final class SliceCache {
     private static final int NO_LAYER = Integer.MIN_VALUE;
-    private final BooleanGridList[][] supportRing;
+    private final BooleanGrid[][] supportRing;
     private final int[] layerNumber;
     private int ringPointer;
     private final int ringSize;
 
     SliceCache(final int ringSize, final int size) {
         this.ringSize = ringSize;
-        supportRing = new BooleanGridList[ringSize][size];
+        supportRing = new BooleanGrid[ringSize][size];
         layerNumber = new int[ringSize];
         ringPointer = 0;
         for (int layer = 0; layer < ringSize; layer++) {
@@ -66,7 +66,7 @@ final class SliceCache {
         return rp;
     }
 
-    void setSupport(final BooleanGridList support, final int layer, final int stl) {
+    void setSupport(final BooleanGrid support, final int layer, final int stl) {
         final int rp = getTheRingLocationForWrite(layer);
         layerNumber[rp] = layer;
         supportRing[rp][stl] = support;
@@ -86,7 +86,7 @@ final class SliceCache {
         return -1;
     }
 
-    BooleanGridList getSupport(final int layer, final int stl) {
+    BooleanGrid getSupport(final int layer, final int stl) {
         final int rp = getTheRingLocationForRead(layer);
         if (rp >= 0) {
             return supportRing[rp][stl];

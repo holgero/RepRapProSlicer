@@ -225,7 +225,7 @@ public final class InFillPatterns {
         final BooleanGridList result = new BooleanGridList();
         for (int i = 0; i < list.size(); i++) {
             final BooleanGrid abg = list.get(i);
-            result.add(BooleanGridMath.difference(abg, bridge, abg.getMaterial()));
+            result.add(BooleanGridMath.difference(abg, bridge));
         }
         return result.unionDuplicates();
     }

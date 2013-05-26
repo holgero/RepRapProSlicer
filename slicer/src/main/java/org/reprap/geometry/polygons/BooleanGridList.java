@@ -236,7 +236,7 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
             for (int j = 0; j < b.size(); j++) {
                 final BooleanGrid grid = b.get(j);
                 if (abg.getMaterial().equals(grid.getMaterial())) {
-                    result.add(BooleanGridMath.difference(abg, grid, abg.getMaterial()));
+                    result.add(BooleanGridMath.difference(abg, grid));
                     aMatched = true;
                     break;
                 }

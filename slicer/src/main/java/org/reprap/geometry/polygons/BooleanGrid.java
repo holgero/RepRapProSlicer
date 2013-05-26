@@ -28,9 +28,9 @@ public class BooleanGrid {
     public static final BooleanGrid NOTHING_THERE = new BooleanGrid(0.0, null, new Integer2DRectangle(), new BitSet(1));
 
     private final double pixelSize;
-    private final BitSet bits;
+    private final String material;
     private final Integer2DRectangle rectangle;
-    private String material;
+    private final BitSet bits;
 
     private BooleanGrid(final double pixelSize, final String material, final Integer2DRectangle rectangle, final BitSet bits) {
         this.pixelSize = pixelSize;
@@ -48,6 +48,13 @@ public class BooleanGrid {
      */
     BooleanGrid(final BooleanGrid bg) {
         this(bg.pixelSize, bg.material, new Integer2DRectangle(bg.rectangle), (BitSet) bg.bits.clone());
+    }
+
+    /**
+     * Copy constructor with new material
+     */
+    public BooleanGrid(final BooleanGrid bg, final String material) {
+        this(bg.pixelSize, material, new Integer2DRectangle(bg.rectangle), (BitSet) bg.bits.clone());
     }
 
     /**
@@ -73,10 +80,6 @@ public class BooleanGrid {
                 bits.set(pixI(x + offxOut, y + offyOut), bg.bits.get(bg.pixI(x + offxIn, y + offyIn)));
             }
         }
-    }
-
-    public void setMaterial(final String material) {
-        this.material = material;
     }
 
     /**
@@ -277,9 +280,8 @@ public class BooleanGrid {
      * Return all the outlines of all the solid areas as real-world polygons.
      */
     public PolygonList allPerimiters() {
-        PolygonList r = iAllPerimiters().realPolygons(getMaterial(), rectangle, pixelSize);
-        r = r.simplify(1.5 * pixelSize);
-        return r;
+        final PolygonList r = iAllPerimiters().realPolygons(getMaterial(), rectangle, pixelSize);
+        return r.simplify(1.5 * pixelSize);
     }
 
     /**

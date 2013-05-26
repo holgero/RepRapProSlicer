@@ -63,13 +63,13 @@ class Slice {
         return result;
     }
 
-    BooleanGrid unionMaterials() {
+    BooleanGrid unionMaterials(final String material) {
         if (bitmaps.size() == 0) {
             return BooleanGrid.NOTHING_THERE;
         }
-        BooleanGrid union = bitmaps.get(0);
+        BooleanGrid union = new BooleanGrid(bitmaps.get(0), material);
         for (int i = 1; i < bitmaps.size(); i++) {
-            union = BooleanGridMath.union(union, bitmaps.get(i), union.getMaterial());
+            union = BooleanGridMath.union(union, new BooleanGrid(bitmaps.get(i), material));
         }
         return union;
     }
