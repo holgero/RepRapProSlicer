@@ -25,36 +25,10 @@ import org.apache.logging.log4j.Logger;
  */
 public class BooleanGrid {
     private static final Logger LOGGER = LogManager.getLogger(BooleanGrid.class);
-
-    /**
-     * How simple does a CSG expression have to be to not be worth pruning
-     * further?
-     */
     public static final BooleanGrid NOTHING_THERE = new BooleanGrid(0.0, null, new Integer2DRectangle(), new BitSet(1));
 
-    /**
-     * Run round the eight neighbours of a pixel anticlockwise from bottom left
-     */
-    private static final Integer2DPoint[] NEIGHBOUR = { new Integer2DPoint(-1, -1), //0 /
-            new Integer2DPoint(0, -1), //1 V
-            new Integer2DPoint(1, -1), //2 \
-            new Integer2DPoint(1, 0), //3 ->
-            new Integer2DPoint(1, 1), //4 /
-            new Integer2DPoint(0, 1), //5 ^
-            new Integer2DPoint(-1, 1), //6 \
-            new Integer2DPoint(-1, 0) //7 <
-    };
-
     private final double pixelSize;
-
-    /**
-     * The pixel map
-     */
     private final BitSet bits;
-
-    /**
-     * The rectangle the pixelmap covers
-     */
     private final Integer2DRectangle rectangle;
     private String material;
 
@@ -65,7 +39,7 @@ public class BooleanGrid {
         this.bits = bits;
     }
 
-    private BooleanGrid(final double pixelSize, final String material, final Integer2DRectangle rectangle) {
+    BooleanGrid(final double pixelSize, final String material, final Integer2DRectangle rectangle) {
         this(pixelSize, material, rectangle, new BitSet(rectangle.getSizeX() * rectangle.getSizeY()));
     }
 
@@ -258,32 +232,6 @@ public class BooleanGrid {
     }
 
     /**
-     * Find a set point
-     */
-    private Integer2DPoint findSeed_i() {
-        for (int x = 0; x < rectangle.getSizeX(); x++) {
-            for (int y = 0; y < rectangle.getSizeY(); y++) {
-                if (get(x, y)) {
-                    return new Integer2DPoint(x, y);
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Find a set point
-     */
-    public Point2D findSeed() {
-        final Integer2DPoint p = findSeed_i();
-        if (p == null) {
-            return null;
-        } else {
-            return rectangle.realPoint(p, pixelSize);
-        }
-    }
-
-    /**
      * Find the centroid of the shape(s)
      */
     private Integer2DPoint findCentroid_i() {
@@ -313,51 +261,6 @@ public class BooleanGrid {
         } else {
             return rectangle.realPoint(p, pixelSize);
         }
-    }
-
-    /**
-     * Recursive flood-fill of solid pixels from p to return a BooleanGrid of
-     * just the shape connected to that pixel.
-     * 
-     * @param p
-     * @return
-     */
-    public BooleanGrid floodCopy(final Point2D pp) {
-        Integer2DPoint p = rectangle.convertToInteger2DPoint(pp, pixelSize);
-        if (!inside(p) || !this.get(p)) {
-            return NOTHING_THERE;
-        }
-        final BooleanGrid result = new BooleanGrid(pixelSize, material, new Integer2DRectangle(rectangle));
-
-        // We implement our own floodfill stack, rather than using recursion to
-        // avoid having to specify a big Java stack just for this one function.
-
-        final int top = 400000;
-        final Integer2DPoint[] stack = new Integer2DPoint[top];
-        int sp = 0;
-        result.set(p, true);
-        stack[sp] = p;
-        Integer2DPoint q;
-
-        while (sp > -1) {
-            p = stack[sp];
-            sp--;
-
-            for (int i = 1; i < 8; i = i + 2) {
-                q = p.add(NEIGHBOUR[i]);
-                if (this.get(q) && !result.get(q)) {
-                    result.set(q, true);
-                    sp++;
-                    if (sp >= top) {
-                        LOGGER.error("BooleanGrid.floodCopy(): stack overflow!");
-                        return result;
-                    }
-                    stack[sp] = q;
-                }
-            }
-        }
-
-        return result;
     }
 
     /**

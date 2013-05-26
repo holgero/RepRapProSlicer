@@ -8,6 +8,7 @@ import org.reprap.configuration.PrintSetting;
 import org.reprap.geometry.polygons.BooleanGrid;
 import org.reprap.geometry.polygons.BooleanGridList;
 import org.reprap.geometry.polygons.BooleanGridMath;
+import org.reprap.geometry.polygons.FloodFiller;
 import org.reprap.geometry.polygons.HalfPlane;
 import org.reprap.geometry.polygons.Hatcher;
 import org.reprap.geometry.polygons.Point2D;
@@ -97,7 +98,7 @@ public final class InFillPatterns {
 
         // Generate the infill patterns.  We do the bridges first, as each bridge subtracts its
         // lands from the other two sets of shapes.  We want that, so they don't get infilled twice.
-        bridgeHatch(lands);
+        bridgeHatch(lands, material);
         hatchedPolygons.add(ProducerStlList.hatch(insides, layerRules, false, false, currentConfiguration));
         hatchedPolygons.add(ProducerStlList.hatch(surfaces, layerRules, true, false, currentConfiguration));
 
@@ -118,25 +119,13 @@ public final class InFillPatterns {
     }
 
     /**
-     * This finds an individual land in landPattern
+     * This finds the bridge that covers a given point. It assumes that there is
+     * only one material at one point in space...
      */
-    private static BooleanGrid findLand(final BooleanGrid landPattern) {
-        final Point2D seed = landPattern.findSeed();
-        if (seed == null) {
-            return null;
-        }
-
-        return landPattern.floodCopy(seed);
-    }
-
-    /**
-     * This finds the bridge that cover cen. It assumes that there is only one
-     * material at one point in space...
-     */
-    private static int findBridge(final BooleanGridList unSupported, final Point2D cen) {
+    private static int findBridge(final BooleanGridList unSupported, final Point2D point) {
         for (int i = 0; i < unSupported.size(); i++) {
             final BooleanGrid bridge = unSupported.get(i);
-            if (bridge.get(cen)) {
+            if (bridge.get(point)) {
                 return i;
             }
         }
@@ -147,104 +136,98 @@ public final class InFillPatterns {
      * Compute the bridge infill for unsupported polygons for a slice. This is
      * very heuristic...
      */
-    private void bridgeHatch(final BooleanGridList lands) {
+    private void bridgeHatch(final BooleanGridList lands, final String material) {
         for (int i = 0; i < lands.size(); i++) {
             BooleanGrid landPattern = lands.get(i);
-            BooleanGrid land1;
-
-            while ((land1 = findLand(landPattern)) != null) {
-                // Find the middle of the land
-                final Point2D cen1 = land1.findCentroid();
-
-                // Wipe this land from the land pattern
+            do {
+                final BooleanGrid land1 = new FloodFiller(landPattern).findLand();
+                if (land1 == BooleanGrid.NOTHING_THERE) {
+                    break;
+                }
                 landPattern = BooleanGridMath.difference(landPattern, land1);
 
-                if (cen1 == null) {
+                final Point2D center1 = land1.findCentroid();
+                if (center1 == null) {
                     LOGGER.error("First land found with no centroid!");
                     continue;
                 }
 
                 // Find the bridge that goes with the land
-                final int bridgesIndex = findBridge(bridges, cen1);
+                final int bridgesIndex = findBridge(bridges, center1);
                 if (bridgesIndex < 0) {
                     LOGGER.debug("Land found with no corresponding bridge.");
                     continue;
                 }
-                final BooleanGrid bridgeStart = bridges.get(bridgesIndex);
-
                 // The bridge must cover the land too
-                final BooleanGrid bridge = bridgeStart.floodCopy(cen1);
-                if (bridge == null) {
-                    continue;
-                }
-
+                final BooleanGrid bridge = new FloodFiller(bridges.get(bridgesIndex)).createFilledCopy(center1);
                 // Find the other land (the first has been wiped)
                 final BooleanGrid land2 = BooleanGridMath.intersection(bridge, landPattern);
-
                 // Find the middle of this land
-                final Point2D cen2 = land2.findCentroid();
-                final ExtruderSetting extruder = currentConfiguration.getExtruderSetting(bridge.getMaterial());
+                final Point2D center2 = land2.findCentroid();
+                final ExtruderSetting extruder = currentConfiguration.getExtruderSetting(material);
                 final double extrusionWidth = extruder.getExtrusionSize();
-                final Hatcher hatcher = new Hatcher(bridge);
-                if (cen2 == null) {
+                if (center2 == null) {
                     LOGGER.debug("Second land found with no centroid.");
-                    // No second land implies a ring of support - just infill it.
-                    final PolygonList hatches = hatcher.hatch(layerRules.getHatchDirection(false, extrusionWidth),
-                            extrusionWidth, currentConfiguration.getPrintSetting().isPathOptimize());
-                    hatchedPolygons.add(hatches);
-
-                    // Remove this bridge (in fact, just its lands) from the other infill patterns.
-                    final BooleanGridList b = new BooleanGridList();
-                    b.add(bridge);
-                    insides = BooleanGridList.differences(insides, b);
-                    surfaces = BooleanGridList.differences(surfaces, b);
+                    fillRingOfSupport(bridge, extrusionWidth);
                 } else {
-                    // Wipe this land from the land pattern
                     landPattern = BooleanGridMath.difference(landPattern, land2);
-
-                    // (Roughly) what direction does the bridge go in?
-                    final Point2D centroidDirection = Point2D.sub(cen2, cen1).norm();
-                    Point2D bridgeDirection = centroidDirection;
-
-                    // Fine the edge of the bridge that is nearest parallel to that, and use that as the fill direction
-                    double spMax = Double.NEGATIVE_INFINITY;
-                    double sp;
-                    final PolygonList bridgeOutline = bridge.allPerimiters();
-                    for (int pol = 0; pol < bridgeOutline.size(); pol++) {
-                        final Polygon polygon = bridgeOutline.polygon(pol);
-
-                        for (int vertex1 = 0; vertex1 < polygon.size(); vertex1++) {
-                            int vertex2 = vertex1 + 1;
-                            if (vertex2 >= polygon.size()) {
-                                vertex2 = 0;
-                            }
-                            final Point2D edge = Point2D.sub(polygon.point(vertex2), polygon.point(vertex1));
-
-                            if ((sp = Math.abs(Point2D.mul(edge, centroidDirection))) > spMax) {
-                                spMax = sp;
-                                bridgeDirection = edge;
-                            }
-
-                        }
-                    }
-
-                    // Build the bridge
-                    final PolygonList hatches = hatcher.hatch(new HalfPlane(new Point2D(0, 0), bridgeDirection),
-                            extrusionWidth, currentConfiguration.getPrintSetting().isPathOptimize());
-                    hatchedPolygons.add(hatches);
-
-                    // Remove this bridge (in fact, just its lands) from the other infill patterns. 
-                    final BooleanGridList b = new BooleanGridList();
-                    b.add(bridge);
-                    insides = BooleanGridList.differences(insides, b);
-                    surfaces = BooleanGridList.differences(surfaces, b);
+                    fillBridge(bridge, center1, center2, extrusionWidth);
                 }
-                // remove the bridge from the bridge patterns.
-                final BooleanGridList b = new BooleanGridList();
-                b.add(bridge);
-                bridges = BooleanGridList.differences(bridges, b);
+                insides = substract(insides, bridge);
+                surfaces = substract(surfaces, bridge);
+                bridges = substract(bridges, bridge);
+            } while (true);
+        }
+    }
+
+    private void fillBridge(final BooleanGrid bridge, final Point2D center1, final Point2D center2, final double extrusionWidth) {
+        // (Roughly) what direction does the bridge go in?
+        final Point2D centroidDirection = Point2D.sub(center2, center1).norm();
+        Point2D bridgeDirection = centroidDirection;
+
+        // Find the edge of the bridge that is nearest parallel to that, and use that as the fill direction
+        double spMax = Double.NEGATIVE_INFINITY;
+        final PolygonList bridgeOutline = bridge.allPerimiters();
+        for (int pol = 0; pol < bridgeOutline.size(); pol++) {
+            final Polygon polygon = bridgeOutline.polygon(pol);
+            for (int vertex1 = 0; vertex1 < polygon.size(); vertex1++) {
+                int vertex2 = vertex1 + 1;
+                if (vertex2 >= polygon.size()) {
+                    vertex2 = 0;
+                }
+                final Point2D edge = Point2D.sub(polygon.point(vertex2), polygon.point(vertex1));
+                final double sp = Math.abs(Point2D.mul(edge, centroidDirection));
+                if (sp > spMax) {
+                    spMax = sp;
+                    bridgeDirection = edge;
+                }
             }
         }
+
+        // Build the bridge
+        final PolygonList hatches = new Hatcher(bridge).hatch(new HalfPlane(new Point2D(0, 0), bridgeDirection),
+                extrusionWidth, currentConfiguration.getPrintSetting().isPathOptimize());
+        hatchedPolygons.add(hatches);
+    }
+
+    private void fillRingOfSupport(final BooleanGrid bridge, final double extrusionWidth) {
+        final Hatcher hatcher = new Hatcher(bridge);
+        final PolygonList hatches = hatcher.hatch(layerRules.getHatchDirection(false, extrusionWidth), extrusionWidth,
+                currentConfiguration.getPrintSetting().isPathOptimize());
+        hatchedPolygons.add(hatches);
+    }
+
+    private static BooleanGridList substract(final BooleanGridList list, final BooleanGrid bridge) {
+        if (list.size() <= 0) {
+            return new BooleanGridList();
+        }
+
+        final BooleanGridList result = new BooleanGridList();
+        for (int i = 0; i < list.size(); i++) {
+            final BooleanGrid abg = list.get(i);
+            result.add(BooleanGridMath.difference(abg, bridge, abg.getMaterial()));
+        }
+        return result.unionDuplicates();
     }
 
     private BooleanGridList offset(final BooleanGridList gridList, final double multiplier) {
