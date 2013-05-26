@@ -33,7 +33,7 @@ public class BooleanGrid {
      * How simple does a CSG expression have to be to not be worth pruning
      * further?
      */
-    private static final BooleanGrid NOTHING_THERE = new BooleanGrid(0.0);
+    public static final BooleanGrid NOTHING_THERE = new BooleanGrid(0.0);
 
     /**
      * Run round the eight neighbours of a pixel anticlockwise from bottom left
@@ -54,6 +54,8 @@ public class BooleanGrid {
      */
     private static final int[] NEIGHBOUR_PRODUCT = { 2, 1, 0, -1, -2, -1, 0, 1 };
 
+    private final double pixelSize;
+
     /**
      * The pixel map
      */
@@ -69,8 +71,6 @@ public class BooleanGrid {
      */
     private Integer2DRectangle rec;
     private String material;
-
-    private final double pixelSize;
 
     /**
      * Build the grid from a CSG expression
@@ -90,8 +90,8 @@ public class BooleanGrid {
     /**
      * Copy constructor N.B. attributes are _not_ deep copied
      */
-    private BooleanGrid(final BooleanGrid bg, final double pixelSize) {
-        this.pixelSize = pixelSize;
+    BooleanGrid(final BooleanGrid bg) {
+        pixelSize = bg.pixelSize;
         material = bg.material;
         visited = null;
         rec = new Integer2DRectangle(bg.rec);
@@ -101,8 +101,8 @@ public class BooleanGrid {
     /**
      * Copy constructor with new rectangle N.B. attributes are _not_ deep copied
      */
-    private BooleanGrid(final BooleanGrid bg, final Integer2DRectangle newRec, final double pixelSize) {
-        this.pixelSize = pixelSize;
+    BooleanGrid(final BooleanGrid bg, final Integer2DRectangle newRec) {
+        pixelSize = bg.pixelSize;
         material = bg.material;
         visited = null;
         rec = new Integer2DRectangle(newRec);
@@ -128,13 +128,6 @@ public class BooleanGrid {
         rec = new Integer2DRectangle();
         bits = new BitSet(1);
         visited = null;
-    }
-
-    /**
-     * The empty set
-     */
-    public static BooleanGrid nullBooleanGrid() {
-        return NOTHING_THERE;
     }
 
     public void setMaterial(final String material) {
@@ -641,19 +634,13 @@ public class BooleanGrid {
     }
 
     /**
-     * Return all the outlines of all the solid areas as polygons consisting of
-     * all the pixels that make up the outlines.
-     */
-    private Integer2DPolygonList iAllPerimitersRaw() {
-        return new BooleanGridWalker(this).marchAll();
-    }
-
-    /**
      * Return all the outlines of all the solid areas as polygons in their
      * simplest form.
      */
     private Integer2DPolygonList iAllPerimiters() {
-        return iAllPerimitersRaw().simplify();
+        final BooleanGridWalker gridWalker = new BooleanGridWalker(this);
+        final Integer2DPolygonList polygons = gridWalker.marchAll();
+        return polygons.simplify();
     }
 
     /**
@@ -1065,7 +1052,7 @@ public class BooleanGrid {
     public BooleanGrid createOffsetGrid(final double dist) {
         final int r = (int) Math.round(dist / pixelSize);
 
-        final BooleanGrid result = new BooleanGrid(this, pixelSize);
+        final BooleanGrid result = new BooleanGrid(this);
         if (r == 0) {
             return result;
         }
@@ -1116,149 +1103,8 @@ public class BooleanGrid {
         return rec;
     }
 
-    /**
-     * Compute the union of two bit patterns, forcing material on the result.
-     */
-    public static BooleanGrid union(final BooleanGrid d, final BooleanGrid e, final String resultMaterial) {
-        BooleanGrid result;
-
-        if (d == NOTHING_THERE) {
-            if (e == NOTHING_THERE) {
-                return NOTHING_THERE;
-            }
-            if (e.material == resultMaterial) { // TODO: string comparison by identity
-                return e;
-            }
-            result = new BooleanGrid(e, e.pixelSize);
-            result.material = resultMaterial;
-            return result;
-        }
-
-        if (e == NOTHING_THERE) {
-            if (d.material == resultMaterial) {
-                return d;
-            }
-            result = new BooleanGrid(d, e.pixelSize);
-            result.material = resultMaterial;
-            return result;
-        }
-
-        if (d.rec.coincidesWith(e.rec)) {
-            result = new BooleanGrid(d, e.pixelSize);
-            result.bits.or(e.bits);
-        } else {
-            final Integer2DRectangle u = d.rec.union(e.rec);
-            result = new BooleanGrid(d, u, d.pixelSize);
-            final BooleanGrid temp = new BooleanGrid(e, u, e.pixelSize);
-            result.bits.or(temp.bits);
-        }
-        result.material = resultMaterial;
-        return result;
-    }
-
-    /**
-     * Compute the union of two bit patterns
-     */
-    static BooleanGrid union(final BooleanGrid d, final BooleanGrid e) {
-        final BooleanGrid result = union(d, e, d.material);
-        if (result != NOTHING_THERE && d.material != e.material) {
-            LOGGER.error("BooleanGrid.union(): attempt to union two bitmaps of different materials: " + d.getMaterial()
-                    + " and " + e.getMaterial());
-        }
-        return result;
-    }
-
-    /**
-     * Compute the intersection of two bit patterns
-     */
-    private static BooleanGrid intersection(final BooleanGrid d, final BooleanGrid e, final String resultMaterial) {
-        if (d == NOTHING_THERE || e == NOTHING_THERE) {
-            return NOTHING_THERE;
-        }
-
-        BooleanGrid result;
-        if (d.rec.coincidesWith(e.rec)) {
-            result = new BooleanGrid(d, e.pixelSize);
-            result.bits.and(e.bits);
-        } else {
-            final Integer2DRectangle u = d.rec.intersection(e.rec);
-            if (u.isEmpty()) {
-                return NOTHING_THERE;
-            }
-            result = new BooleanGrid(d, u, d.pixelSize);
-            final BooleanGrid temp = new BooleanGrid(e, u, d.pixelSize);
-            result.bits.and(temp.bits);
-        }
-        if (result.isEmpty()) {
-            return NOTHING_THERE;
-        }
-        result.material = resultMaterial;
-        return result;
-    }
-
-    /**
-     * Compute the intersection of two bit patterns
-     */
-    public static BooleanGrid intersection(final BooleanGrid d, final BooleanGrid e) {
-        final BooleanGrid result = intersection(d, e, d.material);
-        if (result != NOTHING_THERE && d.material != e.material) {
-            LOGGER.error("BooleanGrid.intersection(): attempt to intersect two bitmaps of different materials: "
-                    + d.getMaterial() + " and " + e.getMaterial());
-        }
-        return result;
-    }
-
-    /**
-     * Grid d - grid e, forcing attribute a on the result d's rectangle is
-     * presumed to contain the result. TODO: write a function to compute the
-     * rectangle from the bitmap
-     */
-    public static BooleanGrid difference(final BooleanGrid d, final BooleanGrid e, final String resultMaterial) {
-        if (d == NOTHING_THERE) {
-            return NOTHING_THERE;
-        }
-
-        BooleanGrid result;
-
-        if (e == NOTHING_THERE) {
-            if (d.material == resultMaterial) {
-                return d;
-            }
-            result = new BooleanGrid(d, e.pixelSize);
-            result.material = resultMaterial;
-            return result;
-        }
-
-        result = new BooleanGrid(d, e.pixelSize);
-        BooleanGrid temp;
-        if (d.rec.coincidesWith(e.rec)) {
-            temp = e;
-        } else {
-            temp = new BooleanGrid(e, result.rec, e.pixelSize);
-        }
-        result.bits.andNot(temp.bits);
-        if (result.isEmpty()) {
-            return NOTHING_THERE;
-        }
-        result.material = resultMaterial;
-        return result;
-    }
-
-    /**
-     * Grid d - grid e d's rectangle is presumed to contain the result. TODO:
-     * write a function to compute the rectangle from the bitmap
-     */
-    public static BooleanGrid difference(final BooleanGrid d, final BooleanGrid e) {
-        final BooleanGrid result = difference(d, e, d.material);
-        if (result != NOTHING_THERE && d.material != e.material) {
-            LOGGER.error("BooleanGrid.difference(): attempt to subtract two bitmaps of different materials: " + d.getMaterial()
-                    + " and " + e.getMaterial());
-        }
-        return result;
-    }
-
     public BooleanGrid subtractPolygons(final PolygonList polygons, final double width) {
-        final BooleanGrid result = new BooleanGrid(this, pixelSize);
+        final BooleanGrid result = new BooleanGrid(this);
         for (int i = 0; i < polygons.size(); i++) {
             final Polygon polygon = polygons.polygon(i);
             result.subtract(polygon, width);
@@ -1275,5 +1121,29 @@ public class BooleanGrid {
             rectangle(end.add(new Integer2DPoint(-pixelWidth, 0)), end.add(new Integer2DPoint(pixelWidth, 0)), pixelWidth,
                     false);
         }
+    }
+
+    void unionWith(final BooleanGrid other) {
+        bits.or(other.bits);
+    }
+
+    void substract(final BooleanGrid other) {
+        bits.andNot(other.bits);
+    }
+
+    public void intersectWith(final BooleanGrid other) {
+        bits.and(other.bits);
+    }
+
+    double getPixelSize() {
+        return pixelSize;
+    }
+
+    Integer2DRectangle getRectangle() {
+        return rec;
+    }
+
+    void setRectangle(final Integer2DRectangle rec) {
+        this.rec = rec;
     }
 }

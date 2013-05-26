@@ -7,6 +7,7 @@ import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.PrintSetting;
 import org.reprap.geometry.polygons.BooleanGrid;
 import org.reprap.geometry.polygons.BooleanGridList;
+import org.reprap.geometry.polygons.BooleanGridMath;
 import org.reprap.geometry.polygons.HalfPlane;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
@@ -155,7 +156,7 @@ public final class InFillPatterns {
                 final Point2D cen1 = land1.findCentroid();
 
                 // Wipe this land from the land pattern
-                landPattern = BooleanGrid.difference(landPattern, land1);
+                landPattern = BooleanGridMath.difference(landPattern, land1);
 
                 if (cen1 == null) {
                     LOGGER.error("First land found with no centroid!");
@@ -177,7 +178,7 @@ public final class InFillPatterns {
                 }
 
                 // Find the other land (the first has been wiped)
-                final BooleanGrid land2 = BooleanGrid.intersection(bridge, landPattern);
+                final BooleanGrid land2 = BooleanGridMath.intersection(bridge, landPattern);
 
                 // Find the middle of this land
                 final Point2D cen2 = land2.findCentroid();
@@ -196,7 +197,7 @@ public final class InFillPatterns {
                     surfaces = BooleanGridList.differences(surfaces, b);
                 } else {
                     // Wipe this land from the land pattern
-                    landPattern = BooleanGrid.difference(landPattern, land2);
+                    landPattern = BooleanGridMath.difference(landPattern, land2);
 
                     // (Roughly) what direction does the bridge go in?
                     final Point2D centroidDirection = Point2D.sub(cen2, cen1).norm();

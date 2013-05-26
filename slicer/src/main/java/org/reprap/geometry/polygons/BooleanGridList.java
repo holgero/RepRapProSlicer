@@ -50,7 +50,7 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
         if (b == null) {
             throw new IllegalArgumentException("b must not be null");
         }
-        if (b != BooleanGrid.nullBooleanGrid()) {
+        if (b != BooleanGrid.NOTHING_THERE) {
             shapes.add(b);
         }
     }
@@ -102,7 +102,7 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
                     if (!usedUp[j]) {
                         final BooleanGrid jg = get(j);
                         if (material.equals(jg.getMaterial())) {
-                            union = BooleanGrid.union(union, jg);
+                            union = BooleanGridMath.union(union, jg);
                             usedUp[j] = true;
                         }
                     }
@@ -154,7 +154,7 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
             for (int j = 0; j < b.size(); j++) {
                 final BooleanGrid grid = b.get(j);
                 if (abg.getMaterial().equals(grid.getMaterial())) {
-                    result.add(BooleanGrid.union(abg, grid));
+                    result.add(BooleanGridMath.union(abg, grid));
                     bMatched[j] = true;
                     aMatched = true;
                     break;
@@ -197,7 +197,7 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
             for (int j = 0; j < b.size(); j++) {
                 final BooleanGrid grid = b.get(j);
                 if (abg.getMaterial().equals(grid.getMaterial())) {
-                    result.add(BooleanGrid.intersection(abg, grid));
+                    result.add(BooleanGridMath.intersection(abg, grid));
                 }
             }
         }
@@ -236,7 +236,7 @@ public class BooleanGridList implements Iterable<BooleanGrid> {
             for (int j = 0; j < b.size(); j++) {
                 final BooleanGrid grid = b.get(j);
                 if (abg.getMaterial().equals(grid.getMaterial())) {
-                    result.add(BooleanGrid.difference(abg, grid, abg.getMaterial()));
+                    result.add(BooleanGridMath.difference(abg, grid, abg.getMaterial()));
                     aMatched = true;
                     break;
                 }

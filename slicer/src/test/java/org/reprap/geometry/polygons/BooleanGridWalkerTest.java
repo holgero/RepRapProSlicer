@@ -56,7 +56,7 @@ public class BooleanGridWalkerTest {
 
     @Test
     public void testMarchRectangleWithOneHole() {
-        final BooleanGrid rectangleWithHole = BooleanGrid.difference(testGrid, testGrid.createOffsetGrid(-0.1));
+        final BooleanGrid rectangleWithHole = BooleanGridMath.difference(testGrid, testGrid.createOffsetGrid(-0.1));
         final Integer2DPolygonList simpleMarch = new BooleanGridWalker(rectangleWithHole).marchAll();
         if (VISUALIZE) {
             System.out.println(printGrid(rectangleWithHole));
@@ -67,7 +67,7 @@ public class BooleanGridWalkerTest {
 
     @Test
     public void testMarchBigC() {
-        final BooleanGrid cShape = BooleanGrid.difference(testGrid, makeRectangleGrid(-0.3, 0.3, -0.3, 0.5));
+        final BooleanGrid cShape = BooleanGridMath.difference(testGrid, makeRectangleGrid(-0.3, 0.3, -0.3, 0.5));
         final Integer2DPolygonList simpleMarch = new BooleanGridWalker(cShape).marchAll();
         if (VISUALIZE) {
             System.out.println(printGrid(cShape));
@@ -78,8 +78,8 @@ public class BooleanGridWalkerTest {
 
     @Test
     public void testMarchThreeIndependentRectangles() {
-        final BooleanGrid threeRectangles = BooleanGrid.union(makeRectangleGrid(-0.4, -0.4, -0.3, -0.3),
-                BooleanGrid.union(makeRectangleGrid(-0.4, 0, -0.3, 0.3), makeRectangleGrid(0, -0.3, 0.3, 0.1)));
+        final BooleanGrid threeRectangles = BooleanGridMath.union(makeRectangleGrid(-0.4, -0.4, -0.3, -0.3),
+                BooleanGridMath.union(makeRectangleGrid(-0.4, 0, -0.3, 0.3), makeRectangleGrid(0, -0.3, 0.3, 0.1)));
         final Integer2DPolygonList simpleMarch = new BooleanGridWalker(threeRectangles).marchAll();
         if (VISUALIZE) {
             System.out.println(printGrid(threeRectangles));

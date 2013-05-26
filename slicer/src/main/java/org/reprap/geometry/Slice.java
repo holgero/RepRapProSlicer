@@ -20,6 +20,7 @@ package org.reprap.geometry;
 
 import org.reprap.geometry.polygons.BooleanGrid;
 import org.reprap.geometry.polygons.BooleanGridList;
+import org.reprap.geometry.polygons.BooleanGridMath;
 import org.reprap.geometry.polygons.PolygonList;
 
 class Slice {
@@ -64,11 +65,11 @@ class Slice {
 
     BooleanGrid unionMaterials() {
         if (bitmaps.size() == 0) {
-            return BooleanGrid.nullBooleanGrid();
+            return BooleanGrid.NOTHING_THERE;
         }
         BooleanGrid union = bitmaps.get(0);
         for (int i = 1; i < bitmaps.size(); i++) {
-            union = BooleanGrid.union(union, bitmaps.get(i), union.getMaterial());
+            union = BooleanGridMath.union(union, bitmaps.get(i), union.getMaterial());
         }
         return union;
     }

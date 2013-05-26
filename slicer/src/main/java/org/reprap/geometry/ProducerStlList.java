@@ -44,6 +44,7 @@ import org.reprap.configuration.MathRoutines;
 import org.reprap.configuration.PrintSetting;
 import org.reprap.geometry.polygons.BooleanGrid;
 import org.reprap.geometry.polygons.BooleanGridList;
+import org.reprap.geometry.polygons.BooleanGridMath;
 import org.reprap.geometry.polygons.CSG2D;
 import org.reprap.geometry.polygons.Circle;
 import org.reprap.geometry.polygons.HalfPlane;
@@ -330,7 +331,7 @@ class ProducerStlList {
         if (previousSupport != null) {
             for (int i = 0; i < previousSupport.size(); i++) {
                 final BooleanGrid above = previousSupport.get(i);
-                support.add(BooleanGrid.difference(above, unionOfThisLayer, material));
+                support.add(BooleanGridMath.difference(above, unionOfThisLayer, material));
             }
             support = support.unionDuplicates();
         }
