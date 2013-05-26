@@ -121,7 +121,7 @@ public class Line {
      */
     Line offset(final double d) {
         final Line result = new Line(this);
-        final Point2D n = Point2D.mul(-d, direction.norm().orthogonal());
+        final Point2D n = Point2D.mul(direction.norm().orthogonal(), -d);
         result.origin = Point2D.add(origin, n);
         return result;
     }

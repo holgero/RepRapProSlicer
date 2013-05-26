@@ -30,12 +30,12 @@ public class BooleanGridTest {
     static final BooleanGrid EMPTY = emptyGrid();
 
     static BooleanGrid makeRectangleGrid(final double minX, final double minY, final double maxX, final double maxY) {
-        return new BooleanGrid(CSG2D.RrCSGFromBox(new Rectangle(new Point2D(minX, minY), new Point2D(maxX, maxY))),
-                new Rectangle(new Point2D(0, 0), new Point2D(.01, .01)), null, PIXELSIZE);
+        return new BooleanGrid(PIXELSIZE, null, new Rectangle(new Point2D(0, 0), new Point2D(.01, .01)),
+                CSG2D.RrCSGFromBox(new Rectangle(new Point2D(minX, minY), new Point2D(maxX, maxY))));
     }
 
     static BooleanGrid emptyGrid() {
-        return new BooleanGrid(CSG2D.nothing(), new Rectangle(new Point2D(0, 0), new Point2D(.01, .01)), null, PIXELSIZE);
+        return new BooleanGrid(PIXELSIZE, null, new Rectangle(new Point2D(0, 0), new Point2D(.01, .01)), CSG2D.nothing());
     }
 
     @Test
@@ -66,9 +66,8 @@ public class BooleanGridTest {
         if (!rectangleEquals(gridA.getRec(), gridB.getRec())) {
             return false;
         }
-        final Integer2DPoint sizeA = gridA.getRec().size;
-        for (int x = 0; x < sizeA.x; x++) {
-            for (int y = 0; y < sizeA.y; y++) {
+        for (int x = 0; x < gridA.getRec().getSizeX(); x++) {
+            for (int y = 0; y < gridA.getRec().getSizeY(); y++) {
                 final Integer2DPoint point = new Integer2DPoint(x, y);
                 if (gridA.get(point) != gridB.get(point)) {
                     return false;
@@ -79,11 +78,12 @@ public class BooleanGridTest {
     }
 
     private static boolean rectangleEquals(final Integer2DRectangle recA, final Integer2DRectangle recB) {
-        return pointEquals(recA.swCorner, recB.swCorner) && pointEquals(recA.size, recB.size);
+        return pointEquals(recA.getSwCorner(), recB.getSwCorner()) && recA.getSizeX() == recB.getSizeX()
+                && recA.getSizeY() == recB.getSizeY();
     }
 
     private static boolean pointEquals(final Integer2DPoint pointA, final Integer2DPoint pointB) {
-        return pointA.x == pointB.x && pointA.y == pointB.y;
+        return pointA.getX() == pointB.getX() && pointA.getY() == pointB.getY();
     }
 
     @Test
@@ -100,10 +100,8 @@ public class BooleanGridTest {
 
     private static String printGrid(final BooleanGrid grid) {
         final StringBuilder output = new StringBuilder();
-        final Integer2DPoint size = grid.getRec().size;
-        for (int y = size.y - 1; y >= 0; y--) {
-            for (int x = 0; x < size.x; x++) {
-                //                output.append(" ");
+        for (int y = grid.getRec().getSizeY() - 1; y >= 0; y--) {
+            for (int x = 0; x < grid.getRec().getSizeX(); x++) {
                 final Integer2DPoint printPoint = new Integer2DPoint(x, y);
                 if (grid.get(printPoint)) {
                     output.append("*");

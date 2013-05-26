@@ -338,8 +338,8 @@ public class LayerRules {
                 .get(supportExtruderNo);
         final double extrusionSize = supportExtruder.getExtrusionSize();
         final String supportMaterial = currentConfiguration.getMaterials().get(supportExtruderNo).getName();
-        final BooleanGrid bg = new BooleanGrid(CSG2D.RrCSGFromBox(bBox), bBox.scale(1.1), supportMaterial, currentConfiguration
-                .getPrinterSetting().getMachineResolution() * 0.6);
+        final BooleanGrid bg = new BooleanGrid(currentConfiguration
+                .getPrinterSetting().getMachineResolution() * 0.6, supportMaterial, bBox.scale(1.1), CSG2D.RrCSGFromBox(bBox));
         final PolygonList foundationPolygon = bg.hatch(getHatchDirection(false, extrusionSize), extrusionSize,
                 currentConfiguration.getPrintSetting().isPathOptimize());
         setFirstAndLast(new PolygonList[] { foundationPolygon });

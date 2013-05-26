@@ -366,7 +366,7 @@ class RepRapPlater extends JPanel implements MouseListener {
         final String defaultMaterial = currentConfiguration.getMaterials().get(0).getName();
         if (getLastPicked() == null) {
             stl = STLObject.createStlObjectFromFile(stlFileContents, defaultMaterial, currentConfiguration);
-            final Point2D middle = Point2D.mul(0.5, new Point2D(200, 200));
+            final Point2D middle = Point2D.mul(new Point2D(200, 200), 0.5);
             final Vector3d v = new Vector3d(middle.x(), middle.y(), 0);
             final Vector3d e = stl.extent();
             e.z = 0;

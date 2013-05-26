@@ -76,7 +76,7 @@ class ExtrusionPath {
             if (sum > extrudeBackLength) {
                 sum = sum - extrudeBackLength;
                 q = Point2D.sub(path.point(last), path.point(i));
-                p = Point2D.add(path.point(i), Point2D.mul(sum / q.mod(), q));
+                p = Point2D.add(path.point(i), Point2D.mul(q, sum / q.mod()));
                 double s = 0;
                 s = speeds.get(last) - speeds.get(i);
                 s = speeds.get(i) + s * sum / q.mod();

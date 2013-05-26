@@ -32,8 +32,8 @@ public class BooleanGridWalkerTest {
 
     @Before
     public void setUp() {
-        assertEquals(34, testGrid.getRec().size.x);
-        assertEquals(34, testGrid.getRec().size.y);
+        assertEquals(35, testGrid.getRec().getSizeX());
+        assertEquals(35, testGrid.getRec().getSizeY());
     }
 
     @Test
@@ -46,12 +46,12 @@ public class BooleanGridWalkerTest {
         assertEquals(1, simpleMarch.size());
         final Integer2DPolygon polygon = simpleMarch.polygon(0);
         assertEquals(26 * 4, polygon.size());
-        assertEquals(4, polygon.point(0).x); // Hmm, no equals() implementation...
-        assertEquals(4, polygon.point(0).y);
-        assertEquals(30, polygon.point(26).x);
-        assertEquals(4, polygon.point(26).y);
-        assertEquals(30, polygon.point(52).x);
-        assertEquals(30, polygon.point(52).y);
+        assertEquals(4, polygon.point(0).getX()); // Hmm, no equals() implementation...
+        assertEquals(4, polygon.point(0).getY());
+        assertEquals(30, polygon.point(26).getX());
+        assertEquals(4, polygon.point(26).getY());
+        assertEquals(30, polygon.point(52).getX());
+        assertEquals(30, polygon.point(52).getY());
     }
 
     @Test
@@ -294,10 +294,8 @@ public class BooleanGridWalkerTest {
 
     private static String printGrid(final BooleanGrid grid) {
         final StringBuilder output = new StringBuilder();
-        final Integer2DPoint size = grid.getRec().size;
-        for (int y = size.y - 1; y >= 0; y--) {
-            for (int x = 0; x < size.x; x++) {
-                //                output.append(" ");
+        for (int y = grid.getRec().getSizeY() - 1; y >= 0; y--) {
+            for (int x = 0; x < grid.getRec().getSizeX(); x++) {
                 final Integer2DPoint printPoint = new Integer2DPoint(x, y);
                 if (grid.get(printPoint)) {
                     output.append("*");

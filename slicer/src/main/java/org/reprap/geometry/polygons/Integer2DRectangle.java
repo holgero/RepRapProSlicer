@@ -1,3 +1,22 @@
+/* RepRapProSlicer creates G-Code from geometry files.
+ *
+ *  Copyright (C) 2013  Holger Oehm
+ *   originally extracted from BooleanGrid 
+ * 
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 package org.reprap.geometry.polygons;
 
 /**
@@ -5,108 +24,105 @@ package org.reprap.geometry.polygons;
  * 
  */
 final class Integer2DRectangle {
-    Integer2DPoint swCorner;
-    Integer2DPoint size;
+    private final Integer2DPoint swCorner;
+    private final int sizeX;
+    private final int sizeY;
 
     /**
      * Construct from the corner points
      */
     Integer2DRectangle(final Integer2DPoint min, final Integer2DPoint max) {
         swCorner = new Integer2DPoint(min);
-        size = max.sub(min);
-        size.x++;
-        size.y++;
+        sizeX = max.getX() - min.getX() + 1;
+        sizeY = max.getY() - min.getY() + 1;
     }
 
     /**
      * Copy constructor
      */
     Integer2DRectangle(final Integer2DRectangle r) {
-        swCorner = new Integer2DPoint(r.swCorner);
-        size = new Integer2DPoint(r.size);
+        this(r.swCorner, r.getNeCorner());
     }
 
     /**
      * Useful to have a single-pixel at the origin
      */
     Integer2DRectangle() {
-        swCorner = new Integer2DPoint(0, 0);
-        size = new Integer2DPoint(1, 1);
+        this(new Integer2DPoint(0, 0), new Integer2DPoint(0, 0));
+    }
+
+    /**
+     * Create an Integer2DRectangle from a Rectangle in world coordinates.
+     */
+    Integer2DRectangle(final Rectangle rectangle, final double pixelSize) {
+        this(toInternalPoint(rectangle.sw(), pixelSize), toInternalPoint(rectangle.ne(), pixelSize));
+    }
+
+    private static Integer2DPoint toInternalPoint(final Point2D realPoint, final double pixelSize) {
+        final Point2D scaled = Point2D.mul(realPoint, 1 / pixelSize);
+        return new Integer2DPoint((int) Math.round(scaled.x()), (int) Math.round(scaled.y()));
     }
 
     /**
      * Are two rectangles the same?
      */
     boolean coincidesWith(final Integer2DRectangle b) {
-        return swCorner.coincidesWith(b.swCorner) && size.coincidesWith(b.size);
+        return swCorner.coincidesWith(b.swCorner) && getSizeX() == b.getSizeX() && getSizeY() == b.getSizeY();
     }
 
     /**
      * This rectangle in the real world
      */
     Rectangle realRectangle(final double pixelSize) {
-        final Integer2DPoint r = new Integer2DPoint(swCorner.x + size.x - 1, swCorner.y + size.y - 1);
-        return new Rectangle(realPoint(swCorner, pixelSize), realPoint(r, pixelSize));
+        return new Rectangle(realPoint(swCorner, pixelSize), realPoint(getNeCorner(), pixelSize));
     }
 
     /**
      * Big rectangle containing the union of two.
      */
     Integer2DRectangle union(final Integer2DRectangle b) {
-        final Integer2DRectangle result = new Integer2DRectangle(this);
-        result.swCorner.x = Math.min(result.swCorner.x, b.swCorner.x);
-        result.swCorner.y = Math.min(result.swCorner.y, b.swCorner.y);
-        int sx = result.swCorner.x + result.size.x - 1;
-        sx = Math.max(sx, b.swCorner.x + b.size.x - 1) - result.swCorner.x + 1;
-        int sy = result.swCorner.y + result.size.y - 1;
-        sy = Math.max(sy, b.swCorner.y + b.size.y - 1) - result.swCorner.y + 1;
-        result.size = new Integer2DPoint(sx, sy);
-        return result;
+        final int swX = Math.min(swCorner.getX(), b.swCorner.getX());
+        final int swY = Math.min(swCorner.getY(), b.swCorner.getY());
+        final int neX = Math.max(swX + getSizeX() - 1, b.swCorner.getX() + b.getSizeX() - 1);
+        final int neY = Math.max(swY + getSizeY() - 1, b.swCorner.getY() + b.getSizeY() - 1);
+        return new Integer2DRectangle(new Integer2DPoint(swX, swY), new Integer2DPoint(neX, neY));
     }
 
     /**
      * Rectangle containing the intersection of two.
      */
     Integer2DRectangle intersection(final Integer2DRectangle b) {
-        final Integer2DRectangle result = new Integer2DRectangle(this);
-        result.swCorner.x = Math.max(result.swCorner.x, b.swCorner.x);
-        result.swCorner.y = Math.max(result.swCorner.y, b.swCorner.y);
-        int sx = result.swCorner.x + result.size.x - 1;
-        sx = Math.min(sx, b.swCorner.x + b.size.x - 1) - result.swCorner.x + 1;
-        int sy = result.swCorner.y + result.size.y - 1;
-        sy = Math.min(sy, b.swCorner.y + b.size.y - 1) - result.swCorner.y + 1;
-        result.size = new Integer2DPoint(sx, sy);
-        return result;
+        final int swX = Math.max(swCorner.getX(), b.swCorner.getX());
+        final int swY = Math.max(swCorner.getY(), b.swCorner.getY());
+        final int neX = Math.min(swX + getSizeX() - 1, b.swCorner.getX() + b.getSizeX() - 1);
+        final int neY = Math.min(swY + getSizeY() - 1, b.swCorner.getY() + b.getSizeY() - 1);
+        return new Integer2DRectangle(new Integer2DPoint(swX, swY), new Integer2DPoint(neX, neY));
     }
 
     /**
      * Grow (dist +ve) or shrink (dist -ve).
      */
-    Integer2DRectangle createOffsetRectangle(final int dist) {
-        final Integer2DRectangle result = new Integer2DRectangle(this);
-        result.swCorner.x = result.swCorner.x - dist;
-        result.swCorner.y = result.swCorner.y - dist;
-        result.size.x = result.size.x + 2 * dist;
-        result.size.y = result.size.y + 2 * dist;
-        return result;
+    Integer2DRectangle offset(final int dist) {
+        final Integer2DPoint distance = new Integer2DPoint(dist, dist);
+        return new Integer2DRectangle(swCorner.sub(distance), getNeCorner().add(new Integer2DPoint(dist, dist)));
     }
 
     /**
      * Anything there?
      */
     boolean isEmpty() {
-        return size.x < 0 | size.y < 0;
+        return getSizeX() < 0 | getSizeY() < 0;
     }
 
     Point2D realPoint(final Integer2DPoint point, final double pixelSize) {
-        return new Point2D(scale(swCorner.x + point.x, pixelSize), scale(swCorner.y + point.y, pixelSize));
+        return new Point2D(scale(swCorner.getX() + point.getX(), pixelSize), scale(swCorner.getY() + point.getY(), pixelSize));
     }
 
     /**
      * Convert real-world point to integer relative to this rectangle
      */
     Integer2DPoint convertToInteger2DPoint(final Point2D a, final double pixelSize) {
-        return new Integer2DPoint(iScale(a.x(), pixelSize) - swCorner.x, iScale(a.y(), pixelSize) - swCorner.y);
+        return new Integer2DPoint(iScale(a.x(), pixelSize) - swCorner.getX(), iScale(a.y(), pixelSize) - swCorner.getY());
     }
 
     /**
@@ -123,4 +139,19 @@ final class Integer2DRectangle {
         return i * pixelSize;
     }
 
+    Integer2DPoint getSwCorner() {
+        return swCorner;
+    }
+
+    private Integer2DPoint getNeCorner() {
+        return new Integer2DPoint(swCorner.getX() + getSizeX() - 1, swCorner.getY() + getSizeY() - 1);
+    }
+
+    public int getSizeX() {
+        return sizeX;
+    }
+
+    public int getSizeY() {
+        return sizeY;
+    }
 }

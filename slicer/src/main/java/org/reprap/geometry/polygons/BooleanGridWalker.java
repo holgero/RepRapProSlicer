@@ -34,8 +34,8 @@ public class BooleanGridWalker {
 
         private String printNearby(final Integer2DPoint point, final int delta) {
             final StringBuilder output = new StringBuilder();
-            for (int y = Math.min(point.y + delta, size.y - 1); y >= Math.max(0, point.y - delta); y--) {
-                for (int x = Math.max(0, point.x - delta); x <= Math.min(point.x + delta, size.x - 1); x++) {
+            for (int y = Math.min(point.getY() + delta, sizeY - 1); y >= Math.max(0, point.getY() - delta); y--) {
+                for (int x = Math.max(0, point.getX() - delta); x <= Math.min(point.getX() + delta, sizeX - 1); x++) {
                     output.append(" ");
                     final Integer2DPoint printPoint = new Integer2DPoint(x, y);
                     if (printPoint.coincidesWith(point)) {
@@ -57,13 +57,13 @@ public class BooleanGridWalker {
                             output.append("l");
                         }
                     } else if (grid.get(printPoint)) {
-                        if (isVisited(printPoint.x, printPoint.y)) {
+                        if (isVisited(printPoint.getX(), printPoint.getY())) {
                             output.append("V");
                         } else {
                             output.append("*");
                         }
                     } else {
-                        if (isVisited(printPoint.x, printPoint.y)) {
+                        if (isVisited(printPoint.getX(), printPoint.getY())) {
                             output.append("v");
                         } else {
                             output.append(".");
@@ -100,7 +100,7 @@ public class BooleanGridWalker {
         }
 
         Integer2DPoint from(final Integer2DPoint from) {
-            return new Integer2DPoint(fromX(from.x), fromY(from.y));
+            return new Integer2DPoint(fromX(from.getX()), fromY(from.getY()));
         }
 
         int fromX(final int x) {
@@ -136,7 +136,8 @@ public class BooleanGridWalker {
     };
 
     private final BooleanGrid grid;
-    private final Integer2DPoint size;
+    private final int sizeX;
+    private final int sizeY;
     private final BitSet visited;
     private Integer2DPoint start;
     private Integer2DPoint here;
@@ -144,8 +145,9 @@ public class BooleanGridWalker {
 
     BooleanGridWalker(final BooleanGrid booleanGrid) {
         grid = booleanGrid;
-        size = grid.getRec().size;
-        visited = new BitSet(size.x * size.y);
+        sizeX = grid.getRec().getSizeX();
+        sizeY = grid.getRec().getSizeY();
+        visited = new BitSet(sizeX * sizeY);
     }
 
     /**
@@ -158,8 +160,8 @@ public class BooleanGridWalker {
             return result;
         }
 
-        for (int x = 0; x < size.x - 1; x++) {
-            for (int y = 0; y < size.y - 1; y++) {
+        for (int x = 0; x < sizeX - 1; x++) {
+            for (int y = 0; y < sizeY - 1; y++) {
                 final int m = marchPattern(x, y);
                 if (m != 0 && m != 15) {
                     if (canMarch(x, y)) {
@@ -191,25 +193,25 @@ public class BooleanGridWalker {
         last = null;
 
         do {
-            final int m = marchPattern(here.x, here.y);
+            final int m = marchPattern(here.getX(), here.getY());
             LOGGER.trace("walking ({})\n{}", here, debugPrinter);
             switch (m) {
             case 1:
                 addToResult(result, here);
                 break;
             case 2:
-                addToResult(result, Neighbour.E.fromX(here.x), Neighbour.E.fromY(here.y));
+                addToResult(result, Neighbour.E.fromX(here.getX()), Neighbour.E.fromY(here.getY()));
                 break;
             case 3:
                 addToResult(result, here);
-                addToResult(result, Neighbour.E.fromX(here.x), Neighbour.E.fromY(here.y));
+                addToResult(result, Neighbour.E.fromX(here.getX()), Neighbour.E.fromY(here.getY()));
                 break;
             case 4:
-                addToResult(result, Neighbour.S.fromX(here.x), Neighbour.S.fromY(here.y));
+                addToResult(result, Neighbour.S.fromX(here.getX()), Neighbour.S.fromY(here.getY()));
                 break;
             case 5:
                 addToResult(result, here);
-                addToResult(result, Neighbour.S.fromX(here.x), Neighbour.S.fromY(here.y));
+                addToResult(result, Neighbour.S.fromX(here.getX()), Neighbour.S.fromY(here.getY()));
                 break;
             case 6:
                 if (last == null) {
@@ -217,8 +219,8 @@ public class BooleanGridWalker {
                     return result;
                 }
                 LOGGER.debug("dud 2x2 grid: {} at {}\n{}", m, here, debugPrinter);
-                setVisited(here.x, here.y, false);
-                if (last.x + last.y > here.x + here.y) {
+                setVisited(here.getX(), here.getY(), false);
+                if (last.getX() + last.getY() > here.getX() + here.getY()) {
                     delete(Neighbour.S.from(here));
                 } else {
                     delete(Neighbour.E.from(here));
@@ -228,11 +230,11 @@ public class BooleanGridWalker {
                 LOGGER.debug("changed grid (m={}), continue at {}\n{}", m, here, debugPrinter);
                 continue;
             case 7:
-                addToResult(result, Neighbour.S.fromX(here.x), Neighbour.S.fromY(here.y));
-                addToResult(result, Neighbour.E.fromX(here.x), Neighbour.E.fromY(here.y));
+                addToResult(result, Neighbour.S.fromX(here.getX()), Neighbour.S.fromY(here.getY()));
+                addToResult(result, Neighbour.E.fromX(here.getX()), Neighbour.E.fromY(here.getY()));
                 break;
             case 8:
-                addToResult(result, Neighbour.SE.fromX(here.x), Neighbour.SE.fromY(here.y));
+                addToResult(result, Neighbour.SE.fromX(here.getX()), Neighbour.SE.fromY(here.getY()));
                 break;
             case 9:
                 if (last == null) {
@@ -240,8 +242,8 @@ public class BooleanGridWalker {
                     return result;
                 }
                 LOGGER.debug("dud 2x2 grid: {} at {}\n{}", m, here, debugPrinter);
-                setVisited(here.x, here.y, false);
-                if (last.x + last.y > here.x + here.y) {
+                setVisited(here.getX(), here.getY(), false);
+                if (last.getX() + last.getY() > here.getX() + here.getY()) {
                     delete(here);
                 } else {
                     delete(Neighbour.SE.from(here));
@@ -251,24 +253,24 @@ public class BooleanGridWalker {
                 LOGGER.debug("changed grid (m={}) and backtracked to {}\n{}", m, here, debugPrinter);
                 continue;
             case 10:
-                addToResult(result, Neighbour.E.fromX(here.x), Neighbour.E.fromY(here.y));
-                addToResult(result, Neighbour.SE.fromX(here.x), Neighbour.SE.fromY(here.y));
+                addToResult(result, Neighbour.E.fromX(here.getX()), Neighbour.E.fromY(here.getY()));
+                addToResult(result, Neighbour.SE.fromX(here.getX()), Neighbour.SE.fromY(here.getY()));
                 break;
             case 11:
                 addToResult(result, here);
-                addToResult(result, Neighbour.SE.fromX(here.x), Neighbour.SE.fromY(here.y));
+                addToResult(result, Neighbour.SE.fromX(here.getX()), Neighbour.SE.fromY(here.getY()));
                 break;
             case 12:
-                addToResult(result, Neighbour.SE.fromX(here.x), Neighbour.SE.fromY(here.y));
-                addToResult(result, Neighbour.S.fromX(here.x), Neighbour.S.fromY(here.y));
+                addToResult(result, Neighbour.SE.fromX(here.getX()), Neighbour.SE.fromY(here.getY()));
+                addToResult(result, Neighbour.S.fromX(here.getX()), Neighbour.S.fromY(here.getY()));
                 break;
             case 13:
-                addToResult(result, Neighbour.SE.fromX(here.x), Neighbour.SE.fromY(here.y));
+                addToResult(result, Neighbour.SE.fromX(here.getX()), Neighbour.SE.fromY(here.getY()));
                 addToResult(result, here);
                 break;
             case 14:
-                addToResult(result, Neighbour.E.fromX(here.x), Neighbour.E.fromY(here.y));
-                addToResult(result, Neighbour.S.fromX(here.x), Neighbour.S.fromY(here.y));
+                addToResult(result, Neighbour.E.fromX(here.getX()), Neighbour.E.fromY(here.getY()));
+                addToResult(result, Neighbour.S.fromX(here.getX()), Neighbour.S.fromY(here.getY()));
                 break;
 
             default:
@@ -284,13 +286,13 @@ public class BooleanGridWalker {
 
     private void delete(final Integer2DPoint pix) {
         grid.set(pix, false);
-        setVisited(pix.x, pix.y, false);
+        setVisited(pix.getX(), pix.getY(), false);
     }
 
     private void addToResult(final Integer2DPolygon result, final Integer2DPoint pix) {
-        if (!isVisited(pix.x, pix.y)) {
+        if (!isVisited(pix.getX(), pix.getY())) {
             result.add(pix);
-            setVisited(pix.x, pix.y, true);
+            setVisited(pix.getX(), pix.getY(), true);
         }
     }
 
@@ -324,14 +326,16 @@ public class BooleanGridWalker {
 
     private void setVisited(final int x, final int y, final boolean v) {
         if (!isInside(x, y)) {
-            throw new RuntimeException("attempt to set pixel beyond boundaries (" + size + "): >>" + x + ", " + y + "<<");
+            throw new RuntimeException("attempt to set pixel beyond boundaries (" + sizeX + ", " + sizeY + "): >>" + x + ", "
+                    + y + "<<");
         }
         visited.set(pixelIndex(x, y), v);
     }
 
     private boolean isVisited(final int x, final int y) {
         if (!isInside(x, y)) {
-            throw new RuntimeException("attempt to get pixel beyond boundaries (" + size + "): >>" + x + ", " + y + "<<");
+            throw new RuntimeException("attempt to get pixel beyond boundaries (" + sizeX + ", " + sizeY + "): >>" + x + ", "
+                    + y + "<<");
         }
         return visited.get(pixelIndex(x, y));
     }
@@ -340,14 +344,14 @@ public class BooleanGridWalker {
      * The index of a pixel in the 1D bit array.
      */
     private int pixelIndex(final int x, final int y) {
-        return x * size.y + y;
+        return x * sizeY + y;
     }
 
     private boolean isInside(final int x, final int y) {
-        if (x < 0 || x >= size.x) {
+        if (x < 0 || x >= sizeX) {
             return false;
         }
-        if (y < 0 || y >= size.y) {
+        if (y < 0 || y >= sizeY) {
             return false;
         }
         return true;

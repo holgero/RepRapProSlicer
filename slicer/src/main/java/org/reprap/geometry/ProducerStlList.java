@@ -377,8 +377,8 @@ class ProducerStlList {
             // Deal with CSG shapes (much simpler and faster).
             for (int i = 0; i < collector.csgs.size(); i++) {
                 final CSG2D csgp = CSG3D.slice(collector.csgs.get(i), currentZ);
-                result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), collector.material, currentConfiguration
-                        .getPrinterSetting().getMachineResolution() * 0.6));
+                result.add(new BooleanGrid(currentConfiguration
+                        .getPrinterSetting().getMachineResolution() * 0.6, collector.material, rectangles.get(stlIndex), csgp));
             }
 
             // Deal with STL-generated edges
@@ -390,8 +390,8 @@ class ProducerStlList {
                     pgl = arcCompensate(pgl);
 
                     final CSG2D csgp = pgl.toCSG();
-                    result.add(new BooleanGrid(csgp, rectangles.get(stlIndex), collector.material, currentConfiguration
-                            .getPrinterSetting().getMachineResolution() * 0.6));
+                    result.add(new BooleanGrid(currentConfiguration
+                            .getPrinterSetting().getMachineResolution() * 0.6, collector.material, rectangles.get(stlIndex), csgp));
                 }
             }
         }

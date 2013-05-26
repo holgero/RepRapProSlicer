@@ -1,75 +1,87 @@
+/* RepRapProSlicer creates G-Code from geometry files.
+ *
+ *  Copyright (C) 2013  Holger Oehm
+ *   originally extracted from BooleanGrid 
+ * 
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 package org.reprap.geometry.polygons;
 
 /**
- * A digital differential analyzer (DDA), calculates the points of a
- * straight line.
+ * A digital differential analyzer (DDA), calculates the points of a straight
+ * line.
  * 
  * @author ensab
  */
 final class DigitalDifferentialAnalyzer {
-    private final Integer2DPoint delta;
-    private Integer2DPoint count;
-    private final Integer2DPoint p;
+    private static final class CoordinateState {
+        final int delta;
+        final boolean positive;
+        int count;
+        int next;
+
+        CoordinateState(final int delta, final boolean positive, final int count, final int next) {
+            this.delta = delta;
+            this.positive = positive;
+            this.count = count;
+            this.next = next;
+        }
+
+        void advance(final int steps) {
+            count += delta;
+            if (count > 0) {
+                count -= steps;
+                if (positive) {
+                    next++;
+                } else {
+                    next--;
+                }
+            }
+        }
+    }
+
+    private final CoordinateState stateX;
+    private final CoordinateState stateY;
     private final int steps;
-    private int taken;
-    private final boolean xPlus, yPlus;
-    private boolean finished;
+    private boolean finished = false;
+    private int taken = 0;
 
     /**
      * Set up the DDA between a start and an end point
      */
-    DigitalDifferentialAnalyzer(final Integer2DPoint s, final Integer2DPoint e) {
-        delta = e.sub(s).abs();
-
-        steps = Math.max(delta.x, delta.y);
-        taken = 0;
-
-        xPlus = e.x >= s.x;
-        yPlus = e.y >= s.y;
-
-        count = new Integer2DPoint(-steps / 2, -steps / 2);
-
-        p = new Integer2DPoint(s);
-
-        finished = false;
+    DigitalDifferentialAnalyzer(final Integer2DPoint start, final Integer2DPoint end) {
+        final Integer2DPoint delta = end.sub(start).abs();
+        steps = Math.max(delta.getX(), delta.getY());
+        stateX = new CoordinateState(delta.getX(), end.getX() >= start.getX(), -steps / 2, start.getX());
+        stateY = new CoordinateState(delta.getY(), end.getY() >= start.getY(), -steps / 2, start.getY());
     }
 
     /**
-     * Return the next point along the line, or null if the last point
-     * returned was the final one.
+     * Return the next point along the line, or null if the last point returned
+     * was the final one.
      */
     Integer2DPoint next() {
         if (finished) {
             return null;
         }
 
-        final Integer2DPoint result = new Integer2DPoint(p);
-
+        final Integer2DPoint result = new Integer2DPoint(stateX.next, stateY.next);
         finished = taken >= steps;
-
-        if (!finished) {
-            taken++;
-            count = count.add(delta);
-
-            if (count.x > 0) {
-                count.x -= steps;
-                if (xPlus) {
-                    p.x++;
-                } else {
-                    p.x--;
-                }
-            }
-
-            if (count.y > 0) {
-                count.y -= steps;
-                if (yPlus) {
-                    p.y++;
-                } else {
-                    p.y--;
-                }
-            }
-        }
-
+        taken++;
+        stateX.advance(steps);
+        stateY.advance(steps);
         return result;
     }
 }

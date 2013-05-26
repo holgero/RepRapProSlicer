@@ -111,24 +111,8 @@ public class Point2D {
         return add(a, b.neg());
     }
 
-    /**
-     * Scale a point
-     * 
-     * @param b
-     *            An R2rPoint
-     * @param factor
-     *            A scale factor
-     * @return The point Rr2Point scaled by a factor of factor
-     */
     public static Point2D mul(final Point2D b, final double factor) {
         return new Point2D(b.x * factor, b.y * factor);
-    }
-
-    /**
-     * @return the point Rr2Point scaled by a factor of a
-     */
-    public static Point2D mul(final double a, final Point2D b) {
-        return mul(b, a);
     }
 
     /**
