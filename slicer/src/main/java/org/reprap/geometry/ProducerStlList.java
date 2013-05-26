@@ -48,6 +48,7 @@ import org.reprap.geometry.polygons.BooleanGridMath;
 import org.reprap.geometry.polygons.CSG2D;
 import org.reprap.geometry.polygons.Circle;
 import org.reprap.geometry.polygons.HalfPlane;
+import org.reprap.geometry.polygons.Hatcher;
 import org.reprap.geometry.polygons.LineSegment;
 import org.reprap.geometry.polygons.ParallelException;
 import org.reprap.geometry.polygons.Point2D;
@@ -377,8 +378,8 @@ class ProducerStlList {
             // Deal with CSG shapes (much simpler and faster).
             for (int i = 0; i < collector.csgs.size(); i++) {
                 final CSG2D csgp = CSG3D.slice(collector.csgs.get(i), currentZ);
-                result.add(new BooleanGrid(currentConfiguration
-                        .getPrinterSetting().getMachineResolution() * 0.6, collector.material, rectangles.get(stlIndex), csgp));
+                result.add(new BooleanGrid(currentConfiguration.getPrinterSetting().getMachineResolution() * 0.6,
+                        collector.material, rectangles.get(stlIndex), csgp));
             }
 
             // Deal with STL-generated edges
@@ -390,8 +391,8 @@ class ProducerStlList {
                     pgl = arcCompensate(pgl);
 
                     final CSG2D csgp = pgl.toCSG();
-                    result.add(new BooleanGrid(currentConfiguration
-                            .getPrinterSetting().getMachineResolution() * 0.6, collector.material, rectangles.get(stlIndex), csgp));
+                    result.add(new BooleanGrid(currentConfiguration.getPrinterSetting().getMachineResolution() * 0.6,
+                            collector.material, rectangles.get(stlIndex), csgp));
                 }
             }
         }
@@ -650,7 +651,10 @@ class ProducerStlList {
                 }
             }
             final HalfPlane hatchLine = layerConditions.getHatchDirection(support, infillWidth);
-            result.add(grid.hatch(hatchLine, infillWidth, currentConfiguration.getPrintSetting().isPathOptimize()));
+            final Hatcher hatcher = new Hatcher(grid);
+            final PolygonList polygons = hatcher.hatch(hatchLine, infillWidth, currentConfiguration.getPrintSetting()
+                    .isPathOptimize());
+            result.add(polygons);
         }
         return result;
     }

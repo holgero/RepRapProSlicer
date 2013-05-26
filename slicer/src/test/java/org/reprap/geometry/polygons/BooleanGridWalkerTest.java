@@ -32,8 +32,8 @@ public class BooleanGridWalkerTest {
 
     @Before
     public void setUp() {
-        assertEquals(35, testGrid.getRec().getSizeX());
-        assertEquals(35, testGrid.getRec().getSizeY());
+        assertEquals(35, testGrid.getRectangle().getSizeX());
+        assertEquals(35, testGrid.getRectangle().getSizeY());
     }
 
     @Test
@@ -294,8 +294,8 @@ public class BooleanGridWalkerTest {
 
     private static String printGrid(final BooleanGrid grid) {
         final StringBuilder output = new StringBuilder();
-        for (int y = grid.getRec().getSizeY() - 1; y >= 0; y--) {
-            for (int x = 0; x < grid.getRec().getSizeX(); x++) {
+        for (int y = grid.getRectangle().getSizeY() - 1; y >= 0; y--) {
+            for (int x = 0; x < grid.getRectangle().getSizeX(); x++) {
                 final Integer2DPoint printPoint = new Integer2DPoint(x, y);
                 if (grid.get(printPoint)) {
                     output.append("*");

@@ -145,8 +145,8 @@ public class BooleanGridWalker {
 
     BooleanGridWalker(final BooleanGrid booleanGrid) {
         grid = booleanGrid;
-        sizeX = grid.getRec().getSizeX();
-        sizeY = grid.getRec().getSizeY();
+        sizeX = grid.getRectangle().getSizeX();
+        sizeY = grid.getRectangle().getSizeY();
         visited = new BitSet(sizeX * sizeY);
     }
 

@@ -9,6 +9,7 @@ import org.reprap.geometry.polygons.BooleanGrid;
 import org.reprap.geometry.polygons.BooleanGridList;
 import org.reprap.geometry.polygons.BooleanGridMath;
 import org.reprap.geometry.polygons.HalfPlane;
+import org.reprap.geometry.polygons.Hatcher;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
@@ -184,11 +185,13 @@ public final class InFillPatterns {
                 final Point2D cen2 = land2.findCentroid();
                 final ExtruderSetting extruder = currentConfiguration.getExtruderSetting(bridge.getMaterial());
                 final double extrusionWidth = extruder.getExtrusionSize();
+                final Hatcher hatcher = new Hatcher(bridge);
                 if (cen2 == null) {
                     LOGGER.debug("Second land found with no centroid.");
                     // No second land implies a ring of support - just infill it.
-                    hatchedPolygons.add(bridge.hatch(layerRules.getHatchDirection(false, extrusionWidth), extrusionWidth,
-                            currentConfiguration.getPrintSetting().isPathOptimize()));
+                    final PolygonList hatches = hatcher.hatch(layerRules.getHatchDirection(false, extrusionWidth),
+                            extrusionWidth, currentConfiguration.getPrintSetting().isPathOptimize());
+                    hatchedPolygons.add(hatches);
 
                     // Remove this bridge (in fact, just its lands) from the other infill patterns.
                     final BooleanGridList b = new BooleanGridList();
@@ -226,8 +229,9 @@ public final class InFillPatterns {
                     }
 
                     // Build the bridge
-                    hatchedPolygons.add(bridge.hatch(new HalfPlane(new Point2D(0, 0), bridgeDirection), extrusionWidth,
-                            currentConfiguration.getPrintSetting().isPathOptimize()));
+                    final PolygonList hatches = hatcher.hatch(new HalfPlane(new Point2D(0, 0), bridgeDirection),
+                            extrusionWidth, currentConfiguration.getPrintSetting().isPathOptimize());
+                    hatchedPolygons.add(hatches);
 
                     // Remove this bridge (in fact, just its lands) from the other infill patterns. 
                     final BooleanGridList b = new BooleanGridList();

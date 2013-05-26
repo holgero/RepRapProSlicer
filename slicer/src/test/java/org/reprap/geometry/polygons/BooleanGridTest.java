@@ -63,11 +63,11 @@ public class BooleanGridTest {
     }
 
     static boolean gridEquals(final BooleanGrid gridA, final BooleanGrid gridB) {
-        if (!rectangleEquals(gridA.getRec(), gridB.getRec())) {
+        if (!rectangleEquals(gridA.getRectangle(), gridB.getRectangle())) {
             return false;
         }
-        for (int x = 0; x < gridA.getRec().getSizeX(); x++) {
-            for (int y = 0; y < gridA.getRec().getSizeY(); y++) {
+        for (int x = 0; x < gridA.getRectangle().getSizeX(); x++) {
+            for (int y = 0; y < gridA.getRectangle().getSizeY(); y++) {
                 final Integer2DPoint point = new Integer2DPoint(x, y);
                 if (gridA.get(point) != gridB.get(point)) {
                     return false;
@@ -100,8 +100,8 @@ public class BooleanGridTest {
 
     private static String printGrid(final BooleanGrid grid) {
         final StringBuilder output = new StringBuilder();
-        for (int y = grid.getRec().getSizeY() - 1; y >= 0; y--) {
-            for (int x = 0; x < grid.getRec().getSizeX(); x++) {
+        for (int y = grid.getRectangle().getSizeY() - 1; y >= 0; y--) {
+            for (int x = 0; x < grid.getRectangle().getSizeX(); x++) {
                 final Integer2DPoint printPoint = new Integer2DPoint(x, y);
                 if (grid.get(printPoint)) {
                     output.append("*");
