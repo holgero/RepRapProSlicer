@@ -24,7 +24,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.reprap.configuration.Configuration;
 import org.reprap.configuration.CurrentConfiguration;
-import org.reprap.geometry.polygons.BooleanGridWalkerTest;
+import org.reprap.geometry.grids.BooleanGridWalkerTest;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.io.rfo.RFO;
 

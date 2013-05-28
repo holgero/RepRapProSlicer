@@ -1,10 +1,19 @@
-package org.reprap.geometry.polygons;
+package org.reprap.geometry.grids;
 
 import java.util.BitSet;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.geometry.polygons.CSG2D;
+import org.reprap.geometry.polygons.HalfPlane;
+import org.reprap.geometry.polygons.Interval;
+import org.reprap.geometry.polygons.Line;
+import org.reprap.geometry.polygons.ParallelException;
+import org.reprap.geometry.polygons.Point2D;
+import org.reprap.geometry.polygons.Polygon;
+import org.reprap.geometry.polygons.PolygonList;
+import org.reprap.geometry.polygons.Rectangle;
 
 /**
  * This class stores a rectangular grid at the same grid resolution as the

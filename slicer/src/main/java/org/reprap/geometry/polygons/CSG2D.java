@@ -316,7 +316,7 @@ public class CSG2D {
      * 
      * @return potential value of a point
      */
-    double value(final Point2D p) {
+    public double value(final Point2D p) {
         final double result;
         switch (op) {
         case LEAF:
@@ -345,7 +345,7 @@ public class CSG2D {
      * 
      * @return value of a box
      */
-    Interval value(final Rectangle b) {
+    public Interval value(final Rectangle b) {
         Interval result;
         switch (op) {
         case LEAF:
@@ -375,7 +375,7 @@ public class CSG2D {
      * 
      * @return pruned box as new CSG object
      */
-    CSG2D prune(final Rectangle b) {
+    public CSG2D prune(final Rectangle b) {
         final CSG2D result;
 
         switch (op) {

@@ -20,7 +20,7 @@
  */
 package org.reprap.geometry;
 
-import org.reprap.geometry.polygons.BooleanGrid;
+import org.reprap.geometry.grids.BooleanGrid;
 
 /**
  * Ring buffer cache to hold previously computed slices for doing infill and

@@ -17,7 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.geometry.polygons;
+package org.reprap.geometry.grids;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

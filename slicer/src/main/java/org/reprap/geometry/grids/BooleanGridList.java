@@ -1,9 +1,12 @@
-package org.reprap.geometry.polygons;
+package org.reprap.geometry.grids;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+
+import org.reprap.geometry.polygons.Point2D;
+import org.reprap.geometry.polygons.PolygonList;
 
 /**
  * Class to hold a list of BooleanGrids with associated attributes for each

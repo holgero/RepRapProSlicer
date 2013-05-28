@@ -17,7 +17,10 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.geometry.polygons;
+package org.reprap.geometry.grids;
+
+import org.reprap.geometry.polygons.Point2D;
+import org.reprap.geometry.polygons.Rectangle;
 
 /**
  * Holds rectangles represented by the sw point and the size.

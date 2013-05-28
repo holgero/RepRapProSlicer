@@ -55,7 +55,6 @@
 
 package org.reprap.geometry.polygons;
 
-
 /**
  * Real 1D intervals
  */
@@ -94,7 +93,7 @@ public class Interval {
         return high;
     }
 
-    boolean empty() {
+    public boolean empty() {
         return empty;
     }
 
@@ -103,7 +102,7 @@ public class Interval {
      * 
      * @return biggest possible interval
      */
-    static Interval bigInterval() {
+    public static Interval bigInterval() {
         return new Interval(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
     }
 
@@ -213,7 +212,7 @@ public class Interval {
      * 
      * @return true if zero is within the interval
      */
-    boolean zero() {
+    public boolean zero() {
         return (!neg() && !pos());
     }
 

@@ -65,7 +65,7 @@ public class Line {
     /**
      * Line between two points
      */
-    Line(final Point2D a, final Point2D b) {
+    public Line(final Point2D a, final Point2D b) {
         origin = new Point2D(a);
         direction = Point2D.sub(b, a);
     }
@@ -87,14 +87,14 @@ public class Line {
         return direction;
     }
 
-    Point2D origin() {
+    public Point2D origin() {
         return origin;
     }
 
     /**
      * The point at a given parameter value
      */
-    Point2D point(final double t) {
+    public Point2D point(final double t) {
         return Point2D.add(origin, Point2D.mul(direction, t));
     }
 

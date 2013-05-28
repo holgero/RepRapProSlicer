@@ -1,7 +1,9 @@
-package org.reprap.geometry.polygons;
+package org.reprap.geometry.grids;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.reprap.geometry.polygons.Polygon;
 
 /**
  * Integer-point polygon

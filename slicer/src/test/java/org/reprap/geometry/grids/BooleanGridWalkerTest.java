@@ -16,14 +16,20 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.geometry.polygons;
+package org.reprap.geometry.grids;
 
 import static org.junit.Assert.assertEquals;
-import static org.reprap.geometry.polygons.BooleanGridTest.emptyGrid;
-import static org.reprap.geometry.polygons.BooleanGridTest.makeRectangleGrid;
+import static org.reprap.geometry.grids.BooleanGridTest.emptyGrid;
+import static org.reprap.geometry.grids.BooleanGridTest.makeRectangleGrid;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.reprap.geometry.grids.BooleanGrid;
+import org.reprap.geometry.grids.BooleanGridMath;
+import org.reprap.geometry.grids.BooleanGridWalker;
+import org.reprap.geometry.grids.Integer2DPoint;
+import org.reprap.geometry.grids.Integer2DPolygon;
+import org.reprap.geometry.grids.Integer2DPolygonList;
 
 public class BooleanGridWalkerTest {
     private static final boolean VISUALIZE = false;

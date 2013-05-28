@@ -74,8 +74,8 @@ import javax.swing.JComponent;
 
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.MaterialSetting;
-import org.reprap.geometry.polygons.BooleanGrid;
-import org.reprap.geometry.polygons.BooleanGridList;
+import org.reprap.geometry.grids.BooleanGrid;
+import org.reprap.geometry.grids.BooleanGridList;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;

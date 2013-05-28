@@ -18,9 +18,9 @@
  */
 package org.reprap.geometry;
 
-import org.reprap.geometry.polygons.BooleanGrid;
-import org.reprap.geometry.polygons.BooleanGridList;
-import org.reprap.geometry.polygons.BooleanGridMath;
+import org.reprap.geometry.grids.BooleanGrid;
+import org.reprap.geometry.grids.BooleanGridList;
+import org.reprap.geometry.grids.BooleanGridMath;
 import org.reprap.geometry.polygons.PolygonList;
 
 class Slice {

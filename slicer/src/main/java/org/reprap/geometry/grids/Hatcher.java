@@ -17,7 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.geometry.polygons;
+package org.reprap.geometry.grids;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -25,6 +25,11 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.geometry.polygons.HalfPlane;
+import org.reprap.geometry.polygons.Interval;
+import org.reprap.geometry.polygons.Point2D;
+import org.reprap.geometry.polygons.PolygonList;
+import org.reprap.geometry.polygons.Rectangle;
 
 public class Hatcher {
     private static final Logger LOGGER = LogManager.getLogger(Hatcher.class);

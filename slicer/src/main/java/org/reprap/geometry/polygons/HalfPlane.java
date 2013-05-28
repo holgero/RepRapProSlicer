@@ -128,7 +128,7 @@ public class HalfPlane {
     /**
      * Get the components
      */
-    Point2D normal() {
+    public Point2D normal() {
         return normal;
     }
 
@@ -171,7 +171,7 @@ public class HalfPlane {
      * 
      * @return complement of half plane
      */
-    HalfPlane complement() {
+    public HalfPlane complement() {
         final HalfPlane r = new HalfPlane(this);
         r.normal = r.normal.neg();
         r.offset = -r.offset;
@@ -191,7 +191,7 @@ public class HalfPlane {
      * 
      * @return potential value of point p
      */
-    double value(final Point2D point) {
+    public double value(final Point2D point) {
         return offset + Point2D.mul(normal, point);
     }
 
@@ -210,7 +210,7 @@ public class HalfPlane {
      * @return cross point
      * @throws ParallelException
      */
-    Point2D crossPoint(final HalfPlane a) throws ParallelException {
+    public Point2D crossPoint(final HalfPlane a) throws ParallelException {
         double det = Point2D.op(normal, a.normal);
         if (det == 0) {
             throw new ParallelException("cross_point: parallel lines.");
@@ -242,7 +242,7 @@ public class HalfPlane {
      * 
      * @return intersection interval
      */
-    Interval wipe(final Line a, final Interval range) {
+    public Interval wipe(final Line a, final Interval range) {
         if (range.empty()) {
             return range;
         }

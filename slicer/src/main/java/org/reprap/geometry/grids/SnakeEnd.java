@@ -1,4 +1,4 @@
-package org.reprap.geometry.polygons;
+package org.reprap.geometry.grids;
 
 /**
  * Holds the ends of hatching patterns. Snakes are a combination of the

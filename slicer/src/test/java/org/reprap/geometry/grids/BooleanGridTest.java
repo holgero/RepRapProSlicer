@@ -16,11 +16,18 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.geometry.polygons;
+package org.reprap.geometry.grids;
 
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
+import org.reprap.geometry.grids.BooleanGrid;
+import org.reprap.geometry.grids.BooleanGridMath;
+import org.reprap.geometry.grids.Integer2DPoint;
+import org.reprap.geometry.grids.Integer2DRectangle;
+import org.reprap.geometry.polygons.CSG2D;
+import org.reprap.geometry.polygons.Point2D;
+import org.reprap.geometry.polygons.Rectangle;
 
 public class BooleanGridTest {
     private static final double PIXELSIZE = 0.03;

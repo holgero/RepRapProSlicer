@@ -206,7 +206,7 @@ public class Rectangle {
      * 
      * @return squared diagonal of the box
      */
-    double dSquared() {
+    public double dSquared() {
         if (isEmpty()) {
             return 0;
         }
@@ -221,7 +221,7 @@ public class Rectangle {
      * @param oldRange
      * @return intersection interval
      */
-    Interval wipe(final Line a, final Interval oldRange) {
+    public Interval wipe(final Line a, final Interval oldRange) {
         if (oldRange.empty()) {
             return oldRange;
         }
