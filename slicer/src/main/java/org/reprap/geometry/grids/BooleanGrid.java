@@ -219,10 +219,7 @@ public class BooleanGrid {
      * The value at a point.
      */
     boolean get(final Integer2DPoint p) {
-        if (!inside(p)) {
-            return false;
-        }
-        return bits.get(pixI(p));
+        return get(p.getX(), p.getY());
     }
 
     /**

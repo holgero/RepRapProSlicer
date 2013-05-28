@@ -24,12 +24,6 @@ import static org.reprap.geometry.grids.BooleanGridTest.makeRectangleGrid;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.reprap.geometry.grids.BooleanGrid;
-import org.reprap.geometry.grids.BooleanGridMath;
-import org.reprap.geometry.grids.BooleanGridWalker;
-import org.reprap.geometry.grids.Integer2DPoint;
-import org.reprap.geometry.grids.Integer2DPolygon;
-import org.reprap.geometry.grids.Integer2DPolygonList;
 
 public class BooleanGridWalkerTest {
     private static final boolean VISUALIZE = false;
@@ -302,8 +296,7 @@ public class BooleanGridWalkerTest {
         final StringBuilder output = new StringBuilder();
         for (int y = grid.getRectangle().getSizeY() - 1; y >= 0; y--) {
             for (int x = 0; x < grid.getRectangle().getSizeX(); x++) {
-                final Integer2DPoint printPoint = new Integer2DPoint(x, y);
-                if (grid.get(printPoint)) {
+                if (grid.get(x, y)) {
                     output.append("*");
                 } else {
                     output.append(".");
