@@ -21,6 +21,7 @@ package org.reprap.configuration;
 import javax.vecmath.Color3f;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
+
 public class Color3fXmlAdapter extends XmlAdapter<XmlRgbColor, Color3f> {
 
     @Override

@@ -1,6 +1,6 @@
 package org.reprap.gcode;
 
-import static org.reprap.configuration.MathRoutines.circleAreaForDiameter;
+import static org.reprap.configuration.store.MathRoutines.circleAreaForDiameter;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -10,9 +10,9 @@ import java.util.Date;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.CurrentConfiguration;
-import org.reprap.configuration.MathRoutines;
 import org.reprap.configuration.PrintSetting;
 import org.reprap.configuration.PrinterSetting;
+import org.reprap.configuration.store.MathRoutines;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Rectangle;
 

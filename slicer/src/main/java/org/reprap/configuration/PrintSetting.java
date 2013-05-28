@@ -26,6 +26,7 @@ import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+
 public class PrintSetting implements NamedSetting {
     @XmlAttribute
     @XmlID
@@ -331,7 +332,7 @@ public class PrintSetting implements NamedSetting {
     }
 
     public File getShieldStlFile() {
-        return new File(Configuration.getReprapDirectory(), shieldStlFile);
+        return new File(Configuration.REPRAP_DIRECTORY, shieldStlFile);
     }
 
     public void setShieldStlFile(final String shieldStlFile) {
@@ -339,11 +340,12 @@ public class PrintSetting implements NamedSetting {
     }
 
     @Override
+    @XmlTransient
     public String getName() {
         return name;
     }
 
-    void setName(final String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 }

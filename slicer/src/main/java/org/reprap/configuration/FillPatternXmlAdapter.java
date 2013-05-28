@@ -20,6 +20,7 @@ package org.reprap.configuration;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
+
 public class FillPatternXmlAdapter extends XmlAdapter<FillPatternDescriptor, FillPattern> {
 
     private static final String RECTILINEAR_TYPE = "rectilinear";

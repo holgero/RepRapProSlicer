@@ -1,6 +1,6 @@
 package org.reprap.gcode;
 
-import static org.reprap.configuration.MathRoutines.circleAreaForDiameter;
+import static org.reprap.configuration.store.MathRoutines.circleAreaForDiameter;
 
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSetting;

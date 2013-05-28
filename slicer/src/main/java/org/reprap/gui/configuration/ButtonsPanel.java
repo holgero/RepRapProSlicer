@@ -29,6 +29,7 @@ import javax.swing.JComponent;
 import javax.swing.border.EmptyBorder;
 
 import org.reprap.configuration.Configuration;
+import org.reprap.configuration.store.ConfigurationInitializer;
 import org.reprap.gui.configuration.common.SettingsNode;
 
 public class ButtonsPanel extends JComponent {
@@ -78,7 +79,7 @@ public class ButtonsPanel extends JComponent {
             public void actionPerformed(final ActionEvent e) {
                 settings.getValues(configuration);
                 settingsEditor.updateTree();
-                configuration.save();
+                new ConfigurationInitializer(Configuration.REPRAP_DIRECTORY).saveConfiguration(configuration);
             }
         });
         return button;

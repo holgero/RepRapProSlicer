@@ -22,7 +22,9 @@ import javax.vecmath.Color3f;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlID;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
 
 public class MaterialSetting implements NamedSetting {
     @XmlAttribute
@@ -42,28 +44,31 @@ public class MaterialSetting implements NamedSetting {
         color = new Color3f(other.color);
     }
 
+    @XmlTransient
     public double getDiameter() {
         return diameter;
     }
 
-    void setDiameter(final double diameter) {
+    public void setDiameter(final double diameter) {
         this.diameter = diameter;
     }
 
+    @XmlTransient
     public Color3f getColor() {
         return color;
     }
 
-    void setColor(final Color3f color) {
+    public void setColor(final Color3f color) {
         this.color = color;
     }
 
     @Override
+    @XmlTransient
     public String getName() {
         return name;
     }
 
-    void setName(final String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 }

@@ -24,6 +24,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.reprap.configuration.Configuration;
 import org.reprap.configuration.CurrentConfiguration;
+import org.reprap.configuration.store.ConfigurationInitializer;
 import org.reprap.geometry.grids.BooleanGridWalkerTest;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.io.rfo.RFO;
@@ -34,7 +35,7 @@ public class ProducerPerformanceTest {
     @Test
     @Ignore("needs javax.media.j3d")
     public void testSlicingPerformance() {
-        final CurrentConfiguration currentConfiguration = Configuration.create().getCurrentConfiguration();
+        final CurrentConfiguration currentConfiguration = new ConfigurationInitializer(Configuration.REPRAP_DIRECTORY).loadConfiguration().getCurrentConfiguration();
         final AllSTLsToBuild stls = RFO.load(testFile, currentConfiguration).getAllStls();
         final Producer producer = new Producer(null, stls.getStlObjects(), new ProductionProgressListener() {
             @Override

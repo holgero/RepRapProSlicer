@@ -36,6 +36,7 @@ import org.reprap.configuration.Configuration;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.MaterialSetting;
 import org.reprap.configuration.PrinterSetting;
+import org.reprap.configuration.store.ConfigurationInitializer;
 
 class CurrentConfigurationStateBox extends JPanel implements ItemListener {
     private static final Insets SMALL_INSETS = new Insets(2, 2, 2, 2);
@@ -133,7 +134,7 @@ class CurrentConfigurationStateBox extends JPanel implements ItemListener {
                     }
                 }
             }
-            configuration.save();
+            new ConfigurationInitializer(Configuration.REPRAP_DIRECTORY).saveConfiguration(configuration);
         }
     }
 }

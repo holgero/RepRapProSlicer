@@ -37,7 +37,7 @@ public class CurrentConfiguration {
         this(null, null, null);
     }
 
-    CurrentConfiguration(final PrintSetting printSetting, final PrinterSetting printerSetting,
+    public CurrentConfiguration(final PrintSetting printSetting, final PrinterSetting printerSetting,
             final List<MaterialSetting> materials) {
         this.printSetting = printSetting;
         this.printerSetting = printerSetting;

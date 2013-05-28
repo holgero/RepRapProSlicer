@@ -23,6 +23,11 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import org.junit.Test;
+import org.reprap.configuration.FillPattern;
+import org.reprap.configuration.FillPatternDescriptor;
+import org.reprap.configuration.FillPatternXmlAdapter;
+import org.reprap.configuration.LinearFillPattern;
+import org.reprap.configuration.RectilinearFillPattern;
 
 public class FillPatternXmlAdapterTest {
     FillPatternXmlAdapter adapter = new FillPatternXmlAdapter();

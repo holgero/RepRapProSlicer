@@ -74,7 +74,7 @@ import java.util.Random;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reprap.configuration.MathRoutines;
+import org.reprap.configuration.store.MathRoutines;
 
 /**
  * The main boundary-representation polygon class

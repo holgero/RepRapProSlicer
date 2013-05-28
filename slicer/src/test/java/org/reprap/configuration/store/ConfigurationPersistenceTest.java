@@ -16,7 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.configuration;
+package org.reprap.configuration.store;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -37,11 +37,15 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.reprap.configuration.Configuration;
+import org.reprap.configuration.CurrentConfiguration;
+import org.reprap.configuration.MaterialSetting;
+import org.reprap.configuration.store.ConfigurationInitializer;
 
 public class ConfigurationPersistenceTest {
     @Rule
     public final TemporaryFolder folder = new TemporaryFolder();
-    private final Configuration configuration = Configuration.create();
+    private final Configuration configuration = new ConfigurationInitializer(Configuration.REPRAP_DIRECTORY).loadConfiguration();
     private JAXBContext context;
     private Unmarshaller unmarshaller;
     private Marshaller marshaller;

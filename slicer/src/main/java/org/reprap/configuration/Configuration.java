@@ -22,24 +22,16 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.apache.commons.io.FileUtils;
 
 @XmlRootElement
 public class Configuration {
-    private static final File REPRAP_DIRECTORY = new File(FileUtils.getUserDirectory(), ".reprap");
-
-    public static Configuration create() {
-        return new ConfigurationInitializer(REPRAP_DIRECTORY).loadConfiguration();
-    }
-
-    static File getReprapDirectory() {
-        return REPRAP_DIRECTORY;
-    }
+    public static final File REPRAP_DIRECTORY = new File(FileUtils.getUserDirectory(), ".reprap");
 
     @XmlElementWrapper
     @XmlElement(name = "material")
@@ -53,47 +45,43 @@ public class Configuration {
     @XmlElement
     private CurrentConfiguration currentConfiguration;
 
-    Configuration() {
+    public Configuration() {
     }
 
+    @XmlTransient
     public List<PrintSetting> getPrintSettings() {
         return printSettings;
     }
 
-    void setPrintSettings(final List<PrintSetting> printSettings) {
+    public void setPrintSettings(final List<PrintSetting> printSettings) {
         this.printSettings = printSettings;
     }
 
+    @XmlTransient
     public List<PrinterSetting> getPrinterSettings() {
         return printerSettings;
     }
 
-    void setPrinterSettings(final List<PrinterSetting> printerSettings) {
+    public void setPrinterSettings(final List<PrinterSetting> printerSettings) {
         this.printerSettings = printerSettings;
     }
 
+    @XmlTransient
     public CurrentConfiguration getCurrentConfiguration() {
         return currentConfiguration;
     }
 
-    void setCurrentConfiguration(final CurrentConfiguration currentConfiguration) {
+    public void setCurrentConfiguration(final CurrentConfiguration currentConfiguration) {
         this.currentConfiguration = currentConfiguration;
     }
 
+    @XmlTransient
     public List<MaterialSetting> getMaterials() {
         return materials;
     }
 
-    void setMaterials(final List<MaterialSetting> materials) {
+    public void setMaterials(final List<MaterialSetting> materials) {
         this.materials = materials;
-    }
-
-    public void save() {
-        try {
-            new ConfigurationInitializer(REPRAP_DIRECTORY).saveConfiguration(this);
-        } catch (final JAXBException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public static String[] getNames(final List<? extends NamedSetting> namedSetting) {

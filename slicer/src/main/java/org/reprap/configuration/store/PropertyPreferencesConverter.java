@@ -16,9 +16,9 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.configuration;
+package org.reprap.configuration.store;
 
-import static org.reprap.configuration.MathRoutines.circleAreaForDiameter;
+import static org.reprap.configuration.store.MathRoutines.circleAreaForDiameter;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,8 +41,16 @@ import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.configuration.Configuration;
+import org.reprap.configuration.CurrentConfiguration;
+import org.reprap.configuration.ExtruderSetting;
+import org.reprap.configuration.LinearFillPattern;
+import org.reprap.configuration.MaterialSetting;
+import org.reprap.configuration.PrintSetting;
+import org.reprap.configuration.PrinterSetting;
+import org.reprap.configuration.RectilinearFillPattern;
 
-final class PropertyPreferencesConverter {
+public final class PropertyPreferencesConverter {
     private static final Logger LOGGER = LogManager.getLogger(PropertyPreferencesConverter.class);
     private static final String SHIELD_STL_FILENAME = "shield.stl";
     private static final String PROLOGUE_FILE = "prologue.gcode";
@@ -58,11 +66,11 @@ final class PropertyPreferencesConverter {
     private final Map<String, MaterialSetting> materialSettings = new LinkedHashMap<>();
     private final List<MaterialSetting> activeMaterials = new ArrayList<>();
 
-    PropertyPreferencesConverter(final File reprapDirectory) {
+    public PropertyPreferencesConverter(final File reprapDirectory) {
         this.reprapDirectory = reprapDirectory;
     }
 
-    Configuration loadConfigurationFromPropertiesFiles() {
+    public Configuration loadConfigurationFromPropertiesFiles() {
         final CurrentConfiguration currentConfiguration = collectPropertiesOfAllMachines();
         final Configuration configuration = new Configuration();
         configuration.setCurrentConfiguration(currentConfiguration);

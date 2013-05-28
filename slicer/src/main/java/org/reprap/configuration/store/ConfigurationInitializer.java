@@ -16,7 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.reprap.configuration;
+package org.reprap.configuration.store;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,8 +38,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reprap.configuration.Configuration;
 
-class ConfigurationInitializer {
+public class ConfigurationInitializer {
     private static final Logger LOGGER = LogManager.getLogger(ConfigurationInitializer.class);
     private static final String DISTRIBUTION_PROPERTIES_DIR_ = "reprap-configurations";
     private static final String REPRAP_FILE = "reprap.xml";
@@ -49,7 +50,7 @@ class ConfigurationInitializer {
     private final Unmarshaller unmarshaller;
     private File xmlFile;
 
-    ConfigurationInitializer(final File reprapDirectory) {
+    public ConfigurationInitializer(final File reprapDirectory) {
         this.reprapDirectory = reprapDirectory;
         try {
             context = JAXBContext.newInstance(Configuration.class);
@@ -62,7 +63,7 @@ class ConfigurationInitializer {
         }
     }
 
-    Configuration loadConfiguration() {
+    public Configuration loadConfiguration() {
         try {
             return loadCurrentConfigurationUnsafe();
         } catch (final JAXBException e) {
@@ -86,7 +87,7 @@ class ConfigurationInitializer {
         return (Configuration) unmarshaller.unmarshal(xmlFile);
     }
 
-    private boolean provideConfigurationFromOldPropertyFiles() throws PropertyException, JAXBException {
+    private boolean provideConfigurationFromOldPropertyFiles() {
         if (reprapDirectory.isDirectory()) {
             LOGGER.info(reprapDirectory + " exists, trying to read property file from there.");
             final PropertyPreferencesConverter converter = new PropertyPreferencesConverter(reprapDirectory);
@@ -101,8 +102,12 @@ class ConfigurationInitializer {
         return false;
     }
 
-    void saveConfiguration(final Configuration configuration) throws JAXBException {
-        marshaller.marshal(configuration, xmlFile);
+    public void saveConfiguration(final Configuration configuration) {
+        try {
+            marshaller.marshal(configuration, xmlFile);
+        } catch (final JAXBException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void provideDefaultConfiguration() throws IOException {

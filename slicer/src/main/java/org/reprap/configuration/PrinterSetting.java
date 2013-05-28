@@ -163,7 +163,7 @@ public class PrinterSetting implements NamedSetting {
     }
 
     public File getBuildPlatformStl() {
-        return new File(Configuration.getReprapDirectory(), buildPlatformStl);
+        return new File(Configuration.REPRAP_DIRECTORY, buildPlatformStl);
     }
 
     public void setBuildPlatformStl(final String buildPlatformStl) {

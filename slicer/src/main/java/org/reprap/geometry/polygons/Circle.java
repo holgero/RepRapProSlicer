@@ -1,6 +1,6 @@
 package org.reprap.geometry.polygons;
 
-import org.reprap.configuration.MathRoutines;
+import org.reprap.configuration.store.MathRoutines;
 
 /**
  * A circle (centre and squared radius)

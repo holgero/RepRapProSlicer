@@ -39,6 +39,7 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.reprap.configuration.Configuration;
+import org.reprap.configuration.store.ConfigurationInitializer;
 import org.reprap.geometry.Producer;
 import org.reprap.geometry.ProductionProgressListener;
 import org.reprap.gui.configuration.SettingsEditor;
@@ -54,7 +55,7 @@ public class MainFrame extends JFrame {
     public MainFrame() throws HeadlessException {
         super("RepRap Slicer");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        configuration = Configuration.create();
+        configuration = new ConfigurationInitializer(Configuration.REPRAP_DIRECTORY).loadConfiguration();
         plater = new RepRapPlater(configuration.getCurrentConfiguration(), actions);
         simulationTab = new SimulationPanel(configuration.getCurrentConfiguration());
     }
