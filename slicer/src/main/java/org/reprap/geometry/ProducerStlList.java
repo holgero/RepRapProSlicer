@@ -257,7 +257,7 @@ class ProducerStlList {
             return EMPTY_SLICE;
         }
 
-        final double currentZ = layerRules.getModelZ(layer) + layerRules.getZStep() * 0.5;
+        final double currentZ = layerRules.getModelZ(layer);
         final Map<String, EdgeAndCsgsCollector> collectorMap = collectEdgeLinesAndCsgs(stlIndex, currentZ);
 
         final BooleanGridList result = new BooleanGridList();

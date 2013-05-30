@@ -49,7 +49,7 @@ public class SupportCalculator {
     }
 
     void calculateSupportPolygons(final LayerRules layerRules, final ProducerStlList stlList) {
-        for (int layer = layerRules.getMachineLayerMax(); layer > 0; layer--) {
+        for (int layer = layerRules.getMachineLayerMax(); layer >= 0; layer--) {
             for (int stl = 0; stl < stlList.size(); stl++) {
                 final Slice slice = stlList.slice(stl, layer);
                 supportPolygons[layer] = computeSupport(stl, slice, layer);

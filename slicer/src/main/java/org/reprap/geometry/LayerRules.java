@@ -1,18 +1,10 @@
 package org.reprap.geometry;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.CurrentConfiguration;
-import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.FillPattern;
 import org.reprap.configuration.PrintSetting;
-import org.reprap.gcode.GCodePrinter;
-import org.reprap.geometry.grids.BooleanGrid;
-import org.reprap.geometry.grids.Hatcher;
-import org.reprap.geometry.polygons.CSG2D;
 import org.reprap.geometry.polygons.HalfPlane;
 import org.reprap.geometry.polygons.Point2D;
-import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.BoundingBox;
@@ -22,41 +14,6 @@ import org.reprap.geometry.polyhedra.BoundingBox;
  * rules for such things as infill patterns, support patterns etc.
  */
 public class LayerRules {
-    private static final Logger LOGGER = LogManager.getLogger(LayerRules.class);
-    /**
-     * The coordinates of the first point plotted in a layer
-     */
-    private final Point2D[] firstPoint;
-
-    /**
-     * The coordinates of the last point plotted in a layer
-     */
-    private final Point2D[] lastPoint;
-
-    /**
-     * The heights of the layers
-     */
-    private final double[] layerZ;
-
-    /**
-     * The names of all the files for all the layers
-     */
-    private final String[] layerFileNames;
-    /**
-     * The machine
-     */
-    private final GCodePrinter printer;
-
-    /**
-     * The top of the model in model coordinates
-     */
-    private final double modelZMax;
-
-    /**
-     * The highest the machine should go this build
-     */
-    private final double machineZMax;
-
     /**
      * The number of the last model layer (first = 0)
      */
@@ -77,22 +34,7 @@ public class LayerRules {
      */
     private final Rectangle bBox;
 
-    /**
-     * The number of surface layers
-     */
-    private final int maxSurfaceLayers;
-
     private final CurrentConfiguration currentConfiguration;
-
-    /**
-     * How far up the model we are in mm
-     */
-    private double modelZ;
-
-    /**
-     * How far we are up from machine Z=0
-     */
-    private double machineZ;
 
     /**
      * The count of layers up the model
@@ -104,32 +46,17 @@ public class LayerRules {
      */
     private int machineLayer;
 
-    LayerRules(final GCodePrinter printer, final BoundingBox box, final CurrentConfiguration currentConfiguration) {
-        this.printer = printer;
+    LayerRules(final BoundingBox box, final CurrentConfiguration currentConfiguration) {
         this.currentConfiguration = currentConfiguration;
         final PrintSetting printSetting = currentConfiguration.getPrintSetting();
         zStep = printSetting.getLayerHeight();
-        maxSurfaceLayers = printSetting.getHorizontalShells();
 
-        modelZMax = box.getZint().high();
+        final double modelZMax = box.getZint().high();
         final int foundationLayers = Math.max(0, printSetting.getRaftLayers());
         modelLayerMax = (int) (modelZMax / zStep) + 1;
         machineLayerMax = modelLayerMax + foundationLayers;
-        machineZMax = modelZMax + foundationLayers * zStep;
-        modelZ = 0;
-        machineZ = 0;
         modelLayer = 0;
         machineLayer = 0;
-
-        // Set up the records of the layers for later reversing (top->down ==>> bottom->up)
-        firstPoint = new Point2D[machineLayerMax + 1];
-        lastPoint = new Point2D[machineLayerMax + 1];
-        layerZ = new double[machineLayerMax + 1];
-        layerFileNames = new String[machineLayerMax + 1];
-        for (int i = 0; i < machineLayerMax + 1; i++) {
-            layerFileNames[i] = null;
-        }
-
         final Rectangle gp = box.getXYbox();
         bBox = new Rectangle(new Point2D(gp.x().low() - 6, gp.y().low() - 6), new Point2D(gp.x().high() + 6, gp.y().high() + 6));
     }
@@ -138,33 +65,19 @@ public class LayerRules {
         return bBox;
     }
 
-    public GCodePrinter getPrinter() {
-        return printer;
+    double getModelZ(final int layer) {
+        return zStep * (layer + 0.5);
     }
 
-    double getModelZ() {
-        return modelZ;
+    double getMachineZ() {
+        return (machineLayer + 1) * zStep;
     }
 
-    public double getModelZ(final int layer) {
-        return zStep * layer;
-    }
-
-    public double getMachineZ() {
-        return machineZ;
-    }
-
-    public int getModelLayer() {
+    int getModelLayer() {
         return modelLayer;
     }
 
-    public int sliceCacheSize() {
-        return (int) Math.ceil(2 * (maxSurfaceLayers * 2 + 1));
-    }
-
     boolean setFirstAndLast(final PolygonList[] polygonLists) {
-        firstPoint[machineLayer] = null;
-        lastPoint[machineLayer] = null;
         if (polygonLists == null) {
             return false;
         }
@@ -186,39 +99,14 @@ public class LayerRules {
         if (lastList == null || first == null) {
             return false;
         }
-        firstPoint[machineLayer] = first;
-        final Polygon lastPolygon = lastList.polygon(lastList.size() - 1);
-        lastPoint[machineLayer] = lastPolygon.point(lastPolygon.size() - 1);
         return true;
     }
 
-    public int realTopLayer() {
-        int rtl = machineLayerMax;
-        while (firstPoint[rtl] == null && rtl > 0) {
-            final String message = "layer " + rtl + " from " + machineLayerMax + " is empty!";
-            if (machineLayerMax - rtl > 1) {
-                LOGGER.error(message);
-            } else {
-                LOGGER.debug(message);
-            }
-            rtl--;
-        }
-        return rtl;
-    }
-
-    public void setLayerFileName(final String name) {
-        layerFileNames[machineLayer] = name;
-    }
-
-    public Point2D getLastPoint(final int layer) {
-        return lastPoint[layer];
-    }
-
-    public int getMachineLayerMax() {
+    int getMachineLayerMax() {
         return machineLayerMax;
     }
 
-    public int getMachineLayer() {
+    int getMachineLayer() {
         return machineLayer;
     }
 
@@ -226,11 +114,11 @@ public class LayerRules {
         return machineLayerMax - modelLayerMax;
     }
 
-    public double getZStep() {
+    double getZStep() {
         return zStep;
     }
 
-    public HalfPlane getFillHatchLine(final double alternatingOffset) {
+    HalfPlane getFillHatchLine(final double alternatingOffset) {
         final int mylayer;
         if (getMachineLayer() < getFoundationLayers()) {
             mylayer = 1;
@@ -247,7 +135,7 @@ public class LayerRules {
         return result;
     }
 
-    public static HalfPlane getHatchLine(final int layer, final FillPattern fillPattern) {
+    static HalfPlane getHatchLine(final int layer, final FillPattern fillPattern) {
         final double angle = Math.toRadians(fillPattern.angle(layer));
         return new HalfPlane(new Point2D(0.0, 0.0), new Point2D(Math.sin(angle), Math.cos(angle)));
     }
@@ -257,8 +145,6 @@ public class LayerRules {
      */
     void stepMachine() {
         machineLayer++;
-        machineZ = zStep * machineLayer;
-        layerZ[machineLayer] = machineZ;
     }
 
     /**
@@ -266,51 +152,6 @@ public class LayerRules {
      */
     void step() {
         modelLayer++;
-        modelZ = modelLayer * zStep;
         stepMachine();
     }
-
-    void layFoundationTopDown(final SimulationPlotter simulationPlot) {
-        if (getFoundationLayers() <= 0) {
-            return;
-        }
-        while (machineLayer >= 0) {
-            LOGGER.debug("Commencing foundation layer at " + getMachineZ());
-            printer.startingLayer(zStep, machineZ, machineLayer, machineLayerMax);
-            fillFoundationRectangle(simulationPlot);
-            stepMachine();
-        }
-    }
-
-    void layFoundationBottomUp(final SimulationPlotter simulationPlot) {
-        if (getFoundationLayers() <= 0) {
-            return;
-        }
-        while (machineLayer < getFoundationLayers()) {
-            stepMachine();
-            LOGGER.debug("Commencing foundation layer at " + getMachineZ());
-            printer.startingLayer(zStep, machineZ, machineLayer, machineLayerMax);
-            fillFoundationRectangle(simulationPlot);
-        }
-    }
-
-    private void fillFoundationRectangle(final SimulationPlotter simulationPlot) {
-        final int supportExtruderNo = currentConfiguration.getPrintSetting().getSupportExtruder();
-        final ExtruderSetting supportExtruder = currentConfiguration.getPrinterSetting().getExtruderSettings()
-                .get(supportExtruderNo);
-        final double extrusionSize = supportExtruder.getExtrusionSize();
-        final String supportMaterial = currentConfiguration.getMaterials().get(supportExtruderNo).getName();
-        final Hatcher hatcher = new Hatcher(new BooleanGrid(
-                currentConfiguration.getPrinterSetting().getMachineResolution() * 0.6, supportMaterial, bBox.scale(1.1),
-                CSG2D.RrCSGFromBox(bBox)));
-        final PolygonList foundationPolygon = hatcher.hatch(getFillHatchLine(extrusionSize), extrusionSize,
-                currentConfiguration.getPrintSetting().isPathOptimize());
-        setFirstAndLast(new PolygonList[] { foundationPolygon });
-        new LayerProducer(this, simulationPlot, currentConfiguration).plot(foundationPolygon);
-    }
-
-    void startPrint() {
-        printer.startRun(bBox, zStep, machineZMax); // Sets current X, Y, Z to 0 and optionally plots an outline
-    }
-
 }

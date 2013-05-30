@@ -50,7 +50,7 @@ public class Producer {
             }
         }
         final BoundingBox buildVolume = ProducerStlList.getBoundingBox(stlObjects);
-        layerRules = new LayerRules(printer, buildVolume, currentConfiguration);
+        layerRules = new LayerRules(buildVolume, currentConfiguration);
         stlList = new ProducerStlList(stlObjects, layerRules, currentConfiguration);
         inFillPatterns = new InFillPatterns(layerRules, currentConfiguration);
         totalExtruders = currentConfiguration.getPrinterSetting().getExtruderSettings().size();
@@ -62,14 +62,18 @@ public class Producer {
         if (currentConfiguration.getPrintSetting().printSupport()) {
             supportCalculator.calculateSupportPolygons(layerRules, stlList);
         }
-        layerRules.startPrint();
-        layerRules.layFoundationBottomUp(simulationPlot);
-        layerRules.step();
+        startPrint();
+        new LayerProducer(layerRules, simulationPlot, currentConfiguration, printer).layFoundationBottomUp();
         while (layerRules.getMachineLayer() < layerRules.getMachineLayerMax()) {
             produceLayer();
             layerRules.step();
         }
         printer.terminate();
+    }
+
+    void startPrint() {
+        // Sets current X, Y, Z to 0 and optionally plots an outline
+        printer.startRun(layerRules.getBox(), layerRules.getZStep(), layerRules.getMachineLayerMax() * layerRules.getZStep());
     }
 
     private void produceLayer() {
@@ -87,7 +91,7 @@ public class Producer {
             LOGGER.debug("Commencing model layer " + layerRules.getModelLayer() + " at " + layerRules.getMachineZ());
             printer.startingLayer(layerRules.getZStep(), layerRules.getMachineZ(), layerRules.getMachineLayer(),
                     layerRules.getMachineLayerMax());
-            final LayerProducer lp = new LayerProducer(layerRules, simulationPlot, currentConfiguration);
+            final LayerProducer lp = new LayerProducer(layerRules, simulationPlot, currentConfiguration, printer);
             for (final PolygonList pl : allPolygons) {
                 lp.plot(pl);
             }
@@ -100,7 +104,7 @@ public class Producer {
         final PrintSetting printSetting = currentConfiguration.getPrintSetting();
         final List<ExtruderSetting> extruderSettings = currentConfiguration.getPrinterSetting().getExtruderSettings();
         final Slice slice = stlList.slice(stl, layerRules.getModelLayer());
-        if (layerRules.getModelLayer() == 1 && brimLines > 0) {
+        if (layerRules.getModelLayer() == 0 && brimLines > 0) {
             final double extrusionSize = extruderSettings.get(0).getExtrusionSize();
             final PolygonList brim = slice.computeBrim(brimLines, extrusionSize);
             final double linkUp = 4 * extrusionSize * extrusionSize;

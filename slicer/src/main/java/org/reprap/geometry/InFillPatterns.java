@@ -43,9 +43,13 @@ public final class InFillPatterns {
         final int layer = layerRules.getModelLayer();
         final BooleanGridList sliceBitmap = slice.getBitmaps(material);
         final int surfaceLayers = currentConfiguration.getPrintSetting().getHorizontalShells();
+        final double extrusionSize = currentConfiguration.getExtruderSetting(material).getExtrusionSize();
+        final double infillOverlap = currentConfiguration.getPrintSetting().getInfillOverlap();
+
+        final BooleanGridList sliceWithoutBorder = slice.subtractBorder(material, extrusionSize, infillOverlap, borders);
         // Get the bottom out of the way - no fancy calculations needed.
-        if (layer <= surfaceLayers) {
-            return ProducerStlList.hatch(offset(sliceBitmap, -1), layerRules, true, currentConfiguration);
+        if (layer < surfaceLayers) {
+            return ProducerStlList.hatch(sliceWithoutBorder, layerRules, true, currentConfiguration);
         }
 
         // If we are solid but the slices above or below us weren't, we need some fine infill as
@@ -87,10 +91,7 @@ public final class InFillPatterns {
 
         // Find the landing areas as a separate set of shapes that go with the bridges.
         final BooleanGridList lands = BooleanGridList.intersections(bridges, BooleanGridList.unions(insides, surfaces));
-        final double extrusionSize = currentConfiguration.getExtruderSetting(material).getExtrusionSize();
-        final double infillOverlap = currentConfiguration.getPrintSetting().getInfillOverlap();
 
-        final BooleanGridList sliceWithoutBorder = slice.subtractBorder(material, extrusionSize, infillOverlap, borders);
         // intersect with the slice without border: subtract the room for the border
         bridges = BooleanGridList.intersections(bridges, sliceWithoutBorder);
         insides = BooleanGridList.intersections(insides, sliceWithoutBorder);

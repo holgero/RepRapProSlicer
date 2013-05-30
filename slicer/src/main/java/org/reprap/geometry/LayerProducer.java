@@ -5,6 +5,9 @@ import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.configuration.ExtruderSetting;
 import org.reprap.gcode.GCodePrinter;
+import org.reprap.geometry.grids.BooleanGrid;
+import org.reprap.geometry.grids.Hatcher;
+import org.reprap.geometry.polygons.CSG2D;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
@@ -16,11 +19,14 @@ class LayerProducer {
     private final LayerRules layerRules;
     private final CurrentConfiguration currentConfiguration;
     boolean firstOneInLayer = true;
+    private final GCodePrinter printer;
 
-    LayerProducer(final LayerRules lc, final SimulationPlotter simPlot, final CurrentConfiguration currentConfiguration) {
+    LayerProducer(final LayerRules lc, final SimulationPlotter simPlot, final CurrentConfiguration currentConfiguration,
+            final GCodePrinter printer) {
         layerRules = lc;
         simulationPlot = simPlot;
         this.currentConfiguration = currentConfiguration;
+        this.printer = printer;
 
         if (simulationPlot != null) {
             if (!simulationPlot.isInitialised()) {
@@ -59,7 +65,6 @@ class LayerProducer {
             return;
         }
 
-        final GCodePrinter printer = layerRules.getPrinter();
         final double currentZ = printer.getZ();
 
         if (firstOneInLayer) {
@@ -93,7 +98,6 @@ class LayerProducer {
         final double extrudeBackLength = extruder.getExtrusionOverrun();
         extrusionPath.backStepExtrude(extrudeBackLength);
 
-        final GCodePrinter printer = layerRules.getPrinter();
         final double liftZ = extruder.getLift();
         singleMove(printer, liftZ, extrusionPath.point(0));
 
@@ -135,5 +139,34 @@ class LayerProducer {
         for (int j = 0; j < pl.size(); j++) {
             plot(pl.polygon(j));
         }
+    }
+
+    void layFoundationBottomUp() {
+        if (layerRules.getFoundationLayers() <= 0) {
+            return;
+        }
+        while (layerRules.getMachineLayer() < layerRules.getFoundationLayers()) {
+            LOGGER.debug("Commencing foundation layer at " + layerRules.getMachineZ());
+            printer.startingLayer(layerRules.getZStep(), layerRules.getMachineZ(), layerRules.getMachineLayer(),
+                    layerRules.getMachineLayerMax());
+            fillFoundationRectangle();
+            layerRules.stepMachine();
+        }
+    }
+
+    private void fillFoundationRectangle() {
+        final int supportExtruderNo = currentConfiguration.getPrintSetting().getSupportExtruder();
+        final ExtruderSetting supportExtruder = currentConfiguration.getPrinterSetting().getExtruderSettings()
+                .get(supportExtruderNo);
+        final double extrusionSize = supportExtruder.getExtrusionSize();
+        final String supportMaterial = currentConfiguration.getMaterials().get(supportExtruderNo).getName();
+        final Rectangle box = layerRules.getBox();
+        final Hatcher hatcher = new Hatcher(new BooleanGrid(
+                currentConfiguration.getPrinterSetting().getMachineResolution() * 0.6, supportMaterial, box.scale(1.1),
+                CSG2D.RrCSGFromBox(box)));
+        final PolygonList foundationPolygon = hatcher.hatch(layerRules.getFillHatchLine(extrusionSize), extrusionSize,
+                currentConfiguration.getPrintSetting().isPathOptimize());
+        layerRules.setFirstAndLast(new PolygonList[] { foundationPolygon });
+        plot(foundationPolygon);
     }
 }
