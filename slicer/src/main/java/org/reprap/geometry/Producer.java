@@ -24,13 +24,13 @@ public class Producer {
      * The list of objects to be built
      */
     private final ProducerStlList stlList;
-    private final PolygonList[] support;
     private final ProductionProgressListener progressListener;
     private final GCodePrinter printer;
     private final int totalExtruders;
     private final int brimLines;
     private final CurrentConfiguration currentConfiguration;
     private final InFillPatterns inFillPatterns;
+    private final SupportCalculator supportCalculator;
 
     /*
      * Skip generating the shield if only one color is printed
@@ -60,16 +60,12 @@ public class Producer {
         final PrintSetting printSetting = currentConfiguration.getPrintSetting();
         omitShield = printSetting.printShield();
         brimLines = printSetting.getBrimLines();
-        if (printSetting.printSupport()) {
-            support = new PolygonList[layerRules.getMachineLayerMax() + 1];
-        } else {
-            support = new PolygonList[0];
-        }
+        supportCalculator = new SupportCalculator(currentConfiguration, stlList.size(), layerRules.getMachineLayerMax() + 1);
     }
 
     public void produce() {
         if (currentConfiguration.getPrintSetting().printSupport()) {
-            calculateSupportPolygons();
+            supportCalculator.calculateSupportPolygons(layerRules, stlList);
         }
         while (layerRules.getModelLayer() > 0) {
             produceLayer();
@@ -80,16 +76,6 @@ public class Producer {
             layerRules.reverseLayers();
         } catch (final IOException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    private void calculateSupportPolygons() {
-        final SupportCalculator supportCalculator = new SupportCalculator(currentConfiguration, stlList.size());
-        for (int layer = layerRules.getMachineLayerMax(); layer > 0; layer--) {
-            for (int stl = 1; stl < stlList.size(); stl++) {
-                final Slice slice = stlList.slice(stl, layer);
-                support[layer] = supportCalculator.computeSupport(stl, slice, layer);
-            }
         }
     }
 
@@ -159,7 +145,8 @@ public class Producer {
             final boolean insideOut = printSetting.isInsideOut();
             final int shells = printSetting.getVerticalShells();
             if (printSetting.printSupport() && extruder == printSetting.getSupportExtruder()) {
-                startNearHere = simplifyAndAdd(support[layerRules.getModelLayer()], linkUp, startNearHere, result);
+                final PolygonList support = supportCalculator.getSupport(layerRules.getModelLayer());
+                startNearHere = simplifyAndAdd(support, linkUp, startNearHere, result);
             }
             final PolygonList borders = slice.getOutlineGrids(material, shells, extrusionSize, insideOut);
             final PolygonList fills = inFillPatterns.computePolygonsForMaterial(stl, slice, stlList, material, borders);

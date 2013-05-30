@@ -29,13 +29,14 @@ import org.reprap.geometry.polygons.HalfPlane;
 import org.reprap.geometry.polygons.PolygonList;
 
 public class SupportCalculator {
+    private final PolygonList[] supportPolygons;
     private final BooleanGrid[] previousLayers;
     private final double infillWidth;
     private final boolean pathOptimize;
     private final FillPattern supportPattern;
     private final String supportMaterial;
 
-    SupportCalculator(final CurrentConfiguration currentConfiguration, final int stlCount) {
+    SupportCalculator(final CurrentConfiguration currentConfiguration, final int stlCount, final int maxLayers) {
         previousLayers = new BooleanGrid[stlCount];
         final PrintSetting printSetting = currentConfiguration.getPrintSetting();
         infillWidth = printSetting.getSupportSpacing();
@@ -44,12 +45,22 @@ public class SupportCalculator {
         final int supportExtruderNo = printSetting.getSupportExtruder();
         final MaterialSetting supportMaterialSetting = currentConfiguration.getMaterials().get(supportExtruderNo);
         supportMaterial = supportMaterialSetting.getName();
+        supportPolygons = new PolygonList[maxLayers];
+    }
+
+    void calculateSupportPolygons(final LayerRules layerRules, final ProducerStlList stlList) {
+        for (int layer = layerRules.getMachineLayerMax(); layer > 0; layer--) {
+            for (int stl = 1; stl < stlList.size(); stl++) {
+                final Slice slice = stlList.slice(stl, layer);
+                supportPolygons[layer] = computeSupport(stl, slice, layer);
+            }
+        }
     }
 
     /**
      * Compute the support hatching polygons for this set of patterns
      */
-    PolygonList computeSupport(final int stl, final Slice slice, final int layer) {
+    private PolygonList computeSupport(final int stl, final Slice slice, final int layer) {
         // Union of everything in this layer because that is everywhere that support _isn't_ needed.
         BooleanGrid unionOfThisLayer = slice.unionMaterials(supportMaterial);
 
@@ -75,5 +86,9 @@ public class SupportCalculator {
     private PolygonList hatchSupport(final BooleanGrid grid, final int layer) {
         final HalfPlane hatchLine = LayerRules.getHatchLine(layer, supportPattern);
         return new Hatcher(grid).hatch(hatchLine, infillWidth, pathOptimize);
+    }
+
+    PolygonList getSupport(final int modelLayer) {
+        return supportPolygons[modelLayer];
     }
 }
