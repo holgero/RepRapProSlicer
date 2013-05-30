@@ -32,11 +32,6 @@ public class Producer {
     private final InFillPatterns inFillPatterns;
     private final SupportCalculator supportCalculator;
 
-    /*
-     * Skip generating the shield if only one color is printed
-     */
-    private boolean omitShield;
-
     public Producer(final File gcodeFile, final List<STLObject> stlObjects, final ProductionProgressListener progressListener,
             final SimulationPlotter simulationPlot, final CurrentConfiguration currentConfiguration) {
         this.progressListener = progressListener;
@@ -47,18 +42,18 @@ public class Producer {
         if (gcodeFile != null) {
             printer.setGCodeFileForOutput(gcodeFile);
         }
-        if (currentConfiguration.getPrintSetting().printShield()) {
-            final BoundingBox boxWithoutShield = ProducerStlList.getBoundingBox(stlObjects);
-            final double modelZMax = boxWithoutShield.getZint().high();
-            stlObjects.add(0, purge.getShield(modelZMax));
+        final PrintSetting printSetting = currentConfiguration.getPrintSetting();
+        if (printSetting.printShield()) {
+            final double modelZMax = ProducerStlList.getMaxMultimaterialZ(stlObjects);
+            if (modelZMax > 0) {
+                stlObjects.add(0, purge.getShield(modelZMax));
+            }
         }
         final BoundingBox buildVolume = ProducerStlList.getBoundingBox(stlObjects);
         layerRules = new LayerRules(printer, buildVolume, currentConfiguration);
         stlList = new ProducerStlList(stlObjects, layerRules, currentConfiguration);
         inFillPatterns = new InFillPatterns(layerRules, currentConfiguration);
         totalExtruders = currentConfiguration.getPrinterSetting().getExtruderSettings().size();
-        final PrintSetting printSetting = currentConfiguration.getPrintSetting();
-        omitShield = false;
         brimLines = printSetting.getBrimLines();
         supportCalculator = new SupportCalculator(currentConfiguration, stlList.size(), layerRules.getMachineLayerMax() + 1);
     }
@@ -86,27 +81,12 @@ public class Producer {
         progressListener.productionProgress(layerRules.getMachineLayer(), layerRules.getMachineLayerMax());
 
         final PolygonList allPolygons[] = new PolygonList[totalExtruders];
-
-        Point2D startNearHere = Point2D.mul(layerRules.getPrinter().getBedNorthEast(), 0.5);
-        if (omitShield) {
-            for (int extruder = 0; extruder < allPolygons.length; extruder++) {
-                allPolygons[extruder] = new PolygonList();
-            }
-            for (int stl = 1; stl < stlList.size(); stl++) {
-                startNearHere = collectPolygonsForObject(stl, startNearHere, allPolygons);
-            }
-            if (usedPhysicalExtruders(allPolygons) > 1) {
-                omitShield = false;
-            }
+        for (int extruder = 0; extruder < allPolygons.length; extruder++) {
+            allPolygons[extruder] = new PolygonList();
         }
-        if (!omitShield) {
-            for (int extruder = 0; extruder < allPolygons.length; extruder++) {
-                allPolygons[extruder] = new PolygonList();
-            }
-            startNearHere = new Point2D(0, 0);
-            for (int stl = 0; stl < stlList.size(); stl++) {
-                startNearHere = collectPolygonsForObject(stl, startNearHere, allPolygons);
-            }
+        Point2D startNearHere = new Point2D(0, 0);
+        for (int stl = 0; stl < stlList.size(); stl++) {
+            startNearHere = collectPolygonsForObject(stl, startNearHere, allPolygons);
         }
         progressListener.productionProgress(layerRules.getMachineLayer(), layerRules.getMachineLayerMax());
         layerRules.setFirstAndLast(allPolygons);
@@ -115,16 +95,6 @@ public class Producer {
             lp.plot(pl);
         }
         printer.finishedLayer(false);
-    }
-
-    private static int usedPhysicalExtruders(final PolygonList[] allPolygons) {
-        int count = 0;
-        for (final PolygonList polygonList : allPolygons) {
-            if (polygonList.size() > 0) {
-                count++;
-            }
-        }
-        return count;
     }
 
     private Point2D collectPolygonsForObject(final int stl, Point2D startNearHere, final PolygonList[] allPolygons) {

@@ -21,8 +21,8 @@
 package org.reprap.geometry;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,16 +94,12 @@ class ProducerStlList {
 
         for (int i = 0; i < stls.size(); i++) {
             final STLObject stl = stls.get(i);
-            final Transform3D trans = stl.getTransform();
-            final BranchGroup bg = stl.getSTL();
-            for (final Object object : Collections.list((Enumeration<?>) bg.getAllChildren())) {
-                if (result == null) {
-                    result = createBoundingBox(object, trans);
-                } else {
-                    final BoundingBox s = createBoundingBox(object, trans);
-                    if (s != null) {
-                        result.expand(s);
-                    }
+            final BoundingBox nextBox = stl.getBoundingBox();
+            if (result == null) {
+                result = nextBox;
+            } else {
+                if (nextBox != null) {
+                    result.expand(nextBox);
                 }
             }
         }
@@ -116,73 +112,14 @@ class ProducerStlList {
     private static void setRectangles(final List<STLObject> stls, final List<Rectangle> rectangles) {
         for (int i = 0; i < stls.size(); i++) {
             final STLObject stl = stls.get(i);
-            final Transform3D trans = stl.getTransform();
-            final BranchGroup bg = stl.getSTL();
-            for (final Object object : Collections.list((Enumeration<?>) bg.getAllChildren())) {
-                final BoundingBox s = createBoundingBox(object, trans);
-                if (s != null) {
-                    if (i < rectangles.size()) {
-                        rectangles.set(i, Rectangle.union(rectangles.get(i), s.getXYbox()));
-                    } else {
-                        rectangles.add(new Rectangle(s.getXYbox()));
-                    }
-                }
-            }
-            if (rectangles.size() <= i) {
+            final BoundingBox box = stl.getBoundingBox();
+            if (box == null) {
                 LOGGER.error("object " + i + " is empty");
                 rectangles.add(null);
+            } else {
+                rectangles.add(new Rectangle(box.getXYbox()));
             }
         }
-    }
-
-    /**
-     * Unpack the Shape3D(s) from value and find their enclosing XYZ box
-     */
-    private static BoundingBox createBoundingBox(final Object value, final Transform3D trans) {
-        BoundingBox result = null;
-
-        if (value instanceof SceneGraphObject) {
-            final SceneGraphObject sceneGraph = (SceneGraphObject) value;
-            if (sceneGraph instanceof Group) {
-                final Group group = (Group) sceneGraph;
-                for (final Object object : Collections.list((Enumeration<?>) group.getAllChildren())) {
-                    if (result == null) {
-                        result = createBoundingBox(object, trans);
-                    } else {
-                        final BoundingBox s = createBoundingBox(object, trans);
-                        if (s != null) {
-                            result.expand(s);
-                        }
-                    }
-                }
-            } else if (sceneGraph instanceof Shape3D) {
-                result = createShapeBoundingBox((Shape3D) sceneGraph, trans);
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * Run through a Shape3D and find its enclosing XYZ box
-     */
-    private static BoundingBox createShapeBoundingBox(final Shape3D shape, final Transform3D trans) {
-        BoundingBox result = null;
-        final GeometryArray geometry = (GeometryArray) shape.getGeometry();
-        if (geometry != null) {
-            final Point3d vertex = new Point3d();
-            final Point3d transformed = new Point3d();
-            for (int i = 0; i < geometry.getVertexCount(); i++) {
-                geometry.getCoordinate(i, vertex);
-                trans.transform(vertex, transformed);
-                if (result == null) {
-                    result = new BoundingBox(transformed);
-                } else {
-                    result.expand(transformed);
-                }
-            }
-        }
-        return result;
     }
 
     /**
@@ -575,6 +512,24 @@ class ProducerStlList {
         }
 
         return result;
+    }
+
+    static double getMaxMultimaterialZ(final List<STLObject> stlObjects) {
+        final Map<String, Double> materialMaxZMap = new HashMap<String, Double>();
+
+        for (final STLObject stlObject : stlObjects) {
+            stlObject.collectMaxZPerMaterial(materialMaxZMap);
+        }
+        if (materialMaxZMap.size() < 2) {
+            return 0.0;
+        }
+        return secondHeighestValue(materialMaxZMap.values());
+    }
+
+    private static double secondHeighestValue(final Collection<Double> values) {
+        final List<Double> heights = new ArrayList<>(values);
+        Collections.sort(heights);
+        return heights.get(heights.size() - 2);
     }
 
     /**

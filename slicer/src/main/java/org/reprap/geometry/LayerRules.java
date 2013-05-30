@@ -298,7 +298,7 @@ public class LayerRules {
         try {
             final PrintStream fileOutStream = new PrintStream(fileStream);
             printer.forceOutputFile(fileOutStream);
-            printer.startRun(bBox, machineZ, machineZMax); // Sets current X, Y, Z to 0 and optionally plots an outline
+            printer.startRun(bBox, layerZ[1], machineZMax); // Sets current X, Y, Z to 0 and optionally plots an outline
             final int top = realTopLayer();
             for (machineLayer = 1; machineLayer <= top; machineLayer++) {
                 machineZ = layerZ[machineLayer];

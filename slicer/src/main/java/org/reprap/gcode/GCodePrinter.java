@@ -290,7 +290,7 @@ public class GCodePrinter {
         for (int e = extruders.length - 1; e >= 0; e--) { // Count down so we end with the one most likely to start the rest
             if (extruderUsed[e]) {
                 if (!zRight) {
-                    singleMove(currentX, currentY, getPrintSetting().getLayerHeight(), getFastFeedrateZ(), true);
+                    singleMove(currentX, currentY, machineZ, getFastFeedrateZ(), true);
                     currentZ = machineZ;
                 }
                 zRight = true;

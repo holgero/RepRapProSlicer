@@ -59,8 +59,10 @@ package org.reprap.geometry.polyhedra;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
 
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BoundingBox;
@@ -758,5 +760,90 @@ public class STLObject {
         final MaterialSetting substitute = materials.get(0);
         LOGGER.warn("Requested material " + materialName + " not found, substituting with " + substitute.getName() + ".");
         return substitute;
+    }
+
+    public void collectMaxZPerMaterial(final Map<String, Double> materialMaxZMap) {
+        for (final STLFileContents stlFile : contents) {
+            final BranchGroup branchGroup = stlFile.getStl();
+            final String material = stlFile.getAttribute().getMaterial();
+            final double z = getBranchGroupBoundingBox(branchGroup, getTransform()).getZint().high();
+            double maxZ = 0;
+            if (materialMaxZMap.containsKey(material)) {
+                maxZ = materialMaxZMap.get(material).doubleValue();
+            }
+            if (z > maxZ) {
+                materialMaxZMap.put(material, z);
+            }
+        }
+    }
+
+    public org.reprap.geometry.BoundingBox getBoundingBox() {
+        return getBranchGroupBoundingBox(getSTL(), getTransform());
+    }
+
+    private static org.reprap.geometry.BoundingBox getBranchGroupBoundingBox(final BranchGroup bg,
+            final Transform3D transformation) {
+        org.reprap.geometry.BoundingBox result = null;
+        for (final Object object : Collections.list((Enumeration<?>) bg.getAllChildren())) {
+            final org.reprap.geometry.BoundingBox nextBox = createBoundingBox(object, transformation);
+            if (result == null) {
+                result = nextBox;
+            } else {
+                if (nextBox != null) {
+                    result.expand(nextBox);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Unpack the Shape3D(s) from value and find their enclosing XYZ box
+     */
+    private static org.reprap.geometry.BoundingBox createBoundingBox(final Object value, final Transform3D trans) {
+        org.reprap.geometry.BoundingBox result = null;
+
+        if (value instanceof SceneGraphObject) {
+            final SceneGraphObject sceneGraph = (SceneGraphObject) value;
+            if (sceneGraph instanceof Group) {
+                final Group group = (Group) sceneGraph;
+                for (final Object object : Collections.list((Enumeration<?>) group.getAllChildren())) {
+                    final org.reprap.geometry.BoundingBox s = createBoundingBox(object, trans);
+                    if (result == null) {
+                        result = s;
+                    } else {
+                        if (s != null) {
+                            result.expand(s);
+                        }
+                    }
+                }
+            } else if (sceneGraph instanceof Shape3D) {
+                result = createShapeBoundingBox((Shape3D) sceneGraph, trans);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Run through a Shape3D and find its enclosing XYZ box
+     */
+    private static org.reprap.geometry.BoundingBox createShapeBoundingBox(final Shape3D shape, final Transform3D trans) {
+        org.reprap.geometry.BoundingBox result = null;
+        final GeometryArray geometry = (GeometryArray) shape.getGeometry();
+        if (geometry != null) {
+            final Point3d vertex = new Point3d();
+            final Point3d transformed = new Point3d();
+            for (int i = 0; i < geometry.getVertexCount(); i++) {
+                geometry.getCoordinate(i, vertex);
+                trans.transform(vertex, transformed);
+                if (result == null) {
+                    result = new org.reprap.geometry.BoundingBox(transformed);
+                } else {
+                    result.expand(transformed);
+                }
+            }
+        }
+        return result;
     }
 }
