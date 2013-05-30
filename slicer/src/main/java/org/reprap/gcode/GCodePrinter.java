@@ -217,7 +217,7 @@ public class GCodePrinter {
      * make a single, usually non-building move (between plots, or zeroing an
      * axis etc.)
      */
-    public void singleMove(double x, double y, double z, final double feedrate, final boolean really) {
+    public void singleMove(double x, double y, double z, final double feedrate) {
         final double x0 = getX();
         final double y0 = getY();
         final double z0 = getZ();
@@ -234,14 +234,6 @@ public class GCodePrinter {
         if (zMove && xyMove) {
             LOGGER.debug("GcodeRepRap.singleMove(): attempt to move in X|Y and Z simultaneously: (x, y, z) = (" + x + ", " + y
                     + ", " + z + ")");
-        }
-
-        if (!really) {
-            currentX = x;
-            currentY = y;
-            currentZ = z;
-            currentFeedrate = feedrate;
-            return;
         }
 
         moveTo(x, y, z, feedrate, false);
@@ -279,16 +271,16 @@ public class GCodePrinter {
      * Plot rectangles round the build on layer 0 or above
      */
     private void plotOutlines(Rectangle rectangle, final double machineZ) {
-        singleMove(currentX, currentY, machineZ, getFastFeedrateZ(), true);
+        singleMove(currentX, currentY, machineZ, getFastFeedrateZ());
         currentZ = machineZ;
-        selectExtruder(0, true);
+        selectExtruder(0);
         final GCodeExtruder extruder = extruders[currentExtruder];
-        singleMove(rectangle.x().low(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate(), true);
+        singleMove(rectangle.x().low(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate());
         startExtruder(true);
-        singleMove(rectangle.x().high(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate(), true);
-        singleMove(rectangle.x().high(), rectangle.y().high(), currentZ, extruder.getFastXYFeedrate(), true);
-        singleMove(rectangle.x().low(), rectangle.y().high(), currentZ, extruder.getFastXYFeedrate(), true);
-        singleMove(rectangle.x().low(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate(), true);
+        singleMove(rectangle.x().high(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate());
+        singleMove(rectangle.x().high(), rectangle.y().high(), currentZ, extruder.getFastXYFeedrate());
+        singleMove(rectangle.x().low(), rectangle.y().high(), currentZ, extruder.getFastXYFeedrate());
+        singleMove(rectangle.x().low(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate());
         currentX = rectangle.x().low();
         currentY = rectangle.y().low();
         retract();
@@ -300,7 +292,7 @@ public class GCodePrinter {
         gcode.writeComment("#!LAYER: " + machineLayer + "/" + (maxMachineLayer - 1));
         extruders[currentExtruder].zeroExtrudedLength(true);
         currentZ = round(machineZ - zStep, 4);
-        singleMove(getX(), getY(), machineZ, getFastFeedrateZ(), true);
+        singleMove(getX(), getY(), machineZ, getFastFeedrateZ());
     }
 
     public void terminate() {
@@ -347,72 +339,68 @@ public class GCodePrinter {
         gcode.setGCodeFileForOutput(gcodeFile);
     }
 
-    private void selectExtruder(final int materialIndex, final boolean really) {
+    private void selectExtruder(final int materialIndex) {
         final GCodeExtruder oldExtruder = extruders[currentExtruder];
         final GCodeExtruder newExtruder = extruders[materialIndex];
         final boolean shield = getPrintSetting().printShield();
 
         if (newExtruder != oldExtruder || forceSelection) {
-            if (really) {
-                oldExtruder.stopExtruding();
+            oldExtruder.stopExtruding();
+            if (materialIndex < 0 || materialIndex >= extruders.length) {
+                LOGGER.error("Selected material (" + materialIndex + ") is out of range.");
+                currentExtruder = 0;
+            } else {
+                currentExtruder = materialIndex;
+            }
 
-                if (materialIndex < 0 || materialIndex >= extruders.length) {
-                    LOGGER.error("Selected material (" + materialIndex + ") is out of range.");
-                    currentExtruder = 0;
-                } else {
-                    currentExtruder = materialIndex;
-                }
-
-                final GCodeExtruder extruder = extruders[currentExtruder];
-                extruder.stopExtruding(); // Make sure we are off
-
-                if (shield) {
-                    moveToDump(extruder);
-                }
-
-                // Now tell the GCodes to select the new extruder and stabilise all temperatures
-                gcode.writeCommand("T" + newExtruder.getID(), "select new extruder");
-
-                if (shield) {
-                    // Plot the purge pattern with the new extruder
-                    startExtruder(true);
-
-                    Point2D purgePoint = purge.getPurgeEnd(extruder, false, 0);
-                    singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
-                    currentX = purgePoint.x();
-                    currentY = purgePoint.y();
-
-                    purgePoint = purge.getPurgeEnd(extruder, false, 1);
-                    singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
-                    currentX = purgePoint.x();
-                    currentY = purgePoint.y();
-
-                    purgePoint = purge.getPurgeEnd(extruder, true, 1);
-                    singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
-                    currentX = purgePoint.x();
-                    currentY = purgePoint.y();
-
-                    purgePoint = purge.getPurgeEnd(extruder, true, 2);
-                    singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
-                    currentX = purgePoint.x();
-                    currentY = purgePoint.y();
-
-                    purgePoint = purge.getPurgeEnd(extruder, false, 2);
-                    singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), true);
-                    currentX = purgePoint.x();
-                    currentY = purgePoint.y();
-
-                    retract();
-                    extruder.stopExtruding();
-                }
+            final GCodeExtruder extruder = extruders[currentExtruder];
+            extruder.stopExtruding(); // Make sure we are off
+            if (shield) {
+                moveToDump(extruder);
+            }
+            gcode.writeCommand("T" + newExtruder.getID(), "select new extruder");
+            if (shield) {
+                plotPurgePattern(extruder);
             }
             forceSelection = false;
         }
     }
 
+    private void plotPurgePattern(final GCodeExtruder extruder) {
+        startExtruder(true);
+
+        Point2D purgePoint = purge.getPurgeEnd(extruder, false, 0);
+        singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate());
+        currentX = purgePoint.x();
+        currentY = purgePoint.y();
+
+        purgePoint = purge.getPurgeEnd(extruder, false, 1);
+        singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate());
+        currentX = purgePoint.x();
+        currentY = purgePoint.y();
+
+        purgePoint = purge.getPurgeEnd(extruder, true, 1);
+        singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate());
+        currentX = purgePoint.x();
+        currentY = purgePoint.y();
+
+        purgePoint = purge.getPurgeEnd(extruder, true, 2);
+        singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate());
+        currentX = purgePoint.x();
+        currentY = purgePoint.y();
+
+        purgePoint = purge.getPurgeEnd(extruder, false, 2);
+        singleMove(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate());
+        currentX = purgePoint.x();
+        currentY = purgePoint.y();
+
+        retract();
+        extruder.stopExtruding();
+    }
+
     private void moveToDump(final GCodeExtruder extruder) {
         final Point2D purgePoint = purge.getPurgeEnd(extruder, true, 0);
-        singleMove(purgePoint.x(), purgePoint.y(), currentZ, getFastXYFeedrate(), true);
+        singleMove(purgePoint.x(), purgePoint.y(), currentZ, getFastXYFeedrate());
         currentX = purgePoint.x();
         currentY = purgePoint.y();
     }
@@ -420,7 +408,7 @@ public class GCodePrinter {
     public void selectExtruder(final String material) {
         for (int i = 0; i < extruders.length; i++) {
             if (material.equals(extruders[i].getMaterial().getName())) {
-                selectExtruder(i, true);
+                selectExtruder(i);
                 return;
             }
         }

@@ -63,7 +63,7 @@ class LayerProducer {
         final double currentZ = printer.getZ();
 
         if (firstOneInLayer) {
-            printer.singleMove(polygon.point(0).x(), polygon.point(0).y(), currentZ, printer.getFastXYFeedrate(), true);
+            printer.singleMove(polygon.point(0).x(), polygon.point(0).y(), currentZ, printer.getFastXYFeedrate());
             printer.forceNextExtruder();
         }
         final String material = polygon.getMaterial();
@@ -123,11 +123,11 @@ class LayerProducer {
         final double currentZ = printer.getZ();
         final double fastFeedrateZ = printer.getFastFeedrateZ();
         if (liftZ > 0) {
-            printer.singleMove(printer.getX(), printer.getY(), currentZ + liftZ, fastFeedrateZ, true);
+            printer.singleMove(printer.getX(), printer.getY(), currentZ + liftZ, fastFeedrateZ);
         }
-        printer.singleMove(point.x(), point.y(), currentZ + liftZ, printer.getFastXYFeedrate(), true);
+        printer.singleMove(point.x(), point.y(), currentZ + liftZ, printer.getFastXYFeedrate());
         if (liftZ > 0) {
-            printer.singleMove(point.x(), point.y(), currentZ, fastFeedrateZ, true);
+            printer.singleMove(point.x(), point.y(), currentZ, fastFeedrateZ);
         }
     }
 
