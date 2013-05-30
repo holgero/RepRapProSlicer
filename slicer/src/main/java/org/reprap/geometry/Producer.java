@@ -84,8 +84,7 @@ public class Producer {
     }
 
     private void calculateSupportPolygons() {
-        final SupportCalculator supportCalculator = new SupportCalculator(currentConfiguration, layerRules.sliceCacheSize(),
-                stlList.size());
+        final SupportCalculator supportCalculator = new SupportCalculator(currentConfiguration, stlList.size());
         for (int layer = layerRules.getMachineLayerMax(); layer > 0; layer--) {
             for (int stl = 1; stl < stlList.size(); stl++) {
                 final Slice slice = stlList.slice(stl, layer);
