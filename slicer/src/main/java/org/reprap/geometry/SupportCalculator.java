@@ -69,7 +69,7 @@ public class SupportCalculator {
         final BooleanGrid previousSupport = previousLayers[stl];
         if (previousSupport == null) {
             previousLayers[stl] = unionOfThisLayer;
-            return new PolygonList();
+            return null;
         }
 
         previousLayers[stl] = BooleanGridMath.union(previousSupport, unionOfThisLayer);

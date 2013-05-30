@@ -123,8 +123,8 @@ public class LayerRules {
         machineZMax = modelZMax + foundationLayers * zStep;
         modelZ = modelZMax;
         machineZ = machineZMax;
-        modelLayer = modelLayerMax;
-        machineLayer = machineLayerMax;
+        modelLayer = 0;
+        machineLayer = 0;
 
         // Set up the records of the layers for later reversing (top->down ==>> bottom->up)
         firstPoint = new Point2D[machineLayerMax + 1];
@@ -264,18 +264,16 @@ public class LayerRules {
      * Move the machine up/down, but leave the model's layer where it is.
      */
     void stepMachine() {
-        machineLayer--;
+        machineLayer++;
         machineZ = zStep * machineLayer;
-        if (machineLayer >= 0) {
-            layerZ[machineLayer] = machineZ;
-        }
+        layerZ[machineLayer] = machineZ;
     }
 
     /**
      * Move both the model and the machine up/down a layer
      */
     void step() {
-        modelLayer--;
+        modelLayer++;
         modelZ = modelLayer * zStep;
         stepMachine();
     }
@@ -332,6 +330,23 @@ public class LayerRules {
         }
     }
 
+    void layFoundationBottomUp(final SimulationPlotter simulationPlot) {
+        if (getFoundationLayers() <= 0) {
+            return;
+        }
+        while (machineLayer <= getFoundationLayers()) {
+            LOGGER.debug("Commencing foundation layer at " + getMachineZ());
+            setLayerFileName(printer.startingLayer(zStep, machineZ, machineLayer, machineLayerMax, false));
+            fillFoundationRectangle(simulationPlot);
+            printer.finishedLayer(false);
+            if (machineLayer < getFoundationLayers()) {
+                stepMachine();
+            } else {
+                step();
+            }
+        }
+    }
+
     private void fillFoundationRectangle(final SimulationPlotter simulationPlot) {
         final int supportExtruderNo = currentConfiguration.getPrintSetting().getSupportExtruder();
         final ExtruderSetting supportExtruder = currentConfiguration.getPrinterSetting().getExtruderSettings()
@@ -341,8 +356,8 @@ public class LayerRules {
         final Hatcher hatcher = new Hatcher(new BooleanGrid(
                 currentConfiguration.getPrinterSetting().getMachineResolution() * 0.6, supportMaterial, bBox.scale(1.1),
                 CSG2D.RrCSGFromBox(bBox)));
-        final PolygonList foundationPolygon = hatcher.hatch(getFillHatchLine(extrusionSize), extrusionSize, currentConfiguration
-                .getPrintSetting().isPathOptimize());
+        final PolygonList foundationPolygon = hatcher.hatch(getFillHatchLine(extrusionSize), extrusionSize,
+                currentConfiguration.getPrintSetting().isPathOptimize());
         setFirstAndLast(new PolygonList[] { foundationPolygon });
         new LayerProducer(this, simulationPlot, currentConfiguration).plot(foundationPolygon);
     }

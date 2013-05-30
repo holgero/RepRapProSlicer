@@ -58,7 +58,7 @@ public class Producer {
         inFillPatterns = new InFillPatterns(layerRules, currentConfiguration);
         totalExtruders = currentConfiguration.getPrinterSetting().getExtruderSettings().size();
         final PrintSetting printSetting = currentConfiguration.getPrintSetting();
-        omitShield = printSetting.printShield();
+        omitShield = false;
         brimLines = printSetting.getBrimLines();
         supportCalculator = new SupportCalculator(currentConfiguration, stlList.size(), layerRules.getMachineLayerMax() + 1);
     }
@@ -67,11 +67,11 @@ public class Producer {
         if (currentConfiguration.getPrintSetting().printSupport()) {
             supportCalculator.calculateSupportPolygons(layerRules, stlList);
         }
-        while (layerRules.getModelLayer() > 0) {
+        layerRules.layFoundationBottomUp(simulationPlot);
+        while (layerRules.getMachineLayer() < layerRules.getMachineLayerMax()) {
             produceLayer();
             layerRules.step();
         }
-        layerRules.layFoundationTopDown(simulationPlot);
         try {
             layerRules.reverseLayers();
         } catch (final IOException e) {
@@ -146,7 +146,9 @@ public class Producer {
             final int shells = printSetting.getVerticalShells();
             if (printSetting.printSupport() && extruder == printSetting.getSupportExtruder()) {
                 final PolygonList support = supportCalculator.getSupport(layerRules.getModelLayer());
-                startNearHere = simplifyAndAdd(support, linkUp, startNearHere, result);
+                if (support != null) {
+                    startNearHere = simplifyAndAdd(support, linkUp, startNearHere, result);
+                }
             }
             final PolygonList borders = slice.getOutlineGrids(material, shells, extrusionSize, insideOut);
             final PolygonList fills = inFillPatterns.computePolygonsForMaterial(stl, slice, stlList, material, borders);
