@@ -1,7 +1,6 @@
 package org.reprap.geometry;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -63,22 +62,17 @@ public class Producer {
         if (currentConfiguration.getPrintSetting().printSupport()) {
             supportCalculator.calculateSupportPolygons(layerRules, stlList);
         }
+        layerRules.startPrint();
         layerRules.layFoundationBottomUp(simulationPlot);
+        layerRules.step();
         while (layerRules.getMachineLayer() < layerRules.getMachineLayerMax()) {
             produceLayer();
             layerRules.step();
         }
-        try {
-            layerRules.reverseLayers();
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
-        }
+        printer.terminate();
     }
 
     private void produceLayer() {
-        LOGGER.debug("Commencing model layer " + layerRules.getModelLayer() + " at " + layerRules.getMachineZ());
-        layerRules.setLayerFileName(printer.startingLayer(layerRules.getZStep(), layerRules.getMachineZ(),
-                layerRules.getMachineLayer(), layerRules.getMachineLayerMax(), false));
         progressListener.productionProgress(layerRules.getMachineLayer(), layerRules.getMachineLayerMax());
 
         final PolygonList allPolygons[] = new PolygonList[totalExtruders];
@@ -89,13 +83,17 @@ public class Producer {
         for (int stl = 0; stl < stlList.size(); stl++) {
             startNearHere = collectPolygonsForObject(stl, startNearHere, allPolygons);
         }
-        progressListener.productionProgress(layerRules.getMachineLayer(), layerRules.getMachineLayerMax());
-        layerRules.setFirstAndLast(allPolygons);
-        final LayerProducer lp = new LayerProducer(layerRules, simulationPlot, currentConfiguration);
-        for (final PolygonList pl : allPolygons) {
-            lp.plot(pl);
+        if (layerRules.setFirstAndLast(allPolygons)) {
+            LOGGER.debug("Commencing model layer " + layerRules.getModelLayer() + " at " + layerRules.getMachineZ());
+            printer.startingLayer(layerRules.getZStep(), layerRules.getMachineZ(), layerRules.getMachineLayer(),
+                    layerRules.getMachineLayerMax());
+            final LayerProducer lp = new LayerProducer(layerRules, simulationPlot, currentConfiguration);
+            for (final PolygonList pl : allPolygons) {
+                lp.plot(pl);
+            }
+        } else {
+            LOGGER.info("Empty layer " + layerRules.getMachineLayer());
         }
-        printer.finishedLayer(false);
     }
 
     private Point2D collectPolygonsForObject(final int stl, Point2D startNearHere, final PolygonList[] allPolygons) {

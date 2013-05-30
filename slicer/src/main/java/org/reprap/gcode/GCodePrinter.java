@@ -3,7 +3,6 @@ package org.reprap.gcode;
 import static org.reprap.configuration.store.MathRoutines.circleAreaForDiameter;
 
 import java.io.File;
-import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -21,7 +20,6 @@ public class GCodePrinter {
     private final CurrentConfiguration currentConfiguration;
     private final GCodeWriter gcode;
     private final GCodeExtruder extruders[];
-    private final boolean extruderUsed[];
     private final Purge purge;
     /**
      * Force an extruder to be selected on startup
@@ -43,7 +41,6 @@ public class GCodePrinter {
             throw new IllegalStateException("A Reprap printer must contain at least one extruder.");
         }
         extruders = new GCodeExtruder[extruderCount];
-        extruderUsed = new boolean[extruderCount];
         currentExtruder = 0;
         createExtruders();
     }
@@ -51,9 +48,6 @@ public class GCodePrinter {
     private void createExtruders() {
         for (int i = 0; i < extruders.length; i++) {
             extruders[i] = new GCodeExtruder(gcode, i, currentConfiguration);
-        }
-        for (int i = 0; i < extruderUsed.length; i++) {
-            extruderUsed[i] = false;
         }
     }
 
@@ -285,66 +279,37 @@ public class GCodePrinter {
      * Plot rectangles round the build on layer 0 or above
      */
     private void plotOutlines(Rectangle rectangle, final double machineZ) {
-        boolean zRight = false;
-
-        for (int e = extruders.length - 1; e >= 0; e--) { // Count down so we end with the one most likely to start the rest
-            if (extruderUsed[e]) {
-                if (!zRight) {
-                    singleMove(currentX, currentY, machineZ, getFastFeedrateZ(), true);
-                    currentZ = machineZ;
-                }
-                zRight = true;
-                selectExtruder(e, true, false);
-                final GCodeExtruder extruder = extruders[currentExtruder];
-                singleMove(rectangle.x().low(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate(), true);
-                startExtruder(true);
-                singleMove(rectangle.x().high(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate(), true);
-                singleMove(rectangle.x().high(), rectangle.y().high(), currentZ, extruder.getFastXYFeedrate(), true);
-                singleMove(rectangle.x().low(), rectangle.y().high(), currentZ, extruder.getFastXYFeedrate(), true);
-                singleMove(rectangle.x().low(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate(), true);
-                currentX = rectangle.x().low();
-                currentY = rectangle.y().low();
-                retract();
-                rectangle = rectangle.offset(2 * extruder.getExtrusionSize());
-                extruderUsed[e] = false; // Stop us doing it again
-            }
-        }
+        singleMove(currentX, currentY, machineZ, getFastFeedrateZ(), true);
+        currentZ = machineZ;
+        selectExtruder(0, true);
+        final GCodeExtruder extruder = extruders[currentExtruder];
+        singleMove(rectangle.x().low(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate(), true);
+        startExtruder(true);
+        singleMove(rectangle.x().high(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate(), true);
+        singleMove(rectangle.x().high(), rectangle.y().high(), currentZ, extruder.getFastXYFeedrate(), true);
+        singleMove(rectangle.x().low(), rectangle.y().high(), currentZ, extruder.getFastXYFeedrate(), true);
+        singleMove(rectangle.x().low(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate(), true);
+        currentX = rectangle.x().low();
+        currentY = rectangle.y().low();
+        retract();
+        rectangle = rectangle.offset(2 * extruder.getExtrusionSize());
     }
 
-    public String startingLayer(final double zStep, final double machineZ, final int machineLayer, final int maxMachineLayer,
-            final boolean really) {
+    public void startingLayer(final double zStep, final double machineZ, final int machineLayer, final int maxMachineLayer) {
         currentFeedrate = -1; // Force it to set the feedrate
-        final String result;
-        if (really) {
-            gcode.writeComment("#!LAYER: " + machineLayer + "/" + (maxMachineLayer - 1));
-            result = null;
-        } else {
-            final File temporaryFile = gcode.openTemporaryOutFile(machineLayer);
-            result = temporaryFile.getPath();
-        }
-        extruders[currentExtruder].zeroExtrudedLength(really);
+        gcode.writeComment("#!LAYER: " + machineLayer + "/" + (maxMachineLayer - 1));
+        extruders[currentExtruder].zeroExtrudedLength(true);
         currentZ = round(machineZ - zStep, 4);
-        singleMove(getX(), getY(), machineZ, getFastFeedrateZ(), really);
-
-        return result;
+        singleMove(getX(), getY(), machineZ, getFastFeedrateZ(), true);
     }
 
-    public void finishedLayer(final boolean reversing) {
-        if (!reversing) {
-            gcode.closeOutFile();
-        }
-    }
-
-    public void terminate(final Point2D lastPoint, final double lastZ) {
+    public void terminate() {
         if (getPrintSetting().printShield()) {
             moveToDump(extruders[currentExtruder]);
         }
 
-        currentX = round(lastPoint.x(), 2);
-        currentY = round(lastPoint.y(), 2);
-        currentZ = round(lastZ, 1);
-
         gcode.writeBlock(getPrinterSetting().getGcodeEpilogue(), "Epilogue:", "------");
+        gcode.closeOutFile();
     }
 
     private static double round(final double c, final double d) {
@@ -382,7 +347,7 @@ public class GCodePrinter {
         gcode.setGCodeFileForOutput(gcodeFile);
     }
 
-    private void selectExtruder(final int materialIndex, final boolean really, final boolean update) {
+    private void selectExtruder(final int materialIndex, final boolean really) {
         final GCodeExtruder oldExtruder = extruders[currentExtruder];
         final GCodeExtruder newExtruder = extruders[materialIndex];
         final boolean shield = getPrintSetting().printShield();
@@ -398,9 +363,6 @@ public class GCodePrinter {
                     currentExtruder = materialIndex;
                 }
 
-                if (update) {
-                    extruderUsed[materialIndex] = true;
-                }
                 final GCodeExtruder extruder = extruders[currentExtruder];
                 extruder.stopExtruding(); // Make sure we are off
 
@@ -455,24 +417,10 @@ public class GCodePrinter {
         currentY = purgePoint.y();
     }
 
-    /**
-     * Force the output stream to be some value - use with caution
-     */
-    public void forceOutputFile(final PrintStream fos) {
-        gcode.forceOutputFile(fos);
-    }
-
-    /**
-     * Return the name if the gcode file
-     */
-    public String getOutputFilename() {
-        return gcode.getOutputFilename();
-    }
-
     public void selectExtruder(final String material) {
         for (int i = 0; i < extruders.length; i++) {
             if (material.equals(extruders[i].getMaterial().getName())) {
-                selectExtruder(i, true, true);
+                selectExtruder(i, true);
                 return;
             }
         }

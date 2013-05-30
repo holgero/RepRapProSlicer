@@ -14,24 +14,12 @@ public class GCodeWriter {
     private static final Logger LOGGER = LogManager.getLogger(GCodeWriter.class);
     private static final Marker GCODE_MARKER = MarkerManager.getMarker("GCODE");
     private static final String COMMENT_CHAR = ";";
-    private static final String GCODE_EXTENSION = ".gcode";
-    private static final String FIRST_ENDING = "_prologue";
-    private static final String TMP_STRING = "_TeMpOrArY_";
 
     private final boolean debugGcode;
-    private String opFileName;
-    private String layerFileNames;
     private PrintStream fileOutStream = null;
 
     public GCodeWriter(final boolean debugGcode) {
         this.debugGcode = debugGcode;
-    }
-
-    /**
-     * Force the output stream - use with caution
-     */
-    public void forceOutputFile(final PrintStream fos) {
-        fileOutStream = fos;
     }
 
     /**
@@ -81,56 +69,14 @@ public class GCodeWriter {
     }
 
     public void setGCodeFileForOutput(final File gcodeFile) {
-        opFileName = gcodeFile.getAbsolutePath();
-        if (opFileName.endsWith(GCODE_EXTENSION)) {
-            opFileName = opFileName.substring(0, opFileName.length() - 6);
-        }
-
-        final String fn = opFileName + FIRST_ENDING + TMP_STRING + GCODE_EXTENSION;
-        LOGGER.debug("opening: " + fn);
-        final File fl = new File(fn);
-        fl.deleteOnExit();
-        final FileOutputStream fileStream;
         try {
-            fileStream = new FileOutputStream(fl);
+            fileOutStream = new PrintStream(new FileOutputStream(gcodeFile));
         } catch (final FileNotFoundException e) {
             throw new RuntimeException(e);
         }
-        fileOutStream = new PrintStream(fileStream);
-        String shortName = gcodeFile.getName();
-        if (!shortName.endsWith(GCODE_EXTENSION)) {
-            shortName += GCODE_EXTENSION;
-        }
-        layerFileNames = System.getProperty("java.io.tmpdir") + File.separator + shortName;
-        final File rfod = new File(layerFileNames);
-        if (!rfod.isDirectory() && !rfod.mkdir()) {
-            throw new RuntimeException("Failed to create " + layerFileNames);
-        }
-        rfod.deleteOnExit();
-        layerFileNames += File.separator;
-    }
-
-    private File getTemporaryFile(final int layerNumber) {
-        return new File(layerFileNames + "reprap" + layerNumber + TMP_STRING + GCODE_EXTENSION);
-    }
-
-    File openTemporaryOutFile(final int layerNumber) {
-        final File tempFile = getTemporaryFile(layerNumber);
-        try {
-            final FileOutputStream fileStream = new FileOutputStream(tempFile);
-            fileOutStream = new PrintStream(fileStream);
-        } catch (final FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-        tempFile.deleteOnExit();
-        return tempFile;
     }
 
     void closeOutFile() {
         fileOutStream.close();
-    }
-
-    public String getOutputFilename() {
-        return opFileName + GCODE_EXTENSION;
     }
 }

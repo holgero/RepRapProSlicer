@@ -1,11 +1,5 @@
 package org.reprap.geometry;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintStream;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reprap.configuration.CurrentConfiguration;
@@ -122,8 +116,8 @@ public class LayerRules {
         modelLayerMax = (int) (modelZMax / zStep) + 1;
         machineLayerMax = modelLayerMax + foundationLayers;
         machineZMax = modelZMax + foundationLayers * zStep;
-        modelZ = modelZMax;
-        machineZ = machineZMax;
+        modelZ = 0;
+        machineZ = 0;
         modelLayer = 0;
         machineLayer = 0;
 
@@ -168,14 +162,14 @@ public class LayerRules {
         return (int) Math.ceil(2 * (maxSurfaceLayers * 2 + 1));
     }
 
-    void setFirstAndLast(final PolygonList[] polygonLists) {
+    boolean setFirstAndLast(final PolygonList[] polygonLists) {
         firstPoint[machineLayer] = null;
         lastPoint[machineLayer] = null;
         if (polygonLists == null) {
-            return;
+            return false;
         }
         if (polygonLists.length <= 0) {
-            return;
+            return false;
         }
         Point2D first = null;
         PolygonList lastList = null;
@@ -190,11 +184,12 @@ public class LayerRules {
             }
         }
         if (lastList == null || first == null) {
-            return;
+            return false;
         }
         firstPoint[machineLayer] = first;
         final Polygon lastPolygon = lastList.polygon(lastList.size() - 1);
         lastPoint[machineLayer] = lastPolygon.point(lastPolygon.size() - 1);
+        return true;
     }
 
     public int realTopLayer() {
@@ -213,10 +208,6 @@ public class LayerRules {
 
     public void setLayerFileName(final String name) {
         layerFileNames[machineLayer] = name;
-    }
-
-    private Point2D getFirstPoint(final int layer) {
-        return firstPoint[layer];
     }
 
     public Point2D getLastPoint(final int layer) {
@@ -279,54 +270,14 @@ public class LayerRules {
         stepMachine();
     }
 
-    private static void copyFile(final PrintStream ps, final String ip) throws IOException {
-        final File f = new File(ip);
-        final FileReader fr = new FileReader(f);
-        try {
-            int character;
-            while ((character = fr.read()) >= 0) {
-                ps.print((char) character);
-            }
-            ps.flush();
-        } finally {
-            fr.close();
-        }
-    }
-
-    void reverseLayers() throws IOException {
-        final String fileName = printer.getOutputFilename();
-        final FileOutputStream fileStream = new FileOutputStream(fileName);
-        try {
-            final PrintStream fileOutStream = new PrintStream(fileStream);
-            printer.forceOutputFile(fileOutStream);
-            printer.startRun(bBox, layerZ[1], machineZMax); // Sets current X, Y, Z to 0 and optionally plots an outline
-            final int top = realTopLayer();
-            for (machineLayer = 1; machineLayer <= top; machineLayer++) {
-                machineZ = layerZ[machineLayer];
-                printer.startingLayer(zStep, machineZ, machineLayer, machineLayerMax, true);
-                printer.singleMove(getFirstPoint(machineLayer).x(), getFirstPoint(machineLayer).y(), machineZ,
-                        printer.getFastXYFeedrate(), true);
-                copyFile(fileOutStream, layerFileNames[machineLayer]);
-
-                printer.singleMove(getLastPoint(machineLayer).x(), getLastPoint(machineLayer).y(), machineZ,
-                        printer.getFastXYFeedrate(), false);
-                printer.finishedLayer(true);
-            }
-            printer.terminate(lastPoint[realTopLayer()], layerZ[realTopLayer()]);
-        } finally {
-            fileStream.close();
-        }
-    }
-
     void layFoundationTopDown(final SimulationPlotter simulationPlot) {
         if (getFoundationLayers() <= 0) {
             return;
         }
         while (machineLayer >= 0) {
             LOGGER.debug("Commencing foundation layer at " + getMachineZ());
-            setLayerFileName(printer.startingLayer(zStep, machineZ, machineLayer, machineLayerMax, false));
+            printer.startingLayer(zStep, machineZ, machineLayer, machineLayerMax);
             fillFoundationRectangle(simulationPlot);
-            printer.finishedLayer(false);
             stepMachine();
         }
     }
@@ -335,16 +286,11 @@ public class LayerRules {
         if (getFoundationLayers() <= 0) {
             return;
         }
-        while (machineLayer <= getFoundationLayers()) {
+        while (machineLayer < getFoundationLayers()) {
+            stepMachine();
             LOGGER.debug("Commencing foundation layer at " + getMachineZ());
-            setLayerFileName(printer.startingLayer(zStep, machineZ, machineLayer, machineLayerMax, false));
+            printer.startingLayer(zStep, machineZ, machineLayer, machineLayerMax);
             fillFoundationRectangle(simulationPlot);
-            printer.finishedLayer(false);
-            if (machineLayer < getFoundationLayers()) {
-                stepMachine();
-            } else {
-                step();
-            }
         }
     }
 
@@ -361,6 +307,10 @@ public class LayerRules {
                 currentConfiguration.getPrintSetting().isPathOptimize());
         setFirstAndLast(new PolygonList[] { foundationPolygon });
         new LayerProducer(this, simulationPlot, currentConfiguration).plot(foundationPolygon);
+    }
+
+    void startPrint() {
+        printer.startRun(bBox, zStep, machineZMax); // Sets current X, Y, Z to 0 and optionally plots an outline
     }
 
 }
