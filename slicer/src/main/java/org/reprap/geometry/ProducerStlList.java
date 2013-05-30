@@ -306,10 +306,9 @@ class ProducerStlList {
     /**
      * Compute the support hatching polygons for this set of patterns
      */
-    PolygonList computeSupport(final int stl, final Slice slice) {
+    PolygonList computeSupport(final int stl, final Slice slice, final int layer) {
         final int supportExtruderNo = currentConfiguration.getPrintSetting().getSupportExtruder();
         final MaterialSetting supportMaterial = currentConfiguration.getMaterials().get(supportExtruderNo);
-        final int layer = layerRules.getModelLayer();
         // Union of everything in this layer because that is everywhere that support _isn't_ needed.
         BooleanGrid unionOfThisLayer = slice.unionMaterials(supportMaterial.getName());
 
@@ -329,7 +328,7 @@ class ProducerStlList {
 
         // Now we subtract the union of this layer from all the stuff requiring support in the layer above.
         final BooleanGrid support = BooleanGridMath.difference(previousSupport, unionOfThisLayer);
-        return hatch(support, layerRules, false, true, currentConfiguration);
+        return hatchSupport(support, layer, currentConfiguration);
     }
 
     private static final class EdgeAndCsgsCollector {
@@ -616,33 +615,35 @@ class ProducerStlList {
      * layerConditions.
      */
     static PolygonList hatch(final BooleanGridList list, final LayerRules layerConditions, final boolean surface,
-            final boolean support, final CurrentConfiguration currentConfiguration) {
+            final CurrentConfiguration currentConfiguration) {
         final PolygonList result = new PolygonList();
         for (int i = 0; i < list.size(); i++) {
-            final PolygonList polygons = hatch(list.get(i), layerConditions, surface, support, currentConfiguration);
+            final PolygonList polygons = hatch(list.get(i), layerConditions, surface, currentConfiguration);
             result.add(polygons);
         }
         return result;
     }
 
     private static PolygonList hatch(final BooleanGrid grid, final LayerRules layerConditions, final boolean surface,
-            final boolean support, final CurrentConfiguration currentConfiguration) {
+            final CurrentConfiguration currentConfiguration) {
         final PrintSetting printSetting = currentConfiguration.getPrintSetting();
         final String material = grid.getMaterial();
         final double infillWidth;
-        if (support) {
-            infillWidth = printSetting.getSupportSpacing();
+        final double extrusionSize = currentConfiguration.getExtruderSetting(material).getExtrusionSize();
+        if (surface) {
+            infillWidth = extrusionSize;
         } else {
-            final double extrusionSize = currentConfiguration.getExtruderSetting(material).getExtrusionSize();
-            if (surface) {
-                infillWidth = extrusionSize;
-            } else {
-                infillWidth = extrusionSize / printSetting.getFillDensity();
-            }
+            infillWidth = extrusionSize / printSetting.getFillDensity();
         }
-        final HalfPlane hatchLine = layerConditions.getHatchDirection(support, infillWidth);
-        final Hatcher hatcher = new Hatcher(grid);
-        final PolygonList polygons = hatcher.hatch(hatchLine, infillWidth, printSetting.isPathOptimize());
-        return polygons;
+        final HalfPlane hatchLine = layerConditions.getFillHatchLine(infillWidth);
+        return new Hatcher(grid).hatch(hatchLine, infillWidth, printSetting.isPathOptimize());
+    }
+
+    private static PolygonList hatchSupport(final BooleanGrid grid, final int layer,
+            final CurrentConfiguration currentConfiguration) {
+        final PrintSetting printSetting = currentConfiguration.getPrintSetting();
+        final double infillWidth = printSetting.getSupportSpacing();
+        final HalfPlane hatchLine = LayerRules.getHatchLine(layer, printSetting.getSupportPattern());
+        return new Hatcher(grid).hatch(hatchLine, infillWidth, printSetting.isPathOptimize());
     }
 }

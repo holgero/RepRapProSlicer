@@ -238,27 +238,26 @@ public class LayerRules {
         return zStep;
     }
 
-    public HalfPlane getHatchDirection(final boolean support, final double alternatingOffset) {
+    public HalfPlane getFillHatchLine(final double alternatingOffset) {
         final int mylayer;
         if (getMachineLayer() < getFoundationLayers()) {
             mylayer = 1;
         } else {
             mylayer = machineLayer;
         }
-        final FillPattern fillPattern;
-        if (support) {
-            fillPattern = currentConfiguration.getPrintSetting().getSupportPattern();
-        } else {
-            fillPattern = currentConfiguration.getPrintSetting().getFillPattern();
-        }
-        final double angle = Math.toRadians(fillPattern.angle(mylayer));
-        HalfPlane result = new HalfPlane(new Point2D(0.0, 0.0), new Point2D(Math.sin(angle), Math.cos(angle)));
+        final FillPattern fillPattern = currentConfiguration.getPrintSetting().getFillPattern();
+        HalfPlane result = getHatchLine(mylayer, fillPattern);
 
-        if (((mylayer / 2) % 2 == 0) && !support) {
+        if ((mylayer / 2) % 2 == 0) {
             result = result.offset(0.5 * alternatingOffset);
         }
 
         return result;
+    }
+
+    public static HalfPlane getHatchLine(final int layer, final FillPattern fillPattern) {
+        final double angle = Math.toRadians(fillPattern.angle(layer));
+        return new HalfPlane(new Point2D(0.0, 0.0), new Point2D(Math.sin(angle), Math.cos(angle)));
     }
 
     /**
@@ -342,8 +341,8 @@ public class LayerRules {
         final Hatcher hatcher = new Hatcher(new BooleanGrid(
                 currentConfiguration.getPrinterSetting().getMachineResolution() * 0.6, supportMaterial, bBox.scale(1.1),
                 CSG2D.RrCSGFromBox(bBox)));
-        final PolygonList foundationPolygon = hatcher.hatch(getHatchDirection(false, extrusionSize), extrusionSize,
-                currentConfiguration.getPrintSetting().isPathOptimize());
+        final PolygonList foundationPolygon = hatcher.hatch(getFillHatchLine(extrusionSize), extrusionSize, currentConfiguration
+                .getPrintSetting().isPathOptimize());
         setFirstAndLast(new PolygonList[] { foundationPolygon });
         new LayerProducer(this, simulationPlot, currentConfiguration).plot(foundationPolygon);
     }

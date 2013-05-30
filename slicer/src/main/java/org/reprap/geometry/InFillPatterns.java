@@ -45,7 +45,7 @@ public final class InFillPatterns {
         final int surfaceLayers = currentConfiguration.getPrintSetting().getHorizontalShells();
         // Get the bottom out of the way - no fancy calculations needed.
         if (layer <= surfaceLayers) {
-            return ProducerStlList.hatch(offset(sliceBitmap, -1), layerRules, true, false, currentConfiguration);
+            return ProducerStlList.hatch(offset(sliceBitmap, -1), layerRules, true, currentConfiguration);
         }
 
         // If we are solid but the slices above or below us weren't, we need some fine infill as
@@ -99,8 +99,8 @@ public final class InFillPatterns {
         // Generate the infill patterns.  We do the bridges first, as each bridge subtracts its
         // lands from the other two sets of shapes.  We want that, so they don't get infilled twice.
         bridgeHatch(lands, material);
-        hatchedPolygons.add(ProducerStlList.hatch(insides, layerRules, false, false, currentConfiguration));
-        hatchedPolygons.add(ProducerStlList.hatch(surfaces, layerRules, true, false, currentConfiguration));
+        hatchedPolygons.add(ProducerStlList.hatch(insides, layerRules, false, currentConfiguration));
+        hatchedPolygons.add(ProducerStlList.hatch(surfaces, layerRules, true, currentConfiguration));
 
         return hatchedPolygons;
     }
@@ -212,7 +212,7 @@ public final class InFillPatterns {
 
     private void fillRingOfSupport(final BooleanGrid bridge, final double extrusionWidth) {
         final Hatcher hatcher = new Hatcher(bridge);
-        final PolygonList hatches = hatcher.hatch(layerRules.getHatchDirection(false, extrusionWidth), extrusionWidth,
+        final PolygonList hatches = hatcher.hatch(layerRules.getFillHatchLine(extrusionWidth), extrusionWidth,
                 currentConfiguration.getPrintSetting().isPathOptimize());
         hatchedPolygons.add(hatches);
     }
