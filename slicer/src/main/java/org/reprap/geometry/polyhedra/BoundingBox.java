@@ -1,4 +1,4 @@
-package org.reprap.geometry;
+package org.reprap.geometry.polyhedra;
 
 import javax.vecmath.Point3d;
 
@@ -20,7 +20,7 @@ public final class BoundingBox {
         XYbox = new Rectangle(new Interval(p0.x, p0.x), new Interval(p0.y, p0.y));
     }
 
-    public void expand(final Point3d p0) {
+    void expand(final Point3d p0) {
         Zint.expand(p0.z);
         XYbox.expand(new Point2D(p0.x, p0.y));
     }

@@ -14,6 +14,7 @@ import org.reprap.gcode.Purge;
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
+import org.reprap.geometry.polyhedra.BoundingBox;
 import org.reprap.geometry.polyhedra.STLObject;
 
 public class Producer {

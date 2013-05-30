@@ -65,7 +65,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.media.j3d.Appearance;
-import javax.media.j3d.BoundingBox;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.GeometryArray;
 import javax.media.j3d.Group;
@@ -109,7 +108,7 @@ public class STLObject {
     private final List<STLFileContents> contents = new ArrayList<STLFileContents>();
     private STLObjectMouseMover mouse = null; // The mouse, if it is controlling us
     private Vector3d extent = null; // X, Y and Z extent
-    private BoundingBox bbox = null; // Temporary storage for the bounding box while loading
+    private javax.media.j3d.BoundingBox bbox = null; // Temporary storage for the bounding box while loading
     private Vector3d rootOffset = null; // Offset of the first-loaded STL under stl
 
     public STLObject() {
@@ -777,15 +776,14 @@ public class STLObject {
         }
     }
 
-    public org.reprap.geometry.BoundingBox getBoundingBox() {
+    public BoundingBox getBoundingBox() {
         return getBranchGroupBoundingBox(getSTL(), getTransform());
     }
 
-    private static org.reprap.geometry.BoundingBox getBranchGroupBoundingBox(final BranchGroup bg,
-            final Transform3D transformation) {
-        org.reprap.geometry.BoundingBox result = null;
+    private static BoundingBox getBranchGroupBoundingBox(final BranchGroup bg, final Transform3D transformation) {
+        BoundingBox result = null;
         for (final Object object : Collections.list((Enumeration<?>) bg.getAllChildren())) {
-            final org.reprap.geometry.BoundingBox nextBox = createBoundingBox(object, transformation);
+            final BoundingBox nextBox = createBoundingBox(object, transformation);
             if (result == null) {
                 result = nextBox;
             } else {
@@ -800,15 +798,15 @@ public class STLObject {
     /**
      * Unpack the Shape3D(s) from value and find their enclosing XYZ box
      */
-    private static org.reprap.geometry.BoundingBox createBoundingBox(final Object value, final Transform3D trans) {
-        org.reprap.geometry.BoundingBox result = null;
+    private static BoundingBox createBoundingBox(final Object value, final Transform3D trans) {
+        BoundingBox result = null;
 
         if (value instanceof SceneGraphObject) {
             final SceneGraphObject sceneGraph = (SceneGraphObject) value;
             if (sceneGraph instanceof Group) {
                 final Group group = (Group) sceneGraph;
                 for (final Object object : Collections.list((Enumeration<?>) group.getAllChildren())) {
-                    final org.reprap.geometry.BoundingBox s = createBoundingBox(object, trans);
+                    final BoundingBox s = createBoundingBox(object, trans);
                     if (result == null) {
                         result = s;
                     } else {
@@ -828,8 +826,8 @@ public class STLObject {
     /**
      * Run through a Shape3D and find its enclosing XYZ box
      */
-    private static org.reprap.geometry.BoundingBox createShapeBoundingBox(final Shape3D shape, final Transform3D trans) {
-        org.reprap.geometry.BoundingBox result = null;
+    private static BoundingBox createShapeBoundingBox(final Shape3D shape, final Transform3D trans) {
+        BoundingBox result = null;
         final GeometryArray geometry = (GeometryArray) shape.getGeometry();
         if (geometry != null) {
             final Point3d vertex = new Point3d();
@@ -838,7 +836,7 @@ public class STLObject {
                 geometry.getCoordinate(i, vertex);
                 trans.transform(vertex, transformed);
                 if (result == null) {
-                    result = new org.reprap.geometry.BoundingBox(transformed);
+                    result = new BoundingBox(transformed);
                 } else {
                     result.expand(transformed);
                 }

@@ -55,6 +55,7 @@ import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.Attributes;
+import org.reprap.geometry.polyhedra.BoundingBox;
 import org.reprap.geometry.polyhedra.CSG3D;
 import org.reprap.geometry.polyhedra.STLObject;
 
