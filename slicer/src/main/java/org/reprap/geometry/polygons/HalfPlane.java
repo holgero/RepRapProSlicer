@@ -55,6 +55,7 @@
 
 package org.reprap.geometry.polygons;
 
+
 /**
  * Class to hold and manipulate linear half-planes
  */
@@ -87,28 +88,6 @@ public class HalfPlane {
         normal = new Point2D(a.normal);
         offset = a.offset;
         p = new Line(a.p);
-    }
-
-    /**
-     * Construct a half-plane from a 3D half-space cutting across a z plane
-     */
-    public HalfPlane(final Point2D normal, final double halfSpaceOffset) throws ParallelException {
-        this.normal = normal;
-        final double m = normal.mod();
-        if (m < 1.0e-10) {
-            throw new ParallelException("HalfPlane from HalfSpace - z parallel");
-        }
-        offset = halfSpaceOffset / m;
-        this.normal = Point2D.div(this.normal, m);
-        Point2D p0, p1;
-        if (Math.abs(normal.x()) < 0.1) {
-            p0 = new Point2D(0, -offset / normal.y());
-        } else {
-            p0 = new Point2D(-offset / normal.x(), 0);
-        }
-        p1 = Point2D.add(p0, normal.orthogonal());
-        p = new Line(p0, p1);
-        p.norm();
     }
 
     /**
@@ -222,20 +201,6 @@ public class HalfPlane {
     }
 
     /**
-     * Parameter value where a line crosses
-     * 
-     * @return parameter value
-     * @throws ParallelException
-     */
-    private double cross_t(final Line a) throws ParallelException {
-        final double det = Point2D.mul(a.direction(), normal);
-        if (det == 0) {
-            throw new ParallelException("cross_t: parallel lines.");
-        }
-        return -value(a.origin()) / det;
-    }
-
-    /**
      * Take a range of parameter values and a line, and find the intersection of
      * that range with the part of the line (if any) on the solid side of the
      * half-plane.
@@ -248,35 +213,35 @@ public class HalfPlane {
         }
 
         // Which way is the line pointing relative to our normal?
-        final boolean wipe_down = (Point2D.mul(a.direction(), normal) >= 0);
-        double t;
-        try {
-            t = cross_t(a);
-            if (t >= range.high()) {
-                if (wipe_down) {
-                    return range;
-                } else {
-                    return new Interval();
-                }
-            } else if (t <= range.low()) {
-                if (wipe_down) {
-                    return new Interval();
-                } else {
-                    return range;
-                }
-            } else {
-                if (wipe_down) {
-                    return new Interval(range.low(), t);
-                } else {
-                    return new Interval(t, range.high());
-                }
-            }
-        } catch (final ParallelException ple) {
-            t = value(a.origin());
+        final double product = Point2D.mul(a.direction(), normal);
+        if (product == 0) {
+            // parallel
+            final double t = value(a.origin());
             if (t <= 0) {
                 return range;
             } else {
                 return new Interval();
+            }
+        }
+        final boolean wipeDown = (product > 0);
+        final double t = -value(a.origin()) / product;
+        if (t >= range.high()) {
+            if (wipeDown) {
+                return range;
+            } else {
+                return new Interval();
+            }
+        } else if (t <= range.low()) {
+            if (wipeDown) {
+                return new Interval();
+            } else {
+                return range;
+            }
+        } else {
+            if (wipeDown) {
+                return new Interval(range.low(), t);
+            } else {
+                return new Interval(t, range.high());
             }
         }
     }
