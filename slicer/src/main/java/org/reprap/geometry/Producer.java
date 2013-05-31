@@ -31,6 +31,7 @@ public class Producer {
     private final CurrentConfiguration currentConfiguration;
     private final InFillPatterns inFillPatterns;
     private final SupportCalculator supportCalculator;
+    private final double maxMulticolorZ;
 
     public Producer(final File gcodeFile, final List<STLObject> stlObjects, final ProductionProgressListener progressListener,
             final SimulationPlotter simulationPlot, final CurrentConfiguration currentConfiguration) {
@@ -44,10 +45,12 @@ public class Producer {
         }
         final PrintSetting printSetting = currentConfiguration.getPrintSetting();
         if (printSetting.printShield()) {
-            final double modelZMax = ProducerStlList.getMaxMultimaterialZ(stlObjects);
-            if (modelZMax > 0) {
-                stlObjects.add(0, purge.getShield(modelZMax));
+            maxMulticolorZ = ProducerStlList.getMaxMultimaterialZ(stlObjects);
+            if (maxMulticolorZ > 0) {
+                stlObjects.add(0, purge.getShield(maxMulticolorZ));
             }
+        } else {
+            maxMulticolorZ = 0;
         }
         final BoundingBox buildVolume = ProducerStlList.getBoundingBox(stlObjects);
         layerRules = new LayerRules(buildVolume, currentConfiguration);
@@ -91,6 +94,9 @@ public class Producer {
             LOGGER.debug("Commencing model layer " + layerRules.getModelLayer() + " at " + layerRules.getMachineZ());
             printer.startingLayer(layerRules.getZStep(), layerRules.getMachineZ(), layerRules.getMachineLayer(),
                     layerRules.getMachineLayerMax());
+            if (isLastLayerMulticolor()) {
+                printer.forceNextExtruder();
+            }
             final LayerProducer lp = new LayerProducer(layerRules, simulationPlot, currentConfiguration, printer);
             for (final PolygonList pl : allPolygons) {
                 lp.plot(pl);
@@ -98,6 +104,10 @@ public class Producer {
         } else {
             LOGGER.info("Empty layer " + layerRules.getMachineLayer());
         }
+    }
+
+    private boolean isLastLayerMulticolor() {
+        return layerRules.getModelZ(layerRules.getModelLayer()) < maxMulticolorZ + layerRules.getZStep();
     }
 
     private Point2D collectPolygonsForObject(final int stl, Point2D startNearHere, final PolygonList[] allPolygons) {

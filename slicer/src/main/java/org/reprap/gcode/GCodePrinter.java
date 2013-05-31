@@ -290,9 +290,9 @@ public class GCodePrinter {
     public void startingLayer(final double zStep, final double machineZ, final int machineLayer, final int maxMachineLayer) {
         currentFeedrate = -1; // Force it to set the feedrate
         gcode.writeComment("#!LAYER: " + machineLayer + "/" + (maxMachineLayer - 1));
-        extruders[currentExtruder].zeroExtrudedLength(true);
+        extruders[currentExtruder].zeroExtrudedLength();
         currentZ = round(machineZ - zStep, 4);
-        singleMove(getX(), getY(), machineZ, getFastFeedrateZ());
+        singleMove(currentX, currentY, machineZ, getFastFeedrateZ());
     }
 
     public void terminate() {

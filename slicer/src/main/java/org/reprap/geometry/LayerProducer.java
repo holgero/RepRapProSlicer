@@ -69,7 +69,6 @@ class LayerProducer {
 
         if (firstOneInLayer) {
             printer.singleMove(polygon.point(0).x(), polygon.point(0).y(), currentZ, printer.getFastXYFeedrate());
-            printer.forceNextExtruder();
         }
         final String material = polygon.getMaterial();
         printer.selectExtruder(material);

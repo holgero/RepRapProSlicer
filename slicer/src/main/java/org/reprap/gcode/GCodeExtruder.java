@@ -74,14 +74,9 @@ public class GCodeExtruder {
         extruderState.setRetraction(retractionDistance);
     }
 
-    /**
-     * Zero the extruded length
-     */
-    void zeroExtrudedLength(final boolean really) {
+    void zeroExtrudedLength() {
         extruderState.zero();
-        if (really) {
-            gcode.writeCommand("G92 E0", "zero the extruded length");
-        }
+        gcode.writeCommand("G92 E0", "zero the extruded length");
     }
 
     void startExtrusion(final boolean reverse) {
