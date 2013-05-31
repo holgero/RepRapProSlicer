@@ -160,7 +160,7 @@ public class Hatcher {
             return null;
         }
 
-        final double vTarget = targetPlane.value(rectangle.realPoint(start, pixelSize));
+        final double vTarget = targetPlane.value(realPoint(start));
 
         vSet(start, true);
 
@@ -170,9 +170,9 @@ public class Hatcher {
         }
 
         Integer2DPoint pNew;
-        final double vOrigin = originPlane.value(rectangle.realPoint(p, pixelSize));
-        boolean notCrossedOriginPlane = originPlane.value(rectangle.realPoint(p, pixelSize)) * vOrigin >= 0;
-        boolean notCrossedTargetPlane = targetPlane.value(rectangle.realPoint(p, pixelSize)) * vTarget >= 0;
+        final double vOrigin = originPlane.value(realPoint(p));
+        boolean notCrossedOriginPlane = originPlane.value(realPoint(p)) * vOrigin >= 0;
+        boolean notCrossedTargetPlane = targetPlane.value(realPoint(p)) * vTarget >= 0;
         while (notCrossedOriginPlane && notCrossedTargetPlane) {
             track.add(p);
             vSet(p, true);
@@ -185,8 +185,8 @@ public class Hatcher {
             }
             dir = neighbourIndex(pNew.sub(p));
             p = pNew;
-            notCrossedOriginPlane = originPlane.value(rectangle.realPoint(p, pixelSize)) * vOrigin >= 0;
-            notCrossedTargetPlane = targetPlane.value(rectangle.realPoint(p, pixelSize)) * vTarget >= 0;
+            notCrossedOriginPlane = originPlane.value(realPoint(p)) * vOrigin >= 0;
+            notCrossedTargetPlane = targetPlane.value(realPoint(p)) * vTarget >= 0;
         }
 
         if (notCrossedOriginPlane) {
@@ -428,88 +428,73 @@ public class Hatcher {
      * Run through the snakes, trying to join them up to make longer snakes
      */
     private void joinUpSnakes(final Integer2DPolygonList snakes, final List<HalfPlane> hatches, final double gap) {
-        int i = 0;
         if (hatches.size() <= 0) {
             return;
         }
-        final Point2D n = hatches.get(0).normal();
-        Integer2DPolygon track;
-        while (i < snakes.size()) {
-            final Integer2DPoint iStart = snakes.polygon(i).point(0);
-            final Integer2DPoint iEnd = snakes.polygon(i).point(snakes.polygon(i).size() - 1);
-            double d;
-            int j = i + 1;
-            boolean incrementI = true;
-            while (j < snakes.size()) {
-                final Integer2DPoint jStart = snakes.polygon(j).point(0);
-                final Integer2DPoint jEnd = snakes.polygon(j).point(snakes.polygon(j).size() - 1);
-                incrementI = true;
-
-                Point2D diff = Point2D.sub(rectangle.realPoint(jStart, pixelSize), rectangle.realPoint(iStart, pixelSize));
-                d = Point2D.mul(diff, n);
-                if (Math.abs(d) < 1.5 * gap) {
-                    track = goToPoint(iStart, jStart, hPlane(iStart, hatches), gap);
-                    if (track != null) {
-                        final Integer2DPolygon p = snakes.polygon(i).negate();
-                        p.add(track);
-                        p.add(snakes.polygon(j));
-                        snakes.set(i, p);
-                        snakes.remove(j);
-                        incrementI = false;
-                        break;
-                    }
+        final Point2D normal = hatches.get(0).normal();
+        for (int i = 0; i < snakes.size(); i++) {
+            do {
+                final Integer2DPolygon newSnake = joinUpSnake(snakes, hatches, gap, snakes.polygon(i), normal, i);
+                if (newSnake == null) {
+                    break;
                 }
+                snakes.set(i, newSnake);
+            } while (true);
+        }
+    }
 
-                diff = Point2D.sub(rectangle.realPoint(jEnd, pixelSize), rectangle.realPoint(iStart, pixelSize));
-                d = Point2D.mul(diff, n);
-                if (Math.abs(d) < 1.5 * gap) {
-                    track = goToPoint(iStart, jEnd, hPlane(iStart, hatches), gap);
-                    if (track != null) {
-                        final Integer2DPolygon p = snakes.polygon(j);
-                        p.add(track.negate());
-                        p.add(snakes.polygon(i));
-                        snakes.set(i, p);
-                        snakes.remove(j);
-                        incrementI = false;
-                        break;
-                    }
-                }
-
-                diff = Point2D.sub(rectangle.realPoint(jStart, pixelSize), rectangle.realPoint(iEnd, pixelSize));
-                d = Point2D.mul(diff, n);
-                if (Math.abs(d) < 1.5 * gap) {
-                    track = goToPoint(iEnd, jStart, hPlane(iEnd, hatches), gap);
-                    if (track != null) {
-                        final Integer2DPolygon p = snakes.polygon(i);
-                        p.add(track);
-                        p.add(snakes.polygon(j));
-                        snakes.set(i, p);
-                        snakes.remove(j);
-                        incrementI = false;
-                        break;
-                    }
-                }
-
-                diff = Point2D.sub(rectangle.realPoint(jEnd, pixelSize), rectangle.realPoint(iEnd, pixelSize));
-                d = Point2D.mul(diff, n);
-                if (Math.abs(d) < 1.5 * gap) {
-                    track = goToPoint(iEnd, jEnd, hPlane(iEnd, hatches), gap);
-                    if (track != null) {
-                        final Integer2DPolygon p = snakes.polygon(i);
-                        p.add(track);
-                        p.add(snakes.polygon(j).negate());
-                        snakes.set(i, p);
-                        snakes.remove(j);
-                        incrementI = false;
-                        break;
-                    }
-                }
-                j++;
-            }
-            if (incrementI) {
-                i++;
+    private Integer2DPolygon joinUpSnake(final Integer2DPolygonList snakes, final List<HalfPlane> hatches, final double gap,
+            final Integer2DPolygon snake, final Point2D normal, final int index) {
+        for (int j = index + 1; j < snakes.size(); j++) {
+            final Integer2DPolygon secondSnake = snakes.polygon(j);
+            final Integer2DPolygon newSnake = joinUpTwoSnakes(hatches, snake, secondSnake, normal, gap);
+            if (newSnake != null) {
+                snakes.remove(j);
+                return newSnake;
             }
         }
+        return null;
+    }
+
+    private Integer2DPolygon joinUpTwoSnakes(final List<HalfPlane> hatches, final Integer2DPolygon snake,
+            final Integer2DPolygon secondSnake, final Point2D normal, final double gap) {
+        Integer2DPolygon track = getTrackIfNear(hatches, gap, snake.point(0), secondSnake.point(0), normal);
+        if (track != null) {
+            return concatenate(snake.negate(), track, secondSnake);
+        }
+        track = getTrackIfNear(hatches, gap, snake.point(0), secondSnake.point(secondSnake.size() - 1), normal);
+        if (track != null) {
+            return concatenate(secondSnake, track.negate(), snake);
+        }
+        track = getTrackIfNear(hatches, gap, snake.point(snake.size() - 1), secondSnake.point(0), normal);
+        if (track != null) {
+            return concatenate(snake, track, secondSnake);
+        }
+        track = getTrackIfNear(hatches, gap, snake.point(snake.size() - 1), secondSnake.point(secondSnake.size() - 1), normal);
+        if (track != null) {
+            return concatenate(snake, track, secondSnake.negate());
+        }
+        return null;
+    }
+
+    private static Integer2DPolygon concatenate(final Integer2DPolygon a, final Integer2DPolygon b, final Integer2DPolygon c) {
+        final Integer2DPolygon result = a;
+        result.add(b);
+        result.add(c);
+        return result;
+    }
+
+    private Integer2DPolygon getTrackIfNear(final List<HalfPlane> hatches, final double gap, final Integer2DPoint from,
+            final Integer2DPoint to, final Point2D normal) {
+        final Point2D direction = Point2D.sub(realPoint(to), realPoint(from));
+        if (Math.abs(Point2D.mul(direction, normal)) < 1.5 * gap) {
+            return goToPoint(from, to, hPlane(from, hatches), gap);
+        }
+        return null;
+    }
+
+    private Point2D realPoint(final Integer2DPoint point) {
+        return rectangle.realPoint(point, pixelSize);
     }
 
     /**
@@ -545,7 +530,7 @@ public class Hatcher {
             p = findUnvisitedNeighbourOnEdgeInDirection(p, dir);
             boolean lost = p == null;
             if (!lost) {
-                lost = Math.abs(hatch.value(rectangle.realPoint(p, pixelSize))) > tooFar;
+                lost = Math.abs(hatch.value(realPoint(p))) > tooFar;
             }
             if (lost) {
                 for (int i = 0; i < track.size(); i++) {
@@ -568,7 +553,7 @@ public class Hatcher {
     private HalfPlane hPlane(final Integer2DPoint p, final List<HalfPlane> hatches) {
         int bot = 0;
         int top = hatches.size() - 1;
-        final Point2D rp = rectangle.realPoint(p, pixelSize);
+        final Point2D rp = realPoint(p);
         double dbot = Math.abs(hatches.get(bot).value(rp));
         double dtop = Math.abs(hatches.get(top).value(rp));
         while (top - bot > 1) {
