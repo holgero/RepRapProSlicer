@@ -157,7 +157,7 @@ public class PolygonList {
      * @param i
      * @param j
      */
-    private void swap(final int i, final int j) {
+    void swap(final int i, final int j) {
         final Polygon p = polygons.get(i);
         polygons.set(i, polygons.get(j));
         polygons.set(j, p);
@@ -168,7 +168,7 @@ public class PolygonList {
      * 
      * @param i
      */
-    private void negate(final int i) {
+    void negate(final int i) {
         final Polygon p = polygon(i).negate();
         polygons.set(i, p);
     }
@@ -202,99 +202,6 @@ public class PolygonList {
         }
 
         return r;
-    }
-
-    /**
-     * Re-order and (if need be) reverse the order of the polygons in a list so
-     * the end of the first is near the start of the second and so on. This is a
-     * heuristic - it does not do a full travelling salesman... This deals with
-     * both open and closed polygons.
-     */
-    public PolygonList nearEnds(final Point2D startNearHere) {
-        final PolygonList result = new PolygonList();
-        if (size() <= 0) {
-            return result;
-        }
-
-        for (int i = 0; i < size(); i++) {
-            result.add(polygon(i));
-        }
-
-        // Make the nearest end point on any polygon to startNearHere
-        // go to polygon 0 and get it the right way round if it's open.
-
-        // Begin by moving the polygon nearest the specified start point to the head
-        // of the list.
-        if (startNearHere != null) {
-            double d = Double.POSITIVE_INFINITY;
-            boolean neg = false;
-            int near = -1;
-            for (int i = 0; i < size(); i++) {
-                double d2 = Point2D.dSquared(startNearHere, result.polygon(i).point(0));
-                if (d2 < d) {
-                    near = i;
-                    d = d2;
-                    neg = false;
-                }
-                if (!result.polygon(i).isClosed()) {
-                    d2 = Point2D.dSquared(startNearHere, result.polygon(i).point(result.polygon(i).size() - 1));
-                    if (d2 < d) {
-                        near = i;
-                        d = d2;
-                        neg = true;
-                    }
-                }
-            }
-
-            if (near < 0) {
-                throw new RuntimeException("RrPolygonList.nearEnds(): no nearest end found to start point!");
-            }
-
-            result.swap(0, near);
-            if (neg) {
-                result.negate(0);
-            }
-        }
-
-        // Go through the rest of the polygons getting them as close as
-        // reasonable.
-        for (int i = 0; i < result.size() - 1; i++) {
-            final Point2D end;
-            if (result.polygon(i).isClosed()) {
-                end = result.polygon(i).point(0);
-            } else {
-                end = result.polygon(i).point(result.polygon(i).size() - 1);
-            }
-            boolean neg = false;
-            int near = -1;
-            double d = Double.POSITIVE_INFINITY;
-            for (int j = i + 1; j < result.size(); j++) {
-                double d2 = Point2D.dSquared(end, result.polygon(j).point(0));
-                if (d2 < d) {
-                    near = j;
-                    d = d2;
-                    neg = false;
-                }
-
-                if (!result.polygon(j).isClosed()) {
-                    d2 = Point2D.dSquared(end, result.polygon(j).point(result.polygon(j).size() - 1));
-                    if (d2 < d) {
-                        near = j;
-                        d = d2;
-                        neg = true;
-                    }
-                }
-            }
-
-            if (near > 0) {
-                if (neg) {
-                    result.negate(near);
-                }
-                result.swap(i + 1, near);
-            }
-        }
-
-        return result;
     }
 
     /**

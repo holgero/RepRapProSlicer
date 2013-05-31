@@ -10,8 +10,8 @@ import org.reprap.configuration.ExtruderSetting;
 import org.reprap.configuration.PrintSetting;
 import org.reprap.gcode.GCodePrinter;
 import org.reprap.gcode.Purge;
+import org.reprap.geometry.polygons.AirMoveOptimizer;
 import org.reprap.geometry.polygons.Point2D;
-import org.reprap.geometry.polygons.Polygon;
 import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polyhedra.BoundingBox;
 import org.reprap.geometry.polyhedra.STLObject;
@@ -31,6 +31,7 @@ public class Producer {
     private final CurrentConfiguration currentConfiguration;
     private final InFillPatterns inFillPatterns;
     private final SupportCalculator supportCalculator;
+    private final AirMoveOptimizer optimizer = new AirMoveOptimizer();
     private final double maxMulticolorZ;
 
     public Producer(final File gcodeFile, final List<STLObject> stlObjects, final ProductionProgressListener progressListener,
@@ -86,9 +87,9 @@ public class Producer {
         for (int extruder = 0; extruder < allPolygons.length; extruder++) {
             allPolygons[extruder] = new PolygonList();
         }
-        Point2D startNearHere = new Point2D(0, 0);
+        optimizer.setStart(new Point2D(0, 0));
         for (int stl = 0; stl < stlList.size(); stl++) {
-            startNearHere = collectPolygonsForObject(stl, startNearHere, allPolygons);
+            collectPolygonsForObject(stl, allPolygons);
         }
         if (layerRules.setFirstAndLast(allPolygons)) {
             LOGGER.debug("Commencing model layer " + layerRules.getModelLayer() + " at " + layerRules.getMachineZ());
@@ -110,7 +111,7 @@ public class Producer {
         return layerRules.getModelZ(layerRules.getModelLayer()) < maxMulticolorZ + layerRules.getZStep();
     }
 
-    private Point2D collectPolygonsForObject(final int stl, Point2D startNearHere, final PolygonList[] allPolygons) {
+    private void collectPolygonsForObject(final int stl, final PolygonList[] allPolygons) {
         final PrintSetting printSetting = currentConfiguration.getPrintSetting();
         final List<ExtruderSetting> extruderSettings = currentConfiguration.getPrinterSetting().getExtruderSettings();
         final Slice slice = stlList.slice(stl, layerRules.getModelLayer());
@@ -118,7 +119,7 @@ public class Producer {
             final double extrusionSize = extruderSettings.get(0).getExtrusionSize();
             final PolygonList brim = slice.computeBrim(brimLines, extrusionSize);
             final double linkUp = 4 * extrusionSize * extrusionSize;
-            startNearHere = simplifyAndAdd(brim, linkUp, startNearHere, allPolygons[0]);
+            simplifyAndAdd(brim, linkUp, allPolygons[0]);
         }
         for (int extruder = 0; extruder < totalExtruders; extruder++) {
             final PolygonList result = allPolygons[extruder];
@@ -130,26 +131,20 @@ public class Producer {
             if (printSetting.printSupport() && extruder == printSetting.getSupportExtruder()) {
                 final PolygonList support = supportCalculator.getSupport(layerRules.getModelLayer());
                 if (support != null) {
-                    startNearHere = simplifyAndAdd(support, linkUp, startNearHere, result);
+                    simplifyAndAdd(support, linkUp, result);
                 }
             }
             final PolygonList borders = slice.getOutlineGrids(material, shells, extrusionSize, insideOut);
             final PolygonList fills = inFillPatterns.computePolygonsForMaterial(stl, slice, stlList, material, borders);
-            startNearHere = simplifyAndAdd(borders, linkUp, startNearHere, result);
-            startNearHere = simplifyAndAdd(fills, linkUp, startNearHere, result);
+            simplifyAndAdd(borders, linkUp, result);
+            simplifyAndAdd(fills, linkUp, result);
         }
-        return startNearHere;
     }
 
-    private static Point2D simplifyAndAdd(final PolygonList list, final double linkUp, Point2D startNearHere,
-            final PolygonList result) {
+    private void simplifyAndAdd(final PolygonList list, final double linkUp, final PolygonList result) {
         if (list.size() > 0) {
             list.radicalReOrder(linkUp);
-            final PolygonList reorderedList = list.nearEnds(startNearHere);
-            final Polygon last = reorderedList.polygon(reorderedList.size() - 1);
-            startNearHere = last.point(last.size() - 1);
-            result.add(reorderedList);
+            result.add(optimizer.reduceAirMovement(list));
         }
-        return startNearHere;
     }
 }
