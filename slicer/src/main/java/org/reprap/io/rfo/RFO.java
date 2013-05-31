@@ -21,7 +21,6 @@ import org.apache.commons.io.IOUtils;
 import org.reprap.configuration.CurrentConfiguration;
 import org.reprap.geometry.polyhedra.AllSTLsToBuild;
 import org.reprap.geometry.polyhedra.STLObject;
-import org.reprap.io.csg.CSGReader;
 import org.xml.sax.SAXException;
 
 /**
@@ -49,14 +48,6 @@ public class RFO {
                 final File copiedFile = new File(targetDirectory, stlFileName);
                 if (!copiedFile.exists()) {
                     FileUtils.copyFile(stlFile, copiedFile);
-                }
-
-                final File csgFile = CSGReader.getCsgFile(stlFile);
-                if (csgFile != null) {
-                    final File copiedCsgFile = new File(targetDirectory, csgFile.getName());
-                    if (!copiedCsgFile.exists()) {
-                        FileUtils.copyFile(csgFile, copiedCsgFile);
-                    }
                 }
             }
         }

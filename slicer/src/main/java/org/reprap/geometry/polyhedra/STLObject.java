@@ -198,7 +198,6 @@ public class STLObject {
      */
     private void addStlFileContents(final STLFileContents stlFileContents, final Attributes att, final boolean add) {
         final BranchGroup bgResult = stlFileContents.getStl();
-        CSG3D csgResult = stlFileContents.getCsg();
         recursiveSetUserData(bgResult, att);
 
         bgResult.setUserData(att);
@@ -206,7 +205,6 @@ public class STLObject {
         if (add) {
             // Add the loaded stuff to us
             recursiveSetOffset(bgResult, rootOffset);
-            csgResult = setOffset(csgResult, rootOffset);
             setAppearance(getAppearance());
             bbox.combine(stlFileContents.getBbox());
             updateExtent();
@@ -226,13 +224,11 @@ public class STLObject {
             // Position us centre at origin:
             rootOffset = add(rootOffset, neg(centre));
             recursiveSetOffset(bgResult, rootOffset);
-            csgResult = setOffset(csgResult, rootOffset);
             final Transform3D temp_t = new Transform3D();
             temp_t.set(centre);
             trans.setTransform(temp_t);
             restoreAppearance();
         }
-        stlFileContents.setCsg(csgResult);
         stlFileContents.setAttribute(att);
         contents.add(stlFileContents);
     }
@@ -368,18 +364,6 @@ public class STLObject {
         }
     }
 
-    private static CSG3D setOffset(final CSG3D c, final Vector3d p) {
-        if (c == null) {
-            return null;
-        }
-        final Matrix4d m = new Matrix4d();
-        m.setIdentity();
-        m.m03 = p.x;
-        m.m13 = p.y;
-        m.m23 = p.z;
-        return c.transform(m);
-    }
-
     /**
      * Soft translation
      */
@@ -463,10 +447,6 @@ public class STLObject {
 
     public BranchGroup getSTL(final int i) {
         return contents.get(i).getStl();
-    }
-
-    public CSG3D getCSG(final int i) {
-        return contents.get(i).getCsg();
     }
 
     // Get the number of objects

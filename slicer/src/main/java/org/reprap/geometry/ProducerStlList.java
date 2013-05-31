@@ -56,7 +56,6 @@ import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.Attributes;
 import org.reprap.geometry.polyhedra.BoundingBox;
-import org.reprap.geometry.polyhedra.CSG3D;
 import org.reprap.geometry.polyhedra.STLObject;
 
 class ProducerStlList {
@@ -238,9 +237,8 @@ class ProducerStlList {
         return result;
     }
 
-    private static final class EdgeAndCsgsCollector {
+    private static final class EdgeCollector {
         final List<LineSegment> edges = new ArrayList<>();
-        final List<CSG3D> csgs = new ArrayList<>();
         String material = null;
     }
 
@@ -258,19 +256,12 @@ class ProducerStlList {
         }
 
         final double currentZ = layerRules.getModelZ(layer);
-        final Map<String, EdgeAndCsgsCollector> collectorMap = collectEdgeLinesAndCsgs(stlIndex, currentZ);
+        final Map<String, EdgeCollector> collectorMap = collectEdgeLinesAndCsgs(stlIndex, currentZ);
 
         final BooleanGridList result = new BooleanGridList();
         // Turn them into lists of polygons, one for each material, then turn those into pixelmaps.
         for (final String material : collectorMap.keySet()) {
-            final EdgeAndCsgsCollector collector = collectorMap.get(material);
-            // Deal with CSG shapes (much simpler and faster).
-            for (int i = 0; i < collector.csgs.size(); i++) {
-                final CSG2D csgp = CSG3D.slice(collector.csgs.get(i), currentZ);
-                result.add(new BooleanGrid(currentConfiguration.getPrinterSetting().getMachineResolution() * 0.6,
-                        collector.material, rectangles.get(stlIndex), csgp));
-            }
-
+            final EdgeCollector collector = collectorMap.get(material);
             // Deal with STL-generated edges
             if (collector.edges.size() > 0) {
                 PolygonList pgl = simpleCull(collector.edges);
@@ -289,10 +280,10 @@ class ProducerStlList {
         return new Slice(result);
     }
 
-    private Map<String, EdgeAndCsgsCollector> collectEdgeLinesAndCsgs(final int stlIndex, final double currentZ) {
-        final Map<String, EdgeAndCsgsCollector> collectorMap = new HashMap<String, EdgeAndCsgsCollector>();
+    private Map<String, EdgeCollector> collectEdgeLinesAndCsgs(final int stlIndex, final double currentZ) {
+        final Map<String, EdgeCollector> collectorMap = new HashMap<String, EdgeCollector>();
         for (final MaterialSetting material : currentConfiguration.getMaterials()) {
-            collectorMap.put(material.getName(), new EdgeAndCsgsCollector());
+            collectorMap.put(material.getName(), new EdgeCollector());
         }
 
         // Generate all the edges for STLObject i at this z
@@ -304,14 +295,9 @@ class ProducerStlList {
         for (int i = 0; i < stlObject.size(); i++) {
             final BranchGroup group = stlObject.getSTL(i);
             final String material = ((Attributes) (group.getUserData())).getMaterial();
-            final EdgeAndCsgsCollector collector = collectorMap.get(material);
+            final EdgeCollector collector = collectorMap.get(material);
             collector.material = material;
-            final CSG3D csg = stlObject.getCSG(i);
-            if (csg != null) {
-                collector.csgs.add(csg.transform(m4));
-            } else {
-                recursiveSetEdges(group, trans, currentZ, material, collector.edges);
-            }
+            recursiveSetEdges(group, trans, currentZ, material, collector.edges);
         }
         return collectorMap;
     }

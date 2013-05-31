@@ -34,21 +34,13 @@ import javax.media.j3d.Shape3D;
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Point3d;
 
-import org.reprap.geometry.polyhedra.CSG3D;
 import org.reprap.geometry.polyhedra.STLFileContents;
-import org.reprap.io.csg.CSGReader;
 
 import com.sun.j3d.loaders.Scene;
 
 public class StlFileLoader {
 
     public static STLFileContents loadSTLFileContents(final File location) {
-        final CSGReader csgr = new CSGReader(location);
-        CSG3D csgResult = null;
-        if (csgr.csgAvailable()) {
-            csgResult = csgr.csg();
-        }
-
         final Scene scene;
         try {
             scene = new StlFile().load(location.getAbsolutePath());
@@ -77,7 +69,7 @@ public class StlFileLoader {
             }
         }
 
-        return new STLFileContents(location, bgResult, csgResult, volume, bbox);
+        return new STLFileContents(location, bgResult, volume, bbox);
     }
 
     /**
