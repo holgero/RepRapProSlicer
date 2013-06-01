@@ -23,21 +23,21 @@
  e-mail: A.Bowyer@bath.ac.uk
  
  RepRap is free; you can redistribute it and/or
- modify it under the terms of the GNU Library General Public
+ modify it under the terms of the GNU Library General private
  Licence as published by the Free Software Foundation; either
  version 2 of the Licence, or (at your option) any later version.
  
  RepRap is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- Library General Public Licence for more details.
+ Library General private Licence for more details.
  
  For this purpose the words "software" and "library" in the GNU Library
- General Public Licence are taken to mean any and all computer programs
+ General private Licence are taken to mean any and all computer programs
  computer files data results documents and other copyright information
  available from the RepRap project.
  
- You should have received a copy of the GNU Library General Public
+ You should have received a copy of the GNU Library General private
  Licence along with RepRap; if not, write to the Free
  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA,
  or see
@@ -63,7 +63,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * RrPolygonList: A collection of 2D polygons List of polygons class. This too
+ * PolygonList: A collection of 2D polygons List of polygons class. This too
  * maintains a maximum enclosing rectangle.
  */
 public class PolygonList {
@@ -106,28 +106,6 @@ public class PolygonList {
     }
 
     /**
-     * Overwrite one of the polygons
-     * 
-     * @param i
-     *            index of polygon to overwrite
-     * @param p
-     *            polygon to set at index i
-     */
-    public void set(final int i, final Polygon p) {
-        polygons.set(i, p);
-    }
-
-    /**
-     * Remove one from the list
-     * 
-     * @param i
-     *            index of polygon to remove
-     */
-    private void remove(final int i) {
-        polygons.remove(i);
-    }
-
-    /**
      * Put a new list on the end
      * 
      * @param lst
@@ -149,28 +127,6 @@ public class PolygonList {
     public void add(final Polygon p) {
         polygons.add(p);
         box.expand(p.getBox());
-    }
-
-    /**
-     * Swap two in the list
-     * 
-     * @param i
-     * @param j
-     */
-    void swap(final int i, final int j) {
-        final Polygon p = polygons.get(i);
-        polygons.set(i, polygons.get(j));
-        polygons.set(j, p);
-    }
-
-    /**
-     * Negate one of the polygons
-     * 
-     * @param i
-     */
-    void negate(final int i) {
-        final Polygon p = polygon(i).negate();
-        polygons.set(i, p);
     }
 
     @Override
@@ -371,71 +327,6 @@ public class PolygonList {
                 throw new RuntimeException("RrPolygonList.radicalReOrder(): more than one material in the list!");
             }
         }
-    }
-
-    /**
-     * Remove polygon pol from the list, replacing it with two polygons, the
-     * first being pol's vertices from 0 to st inclusive, and the second being
-     * pol's vertices from en to its end inclusive. It is permissible for st ==
-     * en, but if st > en, then they are swapped.
-     * 
-     * The two new polygons are put on the end of the list.
-     */
-    public void cutPolygon(final int pol, int st, int en) {
-        final Polygon old = polygon(pol);
-        final Polygon p1 = new Polygon(old.getMaterial(), old.isClosed());
-        final Polygon p2 = new Polygon(old.getMaterial(), old.isClosed());
-        if (st > en) {
-            final int temp = st;
-            st = en;
-            en = temp;
-        }
-        if (st > 0) {
-            for (int i = 0; i <= st; i++) {
-                p1.add(old.point(i));
-            }
-        }
-        if (en < old.size() - 1) {
-            for (int i = en; i < old.size(); i++) {
-                p2.add(old.point(i));
-            }
-        }
-        remove(pol);
-        if (p1.size() > 1) {
-            add(p1);
-        }
-        if (p2.size() > 1) {
-            add(p2);
-        }
-    }
-
-    /**
-     * Search a polygon list to find the nearest point on all the polygons
-     * within it to the point p.
-     * 
-     * Only polygons with the same material are compared.
-     */
-    public PolygonIndexedPoint ppSearch(final Point2D p, final String material) {
-        if (size() <= 0) {
-            return null;
-        }
-        double minDistance = Double.POSITIVE_INFINITY;
-        PolygonIndexedPoint result = null;
-        for (int i = 0; i < size(); i++) {
-            final Polygon pgon = polygon(i);
-            if (material.equals(pgon.getMaterial())) {
-                final int n = pgon.nearestVertex(p);
-                final double distance = Point2D.dSquared(p, pgon.point(n));
-                if (distance < minDistance) {
-                    result = new PolygonIndexedPoint(n, i, pgon);
-                    minDistance = distance;
-                }
-            }
-        }
-        if (result == null) {
-            throw new RuntimeException("no point found!");
-        }
-        return result;
     }
 
     /**

@@ -23,21 +23,21 @@
  e-mail: A.Bowyer@bath.ac.uk
  
  RepRap is free; you can redistribute it and/or
- modify it under the terms of the GNU Library General Public
+ modify it under the terms of the GNU Library General private
  Licence as published by the Free Software Foundation; either
  version 2 of the Licence, or (at your option) any later version.
  
  RepRap is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- Library General Public Licence for more details.
+ Library General private Licence for more details.
  
  For this purpose the words "software" and "library" in the GNU Library
- General Public Licence are taken to mean any and all computer programs
+ General private Licence are taken to mean any and all computer programs
  computer files data results documents and other copyright information
  available from the RepRap project.
  
- You should have received a copy of the GNU Library General Public
+ You should have received a copy of the GNU Library General private
  Licence along with RepRap; if not, write to the Free
  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA,
  or see
@@ -70,7 +70,6 @@ package org.reprap.geometry.polygons;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -85,12 +84,6 @@ public class Polygon {
      * End joined to beginning?
      */
     private boolean closed = false;
-
-    /**
-     * Used to choose the starting point for a randomized-start copy of a
-     * polygon
-     */
-    private static final Random RANDOM = new Random(918273);
 
     /**
      * The (X, Y) points round the polygon as Rr2Points
@@ -208,20 +201,6 @@ public class Polygon {
     }
 
     /**
-     * Sum of the edge lengths
-     */
-    public double getLength() {
-        double len = 0;
-        for (int i = 1; i < size(); i++) {
-            len = len + Point2D.d(point(i), point(i - 1));
-        }
-        if (closed) {
-            len = len + Point2D.d(point(0), point(size() - 1));
-        }
-        return len;
-    }
-
-    /**
      * Put a new polygon on the end (N.B. Attributes of the new polygon are
      * ignored)
      */
@@ -233,22 +212,6 @@ public class Polygon {
             points.add(new Point2D(p.point(i)));
         }
 
-        box.expand(p.box);
-    }
-
-    /**
-     * Put a new polygon in the middle (at vertex k, which will be at the end of
-     * the inserted polygon afterwards). (N.B. Attributes of the new polygon are
-     * ignored)
-     */
-    private void add(int k, final Polygon p) {
-        if (p.size() == 0) {
-            return;
-        }
-        for (int i = 0; i < p.size(); i++) {
-            points.add(k, new Point2D(p.point(i)));
-            k++;
-        }
         box.expand(p.box);
     }
 
@@ -277,16 +240,9 @@ public class Polygon {
     }
 
     /**
-     * @return same polygon starting at a random vertex
-     */
-    public Polygon randomStart() {
-        return newStart(RANDOM.nextInt(size()));
-    }
-
-    /**
      * @return same polygon, but starting at vertex i
      */
-    public Polygon newStart(int i) {
+    Polygon newStart(int i) {
         if (!isClosed()) {
             throw new RuntimeException("attempt to reorder an open polygon");
         }
@@ -320,60 +276,6 @@ public class Polygon {
         }
         if (result < 0) {
             throw new RuntimeException("found no point nearest to: " + p);
-        }
-        return result;
-    }
-
-    /**
-     * Find the nearest vertex on this polygon to any on polygon p, reorder p so
-     * that its nearest is its first one, then merge that polygon into this one.
-     * The reordering is only done if the distance^2 is less than linkUp. If no
-     * reordering and merging are done false is returned, otherwise true is
-     * returned.
-     */
-    boolean nearestVertexReorderMerge(final Polygon p, final double linkUp) {
-        if (!p.isClosed()) {
-            throw new RuntimeException("attempt to reorder an open polygon");
-        }
-
-        double d = Double.POSITIVE_INFINITY;
-        int myPoint = -1;
-        int itsPoint = -1;
-        for (int i = 0; i < size(); i++) {
-            final int j = p.nearestVertex(point(i));
-            final double d2 = Point2D.dSquared(point(i), p.point(j));
-            if (d2 < d) {
-                d = d2;
-                myPoint = i;
-                itsPoint = j;
-            }
-        }
-        if (itsPoint >= 0 && d < linkUp * linkUp) {
-            final Polygon ro = p.newStart(itsPoint);
-            ro.add(0, point(myPoint));
-            add(myPoint, ro);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * Find the index of the polygon point that has the maximal parametric
-     * projection onto a line.
-     */
-    public int maximalVertex(final Line ln) {
-        double d = Double.NEGATIVE_INFINITY;
-        int result = -1;
-        for (int i = 0; i < size(); i++) {
-            final double d2 = ln.projection(point(i));
-            if (d2 > d) {
-                d = d2;
-                result = i;
-            }
-        }
-        if (result < 0) {
-            throw new RuntimeException("found no maximal projection point to line: " + ln);
         }
         return result;
     }
