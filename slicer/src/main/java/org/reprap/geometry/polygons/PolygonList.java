@@ -416,12 +416,12 @@ public class PolygonList {
             return CSG2D.nothing();
         }
         if (size() == 1) {
-            return polygon(0).toCSG();
+            return new Polygon2Csg2dConverter(polygon(0)).getCsg2d();
         }
 
         final List<CSG2D> csgPols = new ArrayList<CSG2D>();
         for (int i = 0; i < size(); i++) {
-            csgPols.add(polygon(i).toCSG());
+            csgPols.add(new Polygon2Csg2dConverter(polygon(i)).getCsg2d());
         }
 
         return resolveInsides(csgPols);
