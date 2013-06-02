@@ -68,7 +68,7 @@ class LayerProducer {
         final double currentZ = printer.getZ();
 
         if (firstOneInLayer) {
-            printer.moveTo(polygon.point(0).x(), polygon.point(0).y(), currentZ, printer.getFastXYFeedrate(), false);
+            printer.moveTo(polygon.point(0).x(), polygon.point(0).y(), currentZ, printer.getFastXYFeedrate());
         }
         final String material = polygon.getMaterial();
         printer.selectExtruder(material);
@@ -96,8 +96,8 @@ class LayerProducer {
         final double extrudeBackLength = extruder.getExtrusionOverrun();
         extrusionPath.backStepExtrude(extrudeBackLength);
 
-        final double liftZ = extruder.getLift();
-        singleMove(printer, liftZ, extrusionPath.point(0));
+        final Point2D startPoint = extrusionPath.point(0);
+        printer.travelTo(startPoint.x(), startPoint.y());
 
         // Print any lead-in.
         printer.startExtruder(firstOneInLayer);
@@ -115,23 +115,10 @@ class LayerProducer {
         }
         for (int i = 0; i < pathLength; i++) {
             final Point2D point = extrusionPath.point(i % extrusionPath.size());
-            printer.moveTo(point.x(), point.y(), layerRules.getMachineZ(), feedrate, false);
+            printer.moveTo(point.x(), point.y(), layerRules.getMachineZ(), feedrate);
             if (i == extruderOffIndex) {
                 printer.retract();
             }
-        }
-        printer.moveTo(printer.getX(), printer.getY(), layerRules.getMachineZ(), extruder.getPrintExtrusionRate(), liftZ > 0);
-    }
-
-    private static void singleMove(final GCodePrinter printer, final double liftZ, final Point2D point) {
-        final double currentZ = printer.getZ();
-        final double fastFeedrateZ = printer.getFastFeedrateZ();
-        if (liftZ > 0) {
-            printer.moveTo(printer.getX(), printer.getY(), currentZ + liftZ, fastFeedrateZ, false);
-        }
-        printer.moveTo(point.x(), point.y(), currentZ + liftZ, printer.getFastXYFeedrate(), false);
-        if (liftZ > 0) {
-            printer.moveTo(point.x(), point.y(), currentZ, fastFeedrateZ, false);
         }
     }
 

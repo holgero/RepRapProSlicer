@@ -141,7 +141,7 @@ public class GCodePrinter {
         currentZ = z;
     }
 
-    public void moveTo(double x, double y, double z, double feedrate, final boolean lift) {
+    public void moveTo(double x, double y, double z, double feedrate) {
         x = checkCoordinate("x", x, getMaximumXvalue());
         y = checkCoordinate("y", y, getMaximumYvalue());
         z = checkCoordinate("z", z, getMaximumZvalue());
@@ -165,14 +165,6 @@ public class GCodePrinter {
         if (zMove && xyMove) {
             LOGGER.debug("attempt to move in X|Y and Z simultaneously: (x, y, z) = (" + currentX + "->" + x + ", " + currentY
                     + "->" + y + ", " + currentZ + "->" + z + ", " + ")");
-        }
-
-        //go up first?
-        if (lift) {
-            final double liftIncrement = extruders[currentExtruder].getLift();
-            final double liftedZ = round(currentZ + liftIncrement, 4);
-            qZMove(liftedZ, getFastFeedrateZ());
-            qFeedrate(feedrate);
         }
 
         if (dz > 0) {
@@ -227,16 +219,16 @@ public class GCodePrinter {
      * Plot rectangles round the build on layer 0 or above
      */
     private void plotOutlines(Rectangle rectangle, final double machineZ) {
-        moveTo(currentX, currentY, machineZ, getFastFeedrateZ(), false);
+        moveTo(currentX, currentY, machineZ, getFastFeedrateZ());
         currentZ = machineZ;
         selectExtruder(0);
         final GCodeExtruder extruder = extruders[currentExtruder];
-        moveTo(rectangle.x().low(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate(), false);
+        moveTo(rectangle.x().low(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate());
         startExtruder(true);
-        moveTo(rectangle.x().high(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate(), false);
-        moveTo(rectangle.x().high(), rectangle.y().high(), currentZ, extruder.getFastXYFeedrate(), false);
-        moveTo(rectangle.x().low(), rectangle.y().high(), currentZ, extruder.getFastXYFeedrate(), false);
-        moveTo(rectangle.x().low(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate(), false);
+        moveTo(rectangle.x().high(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate());
+        moveTo(rectangle.x().high(), rectangle.y().high(), currentZ, extruder.getFastXYFeedrate());
+        moveTo(rectangle.x().low(), rectangle.y().high(), currentZ, extruder.getFastXYFeedrate());
+        moveTo(rectangle.x().low(), rectangle.y().low(), currentZ, extruder.getFastXYFeedrate());
         currentX = rectangle.x().low();
         currentY = rectangle.y().low();
         retract();
@@ -248,7 +240,7 @@ public class GCodePrinter {
         gcode.writeComment("#!LAYER: " + machineLayer + "/" + (maxMachineLayer - 1));
         extruders[currentExtruder].zeroExtrudedLength();
         currentZ = round(machineZ - zStep, 4);
-        moveTo(currentX, currentY, machineZ, getFastFeedrateZ(), false);
+        moveTo(currentX, currentY, machineZ, getFastFeedrateZ());
     }
 
     public void terminate() {
@@ -326,27 +318,27 @@ public class GCodePrinter {
         startExtruder(true);
 
         Point2D purgePoint = purge.getPurgeEnd(extruder, false, 0);
-        moveTo(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), false);
+        moveTo(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate());
         currentX = purgePoint.x();
         currentY = purgePoint.y();
 
         purgePoint = purge.getPurgeEnd(extruder, false, 1);
-        moveTo(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), false);
+        moveTo(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate());
         currentX = purgePoint.x();
         currentY = purgePoint.y();
 
         purgePoint = purge.getPurgeEnd(extruder, true, 1);
-        moveTo(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), false);
+        moveTo(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate());
         currentX = purgePoint.x();
         currentY = purgePoint.y();
 
         purgePoint = purge.getPurgeEnd(extruder, true, 2);
-        moveTo(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), false);
+        moveTo(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate());
         currentX = purgePoint.x();
         currentY = purgePoint.y();
 
         purgePoint = purge.getPurgeEnd(extruder, false, 2);
-        moveTo(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate(), false);
+        moveTo(purgePoint.x(), purgePoint.y(), currentZ, extruder.getFastXYFeedrate());
         currentX = purgePoint.x();
         currentY = purgePoint.y();
 
@@ -355,7 +347,7 @@ public class GCodePrinter {
 
     private void moveToDump(final GCodeExtruder extruder) {
         final Point2D purgePoint = purge.getPurgeEnd(extruder, true, 0);
-        moveTo(purgePoint.x(), purgePoint.y(), currentZ, getFastXYFeedrate(), false);
+        moveTo(purgePoint.x(), purgePoint.y(), currentZ, getFastXYFeedrate());
         currentX = purgePoint.x();
         currentY = purgePoint.y();
     }
@@ -468,5 +460,16 @@ public class GCodePrinter {
 
     private PrinterSetting getPrinterSetting() {
         return currentConfiguration.getPrinterSetting();
+    }
+
+    public void travelTo(final double x, final double y) {
+        final double liftZ = extruders[currentExtruder].getLift();
+        if (liftZ > 0) {
+            moveTo(getX(), getY(), currentZ + liftZ, getFastFeedrateZ());
+        }
+        moveTo(x, y, currentZ, getFastXYFeedrate());
+        if (liftZ > 0) {
+            moveTo(x, y, currentZ - liftZ, getFastFeedrateZ());
+        }
     }
 }
