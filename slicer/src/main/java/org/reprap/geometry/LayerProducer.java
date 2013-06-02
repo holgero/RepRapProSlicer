@@ -103,19 +103,21 @@ class LayerProducer {
         // Print any lead-in.
         printer.startExtruder(firstOneInLayer);
         firstOneInLayer = false;
-        boolean extrudeOff = false;
+
         int pathLength = extrusionPath.size();
         if (extrusionPath.isClosed()) {
             // plot to each point(0..n) and then to point(0).
             pathLength++;
         }
+        int extruderOffIndex = pathLength - 1;
+        if (extrudeBackLength > 0) {
+            extruderOffIndex = extrusionPath.extrudeEnd() + 1;
+        }
         for (int i = 0; i < pathLength; i++) {
             final Point2D point = extrusionPath.point(i % extrusionPath.size());
             final double feedrate = extrusionPath.speed(i % extrusionPath.size());
-            final boolean oldexoff = extrudeOff;
-            extrudeOff = (i > extrusionPath.extrudeEnd() && extrudeBackLength > 0) || i == pathLength - 1;
             printer.moveTo(point.x(), point.y(), layerRules.getMachineZ(), feedrate, false);
-            if (oldexoff ^ extrudeOff) {
+            if (i == extruderOffIndex) {
                 printer.retract();
             }
         }
