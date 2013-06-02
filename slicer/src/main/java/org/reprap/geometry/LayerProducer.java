@@ -68,7 +68,7 @@ class LayerProducer {
         final double currentZ = printer.getZ();
 
         if (firstOneInLayer) {
-            printer.singleMove(polygon.point(0).x(), polygon.point(0).y(), currentZ, printer.getFastXYFeedrate());
+            printer.moveTo(polygon.point(0).x(), polygon.point(0).y(), currentZ, printer.getFastXYFeedrate(), false);
         }
         final String material = polygon.getMaterial();
         printer.selectExtruder(material);
@@ -114,7 +114,7 @@ class LayerProducer {
             final double feedrate = extrusionPath.speed(i % extrusionPath.size());
             final boolean oldexoff = extrudeOff;
             extrudeOff = (i > extrusionPath.extrudeEnd() && extrudeBackLength > 0) || i == pathLength - 1;
-            printer.printTo(point.x(), point.y(), layerRules.getMachineZ(), feedrate, extrudeOff);
+            printer.moveTo(point.x(), point.y(), layerRules.getMachineZ(), feedrate, false);
             if (oldexoff ^ extrudeOff) {
                 printer.retract();
             }
@@ -126,11 +126,11 @@ class LayerProducer {
         final double currentZ = printer.getZ();
         final double fastFeedrateZ = printer.getFastFeedrateZ();
         if (liftZ > 0) {
-            printer.singleMove(printer.getX(), printer.getY(), currentZ + liftZ, fastFeedrateZ);
+            printer.moveTo(printer.getX(), printer.getY(), currentZ + liftZ, fastFeedrateZ, false);
         }
-        printer.singleMove(point.x(), point.y(), currentZ + liftZ, printer.getFastXYFeedrate());
+        printer.moveTo(point.x(), point.y(), currentZ + liftZ, printer.getFastXYFeedrate(), false);
         if (liftZ > 0) {
-            printer.singleMove(point.x(), point.y(), currentZ, fastFeedrateZ);
+            printer.moveTo(point.x(), point.y(), currentZ, fastFeedrateZ, false);
         }
     }
 
