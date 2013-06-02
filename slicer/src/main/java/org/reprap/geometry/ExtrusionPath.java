@@ -20,30 +20,19 @@
  */
 package org.reprap.geometry;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.reprap.geometry.polygons.Point2D;
 import org.reprap.geometry.polygons.Polygon;
 
 class ExtrusionPath {
     private final Polygon path;
     /**
-     * The speed of the machine at each corner
-     */
-    private final List<Double> speeds = new ArrayList<Double>();
-    /**
      * The index of the last point to draw to, if there are more that should
      * just be moved over
      */
     private int extrudeEnd = -1;
 
-    ExtrusionPath(final Polygon path, final double speed) {
+    ExtrusionPath(final Polygon path) {
         this.path = path;
-        for (int i = 0; i < path.size(); i++) {
-            speeds.add(Double.valueOf(speed));
-        }
-        validate();
     }
 
     void backStepExtrude(final double extrudeBackLength) {
@@ -77,16 +66,11 @@ class ExtrusionPath {
                 sum = sum - extrudeBackLength;
                 q = Point2D.sub(path.point(last), path.point(i));
                 p = Point2D.add(path.point(i), Point2D.mul(q, sum / q.mod()));
-                double s = 0;
-                s = speeds.get(last) - speeds.get(i);
-                s = speeds.get(i) + s * sum / q.mod();
                 final int j = i + 1;
                 if (j < path.size()) {
                     path.add(j, p);
-                    speeds.add(j, new Double(s));
                 } else {
                     path.add(p);
-                    speeds.add(new Double(s));
                 }
                 extrudeEnd = j;
                 break;
@@ -97,10 +81,6 @@ class ExtrusionPath {
 
     Point2D point(final int i) {
         return path.point(i);
-    }
-
-    double speed(final int i) {
-        return speeds.get(i).doubleValue();
     }
 
     int size() {
@@ -121,11 +101,5 @@ class ExtrusionPath {
 
     boolean isClosed() {
         return path.isClosed();
-    }
-
-    void validate() {
-        if (speeds.size() != path.size()) {
-            throw new RuntimeException("Speeds arrays differs from path size: " + speeds.size() + ", " + path.size());
-        }
     }
 }

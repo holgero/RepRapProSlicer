@@ -80,13 +80,12 @@ class LayerProducer {
         }
 
         final ExtruderSetting extruder = currentConfiguration.getExtruderSetting(material);
-        final ExtrusionPath extrusionPath = new ExtrusionPath(polygon, calculateFeedrate(polygon,
-                extruder.getPrintExtrusionRate()));
+        final ExtrusionPath extrusionPath = new ExtrusionPath(polygon);
         plotExtrusionPath(extrusionPath, extruder);
     }
 
-    private double calculateFeedrate(final Polygon polygon, final double extrusionRate) {
-        if (polygon.isClosed()) {
+    private double calculateFeedrate(final ExtrusionPath path, final double extrusionRate) {
+        if (path.isClosed()) {
             return currentConfiguration.getPrintSetting().getPerimeterSpeed() * extrusionRate;
         } else {
             return currentConfiguration.getPrintSetting().getInfillSpeed() * extrusionRate;
@@ -104,6 +103,7 @@ class LayerProducer {
         printer.startExtruder(firstOneInLayer);
         firstOneInLayer = false;
 
+        final double feedrate = calculateFeedrate(extrusionPath, extruder.getPrintExtrusionRate());
         int pathLength = extrusionPath.size();
         if (extrusionPath.isClosed()) {
             // plot to each point(0..n) and then to point(0).
@@ -115,7 +115,6 @@ class LayerProducer {
         }
         for (int i = 0; i < pathLength; i++) {
             final Point2D point = extrusionPath.point(i % extrusionPath.size());
-            final double feedrate = extrusionPath.speed(i % extrusionPath.size());
             printer.moveTo(point.x(), point.y(), layerRules.getMachineZ(), feedrate, false);
             if (i == extruderOffIndex) {
                 printer.retract();
