@@ -136,7 +136,7 @@ class ProducerStlList {
         // Turn them into lists of polygons, one for each material, then turn those into pixelmaps.
         for (final String material : collectorMap.keySet()) {
             final EdgeCollector collector = collectorMap.get(material);
-            PolygonList pgl = collector.simpleCull();
+            PolygonList pgl = collector.simpleCull(material);
 
             if (pgl.size() > 0) {
                 pgl = pgl.simplify(GRID_RESOLUTION * 1.5);
@@ -167,7 +167,7 @@ class ProducerStlList {
             final BranchGroup group = stlObject.getSTL(i);
             final String material = ((Attributes) (group.getUserData())).getMaterial();
             final EdgeCollector collector = collectorMap.get(material);
-            collector.recursiveSetEdges(group, trans, currentZ, material);
+            collector.recursiveSetEdges(group, trans, currentZ);
         }
         return collectorMap;
     }

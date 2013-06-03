@@ -11,15 +11,13 @@ public final class LineSegment {
      */
     private final Point2D a;
     private final Point2D b;
-    private final String material;
 
     /**
      * Constructor takes two intersection points with an STL triangle edge.
      */
-    public LineSegment(final Point2D p, final Point2D q, final String material) {
+    public LineSegment(final Point2D p, final Point2D q) {
         a = p;
         b = q;
-        this.material = material;
     }
 
     public Point2D getA() {
@@ -28,9 +26,5 @@ public final class LineSegment {
 
     public Point2D getB() {
         return b;
-    }
-
-    public String getMaterial() {
-        return material;
     }
 }

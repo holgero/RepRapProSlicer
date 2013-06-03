@@ -44,14 +44,14 @@ final class EdgeCollector {
     /**
      * Get all the polygons represented by the edges.
      */
-    PolygonList simpleCull() {
+    PolygonList simpleCull(final String material) {
         final PolygonList result = new PolygonList();
-        Polygon next = getNextPolygon();
+        Polygon next = getNextPolygon(material);
         while (next != null) {
             if (next.size() >= 3) {
                 result.add(next);
             }
-            next = getNextPolygon();
+            next = getNextPolygon(material);
         }
 
         return result;
@@ -97,13 +97,13 @@ final class EdgeCollector {
     /**
      * Stitch together the some of the edges to form a polygon.
      */
-    private Polygon getNextPolygon() {
+    private Polygon getNextPolygon(final String material) {
         if (edges.size() <= 0) {
             return null;
         }
         startLong();
         LineSegment next = edges.remove(0);
-        final Polygon result = new Polygon(next.getMaterial(), true);
+        final Polygon result = new Polygon(material, true);
         final Point2D start = next.getA();
         result.add(start);
         Point2D end = next.getB();
@@ -159,17 +159,17 @@ final class EdgeCollector {
     /**
      * Unpack the Shape3D(s) from value and set edges from them
      */
-    void recursiveSetEdges(final Object value, final Transform3D trans, final double z, final String material) {
+    void recursiveSetEdges(final Object value, final Transform3D trans, final double z) {
         if (value instanceof SceneGraphObject) {
             final SceneGraphObject sg = (SceneGraphObject) value;
             if (sg instanceof Group) {
                 final Group g = (Group) sg;
                 final java.util.Enumeration<?> enumKids = g.getAllChildren();
                 while (enumKids.hasMoreElements()) {
-                    recursiveSetEdges(enumKids.nextElement(), trans, z, material);
+                    recursiveSetEdges(enumKids.nextElement(), trans, z);
                 }
             } else if (sg instanceof Shape3D) {
-                addAllEdges((Shape3D) sg, trans, z, material);
+                addAllEdges((Shape3D) sg, trans, z);
             }
         }
     }
@@ -178,7 +178,7 @@ final class EdgeCollector {
      * Run through a Shape3D and set edges from it at plane z Apply the
      * transform first
      */
-    private void addAllEdges(final Shape3D shape, final Transform3D trans, final double z, final String material) {
+    private void addAllEdges(final Shape3D shape, final Transform3D trans, final double z) {
         final GeometryArray g = (GeometryArray) shape.getGeometry();
         final Point3d p1 = new Point3d();
         final Point3d p2 = new Point3d();
@@ -197,7 +197,7 @@ final class EdgeCollector {
             trans.transform(p1, q1);
             trans.transform(p2, q2);
             trans.transform(p3, q3);
-            addEdge(q1, q2, q3, z, material);
+            addEdge(q1, q2, q3, z);
         }
     }
 
@@ -206,7 +206,7 @@ final class EdgeCollector {
      * Also update the triangulation of the object below the current slice used
      * for the simulation window.
      */
-    private void addEdge(final Point3d p, final Point3d q, final Point3d r, final double z, final String material) {
+    private void addEdge(final Point3d p, final Point3d q, final Point3d r, final double z) {
         Point3d odd;
         Point3d even1;
         Point3d even2;
@@ -257,7 +257,7 @@ final class EdgeCollector {
             even2 = q;
             break;
         default:
-            throw new RuntimeException("addEdge(): the | function doesn't seem to work...");
+            throw new RuntimeException(pat + " not covered in switch");
         }
 
         // Work out the intersection line segment (e1 -> e2) between the z plane and the triangle
@@ -271,6 +271,6 @@ final class EdgeCollector {
         e2 = new Point2D(e2.x(), e2.y());
 
         // Too short?
-        edges.add(new LineSegment(e1, e2, material));
+        edges.add(new LineSegment(e1, e2));
     }
 }
