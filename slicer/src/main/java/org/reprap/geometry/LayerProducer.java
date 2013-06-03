@@ -74,9 +74,7 @@ class LayerProducer {
         printer.selectExtruder(material);
 
         if (simulationPlot != null) {
-            final PolygonList pgl = new PolygonList();
-            pgl.add(polygon);
-            simulationPlot.add(pgl);
+            simulationPlot.add(polygon);
         }
 
         final ExtruderSetting extruder = currentConfiguration.getExtruderSetting(material);
@@ -153,7 +151,6 @@ class LayerProducer {
                 CSG2D.RrCSGFromBox(box)));
         final PolygonList foundationPolygon = hatcher.hatch(layerRules.getFillHatchLine(extrusionSize), extrusionSize,
                 currentConfiguration.getPrintSetting().isPathOptimize());
-        layerRules.setFirstAndLast(new PolygonList[] { foundationPolygon });
         plot(foundationPolygon);
     }
 }

@@ -91,7 +91,7 @@ public class Producer {
         for (int stl = 0; stl < stlList.size(); stl++) {
             collectPolygonsForObject(stl, allPolygons);
         }
-        if (layerRules.setFirstAndLast(allPolygons)) {
+        if (!isEmpty(allPolygons)) {
             LOGGER.debug("Commencing model layer " + layerRules.getModelLayer() + " at " + layerRules.getMachineZ());
             printer.startingLayer(layerRules.getZStep(), layerRules.getMachineZ(), layerRules.getMachineLayer(),
                     layerRules.getMachineLayerMax());
@@ -146,5 +146,16 @@ public class Producer {
             list.radicalReOrder(linkUp);
             result.add(optimizer.reduceAirMovement(list));
         }
+    }
+
+    private static boolean isEmpty(final PolygonList[] polygonLists) {
+        if (polygonLists != null && polygonLists.length > 0) {
+            for (final PolygonList polygonList : polygonLists) {
+                if (polygonList != null && polygonList.size() > 0) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

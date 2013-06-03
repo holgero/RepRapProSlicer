@@ -5,7 +5,6 @@ import org.reprap.configuration.FillPattern;
 import org.reprap.configuration.PrintSetting;
 import org.reprap.geometry.polygons.HalfPlane;
 import org.reprap.geometry.polygons.Point2D;
-import org.reprap.geometry.polygons.PolygonList;
 import org.reprap.geometry.polygons.Rectangle;
 import org.reprap.geometry.polyhedra.BoundingBox;
 
@@ -75,31 +74,6 @@ public class LayerRules {
 
     int getModelLayer() {
         return modelLayer;
-    }
-
-    boolean setFirstAndLast(final PolygonList[] polygonLists) {
-        if (polygonLists == null) {
-            return false;
-        }
-        if (polygonLists.length <= 0) {
-            return false;
-        }
-        Point2D first = null;
-        PolygonList lastList = null;
-        for (final PolygonList polygonList : polygonLists) {
-            if (polygonList != null) {
-                if (polygonList.size() > 0) {
-                    if (first == null) {
-                        first = polygonList.polygon(0).point(0);
-                    }
-                    lastList = polygonList;
-                }
-            }
-        }
-        if (lastList == null || first == null) {
-            return false;
-        }
-        return true;
     }
 
     int getMachineLayerMax() {
