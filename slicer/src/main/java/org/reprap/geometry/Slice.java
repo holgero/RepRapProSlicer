@@ -47,8 +47,8 @@ class Slice {
         return bitmaps;
     }
 
-    PolygonList computeBrim(final int brimLines, final double extrusionSize) {
-        BooleanGridList brimOutline = bitmaps;
+    PolygonList computeBrim(final int brimLines, final double extrusionSize, final String material) {
+        BooleanGridList brimOutline = getBitmaps(material);
         final PolygonList result = new PolygonList();
         result.add(brimOutline.borders());
         for (int line = 1; line < brimLines; line++) {

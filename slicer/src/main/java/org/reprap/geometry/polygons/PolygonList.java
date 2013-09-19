@@ -324,7 +324,8 @@ public class PolygonList {
     private void validateSameMaterial() {
         for (int i = 1; i < size(); i++) {
             if (!polygon(0).getMaterial().equals(polygon(i).getMaterial())) {
-                throw new RuntimeException("RrPolygonList.radicalReOrder(): more than one material in the list!");
+                throw new RuntimeException("more than one material in the list: " + polygon(0).getMaterial() + " != "
+                        + polygon(i).getMaterial());
             }
         }
     }

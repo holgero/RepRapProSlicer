@@ -116,8 +116,11 @@ public class Producer {
         final List<ExtruderSetting> extruderSettings = currentConfiguration.getPrinterSetting().getExtruderSettings();
         final Slice slice = stlList.slice(stl, layerRules.getModelLayer());
         if (layerRules.getModelLayer() == 0 && brimLines > 0) {
+            // TODO: This is a simplified brim calculation: material 0 is used to calculate and to print the brim.
+            // Holds only if the other materials are not at the brim in the first layer.
             final double extrusionSize = extruderSettings.get(0).getExtrusionSize();
-            final PolygonList brim = slice.computeBrim(brimLines, extrusionSize);
+            final String brimMaterial = currentConfiguration.getMaterials().get(0).getName();
+            final PolygonList brim = slice.computeBrim(brimLines, extrusionSize, brimMaterial);
             final double linkUp = 4 * extrusionSize * extrusionSize;
             simplifyAndAdd(brim, linkUp, allPolygons[0]);
         }
